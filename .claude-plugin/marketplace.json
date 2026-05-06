@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "liva-toolbench",
+  "description": "Livanator9000's marketplace for experimenting with Claude Code plugins",
+  "owner": {
+    "name": "Chris Liva",
+    "email": "chrislliva@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "crank",
+      "source": "./plugins/crank",
+      "description": "Design-first development pipeline: brainstorm → spec → plan before writing a line of code",
+      "version": "1.0.1",
+      "category": "tools",
+      "tags": ["crank", "code", "agent"]
+    }
+  ]
+}
