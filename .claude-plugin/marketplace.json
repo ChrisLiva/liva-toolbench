@@ -10,8 +10,8 @@
     {
       "name": "crank",
       "source": "./plugins/crank",
-      "description": "Design-first development pipeline: brainstorm → spec → plan before writing a line of code",
-      "version": "1.0.1",
+      "description": "Design-first development pipeline: brainstorm → spec → plan → execute, taking an idea from sketch to shipped code",
+      "version": "1.1.0",
       "category": "tools",
       "tags": ["crank", "code", "agent"]
     }
