@@ -85,15 +85,15 @@ Extract `PLAN_PATH=...`. Halt on missing sentinel or `BLOCKER:`.
 
 **Status after:** `Plan ready: <path>`
 
-## Phase 4 — execute (default model — execute self-triages)
+## Phase 4 — execute (Sonnet)
 
-**Status before:** `Executing plan (Haiku impl + Sonnet review, managed by execute)…`
+**Status before:** `Executing plan…`
 
 Spawn:
 
 - Tool: `Agent`
 - `subagent_type`: `general-purpose`
-- `model`: omit (let `execute` operate at session default; it manages its own Haiku/Sonnet workers internally)
+- `model`: `sonnet`
 - `description`: `Crank: execute phase`
 - `prompt`:
   > Invoke the `crank:execute` skill via the `Skill` tool with this argument: `<RUN_DIR>`. Run the plan to completion. The skill handles its own non-interactive triage (solo / sequential / parallel) and writes `retro.md`. End your final message with the sentinel `RETRO_PATH=<absolute path to retro.md>` on its own line. If you hit a hard blocker, end with `BLOCKER: <summary>` on its own line, then the sentinel.
@@ -102,9 +102,78 @@ Extract `RETRO_PATH=...`. Halt on missing sentinel or `BLOCKER:`.
 
 **Status after:** `Retro written: <path>`
 
+## Phase 5 — Self-review & remediate (orchestrator + Sonnet)
+
+This phase runs **in the main thread** — you do it yourself, no subagent. The per-task reviewer inside `execute` only sees one task at a time; this phase catches cross-task drift against the original spec.
+
+**Status before:** `Reviewing implementation against spec…`
+
+### 5a. Read the inputs
+
+Read these directly:
+
+- `<RUN_DIR>/spec.md` — the frozen intent.
+- `<RUN_DIR>/retro.md` — what `execute` reported (commits, deviations, open items).
+
+Derive the diff that landed. Retro's `## Summary` lists `commits <first>..<last> on branch <branch>`. Run `git log --oneline <first>^..<last>` and `git diff <first>^..<last>` to see the actual change. If retro names a branch but no SHA range, fall back to `git diff main...<branch>`.
+
+### 5b. Review
+
+Evaluate the diff against:
+
+1. **Spec coverage** — every validation/acceptance criterion in `spec.md` met? Anything missing or quietly substituted?
+2. **Retro red flags** — open items or "punted" work that were actually in-scope per the spec and shouldn't have been deferred. Deviations whose justification is weak.
+3. **Cross-task coherence** — gaps the per-task reviewer couldn't see (inconsistent naming across tasks, dead code from an early task once a later task landed, missing wiring between independently-built pieces).
+
+Be concrete. Cite `file:line`. Don't restyle code or expand scope — this review is about whether the *shipped* diff matches the *original* spec.
+
+### 5c. Persist the review
+
+Write `<RUN_DIR>/review.md`:
+
+```markdown
+# Review: <plan title>
+
+## Verdict
+<APPROVED | CHANGES_REQUESTED>
+
+## Findings
+- <file:line — what's wrong, which spec/retro item it relates to>
+- ...
+
+## Remediation scope (only if CHANGES_REQUESTED)
+- <specific, bounded fix the remediation agent should make>
+- ...
+```
+
+Print one line to the user: `Review verdict: APPROVED` or `Review verdict: CHANGES_REQUESTED (<N> findings)`.
+
+### 5d. Remediate (only if CHANGES_REQUESTED)
+
+Spawn **one** Sonnet agent. No loop — single pass. The review is the contract.
+
+- Tool: `Agent`
+- `subagent_type`: `general-purpose`
+- `model`: `sonnet`
+- `description`: `Crank: post-implementation remediation`
+- `prompt`:
+  > Apply the fixes listed in the `## Remediation scope` section of `<RUN_DIR>/review.md`. Read `<RUN_DIR>/spec.md` and `<RUN_DIR>/retro.md` for context, and `<RUN_DIR>/review.md` in full for the findings.
+  >
+  > Constraints:
+  > - Stay strictly inside the remediation scope. Do not refactor, redesign, or expand.
+  > - For each behavioral fix: write a failing test first, implement, run verification.
+  > - Commit each logical fix separately with a message like `fix(<area>): <what>`. Do NOT amend earlier commits. Do NOT push.
+  > - When done, append a `## Remediation` section to `<RUN_DIR>/retro.md` listing each fix, the commit SHA, and verification output.
+  >
+  > End your final message with `REMEDIATION_DONE=<count of fixes applied>` on its own line. If you cannot proceed on a finding, leave it and continue with the rest; only emit `BLOCKER: <summary>` if no fix can be applied at all.
+
+When the agent returns, extract `REMEDIATION_DONE=<N>`.
+
+**Status after:** `Remediation complete: <N> fixes applied.` (or, if APPROVED, `Review approved — no remediation needed.`)
+
 ## Final summary
 
-After Phase 4 succeeds, print one block:
+After Phase 5 finishes, print one block:
 
 ```
 Crank complete:
@@ -112,6 +181,7 @@ Crank complete:
   spec        <SPEC_PATH>
   plan        <PLAN_PATH>
   retro       <RETRO_PATH>
+  review      <RUN_DIR>/review.md  (<APPROVED | CHANGES_REQUESTED — N fixes applied>)
 ```
 
 If any phase halted on a blocker, the summary instead lists only the artifacts that were produced and the blocker line that ended the run.
