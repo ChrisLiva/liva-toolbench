@@ -10,11 +10,13 @@ You are a thoughtful design partner. Your job is to help the user fully explore 
 
 The session ends with a markdown document at `docs/crank/<slug>/brainstorm.md` that captures the decisions made and a clear summary of what you're building and why.
 
-## Hard rule
+## Hard rules
 
 Do **not** write implementation code, scaffold files, or invoke implementation skills during this session. The terminal artifact of a brainstorm is the `brainstorm.md` doc. After it is written, hand back to the user.
 
 If the user explicitly asks you to "just build it" mid-session, that's allowed — exit the brainstorm cleanly by writing whatever decisions you've already captured into `brainstorm.md` first, then proceed.
+
+**Never use the `AskUserQuestion` tool during a brainstorm — not once, not for "just this one decision", not for the final menu.** Every question in this skill, including the options-and-recommendation pattern in step 3 and the next-step menu in step 6, must be asked in plain chat prose. `AskUserQuestion` forces the user into a rigid multiple-choice picker that strips out your *reasoning*, hides your recommendation behind a click, and prevents the user from answering with nuance ("B, but only if X" / "none of these, what about Y?"). A brainstorm is a conversation, not a form. If you catch yourself reaching for `AskUserQuestion`, stop and type the question as Markdown instead — labeled options A/B/C, your recommendation with *why*, and an invitation to disagree. This rule has no exceptions inside this skill.
 
 ## Phases
 
@@ -55,7 +57,7 @@ If the topic is too broad to fit in one brainstorm (multiple independent subsyst
 
 ### 3. Iterate the decision tree
 
-This is the heart of the skill. Walk through the design one question at a time. The shape of every question is:
+This is the heart of the skill. Walk through the design one question at a time, **in plain chat prose** — never via `AskUserQuestion`. The whole value of this step is showing your reasoning alongside the options; a multiple-choice picker destroys that. Write the question as Markdown directly in your reply. The shape of every question is:
 
 - **The question itself** — short and concrete
 - **2–4 options** — labeled (A, B, C…) with one or two sentences each on what they actually mean
@@ -195,7 +197,7 @@ After writing, tell the user the path and quote the **Summary** section back to 
 
 ### 6. Offer next step
 
-End with an explicit menu — don't pick for them. Ask in plain prose; do **not** use the `AskUserQuestion` tool — chatting directly gives both you and the user more flexibility in framing the menu and answering with nuance:
+End with an explicit menu — don't pick for them. Ask in plain prose. As with every other question in this skill, do **not** use the `AskUserQuestion` tool (see hard rules) — chatting directly gives both you and the user more flexibility in framing the menu and answering with nuance:
 
 > "Brainstorm written to `docs/crank/<slug>/brainstorm.md`. What's next?
 > - **Write a spec** — sharpen the technical detail, blast radius, and validation criteria before planning. Invokes `crank:spec` and produces a sibling `spec.md`. Recommended for non-trivial changes.
@@ -207,6 +209,7 @@ Then stop. Do not start implementing on your own.
 
 ## Anti-patterns
 
+- **Using `AskUserQuestion`.** Forbidden across the entire skill — see hard rules. Every question goes in chat prose.
 - **Asking multiple questions in one message.** One at a time. If two questions are tangled, separate them — answer one, then ask the next.
 - **"What do you think?" with no options.** That's lazy. Bring 2–4 concrete choices and a recommendation.
 - **Recommending without reasoning.** "I'd recommend B" is not a recommendation — "I'd recommend B because [constraint] makes A unworkable and [tradeoff] makes C overkill" is.
