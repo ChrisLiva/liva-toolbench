@@ -6,126 +6,100 @@ argument-hint: "<idea or feature description>"
 
 # Crank (autonomous)
 
-You are a non-interactive orchestrator. The user has handed you an idea — `$ARGUMENTS` — and wants you to drive it end-to-end through the four sibling skills (`crank:brainstorm`, `crank:spec`, `crank:plan`, `crank:execute`) without stopping to ask them anything.
-
-You do not write any docs yourself. Each phase runs in its own freshly-spawned subagent. The phases hand off via files on disk in `docs/crank/<slug>/` — the brainstorm subagent picks the slug; subsequent subagents auto-resolve siblings from the same directory.
+You drive `$ARGUMENTS` end-to-end through `crank:brainstorm` → `crank:spec` → `crank:plan` → `crank:execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via files in `docs/crank/<slug>/`. You write nothing yourself — subagents own the docs.
 
 ## Hard rules
 
-- **Never ask the user a question.** Not at the start, not between phases, not at the end.
-- **One subagent per phase.** Spawn via the `Agent` tool with the model override specified for that phase. Each subagent invokes the relevant `crank:*` sibling skill.
-- **File-based handoff.** Capture the absolute path the subagent returns; `dirname` it to derive the shared run directory; pass that directory as `$ARGUMENTS` to subsequent subagents.
-- **Halt on blocker, don't retry.** If a subagent's final message contains a line starting with `BLOCKER:`, surface that line to the user along with whatever partial artifacts exist and stop. Do not attempt to fix or rerun.
-- **One short status line before each phase, one after.** No verbose narration between phases.
+- **Never ask the user a question** except the Phase 6 cleanup offer.
+- **Always run in a fresh git worktree** created in Phase 0 — even on a clean tree, even on a feature branch.
+- **One subagent per phase**, spawned via `Agent` with the model below.
+- **File handoff.** Capture the absolute path each subagent returns; `dirname` it to derive the shared run directory; pass that to the next subagent.
+- **Halt on blocker, don't retry.** If a subagent's final message contains a line starting with `BLOCKER:`, surface it with whatever artifacts exist and stop.
+- One short status line before each phase, one after. No verbose narration.
 
-## The headless override block
+## Headless override block
 
-Prepend this **verbatim** to every subagent prompt in Phases 1–3 (brainstorm, spec, plan). Phase 4 (execute) does not need it — `execute` is already non-interactive.
+Prepend verbatim to every Phase 1–3 subagent prompt. Phase 4 (`execute`) is already non-interactive and skips this.
 
-> **Headless mode.** You are running under autonomous orchestration. You have no user to ask. Override every interactive gate in the skill you are about to invoke as follows:
-> - At every options-and-recommendation decision, pick the **recommended** option silently. Do not surface the menu.
-> - For non-obvious picks (anything where the recommendation isn't clearly the best fit for the stated idea), write an `Assumption: <what you assumed and why>` line into the relevant section of the output doc.
-> - Skip all confirmation gates: scope confirm, slug confirm, ingest gate, sharpen-questions gate, pre-write gate, phase-split confirm, next-step menu. Proceed directly to writing the output doc.
-> - **Never** emit a question back to the orchestrator. If you hit a true blocker (missing file, contradictory spec, tool failure you cannot work around), write what you have to the output doc, append a `## Blocker` section describing the issue, and end your final message with `BLOCKER: <one-line summary>` on its own line followed by `<ARTIFACT>_PATH=<absolute path>` on the next line.
-> - On success, end your final message with **only** `<ARTIFACT>_PATH=<absolute path>` on its own line. No next-step menu. No summary prose beyond what's already in the doc.
+> **Headless mode.** You run under autonomous orchestration inside a pre-created git worktree. You have no user. Override every interactive gate in the skill you invoke:
+> - At every options-and-recommendation gate, silently pick the recommended option.
+> - For non-obvious picks (where the recommendation isn't clearly the best fit), write an `Assumption: <what you assumed and why>` line into the relevant doc section.
+> - **Skip the Workspace setup section entirely.** The worktree already exists on a fresh `crank/<slug>` branch. Never run `git worktree`, `git checkout -b`, or any branch-switching command.
+> - Skip all other confirmation gates (scope, slug, ingest, sharpen-questions, pre-write, phase-split, next-step menu). Proceed straight to writing the output doc.
+> - **Never** emit a question. On a true blocker, write what you have, append a `## Blocker` section, and end your final message with `BLOCKER: <summary>` on one line and `<ARTIFACT>_PATH=<absolute path>` on the next.
+> - On success, end with **only** `<ARTIFACT>_PATH=<absolute path>` on its own line. No menu, no extra prose.
 > - Skip any adversarial Sonnet sub-review the skill normally runs — the orchestrator owns review cadence.
 
-`<ARTIFACT>` is the phase name uppercased: `BRAINSTORM`, `SPEC`, `PLAN`, `RETRO`.
+`<ARTIFACT>` is `BRAINSTORM`, `SPEC`, `PLAN`, or `RETRO`.
 
-## Phase 1 — brainstorm (Opus)
+## Phase 0 — Worktree setup (orchestrator)
 
-**Status before:** `Brainstorming with Opus…`
+Runs in the main thread, before any subagent.
 
-Spawn:
+**Status:** `Setting up worktree…`
 
-- Tool: `Agent`
-- `subagent_type`: `general-purpose`
-- `model`: `opus`
-- `description`: `Crank: brainstorm phase`
-- `prompt`: the headless override block above, followed by:
-  > Now invoke the `crank:brainstorm` skill via the `Skill` tool with these arguments: `$ARGUMENTS`. Run it under the headless rules above. End your final message with the sentinel `BRAINSTORM_PATH=<absolute path to brainstorm.md>` on its own line.
+1. Resolve repo root and base branch:
+   ```!
+   git rev-parse --show-toplevel
+   git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo main
+   ```
+   Call these `REPO_ROOT` and `BASE_BRANCH` (fall back to `main`).
 
-When the subagent returns, extract `BRAINSTORM_PATH=...` from its final message. `dirname` that path → call it `RUN_DIR`. If the sentinel is missing, halt: print "brainstorm subagent did not return BRAINSTORM_PATH sentinel" along with the last ~20 lines of the subagent's return.
+2. Build a worktree slug: today's date plus a short kebab-case hint from `$ARGUMENTS` (lowercase, alphanumerics + dashes, ≤30 chars): `SLUG=crank-$(date +%Y-%m-%d)-<hint>`. If the resulting path already exists, append `-2`, `-3`, etc.
 
-**Status after:** `Brainstorm ready: <path>`
+3. Create the worktree as a sibling of the repo:
+   ```!
+   git worktree add "$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")-$SLUG" -b "$SLUG" "$BASE_BRANCH"
+   ```
+   Record the absolute path as `WORKTREE_DIR` and the branch as `WORKTREE_BRANCH`. Every subsequent subagent prompt must tell the subagent `cwd: <WORKTREE_DIR>`. Run orchestrator-level git commands from `WORKTREE_DIR`.
 
-If the return also contained `BLOCKER:`, halt now and surface it.
+4. If `git worktree add` fails, surface the error verbatim and halt. Do not force.
 
-## Phase 2 — spec (Opus)
+**Status:** `Worktree ready: <WORKTREE_DIR> on <WORKTREE_BRANCH>`
 
-**Status before:** `Drafting spec with Opus…`
+## Phases 1–4 — Subagent execution
 
-Spawn:
+For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `description: Crank: <phase> phase`) with the model and prompt below. Each prompt is the headless override block (skipped for Phase 4) followed by the phase body, which always opens with:
 
-- Tool: `Agent`
-- `subagent_type`: `general-purpose`
-- `model`: `opus`
-- `description`: `Crank: spec phase`
-- `prompt`: the headless override block, followed by:
-  > Now invoke the `crank:spec` skill via the `Skill` tool with this argument (the run directory containing brainstorm.md): `<RUN_DIR>`. Run it under the headless rules above. End your final message with the sentinel `SPEC_PATH=<absolute path to spec.md>` on its own line.
+> `You are running inside this git worktree: <WORKTREE_DIR> on branch <WORKTREE_BRANCH>. Run all commands from there; do not switch branches or create new worktrees.`
 
-Extract `SPEC_PATH=...`. Halt on missing sentinel or `BLOCKER:`.
+After each subagent returns, extract the sentinel from its final message. If missing, halt and print the last ~20 lines of the return. If the return contains `BLOCKER:`, halt and surface it.
 
-**Status after:** `Spec ready: <path>`
+| # | Phase      | Model  | Status before                  | Skill arg     | Sentinel                       | Status after              |
+|---|------------|--------|--------------------------------|---------------|--------------------------------|---------------------------|
+| 1 | brainstorm | opus   | `Brainstorming with Opus…`     | `$ARGUMENTS`  | `BRAINSTORM_PATH=<abs path>`   | `Brainstorm ready: <path>`|
+| 2 | spec       | opus   | `Drafting spec with Opus…`     | `<RUN_DIR>`   | `SPEC_PATH=<abs path>`         | `Spec ready: <path>`      |
+| 3 | plan       | sonnet | `Planning with Sonnet…`        | `<RUN_DIR>`   | `PLAN_PATH=<abs path>`         | `Plan ready: <path>`      |
+| 4 | execute    | sonnet | `Executing plan…`              | `<RUN_DIR>`   | `RETRO_PATH=<abs path>`        | `Retro written: <path>`   |
 
-## Phase 3 — plan (Sonnet)
+`RUN_DIR = dirname(BRAINSTORM_PATH)` — the shared run directory all later phases reuse.
 
-**Status before:** `Planning with Sonnet…`
+**Phase body templates** (append to the worktree-context line above):
 
-Spawn:
-
-- Tool: `Agent`
-- `subagent_type`: `general-purpose`
-- `model`: `sonnet`
-- `description`: `Crank: plan phase`
-- `prompt`: the headless override block, plus the line **"Default to a single-file plan unless the spec is unambiguously L/XL — bias toward fewer files."**, followed by:
-  > Now invoke the `crank:plan` skill via the `Skill` tool with this argument: `<RUN_DIR>`. Run it under the headless rules above. End your final message with the sentinel `PLAN_PATH=<absolute path to plan.md>` on its own line.
-
-Extract `PLAN_PATH=...`. Halt on missing sentinel or `BLOCKER:`.
-
-**Status after:** `Plan ready: <path>`
-
-## Phase 4 — execute (Sonnet)
-
-**Status before:** `Executing plan…`
-
-Spawn:
-
-- Tool: `Agent`
-- `subagent_type`: `general-purpose`
-- `model`: `sonnet`
-- `description`: `Crank: execute phase`
-- `prompt`:
-  > Invoke the `crank:execute` skill via the `Skill` tool with this argument: `<RUN_DIR>`. Run the plan to completion. The skill handles its own non-interactive triage (solo / sequential / parallel) and writes `retro.md`. End your final message with the sentinel `RETRO_PATH=<absolute path to retro.md>` on its own line. If you hit a hard blocker, end with `BLOCKER: <summary>` on its own line, then the sentinel.
-
-Extract `RETRO_PATH=...`. Halt on missing sentinel or `BLOCKER:`.
-
-**Status after:** `Retro written: <path>`
+- **Phases 1–3**: `Invoke the crank:<phase> skill via the Skill tool with this argument: <skill arg>. Run it under the headless rules above. End your final message with <SENTINEL>=<absolute path> on its own line.`
+- **Phase 3 only**, additionally include: **"Default to a single-file plan unless the spec is unambiguously L/XL — bias toward fewer files."**
+- **Phase 4** (no headless block):
+  > `Do not run the Workspace setup section of the execute skill — the worktree already exists; treat the current branch as the target. Do not run Phase 5 (Finish — cleanup/merge); the orchestrator owns cleanup. Invoke the crank:execute skill via the Skill tool with this argument: <RUN_DIR>. Run the plan to completion through Phase 4 (Retro). The skill handles its own non-interactive triage (solo / sequential / parallel) and writes retro.md. End your final message with RETRO_PATH=<absolute path> on its own line. On a hard blocker, end with BLOCKER: <summary> on one line then the sentinel on the next.`
 
 ## Phase 5 — Self-review & remediate (orchestrator + Sonnet)
 
-This phase runs **in the main thread** — you do it yourself, no subagent. The per-task reviewer inside `execute` only sees one task at a time; this phase catches cross-task drift against the original spec.
+The per-task reviewer inside `execute` sees one task at a time; this phase catches cross-task drift against the original spec. Runs in the main thread.
 
-**Status before:** `Reviewing implementation against spec…`
+**Status:** `Reviewing implementation against spec…`
 
-### 5a. Read the inputs
+### 5a. Read inputs
 
-Read these directly:
-
-- `<RUN_DIR>/spec.md` — the frozen intent.
-- `<RUN_DIR>/retro.md` — what `execute` reported (commits, deviations, open items).
-
-Derive the diff that landed. Retro's `## Summary` lists `commits <first>..<last> on branch <branch>`. Run `git log --oneline <first>^..<last>` and `git diff <first>^..<last>` to see the actual change. If retro names a branch but no SHA range, fall back to `git diff main...<branch>`.
+Read `<RUN_DIR>/spec.md` (frozen intent) and `<RUN_DIR>/retro.md` (what execute reported). Derive the diff: retro's `## Summary` lists `commits <first>..<last> on branch <branch>`. Run `git log --oneline <first>^..<last>` and `git diff <first>^..<last>`. If retro names a branch but no SHA range, fall back to `git diff <BASE_BRANCH>...<branch>`.
 
 ### 5b. Review
 
 Evaluate the diff against:
 
 1. **Spec coverage** — every validation/acceptance criterion in `spec.md` met? Anything missing or quietly substituted?
-2. **Retro red flags** — open items or "punted" work that were actually in-scope per the spec and shouldn't have been deferred. Deviations whose justification is weak.
+2. **Retro red flags** — open items or "punted" work that were actually in-scope. Weak deviation justifications.
 3. **Cross-task coherence** — gaps the per-task reviewer couldn't see (inconsistent naming across tasks, dead code from an early task once a later task landed, missing wiring between independently-built pieces).
 
-Be concrete. Cite `file:line`. Don't restyle code or expand scope — this review is about whether the *shipped* diff matches the *original* spec.
+Cite `file:line`. Don't restyle code or expand scope — this review checks whether the *shipped* diff matches the *original* spec.
 
 ### 5c. Persist the review
 
@@ -139,49 +113,65 @@ Write `<RUN_DIR>/review.md`:
 
 ## Findings
 - <file:line — what's wrong, which spec/retro item it relates to>
-- ...
 
 ## Remediation scope (only if CHANGES_REQUESTED)
-- <specific, bounded fix the remediation agent should make>
-- ...
+- <specific, bounded fix for the remediation agent>
 ```
 
-Print one line to the user: `Review verdict: APPROVED` or `Review verdict: CHANGES_REQUESTED (<N> findings)`.
+Print one line: `Review verdict: APPROVED` or `Review verdict: CHANGES_REQUESTED (<N> findings)`.
 
 ### 5d. Remediate (only if CHANGES_REQUESTED)
 
-Spawn **one** Sonnet agent. No loop — single pass. The review is the contract.
+Spawn **one** Sonnet `Agent` (`general-purpose`, `description: Crank: post-implementation remediation`). Single pass — no loop. The review is the contract.
 
-- Tool: `Agent`
-- `subagent_type`: `general-purpose`
-- `model`: `sonnet`
-- `description`: `Crank: post-implementation remediation`
-- `prompt`:
-  > Apply the fixes listed in the `## Remediation scope` section of `<RUN_DIR>/review.md`. Read `<RUN_DIR>/spec.md` and `<RUN_DIR>/retro.md` for context, and `<RUN_DIR>/review.md` in full for the findings.
-  >
-  > Constraints:
-  > - Stay strictly inside the remediation scope. Do not refactor, redesign, or expand.
-  > - For each behavioral fix: write a failing test first, implement, run verification.
-  > - Commit each logical fix separately with a message like `fix(<area>): <what>`. Do NOT amend earlier commits. Do NOT push.
-  > - When done, append a `## Remediation` section to `<RUN_DIR>/retro.md` listing each fix, the commit SHA, and verification output.
-  >
-  > End your final message with `REMEDIATION_DONE=<count of fixes applied>` on its own line. If you cannot proceed on a finding, leave it and continue with the rest; only emit `BLOCKER: <summary>` if no fix can be applied at all.
+> `You are running inside this git worktree: <WORKTREE_DIR> on branch <WORKTREE_BRANCH>. Apply the fixes listed in the ## Remediation scope section of <RUN_DIR>/review.md. Read <RUN_DIR>/spec.md and retro.md for context, and review.md in full.`
+>
+> Constraints:
+> - Stay strictly inside the remediation scope. No refactor, redesign, or expansion.
+> - For each behavioral fix: failing test first, implement, run verification.
+> - Commit each logical fix separately (`fix(<area>): <what>`). Do NOT amend earlier commits. Do NOT push.
+> - When done, append a `## Remediation` section to retro.md listing each fix, the commit SHA, and verification output.
+> - End your final message with `REMEDIATION_DONE=<N>` on its own line. Skip findings you cannot fix and continue; emit `BLOCKER: <summary>` only if no fix can be applied at all.
 
-When the agent returns, extract `REMEDIATION_DONE=<N>`.
+Extract `REMEDIATION_DONE=<N>`.
 
-**Status after:** `Remediation complete: <N> fixes applied.` (or, if APPROVED, `Review approved — no remediation needed.`)
+**Status:** `Remediation complete: <N> fixes applied.` (or, if APPROVED, `Review approved — no remediation needed.`)
+
+## Phase 6 — Cleanup offer (orchestrator)
+
+The **one allowed user interaction**. Run it even if an earlier phase halted on a blocker, so the user can clean up the partial worktree. Ask in plain chat prose — do **not** use `AskUserQuestion`.
+
+Detect final state from the worktree:
+```!
+cd "<WORKTREE_DIR>" && git log --oneline "<BASE_BRANCH>..HEAD"
+```
+
+Print this block (substitute bracketed values; omit options that don't apply):
+
+> "Crank pipeline complete on worktree `<WORKTREE_DIR>` (branch `<WORKTREE_BRANCH>`, <N> commits ahead of `<BASE_BRANCH>`). How do you want to finish up?
+>
+> - **Merge into `<BASE_BRANCH>` and clean up** — fast-forward `<WORKTREE_BRANCH>` into `<BASE_BRANCH>`, delete the branch, `git worktree remove <WORKTREE_DIR>`. Recommended when the change is reviewed and ready to land.
+> - **Open a PR instead** — push `<WORKTREE_BRANCH>` to origin and `gh pr create` as draft. Recommended when the change needs human review before landing.
+> - **Leave it as-is** — branch and worktree stay where they are; merge/PR/cleanup later.
+> - **Throw it away** — delete the branch and `git worktree remove --force <WORKTREE_DIR>`. **Confirm twice** before doing this."
+
+Recommend `Open a PR` if `origin` points to a code host; recommend direct merge for purely local repos. Wait for the user's pick.
+
+Execute the choice from `<REPO_ROOT>`, not from inside the worktree (`git worktree remove` must run from outside the worktree being removed). Report what happened in one line. Never force-push, amend, or rewrite history. Never delete a branch or worktree without explicit approval.
 
 ## Final summary
 
-After Phase 5 finishes, print one block:
+After Phase 6, print:
 
 ```
 Crank complete:
+  worktree    <WORKTREE_DIR> on <WORKTREE_BRANCH>
   brainstorm  <BRAINSTORM_PATH>
   spec        <SPEC_PATH>
   plan        <PLAN_PATH>
   retro       <RETRO_PATH>
   review      <RUN_DIR>/review.md  (<APPROVED | CHANGES_REQUESTED — N fixes applied>)
+  cleanup     <merged and deleted | PR #123 open | left as-is | discarded>
 ```
 
-If any phase halted on a blocker, the summary instead lists only the artifacts that were produced and the blocker line that ended the run.
+If a phase halted on a blocker, list only the artifacts produced, the blocker line that ended the run, and the cleanup choice from Phase 6.

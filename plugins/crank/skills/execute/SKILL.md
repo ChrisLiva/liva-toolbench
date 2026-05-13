@@ -6,69 +6,47 @@ argument-hint: "[optional path to plan.md or its directory]"
 
 # Execute
 
-You are a senior engineer shipping the plan. Your job is to take the ordered tasks captured in `plan.md`, decide *how* to execute them, do the work (or delegate it), gate every "done" claim on real verification evidence, and finish by writing `retro.md`.
+Ship the plan. Take the ordered tasks in `plan.md`, decide *how* to execute them, do the work (or delegate it), gate every "done" claim on real verification evidence, and finish with `retro.md`. The plan is the source of truth — direct, don't redesign. Surprises become entries in `retro.md`, not silent reroutes.
 
-The implementer (you, or a subagent you dispatch) is capable. The plan is the source of truth — direct, don't redesign. Surprises become open items in `retro.md`, not silent reroutes.
+## Hard rules
 
-## Hard rules (invariants)
+- **Evidence before claims.** Never report a task done without running its verification in this turn and reading the output. "Tests should pass" is a lie if you didn't run them.
+- **TDD by default.** Failing test → watch it fail → implement. Plan-specified exceptions (config flips, doc edits, generated code) skip TDD.
+- **No scope creep.** Stick to the plan's task list. Deviations get logged to `retro.md` and surfaced; they do not silently expand the change.
+- **Plan is frozen.** Don't edit `plan.md` mid-execution.
+- **Don't start on `main`/`master`** without explicit consent — see Workspace setup.
 
-- **Evidence before claims.** Never report a task done without running its verification command in this turn and reading the output. "Tests should pass" is a lie if you didn't run them.
-- **TDD by default.** For each behavioral change, write the failing test first, watch it fail, then implement. Plan-specified exceptions (config flips, doc edits, generated code) skip TDD.
-- **No scope creep.** Stick to the plan's task list. Discoveries that warrant deviation get logged to `retro.md` and surfaced — they do not silently expand the change.
-- **Don't start on `main`/`master`** without explicit consent — branch first.
-- **Plan is frozen.** Don't edit `plan.md` mid-execution. Deviations go in `retro.md`.
+## Workspace setup
 
-## Input contract
+Check `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`. If already on a `crank/<slug>` branch or worktree (brainstorm/spec/plan set it up), confirm in one line and proceed. If on `main`/`master`/`trunk`, **stop and offer in chat prose** (not `AskUserQuestion`): **A.** new branch `git checkout -b crank/<slug>` (cheapest, reuses tree), **B.** new worktree `git worktree add ../<repo>-<slug> -b crank/<slug>` (recommended if tree is dirty, plan is L/XL, or user wants throw-away isolation), **C.** stay put (only if user says so). Wait for confirmation before running the git command. Record the branch and worktree path — you'll cite them in retro and cleanup.
 
-Locate `plan.md`:
+## Locate the plan
 
-1. **Explicit argument** — `$ARGUMENTS` may be a path to `plan.md`, a phase file, or its directory. Use it if present.
-2. **Auto-detect** — otherwise:
-
-   ```!
-   ls -1t docs/crank/*/plan.md 2>/dev/null | head -5
-   ```
-
-   If exactly one exists, use it. If multiple, list them with mtime and ask the user — don't guess.
-3. **None found** — say so and offer to invoke `crank:plan` first.
-
-Read `plan.md` in full (and any phase files it indexes). Skim `spec.md` for context if the plan references decisions not restated. Do **not** re-derive the plan.
+Use `$ARGUMENTS` if it points to `plan.md`, a phase file, or its directory. Otherwise auto-detect via `ls -1t docs/crank/*/plan.md | head -5` — use it if exactly one, ask if multiple, offer `crank:plan` if none. Read `plan.md` in full plus any phase files it indexes. Skim `spec.md` for context if the plan references decisions not restated. Do not re-derive the plan.
 
 ## Phase 1: Triage
 
-Use TaskCreate to track the rest of the work so the user sees progress.
-
-**Default to sequential subagents** for plans larger than ~3 tasks. Fresh context per task beats a crowded session — the only reason to stay solo is when tasks share state so heavily that the controller-overhead isn't worth it.
-
-Decide execution mode by reading the plan's task list:
+Track the rest of the work with TaskCreate. Decide execution mode by reading the task list:
 
 | Signal | Mode |
 |---|---|
-| ≤ ~3 tasks, *and* later tasks edit code from earlier tasks or share in-flight state | **Solo** — execute in this session |
-| Multiple tasks with sequential ordering (later builds on earlier), but each task is self-contained once its predecessor lands | **Sequential subagents** — one Haiku implementer per task, you coordinate |
-| Tasks touching disjoint files, no shared state, order doesn't matter | **Parallel subagents** — dispatch a batch of Haiku implementers concurrently |
+| ≤ ~3 tasks **and** later tasks edit code from earlier tasks or share in-flight state | **Solo** — execute in this session |
+| Sequential ordering (later builds on earlier), each task self-contained once its predecessor lands | **Sequential subagents** — one Haiku implementer per task, you coordinate |
+| Tasks touch disjoint files, no shared state, order doesn't matter | **Parallel subagents** — dispatch a batch of Haiku implementers concurrently |
 
-State the choice in one sentence ("Triaging as parallel: tasks 2/3/5 touch disjoint files; tasks 1, 4, 6 sequential."). Mixed plans are normal — execute the parallel-safe slice in parallel, then resume sequential.
+Default to **sequential subagents** for plans larger than ~3 tasks — fresh context per task beats a crowded session. State the choice in one sentence ("Triaging as parallel: tasks 2/3/5 touch disjoint files; tasks 1, 4, 6 sequential."). Mixed plans are normal — run the parallel-safe slice in parallel, then resume sequential.
 
 ## Phase 2: Execute
 
 ### Solo mode
 
-For each task in order:
-
-1. Mark in-progress in TaskCreate.
-2. Read the task's files block; open the files.
-3. **TDD** — write the failing test, run it, confirm it fails for the right reason, then implement.
-4. Run the task's verification commands. Read the output.
-5. Commit with a message that names the task. Mark complete.
-
-Stop on the first blocker (failing verification, ambiguous instruction, missing dependency). Don't push through — surface the blocker to the user with the actual error.
+For each task in order: mark in-progress, open the files block, write the failing test, run it, confirm it fails for the right reason, implement, run the task's verification, commit with a message that names the task, mark complete. Stop on the first blocker (failing verification, ambiguous instruction, missing dependency) and surface it with the actual error — don't push through.
 
 ### Subagent modes (sequential or parallel)
 
-You are the controller. Subagents never read `plan.md` themselves — you extract the full task text and required context and pass it in.
+You are the controller. Subagents never read `plan.md`; you extract the full task text and required context and pass it in.
 
-**Implementer subagent (default: Haiku, escalate to Sonnet for multi-file integration or judgment-heavy tasks).** The `model` field on `Agent()` overrides the agent definition's default model, so passing `"haiku"` is sufficient even with `general-purpose`:
+**Implementer** (default Haiku; escalate to Sonnet for multi-file integration or judgment-heavy tasks). The `model` field on `Agent()` overrides the agent definition's default, so passing `"haiku"` is sufficient with `general-purpose`:
 
 ```
 Agent({
@@ -84,14 +62,14 @@ Agent({
   - TDD: write failing test first unless plan says otherwise.
 
   Do the work, run verification, commit with message 'feat(<area>): <task summary>'.
-  Constraints: do NOT push, do NOT amend earlier commits, do NOT touch files outside the files block above.
-  Return: status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), commit SHA, verification output, and any concerns."
+  Constraints: do NOT push, do NOT amend earlier commits, do NOT touch files outside the files block.
+  Return: status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), commit SHA, verification output, concerns."
 })
 ```
 
-**Parallel dispatch:** when tasks are independent and touch disjoint files, send multiple Agent calls in a single message. Never dispatch two implementers that could touch the same file in parallel.
+**Parallel dispatch.** Send multiple Agent calls in a single message when tasks are independent and touch disjoint files. Never dispatch two implementers that could touch the same file in parallel.
 
-**Combined review subagent (Sonnet) — once per task after implementer reports DONE:**
+**Combined reviewer** (Sonnet) — once per task after implementer reports `DONE`:
 
 ```
 Agent({
@@ -102,30 +80,19 @@ Agent({
 
   <full task text>
 
-  Check both:
-  1. Spec compliance — does the diff implement exactly what the task asks, no more, no less?
-  2. Code quality — naming, duplication, error handling, test quality, obvious bugs.
+  Check: (1) spec compliance — does the diff implement exactly what the task asks, no more, no less? (2) code quality — naming, duplication, error handling, test quality, obvious bugs.
 
-  Return: APPROVED or CHANGES_REQUESTED with a specific list. Be concrete; cite file:line."
+  Return: APPROVED or CHANGES_REQUESTED with a specific list. Cite file:line."
 })
 ```
 
-If `CHANGES_REQUESTED`, dispatch the same implementer subagent (same model) with the reviewer's feedback and re-review. Loop until `APPROVED`. Don't move to the next task with open review issues.
+On `CHANGES_REQUESTED`, re-dispatch the implementer (same model) with the reviewer's feedback and re-review. Loop until `APPROVED`. Don't move to the next task with open review issues.
 
-**Handling implementer status:**
-
-- `DONE` → review.
-- `DONE_WITH_CONCERNS` → read the concerns; address before review if they affect correctness, otherwise note and proceed.
-- `NEEDS_CONTEXT` → provide the missing context, re-dispatch.
-- `BLOCKED` → if context-shaped, more context + re-dispatch; if reasoning-shaped, escalate to Sonnet; if plan-shaped, escalate to user.
+**Implementer status:** `DONE` → review. `DONE_WITH_CONCERNS` → read concerns, address before review if they affect correctness, otherwise note and proceed. `NEEDS_CONTEXT` → provide it, re-dispatch. `BLOCKED` → context-shaped: more context + re-dispatch; reasoning-shaped: escalate to Sonnet; plan-shaped: escalate to user.
 
 ## Phase 3: Verification gate
 
-Before claiming the plan is done:
-
-1. Re-read `plan.md`'s task list. Tick each one against an actual commit / verification output you ran in this session.
-2. Run the plan's overall validation commands (test suite, linter, typecheck, build) — fresh, in this turn. Read exit codes and full output.
-3. If anything fails or any task is unverified, fix or surface — do not claim completion.
+Before claiming completion: re-read `plan.md`'s task list and tick each one against an actual commit and verification output you ran this session. Then run the plan's overall validation commands (test suite, linter, typecheck, build) fresh, in this turn. Read exit codes and full output. Fix or surface any failure — do not claim completion otherwise.
 
 ## Phase 4: Retro
 
@@ -147,22 +114,31 @@ Write `<plan-dir>/retro.md` (sibling to `plan.md`):
 - <commands run + outcome>
 ```
 
-Keep it short. `git log` already records *what shipped* — the durable signal here is **deviations** and **open items** that the diff alone won't tell the next reader.
+Keep it short. `git log` already records what shipped — the durable signal here is **deviations** and **open items** that the diff alone won't tell the next reader. Then go to Phase 5; do not hand back yet.
 
-Then hand back to the user with a one-line summary and the `retro.md` path. Do not auto-commit/PR — the user runs their own finish flow.
+## Phase 5: Finish — offer cleanup and merge
+
+Required step. Ask in plain chat prose (not `AskUserQuestion`). Detect state with `git rev-parse --abbrev-ref HEAD`, `git log --oneline <base>..HEAD`, `git worktree list` (`<base>` = the user's default branch). Tailor the options to what's actually true — skip worktree-removal if not in a worktree, skip merge if no new commits.
+
+> "Execution complete. Commits `<first>..<last>` shipped on `<branch>`<` in worktree <path>` if applicable>. How do you want to finish up?
+>
+> - **Merge into `<base>` and clean up** — fast-forward (or `--no-ff` if the user prefers) into `<base>`, delete the branch, and (if applicable) `git worktree remove <path>`. Recommended when reviewed-or-self-reviewed and ready to land.
+> - **Open a PR instead** — push `<branch>` to origin and create a draft PR via `gh pr create`. Recommended when human review is needed first.
+> - **Leave it as-is** — branch and worktree stay where they are.
+> - **Throw it away** — only on explicit request: `git branch -D <branch>` and `git worktree remove --force <path>`. **Confirm twice** — destructive."
+
+Recommend the option that fits context (PR for shared/production code, direct merge for solo or experimental work) but let the user decide. Execute the picked option and report what happened in one line. Never force-push, amend, rewrite history, or delete a branch/worktree the user didn't approve. Hand back with a one-line summary, the `retro.md` path, and final state (`branch merged and deleted` / `PR #123 open` / `branch and worktree left at <path>`).
 
 ## Red flags — stop
 
-These are the *moments* where you'd be tempted to break a hard rule. Catch yourself:
+Catch yourself when:
 
-- Reaching for the word "should" or "probably" when describing test/build state.
-- Implementer reported `BLOCKED` and you're about to retry with the same model and same context.
-- About to dispatch parallel subagents whose files-blocks overlap.
-- Letting an implementer's self-review stand in for the combined Sonnet review.
-- Tempted to "just nudge" `plan.md` rather than write a deviation note.
+- You reach for "should" or "probably" to describe test/build state.
+- An implementer reported `BLOCKED` and you're about to retry with the same model and same context.
+- You're about to dispatch parallel subagents whose files-blocks overlap.
+- An implementer's self-review is standing in for the Sonnet review.
+- You're tempted to "just nudge" `plan.md` rather than write a deviation note.
 
 ## Integration
 
-- Runs **after** `crank:plan`. Won't fabricate a plan — bounces back if none exists.
-- Reads `spec.md` only as context; does not modify it.
-- Writes only `retro.md` and the implementation diffs. Plan and spec stay frozen.
+Runs after `crank:plan`. Won't fabricate a plan — bounces back if none exists. Reads `spec.md` only as context. Writes only `retro.md` and the implementation diffs. Plan and spec stay frozen.
