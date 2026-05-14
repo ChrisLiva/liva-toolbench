@@ -16,7 +16,7 @@ Sharpen `brainstorm.md` into an implementation-ready `<brainstorm-dir>/spec.md` 
 
 ## Setup
 
-Check git state (`git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`). If brainstorm already created `crank/<slug>`, confirm and continue. If on `main`/`master`/`trunk`, offer in chat prose: **A.** new branch (default), **B.** new worktree (dirty tree or L/XL), or **C.** stay put (only if user says so). Wait for confirmation.
+Check git state (`git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`). If brainstorm already created `crank/<slug>`, confirm and continue. If on `main`/`master`/`trunk`, offer in chat prose: **A.** new branch (default), **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (dirty tree or L/XL — lands under `.claude/worktrees/`), or **C.** stay put (only if user says so). Wait for confirmation. Never `git worktree add` to a sibling path; always use `EnterWorktree`.
 
 Locate the brainstorm: (1) `$ARGUMENTS` if it points to `brainstorm.md` or its directory, (2) auto-detect via `ls -1t docs/crank/*/brainstorm.md | head -5` — use it if exactly one; if multiple, list with mtimes and ask, (3) none — say so and offer `crank:brainstorm` rather than fabricating one. Read it in full first.
 

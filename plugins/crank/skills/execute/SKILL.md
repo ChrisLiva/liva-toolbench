@@ -18,7 +18,7 @@ Ship the plan. Take the ordered tasks in `plan.md`, decide *how* to execute them
 
 ## Workspace setup
 
-Check `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`. If already on a `crank/<slug>` branch or worktree (brainstorm/spec/plan set it up), confirm in one line and proceed. If on `main`/`master`/`trunk`, **stop and offer in chat prose** (not `AskUserQuestion`): **A.** new branch `git checkout -b crank/<slug>` (cheapest, reuses tree), **B.** new worktree `git worktree add ../<repo>-<slug> -b crank/<slug>` (recommended if tree is dirty, plan is L/XL, or user wants throw-away isolation), **C.** stay put (only if user says so). Wait for confirmation before running the git command. Record the branch and worktree path — you'll cite them in retro and cleanup.
+Check `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`. If already on a `crank/<slug>` branch or worktree (brainstorm/spec/plan set it up), confirm in one line and proceed. If on `main`/`master`/`trunk`, **stop and offer in chat prose** (not `AskUserQuestion`): **A.** new branch `git checkout -b crank/<slug>` (cheapest, reuses tree), **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (recommended if tree is dirty, plan is L/XL, or user wants throw-away isolation — lands under `.claude/worktrees/` and switches the session into it), **C.** stay put (only if user says so). Wait for confirmation before acting. Never `git worktree add` to a sibling path; always use `EnterWorktree`. Record the branch and worktree path — you'll cite them in retro and cleanup.
 
 ## Locate the plan
 
@@ -122,10 +122,10 @@ Required step. Ask in plain chat prose (not `AskUserQuestion`). Detect state wit
 
 > "Execution complete. Commits `<first>..<last>` shipped on `<branch>`<` in worktree <path>` if applicable>. How do you want to finish up?
 >
-> - **Merge into `<base>` and clean up** — fast-forward (or `--no-ff` if the user prefers) into `<base>`, delete the branch, and (if applicable) `git worktree remove <path>`. Recommended when reviewed-or-self-reviewed and ready to land.
+> - **Merge into `<base>` and clean up** — fast-forward (or `--no-ff` if the user prefers) into `<base>`, delete the branch, and (if the worktree was created via `EnterWorktree`) call `ExitWorktree` with `action: "remove"`. For worktrees created manually with `git worktree add`, run `git worktree remove <path>` from outside the worktree. Recommended when reviewed-or-self-reviewed and ready to land.
 > - **Open a PR instead** — push `<branch>` to origin and create a draft PR via `gh pr create`. Recommended when human review is needed first.
 > - **Leave it as-is** — branch and worktree stay where they are.
-> - **Throw it away** — only on explicit request: `git branch -D <branch>` and `git worktree remove --force <path>`. **Confirm twice** — destructive."
+> - **Throw it away** — only on explicit request: `git branch -D <branch>` and either `ExitWorktree` with `action: "remove", discard_changes: true` (if entered via `EnterWorktree`) or `git worktree remove --force <path>` (manual worktrees). **Confirm twice** — destructive."
 
 Recommend the option that fits context (PR for shared/production code, direct merge for solo or experimental work) but let the user decide. Execute the picked option and report what happened in one line. Never force-push, amend, rewrite history, or delete a branch/worktree the user didn't approve. Hand back with a one-line summary, the `retro.md` path, and final state (`branch merged and deleted` / `PR #123 open` / `branch and worktree left at <path>`).
 

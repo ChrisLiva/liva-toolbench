@@ -16,7 +16,7 @@ Turn `spec.md` into an executable plan — ordered tasks with exact paths, comma
 
 ## Setup
 
-Check git state (`git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`). If brainstorm/spec already created `crank/<slug>`, confirm and continue. If on `main`/`master`/`trunk`, offer in chat: **A.** new branch, **B.** new worktree (recommended for L/XL or dirty tree), or **C.** stay put (only if user says so). Wait for confirmation.
+Check git state (`git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`). If brainstorm/spec already created `crank/<slug>`, confirm and continue. If on `main`/`master`/`trunk`, offer in chat: **A.** new branch, **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (recommended for L/XL or dirty tree — lands under `.claude/worktrees/`), or **C.** stay put (only if user says so). Wait for confirmation. Never `git worktree add` to a sibling path; always use `EnterWorktree`.
 
 Locate the spec: (1) `$ARGUMENTS` if it points to `spec.md` or its directory, (2) auto-detect via `ls -1t docs/crank/*/spec.md | head -5` — use it if exactly one; if multiple, list with mtimes and ask, (3) none — say so and offer `crank:spec` rather than fabricating one. Read it in full plus sibling `brainstorm.md` for upstream context.
 

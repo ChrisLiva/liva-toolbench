@@ -24,7 +24,7 @@ Prepend verbatim to every Phase 1–3 subagent prompt. Phase 4 (`execute`) is al
 > **Headless mode.** You run under autonomous orchestration inside a pre-created git worktree. You have no user. Override every interactive gate in the skill you invoke:
 > - At every options-and-recommendation gate, silently pick the recommended option.
 > - For non-obvious picks (where the recommendation isn't clearly the best fit), write an `Assumption: <what you assumed and why>` line into the relevant doc section.
-> - **Skip the Workspace setup section entirely.** The worktree already exists on a fresh `crank/<slug>` branch. Never run `git worktree`, `git checkout -b`, or any branch-switching command.
+> - **Skip the Workspace setup section entirely.** The orchestrator has already entered a fresh worktree on a `crank/<slug>` branch via `EnterWorktree`. Never run `git worktree`, `git checkout -b`, `EnterWorktree`, `ExitWorktree`, or any branch-switching command.
 > - Skip all other confirmation gates (scope, slug, ingest, sharpen-questions, pre-write, phase-split, next-step menu). Proceed straight to writing the output doc.
 > - **Never** emit a question. On a true blocker, write what you have, append a `## Blocker` section, and end your final message with `BLOCKER: <summary>` on one line and `<ARTIFACT>_PATH=<absolute path>` on the next.
 > - On success, end with **only** `<ARTIFACT>_PATH=<absolute path>` on its own line. No menu, no extra prose.
@@ -34,7 +34,7 @@ Prepend verbatim to every Phase 1–3 subagent prompt. Phase 4 (`execute`) is al
 
 ## Phase 0 — Worktree setup (orchestrator)
 
-Runs in the main thread, before any subagent.
+Runs in the main thread, before any subagent. Use the **`EnterWorktree` built-in tool** — never `git worktree add` to a sibling path.
 
 **Status:** `Setting up worktree…`
 
@@ -45,15 +45,18 @@ Runs in the main thread, before any subagent.
    ```
    Call these `REPO_ROOT` and `BASE_BRANCH` (fall back to `main`).
 
-2. Build a worktree slug: today's date plus a short kebab-case hint from `$ARGUMENTS` (lowercase, alphanumerics + dashes, ≤30 chars): `SLUG=crank-$(date +%Y-%m-%d)-<hint>`. If the resulting path already exists, append `-2`, `-3`, etc.
+2. Build a worktree slug: today's date plus a short kebab-case hint from `$ARGUMENTS` (lowercase, alphanumerics + dashes, ≤30 chars): `SLUG=crank/$(date +%Y-%m-%d)-<hint>`. If `EnterWorktree` reports the name is taken, append `-2`, `-3`, etc. and retry.
 
-3. Create the worktree as a sibling of the repo:
+3. Call `EnterWorktree` with `name: "<SLUG>"`. The tool creates the worktree at `<REPO_ROOT>/.claude/worktrees/<SLUG>` on a fresh branch (off `origin/<BASE_BRANCH>`) and switches the orchestrator session into it. Subagents you spawn afterward inherit this CWD — no need to pass `cwd:` explicitly.
+
+4. After the call, capture state:
    ```!
-   git worktree add "$(dirname "$REPO_ROOT")/$(basename "$REPO_ROOT")-$SLUG" -b "$SLUG" "$BASE_BRANCH"
+   pwd
+   git rev-parse --abbrev-ref HEAD
    ```
-   Record the absolute path as `WORKTREE_DIR` and the branch as `WORKTREE_BRANCH`. Every subsequent subagent prompt must tell the subagent `cwd: <WORKTREE_DIR>`. Run orchestrator-level git commands from `WORKTREE_DIR`.
+   Record these as `WORKTREE_DIR` and `WORKTREE_BRANCH`. Run orchestrator-level git commands from `WORKTREE_DIR`.
 
-4. If `git worktree add` fails, surface the error verbatim and halt. Do not force.
+5. If `EnterWorktree` fails, surface the error verbatim and halt. Do not fall back to manual `git worktree add`.
 
 **Status:** `Worktree ready: <WORKTREE_DIR> on <WORKTREE_BRANCH>`
 
@@ -141,23 +144,23 @@ Extract `REMEDIATION_DONE=<N>`.
 
 The **one allowed user interaction**. Run it even if an earlier phase halted on a blocker, so the user can clean up the partial worktree. Ask in plain chat prose — do **not** use `AskUserQuestion`.
 
-Detect final state from the worktree:
+Detect final state from the worktree (you are still inside `WORKTREE_DIR` from Phase 0):
 ```!
-cd "<WORKTREE_DIR>" && git log --oneline "<BASE_BRANCH>..HEAD"
+git log --oneline "<BASE_BRANCH>..HEAD"
 ```
 
 Print this block (substitute bracketed values; omit options that don't apply):
 
 > "Crank pipeline complete on worktree `<WORKTREE_DIR>` (branch `<WORKTREE_BRANCH>`, <N> commits ahead of `<BASE_BRANCH>`). How do you want to finish up?
 >
-> - **Merge into `<BASE_BRANCH>` and clean up** — fast-forward `<WORKTREE_BRANCH>` into `<BASE_BRANCH>`, delete the branch, `git worktree remove <WORKTREE_DIR>`. Recommended when the change is reviewed and ready to land.
+> - **Merge into `<BASE_BRANCH>` and clean up** — fast-forward `<WORKTREE_BRANCH>` into `<BASE_BRANCH>`, delete the branch, then call `ExitWorktree` with `action: "remove"`. Recommended when the change is reviewed and ready to land.
 > - **Open a PR instead** — push `<WORKTREE_BRANCH>` to origin and `gh pr create` as draft. Recommended when the change needs human review before landing.
-> - **Leave it as-is** — branch and worktree stay where they are; merge/PR/cleanup later.
-> - **Throw it away** — delete the branch and `git worktree remove --force <WORKTREE_DIR>`. **Confirm twice** before doing this."
+> - **Leave it as-is** — branch and worktree stay where they are; call `ExitWorktree` with `action: "keep"` to return the session to the original directory. Merge/PR/cleanup later.
+> - **Throw it away** — delete the branch and call `ExitWorktree` with `action: "remove", discard_changes: true`. **Confirm twice** before doing this."
 
 Recommend `Open a PR` if `origin` points to a code host; recommend direct merge for purely local repos. Wait for the user's pick.
 
-Execute the choice from `<REPO_ROOT>`, not from inside the worktree (`git worktree remove` must run from outside the worktree being removed). Report what happened in one line. Never force-push, amend, or rewrite history. Never delete a branch or worktree without explicit approval.
+For merge or PR options, do the git work first (still inside the worktree), then call `ExitWorktree` to leave and let the tool handle removal. For "leave it as-is", just `ExitWorktree` with `action: "keep"`. Report what happened in one line. Never force-push, amend, or rewrite history. Never delete a branch or worktree without explicit approval.
 
 ## Final summary
 

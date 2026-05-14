@@ -22,7 +22,9 @@ git status --short
 git worktree list
 ```
 
-If on `main`/`master`/`trunk`, offer in chat prose: **A.** new branch `git checkout -b crank/<slug>` (cheapest), **B.** new worktree `git worktree add ../<repo>-<slug> -b crank/<slug>` (isolated; pick for non-trivial work or dirty trees), or **C.** stay put (only if the user says so). Recommend A for small changes, B otherwise. Defer the actual command until after Phase 2 so the slug is known. If already on a clean feature branch, just confirm docs land there.
+If on `main`/`master`/`trunk`, offer in chat prose: **A.** new branch `git checkout -b crank/<slug>` (cheapest), **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (isolated under `.claude/worktrees/`; pick for non-trivial work or dirty trees), or **C.** stay put (only if the user says so). Recommend A for small changes, B otherwise. Defer the actual command until after Phase 2 so the slug is known. If already on a clean feature branch, just confirm docs land there.
+
+> **Worktree placement.** Use the `EnterWorktree` built-in tool — never `git worktree add` to a sibling path. It creates the worktree inside `.claude/worktrees/<name>` and switches the session into it automatically. To leave later, use `ExitWorktree`.
 
 ## 1. Ground the context
 
