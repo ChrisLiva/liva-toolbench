@@ -44,7 +44,7 @@ Forces a spec → plan → execute sequence before any code is written. Each sta
 
 **Typical flow:**
 
-```
+```text
 /spec I want to add rate limiting to the API
   → docs/crank/2026-05-06-rate-limiting/spec.md
 
