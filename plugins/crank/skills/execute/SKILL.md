@@ -18,7 +18,7 @@ Ship the plan. Take the ordered tasks in `plan.md`, decide *how* to execute them
 
 ## Workspace setup
 
-Check `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`. If already on a `crank/<slug>` branch or worktree (brainstorm/spec/plan set it up), confirm in one line and proceed. If on `main`/`master`/`trunk`, **stop and offer in chat prose** (not `AskUserQuestion`): **A.** new branch `git checkout -b crank/<slug>` (cheapest, reuses tree), **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (recommended if tree is dirty, plan is L/XL, or user wants throw-away isolation — lands under `.claude/worktrees/` and switches the session into it), **C.** stay put (only if user says so). Wait for confirmation before acting. Never `git worktree add` to a sibling path; always use `EnterWorktree`. Record the branch and worktree path — you'll cite them in retro and cleanup.
+Check `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`. If already on a `crank/<slug>` branch or worktree (spec/plan set it up), confirm in one line and proceed. If on `main`/`master`/`trunk`, **stop and offer in chat prose** (not `AskUserQuestion`): **A.** new branch `git checkout -b crank/<slug>` (cheapest, reuses tree), **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (recommended if tree is dirty, plan is L/XL, or user wants throw-away isolation — lands under `.claude/worktrees/` and switches the session into it), **C.** stay put (only if user says so). Wait for confirmation before acting. Never `git worktree add` to a sibling path; always use `EnterWorktree`. Record the branch and worktree path — you'll cite them in retro and cleanup.
 
 ## Locate the plan
 
