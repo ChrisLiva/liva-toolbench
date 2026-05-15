@@ -31,27 +31,28 @@ Then `/reload-plugins` after any edits.
 
 ### `crank` — design-first development pipeline
 
-Forces a brainstorm → spec → plan sequence before any code is written. Each stage produces a markdown artifact in `docs/crank/<slug>/` that feeds the next, so every implementation decision is documented and reviewable.
+Forces a spec → plan → execute sequence before any code is written. Each stage produces a markdown artifact in `docs/crank/<slug>/` that feeds the next, so every implementation decision is documented and reviewable.
 
 **Skills:**
 
 | Skill | Invoke | What it does |
 |---|---|---|
-| `crank:brainstorm` | `/brainstorm` | Explores a feature, bug, or refactor through guided one-question-at-a-time conversation. Produces `brainstorm.md` capturing all decisions and a clear summary of what you're building and why. |
-| `crank:spec` | `/spec` | Takes a `brainstorm.md` and sharpens it into an implementation-ready spec: exact interfaces, blast radius, size/risk estimate, and a validation plan with precise pass conditions. Produces `spec.md`. |
+| `crank:spec` | `/spec` | Takes an idea or prompt through a continuous one-question-at-a-time grill — exploring the codebase, sharpening decisions, updating CONTEXT.md inline, and offering ADRs sparingly. Produces an implementation-ready spec.md with a Key decisions section, exact interfaces, blast radius, size/risk, and validation plan. |
 | `crank:plan` | `/plan` | Takes a `spec.md` and decomposes it into ordered, bite-sized tasks — each with file paths, commands, exact test code, and expected output. Runs an adversarial subagent review before handing back. Produces `plan.md`. |
+| `crank:execute` | `/execute` | Executes a plan task-by-task — auto-triages between solo, sequential, or parallel subagents; runs TDD per task; gates on real verification evidence; writes retro.md. |
+| `crank:crank` | `/crank` | Runs the full pipeline (spec → plan → execute) autonomously from one prompt. Each phase runs in its own subagent inside a fresh git worktree. |
 
 **Typical flow:**
 
-```
-/brainstorm I want to add rate limiting to the API
-  → docs/crank/2026-05-06-rate-limiting/brainstorm.md
-
-/spec
+```text
+/spec I want to add rate limiting to the API
   → docs/crank/2026-05-06-rate-limiting/spec.md
 
 /plan
   → docs/crank/2026-05-06-rate-limiting/plan.md
+
+/execute
+  → docs/crank/2026-05-06-rate-limiting/retro.md
 ```
 
 Then execute the plan task-by-task in a fresh session.
@@ -68,7 +69,6 @@ plugins/
     .claude-plugin/
       plugin.json
     skills/
-      brainstorm/SKILL.md
       spec/SKILL.md
       plan/SKILL.md
 ```

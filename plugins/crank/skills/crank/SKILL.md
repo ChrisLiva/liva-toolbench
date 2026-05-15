@@ -1,12 +1,12 @@
 ---
 name: crank
-description: Run the full Crank pipeline (brainstorm → spec → plan → execute) autonomously from a single prompt. Use when the user types /crank or asks to take an idea from raw thought to shipped code without back-and-forth.
+description: Run the full Crank pipeline (spec → plan → execute) autonomously from a single prompt. Use when the user types /crank or asks to take an idea from raw thought to shipped code without back-and-forth.
 argument-hint: "<idea or feature description>"
 ---
 
 # Crank (autonomous)
 
-You drive `$ARGUMENTS` end-to-end through `crank:brainstorm` → `crank:spec` → `crank:plan` → `crank:execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via files in `docs/crank/<slug>/`. You write nothing yourself — subagents own the docs.
+You drive `$ARGUMENTS` end-to-end through `crank:spec` → `crank:plan` → `crank:execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via files in `docs/crank/<slug>/`. You write nothing yourself — subagents own the docs.
 
 ## Hard rules
 
@@ -19,7 +19,7 @@ You drive `$ARGUMENTS` end-to-end through `crank:brainstorm` → `crank:spec` �
 
 ## Headless override block
 
-Prepend verbatim to every Phase 1–3 subagent prompt. Phase 4 (`execute`) is already non-interactive and skips this.
+Prepend verbatim to every Phase 1–2 subagent prompt. Phase 3 (`execute`) is already non-interactive and skips this.
 
 > **Headless mode.** You run under autonomous orchestration inside a pre-created git worktree. You have no user. Override every interactive gate in the skill you invoke:
 > - At every options-and-recommendation gate, silently pick the recommended option.
@@ -30,7 +30,7 @@ Prepend verbatim to every Phase 1–3 subagent prompt. Phase 4 (`execute`) is al
 > - On success, end with **only** `<ARTIFACT>_PATH=<absolute path>` on its own line. No menu, no extra prose.
 > - Skip any adversarial Sonnet sub-review the skill normally runs — the orchestrator owns review cadence.
 
-`<ARTIFACT>` is `BRAINSTORM`, `SPEC`, `PLAN`, or `RETRO`.
+`<ARTIFACT>` is `SPEC`, `PLAN`, or `RETRO`.
 
 ## Phase 0 — Worktree setup (orchestrator)
 
@@ -60,31 +60,30 @@ Runs in the main thread, before any subagent. Use the **`EnterWorktree` built-in
 
 **Status:** `Worktree ready: <WORKTREE_DIR> on <WORKTREE_BRANCH>`
 
-## Phases 1–4 — Subagent execution
+## Phases 1–3 — Subagent execution
 
-For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `description: Crank: <phase> phase`) with the model and prompt below. Each prompt is the headless override block (skipped for Phase 4) followed by the phase body, which always opens with:
+For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `description: Crank: <phase> phase`) with the model and prompt below. Each prompt is the headless override block (skipped for Phase 3) followed by the phase body, which always opens with:
 
 > `You are running inside this git worktree: <WORKTREE_DIR> on branch <WORKTREE_BRANCH>. Run all commands from there; do not switch branches or create new worktrees.`
 
 After each subagent returns, extract the sentinel from its final message. If missing, halt and print the last ~20 lines of the return. If the return contains `BLOCKER:`, halt and surface it.
 
-| # | Phase      | Model  | Status before                  | Skill arg     | Sentinel                       | Status after              |
-|---|------------|--------|--------------------------------|---------------|--------------------------------|---------------------------|
-| 1 | brainstorm | opus   | `Brainstorming with Opus…`     | `$ARGUMENTS`  | `BRAINSTORM_PATH=<abs path>`   | `Brainstorm ready: <path>`|
-| 2 | spec       | opus   | `Drafting spec with Opus…`     | `<RUN_DIR>`   | `SPEC_PATH=<abs path>`         | `Spec ready: <path>`      |
-| 3 | plan       | sonnet | `Planning with Sonnet…`        | `<RUN_DIR>`   | `PLAN_PATH=<abs path>`         | `Plan ready: <path>`      |
-| 4 | execute    | sonnet | `Executing plan…`              | `<RUN_DIR>`   | `RETRO_PATH=<abs path>`        | `Retro written: <path>`   |
+| # | Phase   | Model  | Status before                  | Skill arg     | Sentinel                       | Status after              |
+|---|---------|--------|--------------------------------|---------------|--------------------------------|---------------------------|
+| 1 | spec    | opus   | `Drafting spec with Opus…`     | `$ARGUMENTS`  | `SPEC_PATH=<abs path>`         | `Spec ready: <path>`      |
+| 2 | plan    | sonnet | `Planning with Sonnet…`        | `<RUN_DIR>`   | `PLAN_PATH=<abs path>`         | `Plan ready: <path>`      |
+| 3 | execute | sonnet | `Executing plan…`              | `<RUN_DIR>`   | `RETRO_PATH=<abs path>`        | `Retro written: <path>`   |
 
-`RUN_DIR = dirname(BRAINSTORM_PATH)` — the shared run directory all later phases reuse.
+`RUN_DIR = dirname(SPEC_PATH)` — the shared run directory all later phases reuse.
 
 **Phase body templates** (append to the worktree-context line above):
 
-- **Phases 1–3**: `Invoke the crank:<phase> skill via the Skill tool with this argument: <skill arg>. Run it under the headless rules above. End your final message with <SENTINEL>=<absolute path> on its own line.`
-- **Phase 3 only**, additionally include: **"Default to a single-file plan unless the spec is unambiguously L/XL — bias toward fewer files."**
-- **Phase 4** (no headless block):
+- **Phases 1–2**: `Invoke the crank:<phase> skill via the Skill tool with this argument: <skill arg>. Run it under the headless rules above. End your final message with <SENTINEL>=<absolute path> on its own line.`
+- **Phase 2 only**, additionally include: **"Default to a single-file plan unless the spec is unambiguously L/XL — bias toward fewer files."**
+- **Phase 3** (no headless block):
   > `Do not run the Workspace setup section of the execute skill — the worktree already exists; treat the current branch as the target. Do not run Phase 5 (Finish — cleanup/merge); the orchestrator owns cleanup. Invoke the crank:execute skill via the Skill tool with this argument: <RUN_DIR>. Run the plan to completion through Phase 4 (Retro). The skill handles its own non-interactive triage (solo / sequential / parallel) and writes retro.md. End your final message with RETRO_PATH=<absolute path> on its own line. On a hard blocker, end with BLOCKER: <summary> on one line then the sentinel on the next.`
 
-## Phase 5 — Self-review & remediate (orchestrator + Sonnet)
+## Phase 4 — Self-review & remediate (orchestrator + Sonnet)
 
 The per-task reviewer inside `execute` sees one task at a time; this phase catches cross-task drift against the original spec. Runs in the main thread.
 
@@ -140,7 +139,7 @@ Extract `REMEDIATION_DONE=<N>`.
 
 **Status:** `Remediation complete: <N> fixes applied.` (or, if APPROVED, `Review approved — no remediation needed.`)
 
-## Phase 6 — Cleanup offer (orchestrator)
+## Phase 5 — Cleanup offer (orchestrator)
 
 The **one allowed user interaction**. Run it even if an earlier phase halted on a blocker, so the user can clean up the partial worktree. Ask in plain chat prose — do **not** use `AskUserQuestion`.
 
@@ -164,12 +163,11 @@ For merge or PR options, do the git work first (still inside the worktree), then
 
 ## Final summary
 
-After Phase 6, print:
+After Phase 5, print:
 
 ```
 Crank complete:
   worktree    <WORKTREE_DIR> on <WORKTREE_BRANCH>
-  brainstorm  <BRAINSTORM_PATH>
   spec        <SPEC_PATH>
   plan        <PLAN_PATH>
   retro       <RETRO_PATH>
