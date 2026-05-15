@@ -66,7 +66,7 @@ Drill into implementer-level detail: **interface shape** Pocock-style (types, in
 
 **Verify external deps** via `context7` MCP (`resolve-library-id` → `query-docs`) or web search before pinning. Match the project's pinning style.
 
-Apply SOLID/DRY/YAGNI when relevant. Suggest in-scope refactors that improve readability, maintainability, or testability.
+Apply SOLID/DRY/YAGNI when relevant. Suggest in-scope refactors that improve readability, maintainability, or testability. Match the file and module granularity of sibling features — don't fragment one cohesive operation across several thin files. Extracting a genuinely pure, separately-testable function into its own module is good design; splitting for its own sake is not.
 
 ### 5. Blast radius
 
@@ -85,13 +85,13 @@ Default *hard* toward agent-verifiable.
 
 ### 8. Resolve and write
 
-**Pre-write gate.** Classify every decision: **Resolved** (into the spec body), **Deferred-OK** (implementer can pick reasonably — into Open questions), **Blocking** (would change a file, symbol, contract, signature, test, or schema). For each blocker, ask in chat (options + recommendation + reasoning); apply answers; re-walk until zero blockers. **Headless fallback**: pick the most defensible option, write it, add `Assumption: X — invalidated by Y` under Open questions.
+**Pre-write gate.** Classify every decision: **Resolved** (into the spec body), **Deferred-OK** (implementer can pick reasonably — into Open questions), **Blocking** (would change a file, symbol, contract, signature, test, or schema). For each blocker, ask in chat (options + recommendation + reasoning); apply answers; re-walk until zero blockers. Every **Resolved** decision must land on exactly one outcome — if a decision or its **Sharpened** bullets still waver between two resolutions (the "simpler rule for v1 is actually the opposite" trap), it is not resolved: pick one and delete the loser. **Headless fallback**: pick the most defensible option, write it, add `Assumption: X — invalidated by Y` under Open questions.
 
 Then write `docs/crank/<slug>/spec.md`. Sections (omit any that don't apply; keep each as short as the topic allows):
 
 - **Header:** title, date, `Status: Spec — ready for plan`.
 - **Context** — what we're working on and why. 2–4 sentences. Reference files with `path:line`.
-- **Key decisions** — for each: **Options considered** (A/B/C with one-line summaries), **Chose** (option + pinned version if a dep), **Why** (reasoning that rules out alternatives), optional **Sharpened** (sub-bullets where this spec went beyond the original framing). Order architectural → tactical.
+- **Key decisions** — for each: **Options considered** (A/B/C with one-line summaries), **Chose** (option + pinned version if a dep), **Why** (reasoning that rules out alternatives), optional **Sharpened** (sub-bullets that *refine* the chosen option — never a competing alternative or a v1-vs-ideal waffle). Order architectural → tactical.
 - **Goals & non-goals**.
 - **Technical approach** — sharpened decisions: signatures, configs, exact paths. Reference `path/to/file.ts:line`.
 - **Interfaces & contracts** — code blocks; shapes only, no bodies. Omit if purely internal.
@@ -121,6 +121,6 @@ In chat prose (no `AskUserQuestion`): *"Spec written to `docs/crank/<slug>/spec.
 
 ## Anti-patterns & style
 
-Avoid: asking the user what their own code does; vague validation ("make sure it works"); padding the user-test list with agent-runnable checks; skipping blast radius because it "feels small"; treating `CONTEXT.md` as a scratch pad for implementation details; offering ADRs for trivial or easily-reversible decisions; writing the doc without confirming wrap-up; using **Open questions** as escape from blockers (reserved for explicit deferrals or headless `Assumption:` lines); skipping adversarial review; capitulating on every reviewer item; silently dropping reviewer items; continuing past the doc.
+Avoid: asking the user what their own code does; vague validation ("make sure it works"); padding the user-test list with agent-runnable checks; skipping blast radius because it "feels small"; treating `CONTEXT.md` as a scratch pad for implementation details; offering ADRs for trivial or easily-reversible decisions; writing the doc without confirming wrap-up; using **Open questions** as escape from blockers (reserved for explicit deferrals or headless `Assumption:` lines); skipping adversarial review; capitulating on every reviewer item; silently dropping reviewer items; recording a decision that waffles between two resolutions instead of cutting one; splitting one cohesive operation across more thin files than a sibling feature would use; continuing past the doc.
 
 Match the topic's energy — a small bug fix gets a 30-line spec; a new subsystem gets a denser one. Be direct. Quote `path:line` and actual command output. When you don't know, say so — and either go look or ask, depending on whether the answer's in the code or the user's head.
