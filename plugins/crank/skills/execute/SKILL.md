@@ -69,24 +69,22 @@ Agent({
 
 **Parallel dispatch.** Send multiple Agent calls in a single message when tasks are independent and touch disjoint files. Never dispatch two implementers that could touch the same file in parallel.
 
-**Combined reviewer** (Sonnet) — once per task after implementer reports `DONE`:
+**Code reviewer** — the `crank-reviewer` agent, once per task after the implementer reports `DONE`. The agent definition owns the review rubric and output format; you supply only the per-task context:
 
 ```
 Agent({
   description: "Review task <N>",
-  subagent_type: "general-purpose",
-  model: "sonnet",
-  prompt: "Review commit <SHA> against this task spec:
+  subagent_type: "crank-reviewer",
+  prompt: "<full task text from plan.md>
 
-  <full task text>
-
-  Check: (1) spec compliance — does the diff implement exactly what the task asks, no more, no less? (2) code quality — naming, duplication, error handling, test quality, obvious bugs.
-
-  Return: APPROVED or CHANGES_REQUESTED with a specific list. Cite file:line."
+  Context:
+  - What was built: <one-line summary>
+  - Commit SHA: <SHA>   (or BASE..HEAD range if the task produced several)
+  - Branch: <name>, working dir: <repo root>"
 })
 ```
 
-On `CHANGES_REQUESTED`, re-dispatch the implementer (same model) with the reviewer's feedback and re-review. Loop until `APPROVED`. Don't move to the next task with open review issues.
+The reviewer returns Strengths, Issues (Critical / Important / Minor), and an Assessment ending in a `**Verdict:**` line — `APPROVED` or `CHANGES_REQUESTED`. On `CHANGES_REQUESTED`, re-dispatch the implementer (same model) with the reviewer's issue list and re-review. Loop until `APPROVED`. Don't move to the next task with open Critical or Important issues; Minor issues may be carried as a `retro.md` note if the user is time-boxed.
 
 **Implementer status:** `DONE` → review. `DONE_WITH_CONCERNS` → read concerns, address before review if they affect correctness, otherwise note and proceed. `NEEDS_CONTEXT` → provide it, re-dispatch. `BLOCKED` → context-shaped: more context + re-dispatch; reasoning-shaped: escalate to Sonnet; plan-shaped: escalate to user.
 
@@ -136,7 +134,7 @@ Catch yourself when:
 - You reach for "should" or "probably" to describe test/build state.
 - An implementer reported `BLOCKED` and you're about to retry with the same model and same context.
 - You're about to dispatch parallel subagents whose files-blocks overlap.
-- An implementer's self-review is standing in for the Sonnet review.
+- An implementer's self-review is standing in for the `crank-reviewer` pass.
 - You're tempted to "just nudge" `plan.md` rather than write a deviation note.
 
 ## Integration

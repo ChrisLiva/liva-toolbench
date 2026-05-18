@@ -26,13 +26,21 @@ Locate the spec: (1) `$ARGUMENTS` if it points to `spec.md` or its directory, (2
 
 In 2–3 sentences, state back: the change, the size/risk tier, any spec section that looks hard to plan against (validation without exact command, interface without signature, blast bullet that contradicts the code). Ask once: *"Plan against this, or flag back to `crank:spec` first?"* Capture small gaps as pre-write blockers (would change a task) or open items (wouldn't).
 
-### 2. Re-ground in code
+### 2. Re-ground in code — delegate, don't read
 
-Run `git log --oneline -10` and `git status --short`. Re-read the files the spec named plus any new file in recent commits that overlaps the change area. Surface drift (renamed function, new dep, deleted file) as "Updates since spec" or as a blocker. Stop when you can write code blocks for the touched files without guessing imports, types, or signatures.
+Grounding means *facts* — exact signatures, types, import paths, drift since spec, patterns to mirror — not whole source files in your context. Reading the subsystem yourself is what blows a fresh session past 150k before you write a line. So delegate.
+
+Dispatch the **`crank-scout`** agent via **Agent** (`subagent_type: "crank-scout"`). Pass it the spec's named files/areas, the path to `spec.md`, and any specific questions a code block will hinge on (a signature you must match, whether a module moved). For a large or multi-area spec, **fan out several scouts in one message** — one per area — and assemble their reports. Each scout burns its own context exploring; you keep only the distilled report.
+
+You still run `git log --oneline -10` and `git status --short` yourself — cheap, and you need them for phase 1 and the branch check. But the file reading goes to scouts.
+
+From the returned reports: fold drift into **Updates since spec** or raise it as a blocker; treat a "too-broad" signal as evidence the phase boundaries need re-cutting (route back to `crank:spec`). Stop when the reports let you write code blocks for the touched files without guessing imports, types, or signatures. If a report leaves a gap, re-dispatch that scout with a sharper question rather than opening the file yourself.
+
+**Multi-phase:** persist the assembled facts to `<spec-dir>/grounding.md` so a later phase's planning session reads that (~small) file instead of re-exploring. The file is a cache, not truth — each phase ships code, so **re-run the scouts and refresh the relevant sections** when planning the next phase rather than trusting stale entries.
 
 ### 3. Map the file structure
 
-For every file the plan touches: **path** (from repo root), **action** (`create`/`modify`/`delete`), **responsibility** (one line). If a file's responsibility needs more than one line, that's SRP tension — split now (as a task) or note as an open item. Follow existing patterns; don't unilaterally restructure unless a file you're already modifying has grown unwieldy.
+Build this from the scout reports, not a fresh read. For every file the plan touches: **path** (from repo root), **action** (`create`/`modify`/`delete`), **responsibility** (one line). If a file's responsibility needs more than one line, that's SRP tension — split now (as a task) or note as an open item. Follow the patterns the scouts cited; don't unilaterally restructure unless a file you're already modifying has grown unwieldy. If the table needs a file no scout covered, dispatch a scout for it — still don't read it yourself.
 
 ### 4. Decompose into tasks
 
@@ -90,6 +98,6 @@ Then stop.
 
 ## Anti-patterns & style
 
-Avoid: editing source files mid-plan; asking the user what their own code does; re-litigating spec decisions (surface shifts under **Updates since spec** or route back); vague verify steps ("tests pass"); skipping the failing test when a seam exists; manufacturing fake tests when no seam exists; step-level or batched commits (one per task, after verify); placeholders of any flavor; over-specifying mechanical work (no five-line block for a getter); YAGNI violations (`// for future use` → delete); premature DRY (extract on the third copy); skipping the pre-write gate or adversarial review because the plan "feels solid"; capitulating on every reviewer item; silently dropping reviewer items; continuing past the doc; splitting a small plan into phases (phases earn their place at >1000 lines, >12 tasks, L/XL spec, or natural review seams); stuffing the multi-phase index with task steps (it's an index); skipping the retro task.
+Avoid: editing source files mid-plan; reading the subsystem into your own context instead of dispatching `crank-scout` (the fast path to a blown context window); asking the user what their own code does; re-litigating spec decisions (surface shifts under **Updates since spec** or route back); vague verify steps ("tests pass"); skipping the failing test when a seam exists; manufacturing fake tests when no seam exists; step-level or batched commits (one per task, after verify); placeholders of any flavor; over-specifying mechanical work (no five-line block for a getter); YAGNI violations (`// for future use` → delete); premature DRY (extract on the third copy); skipping the pre-write gate or adversarial review because the plan "feels solid"; capitulating on every reviewer item; silently dropping reviewer items; continuing past the doc; splitting a small plan into phases (phases earn their place at >1000 lines, >12 tasks, L/XL spec, or natural review seams); stuffing the multi-phase index with task steps (it's an index); skipping the retro task.
 
 Match the spec's energy — a small fix gets a 2–4 task plan; a new subsystem gets a denser one with a longer file-structure table. Be direct. Quote `path:line` and actual command output. When you don't know, say so — and either go look or ask, depending on whether the answer's in the code or the user's head.
