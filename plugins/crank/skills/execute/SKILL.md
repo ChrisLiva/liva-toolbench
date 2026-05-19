@@ -69,12 +69,12 @@ Agent({
 
 **Parallel dispatch.** Send multiple Agent calls in a single message when tasks are independent and touch disjoint files. Never dispatch two implementers that could touch the same file in parallel.
 
-**Code reviewer** — the `crank-reviewer` agent, once per task after the implementer reports `DONE`. The agent definition owns the review rubric and output format; you supply only the per-task context:
+**Code reviewer** — the `crank:crank-reviewer` agent, once per task after the implementer reports `DONE`. The agent definition owns the review rubric and output format; you supply only the per-task context:
 
 ```
 Agent({
   description: "Review task <N>",
-  subagent_type: "crank-reviewer",
+  subagent_type: "crank:crank-reviewer",
   prompt: "<full task text from plan.md>
 
   Context:
@@ -134,7 +134,7 @@ Catch yourself when:
 - You reach for "should" or "probably" to describe test/build state.
 - An implementer reported `BLOCKED` and you're about to retry with the same model and same context.
 - You're about to dispatch parallel subagents whose files-blocks overlap.
-- An implementer's self-review is standing in for the `crank-reviewer` pass.
+- An implementer's self-review is standing in for the `crank:crank-reviewer` pass.
 - You're tempted to "just nudge" `plan.md` rather than write a deviation note.
 
 ## Integration
