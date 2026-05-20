@@ -11,9 +11,17 @@
       "name": "crank",
       "source": "./plugins/crank",
       "description": "Design-first development pipeline: spec → plan → execute, taking an idea from sketch to shipped code",
-      "version": "3.1.1",
+      "version": "3.2.0",
       "category": "tools",
       "tags": ["crank", "code", "agent"]
+    },
+    {
+      "name": "crank-jesus",
+      "source": "./plugins/crank-jesus",
+      "description": "User-only slash commands that wrap third-party skills (Pocock + superpowers) with crank's slug/directory artifact convention so phases chain via docs/crank/<slug>/<phase>.md",
+      "version": "0.1.0",
+      "category": "tools",
+      "tags": ["crank", "crank-jesus", "wrapper", "pocock", "superpowers"]
     }
   ]
 }
