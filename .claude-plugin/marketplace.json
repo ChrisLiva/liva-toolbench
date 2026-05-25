@@ -22,6 +22,14 @@
       "version": "0.1.0",
       "category": "tools",
       "tags": ["crank", "crank-jesus", "wrapper", "pocock", "superpowers"]
+    },
+    {
+      "name": "effective-html",
+      "source": "./plugins/effective-html",
+      "description": "User-summoned skill that nudges Claude to produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown — distilled from anthropics/html-effectiveness.",
+      "version": "0.2.0",
+      "category": "tools",
+      "tags": ["html", "communication", "artifact", "single-file"]
     }
   ]
 }
