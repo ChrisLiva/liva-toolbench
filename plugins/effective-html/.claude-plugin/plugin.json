@@ -1,7 +1,7 @@
 {
   "name": "effective-html",
   "description": "Distills the anthropics/html-effectiveness gallery into a user-summoned skill that helps Claude produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "Chris Liva",
     "email": "chrislliva@gmail.com"
