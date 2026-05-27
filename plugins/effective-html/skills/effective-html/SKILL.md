@@ -15,7 +15,10 @@ The user picked HTML for `$ARGUMENTS`. Your job is a *good* artifact, not a deba
 
 ## Agent ↔ user comm contract
 
-Every artifact includes, at the top of the page, two buttons: **Export Comments Only** and **Export to Markdown**. Each logical section gets a `<textarea>` comment box; one more at the end for whole-doc comments. Both exports start with the absolute path of this HTML file as a top-line reference (e.g. `> Source: /path/to/artifact.html`) — the agent receiving the paste may not know which file the comments are about. Export Comments Only then copies each non-empty comment with its section heading. Export to Markdown copies a markdown rendering of the whole doc (comments inlined under their section). These are the only places JS is allowed — keep them tiny.
+Ask the user if the HTML doc is for presentation or iteration. If it's for iteration, follow these instructions:
+
+### Iteration Instructions
+Iteration artifacts include, at the top of the page, two buttons: **Export Comments Only** and **Export to Markdown**. Each logical section gets a `<textarea>` comment box; one more at the end for whole-doc comments. Both exports start with the absolute path of this HTML file as a top-line reference (e.g. `> Source: /path/to/artifact.html`) — the agent receiving the paste may not know which file the comments are about. Export Comments Only then copies each non-empty comment with its section heading. Export to Markdown copies a markdown rendering of the whole doc (comments inlined under their section). These are the only places JS is allowed — keep them tiny.
 
 ## Use visualizations where they earn their place
 

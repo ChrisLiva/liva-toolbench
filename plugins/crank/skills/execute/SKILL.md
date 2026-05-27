@@ -1,142 +1,53 @@
 ---
 name: execute
-description: Executes a Crank plan.md — auto-triages between solo, sequential-subagent, or parallel-subagent execution, runs TDD per task, gates on verification evidence, and writes retro.md. Use whenever a plan.md exists and the user types /execute, says "implement the plan", "ship this", "build it", "run the plan", or otherwise asks to execute the work captured in a plan.
-argument-hint: "[optional path to plan.md or its directory]"
+description: Execute an implementation plan task-by-task — TDD where the seam exists, verification evidence before every "done" claim, optional per-task subagents — then write a retro. Use when the user types /execute or hands you a plan to ship.
+argument-hint: "[optional path to plan.md]"
 ---
 
 # Execute
 
-Ship the plan. Take the ordered tasks in `plan.md`, decide *how* to execute them, do the work (or delegate it), gate every "done" claim on real verification evidence, and finish with `retro.md`. The plan is the source of truth — direct, don't redesign. Surprises become entries in `retro.md`, not silent reroutes.
+Ship the plan. Treat the plan as the source of truth — direct, don't redesign. **Evidence before claims:** never report a task done without running its verification this turn and reading the output. **Plan is frozen** during execution — surprises become retro entries, not silent reroutes.
 
-## Hard rules
+## Load and critically review
 
-- **Evidence before claims.** Never report a task done without running its verification in this turn and reading the output. "Tests should pass" is a lie if you didn't run them.
-- **TDD by default.** Failing test → watch it fail → implement. Plan-specified exceptions (config flips, doc edits, generated code) skip TDD.
-- **No scope creep.** Stick to the plan's task list. Deviations get logged to `retro.md` and surfaced; they do not silently expand the change.
-- **Plan is frozen.** Don't edit `plan.md` mid-execution.
-- **Don't start on `main`/`master`** without explicit consent — see Workspace setup.
+If `$ARGUMENTS` is a path, read it; otherwise use the plan already in the conversation. Read it in full. Before starting, flag anything that would block execution: missing context, ambiguous step, undefined symbol, contradiction with the codebase. If you find blockers, surface them and stop — don't push through. Check `git status --short` and the current branch; if you're on `main`/`master` with a non-trivial change, ask once before committing.
 
-## Workspace setup
+## Pick the execution shape
 
-Check `git rev-parse --abbrev-ref HEAD`, `git status --short`, `git worktree list`. If already on a `crank/<slug>` branch or worktree (spec/plan set it up), confirm in one line and proceed. If on `main`/`master`/`trunk`, **stop and offer in chat prose** (not `AskUserQuestion`): **A.** new branch `git checkout -b crank/<slug>` (cheapest, reuses tree), **B.** new worktree via the `EnterWorktree` tool with `name: "crank/<slug>"` (recommended if tree is dirty, plan is L/XL, or user wants throw-away isolation — lands under `.claude/worktrees/` and switches the session into it), **C.** stay put (only if user says so). Wait for confirmation before acting. Never `git worktree add` to a sibling path; always use `EnterWorktree`. Record the branch and worktree path — you'll cite them in retro and cleanup.
+You decide based on the plan — there is no required mode:
 
-## Locate the plan
+- **Solo (in this session)** — small plans (~3 tasks or fewer), tasks that share in-flight state, or quick fixes.
+- **Sequential subagents** — larger plans where fresh context per task beats a crowded session. Default for >3 tasks.
+- **Parallel subagents** — only when tasks touch disjoint files with no shared state.
 
-Use `$ARGUMENTS` if it points to `plan.md`, a phase file, or its directory. Otherwise auto-detect via `ls -1t docs/crank/*/plan.md | head -5` — use it if exactly one, ask if multiple, offer `crank:plan` if none. Read `plan.md` in full plus any phase files it indexes. Skim `spec.md` for context if the plan references decisions not restated. Do not re-derive the plan.
+State the choice in one sentence and proceed.
 
-## Phase 1: Triage
+## Per task
 
-Track the rest of the work with TaskCreate. Decide execution mode by reading the task list:
+1. **Implement.** Failing test → watch it fail → minimal impl → run the task's `verify` step → commit with a message that names the task. Skip TDD only when the plan explicitly does (config flips, doc edits, generated code).
+2. **Review.** Either self-review (solo mode) or dispatch a reviewer subagent (`Agent` tool, `description: "Review task <N>"`). Two-stage rubric: **spec compliance** first (does the diff implement what the task says, nothing more, nothing less?), then **code quality** (DRY / SOLID / YAGNI, error handling at boundaries, tests assert behavior). Reviewer returns `APPROVED` or `CHANGES_REQUESTED` with a bulleted issue list. On changes, re-implement and re-review until approved — don't carry critical or important issues into the next task.
 
-| Signal | Mode |
-|---|---|
-| ≤ ~3 tasks **and** later tasks edit code from earlier tasks or share in-flight state | **Solo** — execute in this session |
-| Sequential ordering (later builds on earlier), each task self-contained once its predecessor lands | **Sequential subagents** — one Haiku implementer per task, you coordinate |
-| Tasks touch disjoint files, no shared state, order doesn't matter | **Parallel subagents** — dispatch a batch of Haiku implementers concurrently |
+**Subagent dispatch.** When you delegate the implementer, pass the full task text (don't make the subagent read the plan) plus context: branch, files-block, exact verify command, "do not push, do not amend earlier commits, do not touch files outside the files-block." Pick the model by task complexity — cheap for mechanical single-file work, standard for multi-file integration, capable for design judgment. Dispatch parallel implementers in a single message only when their files-blocks don't overlap. Implementer status: `DONE` → review; `DONE_WITH_CONCERNS` → read first, address if they affect correctness; `NEEDS_CONTEXT` → provide and re-dispatch; `BLOCKED` → escalate model once, then surface to the user.
 
-Default to **sequential subagents** for plans larger than ~3 tasks — fresh context per task beats a crowded session. State the choice in one sentence ("Triaging as parallel: tasks 2/3/5 touch disjoint files; tasks 1, 4, 6 sequential."). Mixed plans are normal — run the parallel-safe slice in parallel, then resume sequential.
+## Verify the whole
 
-## Phase 2: Execute
+Before claiming completion: re-tick every task in the plan against an actual commit. Run the plan's overall validation commands (suite, lint, typecheck, build) fresh this turn and read the output. Any failure stops the run.
 
-### Solo mode
+## Retro
 
-For each task in order: mark in-progress, open the files block, write the failing test, run it, confirm it fails for the right reason, implement, run the task's verification, commit with a message that names the task, mark complete. Stop on the first blocker (failing verification, ambiguous instruction, missing dependency) and surface it with the actual error — don't push through.
+Write a retro to a fresh OS temp file: `$(mktemp -t crank-retro).md`. Sections:
 
-### Subagent modes (sequential or parallel)
+- **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
+- **Deviations** — anywhere the diff meaningfully differs from the plan and why. "None" if none.
+- **Open items** — follow-ups, surprises future related work should know about.
+- **Validation evidence** — commands run, outcomes.
 
-You are the controller. Subagents never read `plan.md`; you extract the full task text and required context and pass it in.
+## Hand back
 
-**Implementer** (default Haiku; escalate to Sonnet for multi-file integration or judgment-heavy tasks). The `model` field on `Agent()` overrides the agent definition's default, so passing `"haiku"` is sufficient with `general-purpose`:
+In chat prose, offer for the retro:
 
-```
-Agent({
-  description: "Implement task <N>: <slug>",
-  subagent_type: "general-purpose",
-  model: "haiku",
-  prompt: "<full task text from plan.md>
+- **Keep the temp file** (default) — the path is known; user can move it or feed it elsewhere later.
+- **Copy into the repo** — copy to a user-named path under the working directory.
+- **Print inline and delete** — paste the final contents and remove the temp file.
 
-  Context:
-  - Branch: <name>, working dir: <repo root>
-  - Files this task touches: <list>
-  - Verification command(s): <list>
-  - TDD: write failing test first unless plan says otherwise.
-
-  Do the work, run verification, commit with message 'feat(<area>): <task summary>'.
-  Constraints: do NOT push, do NOT amend earlier commits, do NOT touch files outside the files block.
-  Return: status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), commit SHA, verification output, concerns."
-})
-```
-
-**Parallel dispatch.** Send multiple Agent calls in a single message when tasks are independent and touch disjoint files. Never dispatch two implementers that could touch the same file in parallel.
-
-**Code reviewer** — the `crank:crank-reviewer` agent, once per task after the implementer reports `DONE`. The agent definition owns the review rubric and output format; you supply only the per-task context:
-
-```
-Agent({
-  description: "Review task <N>",
-  subagent_type: "crank:crank-reviewer",
-  prompt: "<full task text from plan.md>
-
-  Context:
-  - What was built: <one-line summary>
-  - Commit SHA: <SHA>   (or BASE..HEAD range if the task produced several)
-  - Branch: <name>, working dir: <repo root>"
-})
-```
-
-The reviewer returns Strengths, Issues (Critical / Important / Minor), and an Assessment ending in a `**Verdict:**` line — `APPROVED` or `CHANGES_REQUESTED`. On `CHANGES_REQUESTED`, re-dispatch the implementer (same model) with the reviewer's issue list and re-review. Loop until `APPROVED`. Don't move to the next task with open Critical or Important issues; Minor issues may be carried as a `retro.md` note if the user is time-boxed.
-
-**Implementer status:** `DONE` → review. `DONE_WITH_CONCERNS` → read concerns, address before review if they affect correctness, otherwise note and proceed. `NEEDS_CONTEXT` → provide it, re-dispatch. `BLOCKED` → context-shaped: more context + re-dispatch; reasoning-shaped: escalate to Sonnet; plan-shaped: escalate to user.
-
-## Phase 3: Verification gate
-
-Before claiming completion: re-read `plan.md`'s task list and tick each one against an actual commit and verification output you ran this session. Then run the plan's overall validation commands (test suite, linter, typecheck, build) fresh, in this turn. Read exit codes and full output. Fix or surface any failure — do not claim completion otherwise.
-
-## Phase 4: Retro
-
-Write `<plan-dir>/retro.md` (sibling to `plan.md`):
-
-```markdown
-# Retro: <plan title>
-
-## Summary
-- Tasks 1–N shipped, commits <first-SHA>..<last-SHA> on branch `<branch>`.
-
-## Deviations from plan
-- <task / what changed / why> (or "none")
-
-## Open items
-- <anything punted, follow-up work, surprises that future related work should know>
-
-## Validation evidence
-- <commands run + outcome>
-```
-
-Keep it short. `git log` already records what shipped — the durable signal here is **deviations** and **open items** that the diff alone won't tell the next reader. Then go to Phase 5; do not hand back yet.
-
-## Phase 5: Finish — offer cleanup and merge
-
-Required step. Ask in plain chat prose (not `AskUserQuestion`). Detect state with `git rev-parse --abbrev-ref HEAD`, `git log --oneline <base>..HEAD`, `git worktree list` (`<base>` = the user's default branch). Tailor the options to what's actually true — skip worktree-removal if not in a worktree, skip merge if no new commits.
-
-> "Execution complete. Commits `<first>..<last>` shipped on `<branch>`<` in worktree <path>` if applicable>. How do you want to finish up?
->
-> - **Merge into `<base>` and clean up** — fast-forward (or `--no-ff` if the user prefers) into `<base>`, delete the branch, and (if the worktree was created via `EnterWorktree`) call `ExitWorktree` with `action: "remove"`. For worktrees created manually with `git worktree add`, run `git worktree remove <path>` from outside the worktree. Recommended when reviewed-or-self-reviewed and ready to land.
-> - **Open a PR instead** — push `<branch>` to origin and create a draft PR via `gh pr create`. Recommended when human review is needed first.
-> - **Leave it as-is** — branch and worktree stay where they are.
-> - **Throw it away** — only on explicit request: `git branch -D <branch>` and either `ExitWorktree` with `action: "remove", discard_changes: true` (if entered via `EnterWorktree`) or `git worktree remove --force <path>` (manual worktrees). **Confirm twice** — destructive."
-
-Recommend the option that fits context (PR for shared/production code, direct merge for solo or experimental work) but let the user decide. Execute the picked option and report what happened in one line. Never force-push, amend, rewrite history, or delete a branch/worktree the user didn't approve. Hand back with a one-line summary, the `retro.md` path, and final state (`branch merged and deleted` / `PR #123 open` / `branch and worktree left at <path>`).
-
-## Red flags — stop
-
-Catch yourself when:
-
-- You reach for "should" or "probably" to describe test/build state.
-- An implementer reported `BLOCKED` and you're about to retry with the same model and same context.
-- You're about to dispatch parallel subagents whose files-blocks overlap.
-- An implementer's self-review is standing in for the `crank:crank-reviewer` pass.
-- You're tempted to "just nudge" `plan.md` rather than write a deviation note.
-
-## Integration
-
-Runs after `crank:plan`. Won't fabricate a plan — bounces back if none exists. Reads `spec.md` only as context. Writes only `retro.md` and the implementation diffs. Plan and spec stay frozen.
+For the branch and commits, **ask the user how to finish** (merge / PR / leave / discard) — never force-push, amend, rewrite history, or delete a branch without explicit approval. Then stop.
