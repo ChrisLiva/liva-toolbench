@@ -1,19 +1,15 @@
 ---
 name: effective-html
-description: User-summoned. When the user invokes this skill, treat the answer-medium question as already decided — produce a single-file HTML artifact (not markdown, not a web app). Covers the WHEN/WHY rubric for HTML-vs-markdown, the no-build-no-CDN constraint, the up-front "pick a visual direction" step, and the "always end with an export button" mandate for throwaway editors. Assumes you already know how to write HTML/CSS/JS.
+description: Produce a single-file HTML artifact that allows a smoother communication between the user and the coding agent when reviewing text documents.
 disable-model-invocation: true
 argument-hint: "<what to make as HTML>"
 ---
 
-The user has explicitly chosen HTML as the output medium for `$ARGUMENTS`. Don't second-guess that or ask "are you sure you don't want markdown?" — the choice is made. Your job is to produce a *good* HTML artifact, not to debate the format.
-
-The non-obvious stuff is below. Things you already know — semantic tags, flexbox, grid, SVG basics, ARIA, how to write an event listener — are assumed and not repeated.
+The user has explicitly chosen HTML as the output medium for `$ARGUMENTS`. Your job is to produce a *good* HTML artifact, not to debate the format.
 
 ## What HTML actually buys you (and where the value comes from)
 
-Markdown is a linear scroll. It's great when the reader will read top-to-bottom once. The moment the reader needs to **compare, navigate, toggle, drag, or come back tomorrow and re-skim**, markdown collapses. HTML lets you put spatial information in space, give the reader a verb to use, and ship the whole thing in one file they can save, email, or drop on a server.
-
-The decision rubric: prefer HTML when **at least one** of these is true.
+The moment the reader needs to **compare, navigate, toggle, drag, or come back tomorrow and re-skim**, markdown collapses. HTML lets you put spatial information in space, give the reader a verb to use, and ship the whole thing in one file.
 
 - **Comparison is the point.** Three approaches side-by-side. Before/after. Variant sheets. Linear prose forces the reader to hold options in working memory; HTML doesn't.
 - **The artifact is genuinely spatial.** Diffs with margin notes. Module maps with arrows. Timelines. Diagrams. Calendars. Things that lose meaning when flattened to lines.
@@ -21,43 +17,28 @@ The decision rubric: prefer HTML when **at least one** of these is true.
 - **It's a recurring document.** Weekly status, post-mortem, design system, PR write-up. The structure pays for itself across many reads.
 - **You want them to react to it, not imagine it.** Visual designs, motion, layout options. If you find yourself writing "imagine a sidebar that…", stop and build the sidebar.
 
-Stay with markdown (or plain prose) when:
-
-- The content is short and linear and the reader will read it once.
-- The user will want to **co-author** by editing the text — markdown is friendly to that, HTML is hostile.
-- The output is going to feed another tool or LLM downstream.
-- You'd just be wrapping prose in `<p>` tags. That's not a win, that's overhead.
-
 ## The "single file, no build, no CDN" constraint
 
 The artifacts are valuable precisely because they're *files*, not *apps*. One `.html`, save-and-share, email-safe, works offline, opens on the recipient's machine in two seconds with no install. This constraint is load-bearing — break it and you lose most of the value.
 
-- **One file.** All CSS in a `<style>` tag, all JS in a `<script>` tag. No external stylesheets, no module imports.
+- **One file.** All CSS in a `<style>` tag. No external stylesheets, no module imports.
 - **No CDN, no `<script src="https://…">`.** Don't pull in React, Tailwind, Chart.js, htmx, Alpine, D3, lucide, fontawesome, mermaid, Google Fonts, anything. The first time the recipient opens it on a plane it's broken.
 - **No `fetch` to remote services.** The data is in the file or comes from the user's interaction.
 - **No build step, no preprocessor, no transpile.** What you write is what runs.
-- **Vanilla JS, ES2015+ is fine.** Wrap in an IIFE (`(function(){ … })();`) so globals don't leak — these files often get pasted into other contexts.
+- **No Javascript** Use HTML and CSS for interactivity and animations.
 - **No localStorage / cookies / service workers** unless the user specifically asks. These artifacts are throwaway by design; persistence is a surprising side effect.
 
-If the user asks for a real web app, that's a different task — don't apply these rules then.
+## Agent -> User Communication with HTML
 
-## The "always end with an export button" mandate (for editor artifacts)
+Always include two button in your HTML at the top of the page, "Export Comments Only" and "Export to Markdown".
 
-This is the single most common failure mode for editor-style artifacts (triage boards, flag toggles, prompt tuners, drag-and-drop rankers, anything where the user *changes state*). The agent builds something beautiful, the user spends ten minutes interacting with it, and then realizes there is no way to get the result back out. The session ends with the user copy-typing the screen into a doc.
+In each logical section of the HTML doc, leave a comment box for the user to insert comments about that section. At the end of the doc, leave a comment box for the user to comment on the doc as a whole.
 
-Fix: every editor artifact ends with a **copy/export button**. Always.
-
-- The button copies the user's work as **markdown or plain text** (occasionally JSON if structured data), not as HTML. The user is moving it into a doc, a PR description, a Slack message, a follow-up prompt to you. They want text.
-- Use `navigator.clipboard.writeText(...)` with a `document.execCommand('copy')` fallback on a hidden `<textarea>` — clipboard API silently no-ops in some contexts.
-- Give the button visible feedback. Swap the label to "Copied ✓" for ~1.2s on success.
-- Put it in a sticky toolbar at the top of the page so it's always reachable, not at the bottom where the user has to scroll past their work to find it.
-- For more complex editors (filter flags, etc), also offer a "Copy as diff" — markdown showing only what *changed* from the starting state. That's almost always what the user actually wants to share.
-
-If the artifact has no editable state — it's a report or an explainer — no export button is needed. The artifact itself is the output.
+When a user clicks "Export Comments Only", copy the comments they typed and references to the section and HTML file to their clipboard so they can paste it into an agent session and chat about it. When they click "Export to Markdown", do the same thing, but converting the entire HTML doc to markdown so they can copy-paste elsewhere.
 
 ## Pick a visual direction with the user first
 
-There's no single "right" look for these artifacts — a deploy-pipeline flowchart wants a different aesthetic than the all-hands deck or a sprint-cleanup triage board. **Before you start writing HTML, sketch 3–4 distinct style directions in chat and let the user pick one** (or describe their own). This takes ten seconds and prevents you from defaulting to the same beige sans-serif every time you're invoked.
+There's no single "right" look for these artifacts — a deploy-pipeline flowchart wants a different aesthetic than the all-hands deck or a sprint-cleanup triage board. **Before you start writing HTML, sketch 3–4 distinct style directions in chat and let the user pick one** (or describe their own).
 
 Each direction is one line — palette, type, overall feel. Tailor the menu to the artifact: pick directions that actually suit what you're about to build, don't just rattle off the same four every time. Some directions that tend to work, mix and match or invent your own:
 
@@ -137,11 +118,14 @@ These artifacts get their value from being small and obvious enough that a recip
 - `<details>/<summary>` for collapsibles — no JS needed.
 - Tabs: a row of `<button>`s and `class="on"` toggling visibility of sibling panels. Don't reach for a tab library.
 - Sparklines and tiny charts: hand-write the SVG with a `<polyline>` and `viewBox`. Two lines of math beats importing a chart library.
-- Live preview on input: debounce with `requestAnimationFrame`, not a debounce library.
 - Sliders / numeric inputs: native `<input type="range">` or button presets that flip a CSS custom property via `root.style.setProperty('--ease', '…')`.
 - Drag-and-drop: native HTML5 events. No `react-dnd`, no `Sortable.js`.
 
 If you find yourself reaching for a dependency, stop and look at the problem again — most "I need a library" moments dissolve into 20 lines of vanilla.
+
+## Visual Cleanup
+
+Before presenting the HTML file to the user, open the file in a browser, take a screenshot of the entire page, and fix any obvious visual issues such as text not wrapping inside containers, lines in visualizations not pointing in the right direction, etc.
 
 ## A final note on length and density
 
