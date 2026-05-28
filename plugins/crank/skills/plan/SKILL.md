@@ -10,13 +10,26 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 
 Write the plan to a fresh OS temp file: `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. If `$ARGUMENTS` is a path, read the spec from there; otherwise use the spec already in the conversation. Tell the user the path once.
 
+## Vocabulary
+
+Shared design language across the crank skills (spec → plan → execute). Use these terms with these meanings:
+
+- **Module** — anything with an interface and an implementation: a function, class, file, or larger slice.
+- **Interface** — the full contract a caller must understand: signatures, invariants, ordering, errors, config.
+- **Depth** — how much an interface hides. A **deep** module exposes a small interface over substantial behavior; a **shallow** one exposes nearly as much as it hides.
+- **Deletion test** — imagine the module gone. If its complexity simply vanishes, it was a pass-through; if that complexity reappears across many callers, the boundary earned its place.
+- **Seam** — a place where behavior can be swapped without editing in that place; the location of an interface, and the surface tests drive (the production node/endpoint/entry point a real user reaches, never a synthetic stand-in).
+- **Port / adapter** — a seam that crosses a dependency: the **port** is the interface, an **adapter** is a concrete fill (production HTTP/db vs. in-memory test double). Two adapters justify a port; one is just indirection.
+
 ## Ground first
 
 Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. **Bias toward delegating** wide reads to a subagent (`Agent` tool) so its context — not yours — holds the source.
 
 ## Map the files
 
-For every file the plan touches, record **path / action (`create` / `modify` / `delete`) / responsibility (one line)**. One clear responsibility per file. Follow established patterns; don't unilaterally restructure unless a file you're already modifying has grown unwieldy.
+For every file the plan touches, record **path / action (`create` / `modify` / `delete`) / responsibility (one line)**. One clear responsibility per file. Follow established patterns; don't unilaterally restructure unless a file you're already modifying has grown unwieldy or the spec's **Refactor scope** names it for reshaping.
+
+If you can't state a `create`'d file's responsibility without "passes X to Y" or "wraps Z", it fails the deletion test — fold it into its caller rather than adding a pass-through module. (This applies to new files and to files named in the spec's **Refactor scope**, which are deliberately open to reshaping; files outside that scope keep their established boundaries.)
 
 ## Decompose
 
@@ -34,6 +47,7 @@ Include whichever sections apply, scaled to the change (a small fix is 2–4 tas
 
 - **Header** — title, link to the spec, `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions).
 - **Updates since spec** — drift you found while grounding. Omit if none.
+- **Refactor scope** — copy from the spec if present; the explicit allowlist of existing modules open to reshaping. Omit if the spec had none.
 - **File structure** — the table from above.
 - **Tasks** — each with a `Files:` block followed by the checkbox steps.
 - **Smoke tests for the user** — anything the spec flagged as needing real-human verification. Omit if none.
