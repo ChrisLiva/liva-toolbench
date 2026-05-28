@@ -10,9 +10,9 @@ Turn what you and the user have been discussing into a single self-contained spe
 
 ## Ground in the codebase first
 
-Before drafting Technical decisions, dispatch subagents in parallel — one per layer the change touches (DB / IPC / renderer state / renderer queries / tests) — to find the existing surface in the codebase. Brief each subagent verbatim:
+Before drafting Technical decisions, dispatch subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Brief each subagent verbatim:
 
-> Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`. Find one or two existing features that do something analogous and report: the exact surface they use (repository function, IPC contract shape, renderer hook, query key, test helper), the `file:line` of that surface, and one sentence on the convention you observed. Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
+> Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`. Find one or two existing features that do something analogous and report: the exact surface they use (database, api, frontend, tests, etc.), the `file:line` of that surface, and one sentence on the convention you observed. Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
 
 Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
 
