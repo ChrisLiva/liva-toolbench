@@ -6,14 +6,14 @@ argument-hint: "<idea or feature description>"
 
 # Crank (autonomous)
 
-You drive `$ARGUMENTS` end-to-end through `crank:spec` → `crank:plan` → `crank:execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via files in `docs/crank/<slug>/`. You write nothing yourself — subagents own the docs.
+You drive `$ARGUMENTS` end-to-end through `crank:spec` → `crank:plan` → `crank:execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via `spec.md` / `plan.md` / `retro.md` in a shared run directory (`RUN_DIR`) you create in Phase 0. You write nothing yourself — subagents own the docs.
 
 ## Hard rules
 
-- **Never ask the user a question** except the Phase 6 cleanup offer.
+- **Never ask the user a question** except the Phase 4 cleanup offer.
 - **Always run in a fresh git worktree** created in Phase 0 — even on a clean tree, even on a feature branch.
 - **One subagent per phase**, spawned via `Agent` with the model below.
-- **File handoff.** Capture the absolute path each subagent returns; `dirname` it to derive the shared run directory; pass that to the next subagent.
+- **File handoff.** You tell each subagent the exact artifact path to write inside `RUN_DIR`; its sentinel line confirms it. Pass `RUN_DIR` to the next phase.
 - **Halt on blocker, don't retry.** If a subagent's final message contains a line starting with `BLOCKER:`, surface it with whatever artifacts exist and stop.
 - One short status line before each phase, one after. No verbose narration.
 
@@ -24,11 +24,12 @@ Prepend verbatim to every Phase 1–2 subagent prompt. Phase 3 (`execute`) is al
 > **Headless mode.** You run under autonomous orchestration inside a pre-created git worktree. You have no user. Override every interactive gate in the skill you invoke:
 > - At every options-and-recommendation gate, silently pick the recommended option.
 > - For non-obvious picks (where the recommendation isn't clearly the best fit), write an `Assumption: <what you assumed and why>` line into the relevant doc section.
-> - **Skip the Workspace setup section entirely.** The orchestrator has already entered a fresh worktree on a `crank/<slug>` branch via `EnterWorktree`. Never run `git worktree`, `git checkout -b`, `EnterWorktree`, `ExitWorktree`, or any branch-switching command.
-> - Skip all other confirmation gates (scope, slug, ingest, sharpen-questions, pre-write, phase-split, next-step menu). Proceed straight to writing the output doc.
+> - The orchestrator has already entered a fresh worktree on a `crank/<slug>` branch via `EnterWorktree`. Never run `git worktree`, `git checkout -b`, `EnterWorktree`, `ExitWorktree`, or any branch-switching command.
+> - Skip every other interactive step the skill offers — the one-targeted-question allowance, the hand-back menu, any finish-up ask. Proceed straight to writing the output doc.
+> - Write the output doc to the exact path given in your prompt — skip the skill's `mktemp` step and its hand-back menu.
+> - Run the skill's adversarial review as written — it is your only review pass.
 > - **Never** emit a question. On a true blocker, write what you have, append a `## Blocker` section, and end your final message with `BLOCKER: <summary>` on one line and `<ARTIFACT>_PATH=<absolute path>` on the next.
 > - On success, end with **only** `<ARTIFACT>_PATH=<absolute path>` on its own line. No menu, no extra prose.
-> - Skip any adversarial Sonnet sub-review the skill normally runs — the orchestrator owns review cadence.
 
 `<ARTIFACT>` is `SPEC`, `PLAN`, or `RETRO`.
 
@@ -56,7 +57,9 @@ Runs in the main thread, before any subagent. Use the **`EnterWorktree` built-in
    ```
    Record these as `WORKTREE_DIR` and `WORKTREE_BRANCH`. Run orchestrator-level git commands from `WORKTREE_DIR`.
 
-5. If `EnterWorktree` fails, surface the error verbatim and halt. Do not fall back to manual `git worktree add`.
+5. Create the shared run directory: `RUN_DIR=$(mktemp -d -t crank-run)`. All phase artifacts land here as `spec.md`, `plan.md`, `retro.md`.
+
+6. If `EnterWorktree` fails, surface the error verbatim and halt. Do not fall back to manual `git worktree add`.
 
 **Status:** `Worktree ready: <WORKTREE_DIR> on <WORKTREE_BRANCH>`
 
@@ -68,78 +71,22 @@ For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `descriptio
 
 After each subagent returns, extract the sentinel from its final message. If missing, halt and print the last ~20 lines of the return. If the return contains `BLOCKER:`, halt and surface it.
 
-| # | Phase   | Model  | Status before                  | Skill arg     | Sentinel                       | Status after              |
-|---|---------|--------|--------------------------------|---------------|--------------------------------|---------------------------|
-| 1 | spec    | opus   | `Drafting spec with Opus…`     | `$ARGUMENTS`  | `SPEC_PATH=<abs path>`         | `Spec ready: <path>`      |
-| 2 | plan    | sonnet | `Planning with Sonnet…`        | `<RUN_DIR>`   | `PLAN_PATH=<abs path>`         | `Plan ready: <path>`      |
-| 3 | execute | sonnet | `Executing plan…`              | `<RUN_DIR>`   | `RETRO_PATH=<abs path>`        | `Retro written: <path>`   |
-
-`RUN_DIR = dirname(SPEC_PATH)` — the shared run directory all later phases reuse.
+| # | Phase   | Model  | Status before                  | Skill arg            | Output doc            | Sentinel                | Status after            |
+|---|---------|--------|--------------------------------|----------------------|-----------------------|-------------------------|-------------------------|
+| 1 | spec    | opus   | `Drafting spec with Opus…`     | `$ARGUMENTS`         | `<RUN_DIR>/spec.md`   | `SPEC_PATH=<abs path>`  | `Spec ready: <path>`    |
+| 2 | plan    | sonnet | `Planning with Sonnet…`        | `<RUN_DIR>/spec.md`  | `<RUN_DIR>/plan.md`   | `PLAN_PATH=<abs path>`  | `Plan ready: <path>`    |
+| 3 | execute | sonnet | `Executing plan…`              | `<RUN_DIR>/plan.md`  | `<RUN_DIR>/retro.md`  | `RETRO_PATH=<abs path>` | `Retro written: <path>` |
 
 **Phase body templates** (append to the worktree-context line above):
 
-- **Phases 1–2**: `Invoke the crank:<phase> skill via the Skill tool with this argument: <skill arg>. Run it under the headless rules above. End your final message with <SENTINEL>=<absolute path> on its own line.`
+- **Phases 1–2**: `Invoke the crank:<phase> skill via the Skill tool with this argument: <skill arg>. Run it under the headless rules above. Write the output doc to <output doc>. End your final message with <SENTINEL>=<absolute path> on its own line.`
 - **Phase 2 only**, additionally include: **"Default to a single-file plan unless the spec is unambiguously L/XL — bias toward fewer files."**
 - **Phase 3** (no headless block):
-  > `Do not run the Workspace setup section of the execute skill — the worktree already exists; treat the current branch as the target. Do not run Phase 5 (Finish — cleanup/merge); the orchestrator owns cleanup. Invoke the crank:execute skill via the Skill tool with this argument: <RUN_DIR>. Run the plan to completion through Phase 4 (Retro). The skill handles its own non-interactive triage (solo / sequential / parallel) and writes retro.md. End your final message with RETRO_PATH=<absolute path> on its own line. On a hard blocker, end with BLOCKER: <summary> on one line then the sentinel on the next.`
+  > `The worktree already exists — treat the current branch as the target; never create branches or worktrees, and skip the execute skill's on-main-branch confirmation. Skip the skill's Hand back section; the orchestrator owns cleanup. Invoke the crank:execute skill via the Skill tool with this argument: <RUN_DIR>/plan.md. Run the plan to completion through the skill's Verify the whole gates — including the final fresh-eyes review and any remediation it requests. Write the retro to <RUN_DIR>/retro.md — ignore the skill's mktemp instruction for the retro. The skill handles its own non-interactive triage (solo / sequential / parallel). End your final message with RETRO_PATH=<absolute path> on its own line. On a hard blocker, end with BLOCKER: <summary> on one line then the sentinel on the next.`
 
-## Phase 4 — Self-review & remediate (orchestrator + Sonnet)
+After Phase 3, read `<RUN_DIR>/retro.md` and report the **Final review** verdict in your status line — the execute skill runs the whole-diff review against the spec and any remediation itself; the orchestrator does not re-review.
 
-The per-task reviewer inside `execute` sees one task at a time; this phase catches cross-task drift against the original spec. Runs in the main thread.
-
-**Status:** `Reviewing implementation against spec…`
-
-### 5a. Read inputs
-
-Read `<RUN_DIR>/spec.md` (frozen intent) and `<RUN_DIR>/retro.md` (what execute reported). Derive the diff: retro's `## Summary` lists `commits <first>..<last> on branch <branch>`. Run `git log --oneline <first>^..<last>` and `git diff <first>^..<last>`. If retro names a branch but no SHA range, fall back to `git diff <BASE_BRANCH>...<branch>`.
-
-### 5b. Review
-
-Evaluate the diff against:
-
-1. **Spec coverage** — every validation/acceptance criterion in `spec.md` met? Anything missing or quietly substituted?
-2. **Retro red flags** — open items or "punted" work that were actually in-scope. Weak deviation justifications.
-3. **Cross-task coherence** — gaps the per-task reviewer couldn't see (inconsistent naming across tasks, dead code from an early task once a later task landed, missing wiring between independently-built pieces).
-
-Cite `file:line`. Don't restyle code or expand scope — this review checks whether the *shipped* diff matches the *original* spec.
-
-### 5c. Persist the review
-
-Write `<RUN_DIR>/review.md`:
-
-```markdown
-# Review: <plan title>
-
-## Verdict
-<APPROVED | CHANGES_REQUESTED>
-
-## Findings
-- <file:line — what's wrong, which spec/retro item it relates to>
-
-## Remediation scope (only if CHANGES_REQUESTED)
-- <specific, bounded fix for the remediation agent>
-```
-
-Print one line: `Review verdict: APPROVED` or `Review verdict: CHANGES_REQUESTED (<N> findings)`.
-
-### 5d. Remediate (only if CHANGES_REQUESTED)
-
-Spawn **one** Sonnet `Agent` (`general-purpose`, `description: Crank: post-implementation remediation`). Single pass — no loop. The review is the contract.
-
-> `You are running inside this git worktree: <WORKTREE_DIR> on branch <WORKTREE_BRANCH>. Apply the fixes listed in the ## Remediation scope section of <RUN_DIR>/review.md. Read <RUN_DIR>/spec.md and retro.md for context, and review.md in full.`
->
-> Constraints:
-> - Stay strictly inside the remediation scope. No refactor, redesign, or expansion.
-> - For each behavioral fix: failing test first, implement, run verification.
-> - Commit each logical fix separately (`fix(<area>): <what>`). Do NOT amend earlier commits. Do NOT push.
-> - When done, append a `## Remediation` section to retro.md listing each fix, the commit SHA, and verification output.
-> - End your final message with `REMEDIATION_DONE=<N>` on its own line. Skip findings you cannot fix and continue; emit `BLOCKER: <summary>` only if no fix can be applied at all.
-
-Extract `REMEDIATION_DONE=<N>`.
-
-**Status:** `Remediation complete: <N> fixes applied.` (or, if APPROVED, `Review approved — no remediation needed.`)
-
-## Phase 5 — Cleanup offer (orchestrator)
+## Phase 4 — Cleanup offer (orchestrator)
 
 The **one allowed user interaction**. Run it even if an earlier phase halted on a blocker, so the user can clean up the partial worktree. Ask in plain chat prose — do **not** use `AskUserQuestion`.
 
@@ -163,7 +110,7 @@ For merge or PR options, do the git work first (still inside the worktree), then
 
 ## Final summary
 
-After Phase 5, print:
+After Phase 4, print:
 
 ```
 Crank complete:
@@ -171,8 +118,8 @@ Crank complete:
   spec        <SPEC_PATH>
   plan        <PLAN_PATH>
   retro       <RETRO_PATH>
-  review      <RUN_DIR>/review.md  (<APPROVED | CHANGES_REQUESTED — N fixes applied>)
+  review      <APPROVED | CHANGES_REQUESTED — N fixes applied>  (from retro's Final review)
   cleanup     <merged and deleted | PR #123 open | left as-is | discarded>
 ```
 
-If a phase halted on a blocker, list only the artifacts produced, the blocker line that ended the run, and the cleanup choice from Phase 6.
+If a phase halted on a blocker, list only the artifacts produced, the blocker line that ended the run, and the cleanup choice from Phase 4.
