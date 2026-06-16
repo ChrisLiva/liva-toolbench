@@ -21,6 +21,7 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
 - **Plan is frozen** during execution — surprises become retro entries, not silent reroutes.
 - **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
+- **A stated dispatch binds you to spawn.** The moment your output says you'll spawn, dispatch, delegate, or hand a task to a subagent, your *next* action is that spawn — per <subagent-tiers>, an `Agent` call in Claude Code or a subagent spawn in Codex — not the work done inline. Announcing a subagent and then implementing or reviewing it yourself on the main thread is a defect, not a shortcut. If main-thread work is the right call, don't announce a dispatch in the first place; say you're staying on-thread and why.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
 </rules>
 
@@ -63,6 +64,8 @@ You decide based on the plan — there is no required mode. State the choice in 
 - **Solo (in this session)** — *Gains:* zero dispatch overhead; full in-flight state carries between tasks. *Costs:* every task's source and noise stays in your window, degrading later tasks; self-review is the weakest review. *Fits:* small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes.
 - **Sequential subagents** — *Gains:* fresh context per task; an independent reviewer per diff. *Costs:* each dispatch pays re-orientation; you must brief completely or the implementer guesses. *Fits:* the default for >3 tasks.
 - **Parallel subagents** — *Gains:* wall-clock speed. *Costs:* no shared state between implementers; overlapping edits conflict. *Fits:* only when tasks touch disjoint files with no shared state.
+
+Once stated, the shape binds the run. If you chose Sequential or Parallel subagents, the first action on each task is the implementer dispatch — not an Edit or Write on the main thread — and each task's review is a dispatched reviewer, not self-review. Sliding back to solo mid-run because dispatch feels heavier is a deviation: if one task genuinely needs shared in-flight state, name it and re-state the shape before you proceed — don't silently absorb the work onto the main thread.
 
 ## Per task
 
