@@ -116,10 +116,16 @@ Quote the reviewer's summary line back to the user.
 
 ## Hand back
 
+First render an interactive HTML review of the final spec and open it in the user's browser; then offer the file menu.
+
+**Open the review.** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the spec as the `.html` sibling of the temp file and open it — give each acceptance criterion its own comment box. Tell the user the HTML path and that they can comment per section, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the spec and re-render. (Under `/crank`/headless the whole Hand back step is skipped, so the browser never opens mid-pipeline.)
+
 In chat prose, offer:
 
 - **Keep the temp file** (default) — the path is already known; user can hand it to the plan skill, feed it elsewhere, or move it later.
 - **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final contents into the chat and remove the temp file.
+- **Print inline and delete** — paste the final contents into the chat and remove the temp file (and its `.html` sibling).
+
+When the user pastes a block beginning `> Source: <path>`, apply each `## <heading>` comment to that markdown and resolve every `Out of scope → requested IN scope` item (fold it into the spec as a real acceptance criterion / decision, or push back with a reason — never drop it silently), then re-render the HTML and reopen it. See HTML-REVIEW.md's "Applying a pasted review."
 
 Then stop. Do not auto-invoke other skills or continue past the handback.
