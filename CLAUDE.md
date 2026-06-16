@@ -61,8 +61,8 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 
 Some plugins ship for **both** Claude Code and Codex — they carry a
 `.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`, and both manifests
-read the same `skills/` tree. `crank` is the cross-harness flagship; `crank-jesus`
-and the rest are Claude-only unless they grow a `.codex-plugin/`.
+read the same `skills/` tree. `crank` is the cross-harness flagship; other plugins
+are Claude-only unless they grow a `.codex-plugin/`.
 
 **The Codex manifest** mirrors the Claude one (`name`, `version`, `description`,
 `keywords`) but swaps `author`/`license` for an `interface` block:
