@@ -1,7 +1,7 @@
 {
   "name": "effective-html",
-  "version": "0.3.0",
-  "description": "Distills the anthropics/html-effectiveness gallery into a user-summoned skill that helps Claude produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown.",
+  "version": "0.4.0",
+  "description": "Distills the anthropics/html-effectiveness gallery into a user-summoned skill that helps the coding agent produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown.",
   "keywords": ["html", "communication", "artifact", "single-file", "anthropic"],
   "interface": {
     "displayName": "Effective HTML",

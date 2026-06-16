@@ -26,10 +26,10 @@
     {
       "name": "effective-html",
       "source": "./plugins/effective-html",
-      "description": "User-summoned skill that nudges Claude to produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown — distilled from anthropics/html-effectiveness.",
-      "version": "0.2.0",
+      "description": "User-summoned skill that nudges the coding agent to produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown — distilled from anthropics/html-effectiveness.",
+      "version": "0.4.0",
       "category": "tools",
-      "tags": ["html", "communication", "artifact", "single-file"]
+      "tags": ["html", "communication", "artifact", "single-file", "anthropic"]
     }
   ]
 }

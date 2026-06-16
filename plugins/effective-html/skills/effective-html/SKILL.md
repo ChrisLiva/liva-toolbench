@@ -5,7 +5,7 @@ disable-model-invocation: true
 argument-hint: "<what to make as HTML>"
 ---
 
-The user picked HTML for `$ARGUMENTS`. Your job is a *good* artifact, not a debate about the format.
+HTML is the chosen format for what was asked (see `argument-hint`). Your job is a *good* artifact, not a debate about the format.
 
 ## Constraints (load-bearing — the artifact must work offline, on a plane, when forwarded)
 
@@ -30,15 +30,15 @@ Before writing HTML, sketch 3–4 short distinct visual directions in chat tailo
 
 ## Delegate the rendering
 
-Once the direction is picked, invoke `Skill(name="frontend-design:frontend-design", args="<picked direction> + <one-paragraph brief of the artifact, including the constraints above and the export-button contract>")`. That skill is substantially better than you at avoiding generic-AI aesthetics, which is the whole reason the user asked for HTML.
+Once the direction is picked, hand the rendering to a `frontend-design` skill if your harness has one — that skill is substantially better than you at avoiding generic-AI aesthetics, which is the whole reason the user asked for HTML. On **Claude Code**, invoke it: `Skill(name="frontend-design:frontend-design", args="<picked direction> + <one-paragraph brief of the artifact, including the constraints above and the export-button contract>")`.
 
-Skip the delegation only if: (a) the artifact is a one-screen widget under ~150 lines, (b) you've already invoked frontend-design earlier in this conversation for the same direction and you're iterating a minor tweak, or (c) `frontend-design:frontend-design` isn't installed — in which case render directly, holding to the same constraints and direction.
+Skip the delegation and render directly — holding to the same constraints and direction — if: (a) the artifact is a one-screen widget under ~150 lines, (b) you already invoked frontend-design earlier in this conversation for the same direction and you're iterating a minor tweak, or (c) no `frontend-design` skill is available in your harness (e.g. under **Codex**, where it isn't packaged).
 
 ## Visual cleanup before handoff
 
-Open the file in a browser, screenshot the full page, and fix obvious issues — text overflowing containers, SVG strokes pointing the wrong way, misaligned grids, illegible contrast.
+If your harness can render the page — a browser tool, Playwright, computer-use, anything that produces a screenshot — open the file, screenshot the full page, and fix obvious issues: text overflowing containers, SVG strokes pointing the wrong way, misaligned grids, illegible contrast. If it can't render, self-review statically instead: read the markup back and re-derive every SVG coordinate by hand — the checks below don't need a screenshot, only attention.
 
-For every inline `<svg>` you wrote, look at the screenshot and verify the diagram says what the prose says. Specifically:
+For every inline `<svg>` you wrote — looking at the screenshot, or reading the markup if you have none — verify the diagram says what the prose says. Specifically:
 - Points that should sit on a curve/axis/ring actually sit on it (compute positions with the right polar/Cartesian formula — don't eyeball coordinates).
 - Labels sit next to the thing they label without overlapping nearby elements; anchors (`text-anchor`, `dominant-baseline`) put text on the correct side.
 - Scales, bar lengths, and angles are proportional to the underlying numbers — not vibes.
