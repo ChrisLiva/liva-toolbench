@@ -11,7 +11,7 @@
       "name": "crank",
       "source": "./plugins/crank",
       "description": "Design-first development pipeline: spec → plan → execute, taking an idea from sketch to shipped code",
-      "version": "4.2.1",
+      "version": "4.2.2",
       "category": "tools",
       "tags": ["crank", "code", "agent"]
     },

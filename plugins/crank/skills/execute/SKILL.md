@@ -34,17 +34,14 @@ Shared design language across the crank skills (the spec skill defines the full 
 
 ## Workflow
 
-Copy this checklist and check off steps as you complete them:
+Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress. The execution loop fans out: once the plan is loaded, add one task per task it defines, so each plan task opens and closes on its own.
 
-```
-Execute progress:
-- [ ] Plan loaded (and spec, via the plan's Spec: header); blockers surfaced
-- [ ] Execution shape picked and stated in one sentence
-- [ ] Per task: implement → verify → review → commit (repeat for all tasks)
-- [ ] Verify the whole: plan walk → coverage walk → final review
-- [ ] Retro written
-- [ ] Hand back
-```
+- Plan loaded (and spec, via the plan's Spec: header); blockers surfaced
+- Execution shape picked and stated in one sentence
+- Execute task-by-task — one tracked task per plan task, each running implement → verify → review → commit
+- Verify the whole: plan walk → coverage walk → final review
+- Retro written
+- Hand back
 
 ## Load and critically review
 

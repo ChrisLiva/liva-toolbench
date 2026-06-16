@@ -35,18 +35,15 @@ Shared design language across the crank skills (the spec skill defines the full 
 
 ## Workflow
 
-Copy this checklist and check off steps as you complete them:
+Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
 
-```
-Plan progress:
-- [ ] Ground: spec-named files read, signatures captured (delegate wide reads)
-- [ ] File map: every touched file has path / action / responsibility
-- [ ] Tasks decomposed and ordered (each independently committable)
-- [ ] Steps written: code embedded where shape matters, exact verify lines
-- [ ] Coverage table: every spec criterion has a row
-- [ ] Adversarially reviewed (subagent edits the file in place)
-- [ ] Hand back
-```
+- Ground: spec-named files read, signatures captured (delegate wide reads)
+- File map: every touched file has path / action / responsibility
+- Tasks decomposed and ordered (each independently committable)
+- Steps written: code embedded where shape matters, exact verify lines
+- Coverage table: every spec criterion has a row
+- Adversarially reviewed (subagent edits the file in place)
+- Hand back
 
 ## Ground first
 

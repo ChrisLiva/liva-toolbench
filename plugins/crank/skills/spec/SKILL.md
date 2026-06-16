@@ -38,15 +38,12 @@ Shared design language across the crank skills (spec → plan → execute). Use 
 
 ## Workflow
 
-Copy this checklist and check off steps as you complete them:
+Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
 
-```
-Spec progress:
-- [ ] Ground in the codebase first (parallel Sonnet subagents, one per layer)
-- [ ] Draft (sections scaled to topic, design lens on in-scope modules)
-- [ ] Adversarially review (subagent edits the file in place)
-- [ ] Hand back
-```
+- Ground in the codebase first (parallel Sonnet subagents, one per layer)
+- Draft (sections scaled to topic, design lens on in-scope modules)
+- Adversarially review (subagent edits the file in place)
+- Hand back
 
 ## Ground in the codebase first
 
