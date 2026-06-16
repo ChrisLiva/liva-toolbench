@@ -57,7 +57,52 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 
 ---
 
+## Cross-harness plugins (Claude Code + Codex)
+
+Some plugins ship for **both** Claude Code and Codex — they carry a
+`.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`, and both manifests
+read the same `skills/` tree. `crank` is the cross-harness flagship; `crank-jesus`
+and the rest are Claude-only unless they grow a `.codex-plugin/`.
+
+**The Codex manifest** mirrors the Claude one (`name`, `version`, `description`,
+`keywords`) but swaps `author`/`license` for an `interface` block:
+
+```json
+{
+  "name": "<name>",
+  "version": "<x.y.z>",
+  "description": "...",
+  "keywords": ["..."],
+  "interface": { "displayName": "<Title Case>", "developerName": "Chris Liva" }
+}
+```
+
+There is no separate Codex marketplace — packaging is per-plugin, just the manifest.
+
+**In a cross-harness plugin, skill/agent bodies must not depend on Claude-only
+preprocessing** — none of it runs under Codex:
+
+- `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SKILL_DIR}`, and every other `${CLAUDE_*}` substitution
+- `@file` includes
+- `` !`cmd` `` / ` ```! ` bang shell execution
+
+**Sharing a reference file between two skills:** keep the real file in one skill's
+directory, **symlink** it into the other, and reference it with a relative link —
+`[FILE.md](FILE.md)` (the pattern mattpocock's skills use). Don't add a `_shared/`
+dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path. Example:
+`crank/skills/plan/HTML-REVIEW.md` symlinks to `../spec/HTML-REVIEW.md`, and both
+`SKILL.md`s link to it relatively.
+
+> Symlinks only survive a `core.symlinks=true` checkout (macOS/Linux default). If a
+> Windows checkout is in scope, commit a copy in each directory instead.
+
+---
+
 ## Magic syntax cheat sheet
+
+> **Claude-only.** Everything in this section is Claude Code preprocessing — it does
+> **not** run under Codex. In a cross-harness plugin (see *Cross-harness plugins*),
+> avoid all of it; use plain prose + relative file links instead.
 
 These work inside skill `SKILL.md` and command `.md` bodies. They are **preprocessing** — they expand before Claude sees the content.
 
@@ -234,6 +279,17 @@ Inside the session:
 - `/agents` — inspect/edit subagents
 - `/plugin` — manage installed plugins
 - `What skills are available?` — confirm yours appears
+
+---
+
+## Record settled decisions where the next agent will look
+
+When you land a load-bearing design choice inside a skill — a tradeoff a future
+review could plausibly reverse (offline vs CDN, port vs direct call, which library)
+— record it **inline in that skill's reference doc** with a `(per project decision:
+…)` marker, not just in chat. Example: `crank/skills/spec/HTML-REVIEW.md` notes
+Tailwind + Mermaid load via CDN "(per project decision)". This is what stops coding
+agents from re-suggesting the option you already ruled out.
 
 ---
 
