@@ -77,7 +77,24 @@ and the rest are Claude-only unless they grow a `.codex-plugin/`.
 }
 ```
 
-There is no separate Codex marketplace — packaging is per-plugin, just the manifest.
+**Two things make a plugin installable under Codex, not one** — a valid
+`.codex-plugin/plugin.json` is necessary but not sufficient:
+
+1. The per-plugin `.codex-plugin/plugin.json` above.
+2. An entry in the repo's **Codex marketplace index**, `.agents/plugins/marketplace.json`
+   — the local-marketplace catalog Codex reads (`codex plugin marketplace list` shows it
+   rooted at the repo). A plugin absent from it can't be installed even with a perfect
+   `.codex-plugin/plugin.json`: `codex plugin add <name>@liva-toolbench` fails with
+   *"not found in marketplace."* Add a `local` source entry beside the others:
+
+   ```json
+   { "name": "<name>", "source": { "source": "local", "path": "./plugins/<name>" }, "category": "tools" }
+   ```
+
+   Then `codex plugin add <name>@liva-toolbench` to install (re-run after a version bump
+   to refresh the snapshot). This index is **separate from** Claude's
+   `.claude-plugin/marketplace.json` and must be kept in sync by hand — it's easy to ship
+   a `.codex-plugin/` manifest and forget to register the plugin here.
 
 **In a cross-harness plugin, skill/agent bodies must not depend on Claude-only
 preprocessing** — none of it runs under Codex:

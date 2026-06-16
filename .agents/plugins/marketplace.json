@@ -8,6 +8,11 @@
       "name": "crank",
       "source": { "source": "local", "path": "./plugins/crank" },
       "category": "tools"
+    },
+    {
+      "name": "effective-html",
+      "source": { "source": "local", "path": "./plugins/effective-html" },
+      "category": "tools"
     }
   ]
 }
