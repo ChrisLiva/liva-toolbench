@@ -1,6 +1,6 @@
 ---
 name: spec
-description: Synthesize the current conversation — grilling, brainstorming, prototyping — into one document that is part PRD, part technical spec, then adversarially review it in place. Use when the user types /spec or asks to write up what you've been discussing.
+description: Synthesize the current conversation — grilling, brainstorming, prototyping — into one document that is part PRD, part technical spec, then adversarially review it in place. Use when the user asks to write up what you've been discussing.
 argument-hint: "[optional topic hint]"
 ---
 
@@ -11,7 +11,7 @@ Turn what you and the user have been discussing into a single self-contained spe
 <rules>
 - **Synthesize from the conversation; do not restart the interview.** If a real gap blocks the writeup, ask one targeted question; otherwise resolve it and note the assumption in the doc.
 - **No placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question), or move it to **Out of scope** with a sentence on why.
-- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`).
+- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`) unless otherwise specified.
 - **Write the draft to a fresh OS temp file:** `$(mktemp -t crank-spec).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Reference real files as `path:line`** wherever you have them.
 </rules>
@@ -100,7 +100,7 @@ Keep the interface as the test surface (see Testing approach): the seam you name
 
 ## Adversarially review
 
-Spawn one Sonnet subagent via the `Agent` tool (`description: "Adversarial spec review"`, `model: sonnet`) and pass it the spec's absolute path. Pass this brief verbatim:
+Spawn one Opus subagent via the `Agent` tool (`description: "Adversarial spec review"`, `model: opus`) and pass it the spec's absolute path. Pass this brief verbatim:
 
 <brief>
 Read the spec at `<path>`. Flag every instance of: **ambiguity** (two engineers could implement it meaningfully differently), **inaccuracy** (a claim that contradicts the codebase — verify against the repo), **criteria gaps** (a behavior the spec body describes — interaction, keybinding, edge case, state transition, validation — with no matching numbered acceptance criterion, or a criterion too vague to falsify), **off-pattern** (a layer is touched without naming the existing surface for that layer — repository function, renderer hook, query key, IPC shape — that analogous features in the codebase use; grep one or two analogous files to confirm), **shallow module** (a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test: removing it would not scatter complexity, so it's a pass-through that should fold into its caller — don't flag existing modules outside the Refactor scope, their boundaries are settled), **missed simplification** (complexity the spec itself introduces — a new mode, flag, wrapper, or special-case branch in an existing flow — where a reframing would let an existing module absorb the behavior; flag only when you can name the simpler shape, and don't flag a decision the spec records with its tradeoff), **bespoke duplication** (the spec designs a helper or utility the codebase already provides — grep to confirm, and name the canonical one), **boundary smells** (a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit), **placeholder language** (`TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved), and **missing technical detail** that would block an implementer. Don't re-open settled decisions. Then edit the file in place to fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, resolve placeholders or move them to **Out of scope**, fill in missing detail. End your reply with a one-line summary of what changed.

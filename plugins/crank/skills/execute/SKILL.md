@@ -11,7 +11,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 <rules>
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
 - **Plan is frozen** during execution — surprises become retro entries, not silent reroutes.
-- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`). Sole exception: the one-time model escalation for a `BLOCKED` implementer.
+- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`) unless otherwise specified.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
 </rules>
 
@@ -75,7 +75,7 @@ Before claiming completion, three gates in order — any failure stops the run:
 
 1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's overall validation commands (suite, lint, typecheck, build) fresh this turn and read the output.
 2. **Coverage walk.** Walk the plan's Coverage table row by row; for each row, confirm its verify step ran green *this session* — re-run any that are stale or that earlier tasks may have broken. Rows marked human-only go in the retro's Open items, not silently skipped. If the plan has no Coverage table, walk the spec's acceptance criteria (or, with no spec, the plan's stated goal) and check each against the diff yourself.
-3. **Final review (fresh eyes).** Per-task reviewers saw one task at a time; this pass catches what they couldn't. Dispatch one Sonnet reviewer subagent (`Agent` tool, `description: "Final review vs spec"`, `model: sonnet`) with the spec path (or the plan path if no spec exists), the Coverage table, and the diff range (`git diff <first-commit>^..HEAD`). Pass this brief verbatim:
+3. **Final review (fresh eyes).** Per-task reviewers saw one task at a time; this pass catches what they couldn't. Dispatch one Opus reviewer subagent (`Agent` tool, `description: "Final review vs spec"`, `model: opus`) with the spec path (or the plan path if no spec exists), the Coverage table, and the diff range (`git diff <first-commit>^..HEAD`). Pass this brief verbatim:
 
 <brief>
 Review the shipped diff against the spec. Check every acceptance criterion against the diff — met, missing, or quietly substituted. Then check cross-task coherence: naming drift between tasks, dead code an early task left once a later one landed, missing wiring between independently built pieces. Then check structural quality of the whole diff: **spaghetti growth** (a one-off conditional, flag, or special case threaded through a flow the plan never named, instead of routed behind the module that owns the concept), **bespoke duplication** (the diff re-implements a helper the codebase already provides, or two tasks independently built near-duplicate helpers that should be one — grep to confirm), and **boundary smells** (casts, `any`, or new optional parameters papering over an unclear contract where the invariant could be explicit). Cite `file:line`; don't restyle or expand scope. Return `APPROVED` or `CHANGES_REQUESTED` with a bulleted, bounded fix list.
@@ -92,6 +92,8 @@ Write a retro to a fresh OS temp file: `$(mktemp -t crank-retro).md`. Sections:
 - **Final review** — verdict, findings fixed (with commit SHAs), findings deferred.
 - **Open items** — follow-ups, human-only smoke checks, surprises future related work should know about.
 - **Validation evidence** — commands run, outcomes.
+
+If the Retro contains Open Items, state these items to the user.
 
 ## Hand back
 

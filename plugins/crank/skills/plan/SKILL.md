@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Turn a spec — written by the spec skill or already in the conversation — into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user types /plan or asks to break a spec into ordered tasks.
+description: Turn a spec — written by the spec skill or already in the conversation — into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user asks to break a spec into ordered tasks.
 argument-hint: "[optional path to spec.md]"
 ---
 
@@ -11,7 +11,7 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 <rules>
 - If `$ARGUMENTS` is a path, read the spec from there; otherwise use the spec already in the conversation.
 - **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
-- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`).
+- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`) unless otherwise specified.
 - **No placeholders.** No `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", or references to symbols no task defines. Show code in every code step.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 </rules>
@@ -99,7 +99,7 @@ Include whichever sections apply, scaled to the change (a small fix is 2–4 tas
 
 ## Adversarially review
 
-Spawn one Sonnet subagent via the `Agent` tool (`description: "Adversarial plan review"`, `model: sonnet`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
+Spawn one Opus subagent via the `Agent` tool (`description: "Adversarial plan review"`, `model: opus`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
 
 <brief>
 Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation. Flag every instance of: **non-runnable steps** (path / command / expected / instruction not concrete enough to type code from), **coverage holes** (walk the spec yourself — every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation — and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason), **name / type / path inconsistencies** across tasks or against the codebase, **placeholder language** (`TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols), **dead-seam verify steps** (a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent), **spaghetti growth** (a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept), **bespoke duplication** (embedded code re-implements a helper the codebase already provides — grep to confirm, and rewrite the step to call the canonical one), **boundary smells** (embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract), and **order problems** (a task imports what no earlier task built). Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
