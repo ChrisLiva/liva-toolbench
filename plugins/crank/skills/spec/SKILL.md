@@ -8,17 +8,26 @@ argument-hint: "[optional topic hint]"
 
 Turn what you and the user have been discussing into a single self-contained spec — part PRD (user-facing intent), part technical spec (decisions already settled).
 
+<subagent-tiers>
+This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
+
+- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
+- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
+
+Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+</subagent-tiers>
+
 <rules>
 - **Synthesize from the conversation; do not restart the interview.** If a real gap blocks the writeup, ask one targeted question; otherwise resolve it and note the assumption in the doc.
 - **No placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question), or move it to **Out of scope** with a sentence on why.
-- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`) unless otherwise specified.
+- **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
 - **Write the draft to a fresh OS temp file:** `$(mktemp -t crank-spec).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Reference real files as `path:line`** wherever you have them.
 </rules>
 
 ## Subagents
 
-If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a Sonnet subagent to find out rather than digging in your own context.
+If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context.
 
 <tradeoff>
 **Dispatching** keeps your context clean for synthesis and lets explorations run in parallel — at the cost of dispatch latency and a subagent that lacks the conversation's nuance. **Main-thread reading** keeps that nuance and is faster for a single lookup — at the cost of filling your window with source you'll never need again. Default: a one-symbol lookup in a known file, do yourself; anything wider, dispatch.
@@ -40,14 +49,14 @@ Shared design language across the crank skills (spec → plan → execute). Use 
 
 Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
 
-- Ground in the codebase first (parallel Sonnet subagents, one per layer)
+- Ground in the codebase first (parallel standard subagents, one per layer)
 - Draft (sections scaled to topic, design lens on in-scope modules)
 - Adversarially review (subagent edits the file in place)
 - Hand back
 
 ## Ground in the codebase first
 
-Before drafting Technical decisions, dispatch Sonnet subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
+Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
 
 <brief>
 Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`. Find one or two existing features that do something analogous and report: the exact surface they use (database, api, frontend, tests, etc.), the `file:line` of that surface, and one sentence on the convention you observed. Also report any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists. Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
@@ -97,7 +106,7 @@ Keep the interface as the test surface (see Testing approach): the seam you name
 
 ## Adversarially review
 
-Spawn one Opus subagent via the `Agent` tool (`description: "Adversarial spec review"`, `model: opus`) and pass it the spec's absolute path. Pass this brief verbatim:
+Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial spec review"`) and pass it the spec's absolute path. Pass this brief verbatim:
 
 <brief>
 Read the spec at `<path>`. Flag every instance of: **ambiguity** (two engineers could implement it meaningfully differently), **inaccuracy** (a claim that contradicts the codebase — verify against the repo), **criteria gaps** (a behavior the spec body describes — interaction, keybinding, edge case, state transition, validation — with no matching numbered acceptance criterion, or a criterion too vague to falsify), **off-pattern** (a layer is touched without naming the existing surface for that layer — repository function, renderer hook, query key, IPC shape — that analogous features in the codebase use; grep one or two analogous files to confirm), **shallow module** (a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test: removing it would not scatter complexity, so it's a pass-through that should fold into its caller — don't flag existing modules outside the Refactor scope, their boundaries are settled), **missed simplification** (complexity the spec itself introduces — a new mode, flag, wrapper, or special-case branch in an existing flow — where a reframing would let an existing module absorb the behavior; flag only when you can name the simpler shape, and don't flag a decision the spec records with its tradeoff), **bespoke duplication** (the spec designs a helper or utility the codebase already provides — grep to confirm, and name the canonical one), **boundary smells** (a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit), **placeholder language** (`TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved), and **missing technical detail** that would block an implementer. Don't re-open settled decisions. Then edit the file in place to fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, resolve placeholders or move them to **Out of scope**, fill in missing detail. End your reply with a one-line summary of what changed.

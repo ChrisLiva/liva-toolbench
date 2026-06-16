@@ -8,17 +8,26 @@ argument-hint: "[optional path to spec.md]"
 
 Turn the spec into something a coding agent can execute task-by-task with no further design conversation. **Bite-sized tasks. TDD rhythm. Frequent commits. No placeholders.**
 
+<subagent-tiers>
+This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
+
+- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
+- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
+
+Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+</subagent-tiers>
+
 <rules>
 - If `$ARGUMENTS` is a path, read the spec from there; otherwise use the spec already in the conversation.
 - **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
-- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`) unless otherwise specified.
+- **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
 - **No placeholders.** No `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", or references to symbols no task defines. Show code in every code step.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 </rules>
 
 ## Subagents
 
-If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a Sonnet subagent to find out rather than digging in your own context.
+If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context.
 
 <tradeoff>
 **Dispatching** keeps your context free to hold the plan's structure, and the subagent's window — not yours — absorbs the source it reads. It costs dispatch latency and requires writing a self-contained brief. **Main-thread reading** is faster for a single lookup and keeps full conversational nuance — at the cost of crowding the window you need for plan-writing. Default: a one-symbol lookup in a known file, do yourself; wide reads, dispatch.
@@ -96,7 +105,7 @@ Include whichever sections apply, scaled to the change (a small fix is 2–4 tas
 
 ## Adversarially review
 
-Spawn one Opus subagent via the `Agent` tool (`description: "Adversarial plan review"`, `model: opus`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
+Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial plan review"`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
 
 <brief>
 Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation. Flag every instance of: **non-runnable steps** (path / command / expected / instruction not concrete enough to type code from), **coverage holes** (walk the spec yourself — every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation — and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason), **name / type / path inconsistencies** across tasks or against the codebase, **placeholder language** (`TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols), **dead-seam verify steps** (a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent), **spaghetti growth** (a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept), **bespoke duplication** (embedded code re-implements a helper the codebase already provides — grep to confirm, and rewrite the step to call the canonical one), **boundary smells** (embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract), and **order problems** (a task imports what no earlier task built). Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.

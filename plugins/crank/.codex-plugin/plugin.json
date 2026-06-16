@@ -1,0 +1,10 @@
+{
+  "name": "crank",
+  "version": "5.0.0",
+  "description": "Design-first development pipeline: spec → plan → execute, taking an idea from sketch to shipped code",
+  "keywords": ["crank", "code", "agent"],
+  "interface": {
+    "displayName": "Crank",
+    "developerName": "Chris Liva"
+  }
+}

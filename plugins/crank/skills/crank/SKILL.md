@@ -8,11 +8,20 @@ argument-hint: "<idea or feature description>"
 
 You drive `$ARGUMENTS` end-to-end through `crank:spec` → `crank:plan` → `crank:execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via `spec.md` / `plan.md` / `retro.md` in a shared run directory (`RUN_DIR`) you create in Phase 0. You write nothing yourself — subagents own the docs.
 
+<subagent-tiers>
+This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
+
+- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
+- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
+
+Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+</subagent-tiers>
+
 ## Hard rules
 
 - **Never ask the user a question** except the Phase 4 cleanup offer.
 - **Always run in a fresh git worktree** created in Phase 0 — even on a clean tree, even on a feature branch.
-- **One subagent per phase**, spawned via `Agent` with the model below.
+- **One subagent per phase**, spawned via `Agent` at the tier below (see <subagent-tiers>).
 - **File handoff.** You tell each subagent the exact artifact path to write inside `RUN_DIR`; its sentinel line confirms it. Pass `RUN_DIR` to the next phase.
 - **Halt on blocker, don't retry.** If a subagent's final message contains a line starting with `BLOCKER:`, surface it with whatever artifacts exist and stop.
 - One short status line before each phase, one after. No verbose narration.
@@ -65,17 +74,17 @@ Runs in the main thread, before any subagent. Use the **`EnterWorktree` built-in
 
 ## Phases 1–3 — Subagent execution
 
-For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `description: Crank: <phase> phase`) with the model and prompt below. Each prompt is the headless override block (skipped for Phase 3) followed by the phase body, which always opens with:
+For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `description: Crank: <phase> phase`) with the tier and prompt below. Each prompt is the headless override block (skipped for Phase 3) followed by the phase body, which always opens with:
 
 > `You are running inside this git worktree: <WORKTREE_DIR> on branch <WORKTREE_BRANCH>. Run all commands from there; do not switch branches or create new worktrees.`
 
 After each subagent returns, extract the sentinel from its final message. If missing, halt and print the last ~20 lines of the return. If the return contains `BLOCKER:`, halt and surface it.
 
-| # | Phase   | Model  | Status before                  | Skill arg            | Output doc            | Sentinel                | Status after            |
-|---|---------|--------|--------------------------------|----------------------|-----------------------|-------------------------|-------------------------|
-| 1 | spec    | opus   | `Drafting spec with Opus…`     | `$ARGUMENTS`         | `<RUN_DIR>/spec.md`   | `SPEC_PATH=<abs path>`  | `Spec ready: <path>`    |
-| 2 | plan    | sonnet | `Planning with Sonnet…`        | `<RUN_DIR>/spec.md`  | `<RUN_DIR>/plan.md`   | `PLAN_PATH=<abs path>`  | `Plan ready: <path>`    |
-| 3 | execute | sonnet | `Executing plan…`              | `<RUN_DIR>/plan.md`  | `<RUN_DIR>/retro.md`  | `RETRO_PATH=<abs path>` | `Retro written: <path>` |
+| # | Phase   | Tier     | Status before              | Skill arg            | Output doc            | Sentinel                | Status after            |
+|---|---------|----------|----------------------------|----------------------|-----------------------|-------------------------|-------------------------|
+| 1 | spec    | heavy    | `Drafting spec…`           | `$ARGUMENTS`         | `<RUN_DIR>/spec.md`   | `SPEC_PATH=<abs path>`  | `Spec ready: <path>`    |
+| 2 | plan    | standard | `Planning…`                | `<RUN_DIR>/spec.md`  | `<RUN_DIR>/plan.md`   | `PLAN_PATH=<abs path>`  | `Plan ready: <path>`    |
+| 3 | execute | standard | `Executing plan…`          | `<RUN_DIR>/plan.md`  | `<RUN_DIR>/retro.md`  | `RETRO_PATH=<abs path>` | `Retro written: <path>` |
 
 **Phase body templates** (append to the worktree-context line above):
 

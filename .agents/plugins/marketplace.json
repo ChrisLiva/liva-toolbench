@@ -1,0 +1,13 @@
+{
+  "name": "liva-toolbench",
+  "interface": {
+    "displayName": "Liva Toolbench"
+  },
+  "plugins": [
+    {
+      "name": "crank",
+      "source": { "source": "local", "path": "./plugins/crank" },
+      "category": "tools"
+    }
+  ]
+}

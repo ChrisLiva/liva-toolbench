@@ -8,10 +8,19 @@ argument-hint: "[optional path to plan.md]"
 
 Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 
+<subagent-tiers>
+This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
+
+- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
+- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
+
+Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+</subagent-tiers>
+
 <rules>
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
 - **Plan is frozen** during execution — surprises become retro entries, not silent reroutes.
-- **Every subagent this skill spawns runs on Sonnet** (`model: sonnet`) unless otherwise specified.
+- **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
 </rules>
 
@@ -20,7 +29,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 Bias toward dispatch over main-thread work: exploring the codebase to settle a question, validating a plan claim against the source, implementing tasks, reviewing diffs.
 
 <tradeoff>
-**Dispatching** gives each task a clean Sonnet context — implementation quality doesn't degrade as the session grows, and reviewers see the diff with fresh eyes. It costs dispatch overhead and forces you to write self-contained briefs (the subagent knows nothing you don't pass it). **Main-thread work** keeps in-flight state (an import you just added, a convention you just noticed) at zero handoff cost — but every task's source and noise accumulates in your window, and your own review of your own work is the weakest kind. Lean toward dispatch as task count grows; stay on-thread for quick fixes that share state.
+**Dispatching** gives each task a clean, fresh context — implementation quality doesn't degrade as the session grows, and reviewers see the diff with fresh eyes. It costs dispatch overhead and forces you to write self-contained briefs (the subagent knows nothing you don't pass it). **Main-thread work** keeps in-flight state (an import you just added, a convention you just noticed) at zero handoff cost — but every task's source and noise accumulates in your window, and your own review of your own work is the weakest kind. Lean toward dispatch as task count grows; stay on-thread for quick fixes that share state.
 </tradeoff>
 
 ## Vocabulary
@@ -58,13 +67,13 @@ You decide based on the plan — there is no required mode. State the choice in 
 ## Per task
 
 1. **Implement.** Failing test → watch it fail → minimal impl → run the task's `verify` step → commit with a message that names the task. Skip TDD only when the plan explicitly does (config flips, doc edits, generated code).
-2. **Review.** Either self-review (solo mode) or dispatch a Sonnet reviewer subagent (`Agent` tool, `description: "Review task <N>"`). Two-stage rubric, in order:
+2. **Review.** Either self-review (solo mode) or dispatch a standard reviewer subagent (`Agent` tool, `description: "Review task <N>"`). Two-stage rubric, in order:
    - **Spec compliance** — does the diff implement what the task says, nothing more, nothing less?
    - **Code quality** — DRY / SOLID / YAGNI, error handling at boundaries, tests assert behavior through the interface, not internal state. Within code quality, check **depth** for any *new* module the task introduced: does it fail the deletion test (a pass-through whose complexity vanishes if removed), or is its interface nearly as complex as its implementation (shallow)? If so, the fix is to fold it into its caller — a bounded cleanup of this task's own diff, not a redesign of the plan's structure. Apply this to modules the task newly introduced and to any the plan's **Refactor scope** named for reshaping (there, the reshape *is* the task — hold it to the depth bar the spec set); existing modules outside that scope keep frozen boundaries. Also flag, bounded to this task's own diff: **spaghetti growth** (the diff threads a one-off conditional, flag, or special case through a flow the plan never named — route it behind the module that owns the concept), **bespoke duplication** (the diff re-implements a helper the codebase already provides — call the canonical one instead), and **boundary smells** (the diff uses casts, `any`, or new optional parameters to paper over an unclear contract — make the invariant explicit; if the contract itself is the problem, that's a retro entry, not a cast).
 
    Reviewer returns `APPROVED` or `CHANGES_REQUESTED` with a bulleted issue list. On changes, re-implement and re-review until approved — the loop costs turns now, but carrying a critical or important issue into the next task costs more later, because subsequent tasks build on the defect.
 
-**Subagent dispatch.** When you delegate the implementer, pass the full task text (don't make the subagent read the plan) plus context: branch, files-block, exact verify command, "do not push, do not amend earlier commits, do not touch files outside the files-block." Dispatch parallel implementers in a single message only when their files-blocks don't overlap. Implementer status: `DONE` → review; `DONE_WITH_CONCERNS` → read first, address if they affect correctness; `NEEDS_CONTEXT` → provide and re-dispatch; `BLOCKED` → escalate the model once (the Sonnet rule's sole exception), then surface to the user.
+**Subagent dispatch.** When you delegate the implementer, pass the full task text (don't make the subagent read the plan) plus context: branch, files-block, exact verify command, "do not push, do not amend earlier commits, do not touch files outside the files-block." Dispatch parallel implementers in a single message only when their files-blocks don't overlap. Implementer status: `DONE` → review; `DONE_WITH_CONCERNS` → read first, address if they affect correctness; `NEEDS_CONTEXT` → provide and re-dispatch; `BLOCKED` → escalate to the heavy tier once (the sole exception to the standard-tier default), then surface to the user.
 
 ## Verify the whole
 
@@ -72,7 +81,7 @@ Before claiming completion, three gates in order — any failure stops the run:
 
 1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's overall validation commands (suite, lint, typecheck, build) fresh this turn and read the output.
 2. **Coverage walk.** Walk the plan's Coverage table row by row; for each row, confirm its verify step ran green *this session* — re-run any that are stale or that earlier tasks may have broken. Rows marked human-only go in the retro's Open items, not silently skipped. If the plan has no Coverage table, walk the spec's acceptance criteria (or, with no spec, the plan's stated goal) and check each against the diff yourself.
-3. **Final review (fresh eyes).** Per-task reviewers saw one task at a time; this pass catches what they couldn't. Dispatch one Opus reviewer subagent (`Agent` tool, `description: "Final review vs spec"`, `model: opus`) with the spec path (or the plan path if no spec exists), the Coverage table, and the diff range (`git diff <first-commit>^..HEAD`). Pass this brief verbatim:
+3. **Final review (fresh eyes).** Per-task reviewers saw one task at a time; this pass catches what they couldn't. Dispatch one heavy reviewer subagent (`Agent` tool, `description: "Final review vs spec"`) with the spec path (or the plan path if no spec exists), the Coverage table, and the diff range (`git diff <first-commit>^..HEAD`). Pass this brief verbatim:
 
 <brief>
 Review the shipped diff against the spec. Check every acceptance criterion against the diff — met, missing, or quietly substituted. Then check cross-task coherence: naming drift between tasks, dead code an early task left once a later one landed, missing wiring between independently built pieces. Then check structural quality of the whole diff: **spaghetti growth** (a one-off conditional, flag, or special case threaded through a flow the plan never named, instead of routed behind the module that owns the concept), **bespoke duplication** (the diff re-implements a helper the codebase already provides, or two tasks independently built near-duplicate helpers that should be one — grep to confirm), and **boundary smells** (casts, `any`, or new optional parameters papering over an unclear contract where the invariant could be explicit). Cite `file:line`; don't restyle or expand scope. Return `APPROVED` or `CHANGES_REQUESTED` with a bulleted, bounded fix list.
