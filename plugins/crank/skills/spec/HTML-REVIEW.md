@@ -26,7 +26,7 @@ Tailwind + Mermaid, both via CDN (per project decision). Mermaid only where a re
 
 ## Assemble the page in this order
 
-`<head>` → sticky bar → header (spec-sheet) → *(optional Mermaid card)* → shape strip → file table *(plan)* → body sections → out-of-scope → global comment → footnote → toast → embedded markdown → export script.
+`<head>` → sticky bar → header (spec-sheet) → *(optional Mermaid card)* → shape strip → file table *(plan)* → global constraints *(plan)* → body sections → out-of-scope → global comment → footnote → toast → embedded markdown → export script.
 
 The **`<head>`, sticky bar, embedded-markdown block, and export script are load-bearing constants — reproduce them verbatim.** Everything between is filled from the doc.
 
@@ -118,6 +118,10 @@ A row of `flex-1` stat cards (`<div class="font-serif text-[26px] font-bold">`).
 
 `path` (`font-mono text-[13px]`) · action badge · responsibility. Action badge classes: `create` → `bg-green-100 text-green-800`, `modify` → `bg-amber-100 text-amber-800`, `delete` → `bg-red-100 text-red-800`. Each badge: `<span class="text-[11px] font-bold uppercase px-2 py-0.5 rounded …">create</span>`.
 
+### Filled — Global Constraints (plan only)
+
+If the plan has a **Global Constraints** section, render it right after the file table: the section-heading constant labelled `Global Constraints`, then a tight `<ul>` with one `<li>` per rule (any pinned value in `font-mono`), then a single comment box (`data-section="Global Constraints"`). These rules bind every task, so they read as a standing reference above the task list — not as another task.
+
 ### Filled — task card (plan) — repeat per task
 
 ```html
@@ -130,6 +134,8 @@ A row of `flex-1` stat cards (`<div class="font-serif text-[26px] font-bold">`).
   </summary>
   <div class="px-[1.1rem] pb-4 border-t border-stone-100">
     <div class="font-mono text-[12.5px] text-stone-500 my-3.5"><b class="text-ink">Files:</b> {{files line}}</div>
+    <!-- when the task lists an Interfaces block: -->
+    <div class="font-mono text-[12.5px] text-stone-500 mb-3.5"><b class="text-ink">Interfaces:</b> consumes {{…}} · produces {{…}}</div>
     <!-- per step: a checkbox marker + text; embed code in <pre class="code"> with <span class="c|k|s"> tokens -->
     <div class="flex gap-2.5 mb-2.5"><div class="w-[15px] h-[15px] border-[1.5px] border-stone-300 rounded mt-0.5 shrink-0"></div><div class="flex-1">{{Step N: …}}</div></div>
     <!-- verify line: -->

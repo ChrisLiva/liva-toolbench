@@ -46,9 +46,9 @@ Shared design language across the crank skills (the spec skill defines the full 
 
 Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
 
-- Ground: spec-named files read, signatures captured (delegate wide reads)
+- Ground: spec-named files read, signatures captured (delegate wide reads); Global Constraints lifted from the spec
 - File map: every touched file has path / action / responsibility
-- Tasks decomposed and ordered (each independently committable)
+- Tasks decomposed and ordered (each independently committable), each naming its Consumes / Produces interfaces
 - Steps written: code embedded where shape matters, exact verify lines
 - Coverage table: every spec criterion has a row
 - Adversarially reviewed (subagent edits the file in place)
@@ -68,7 +68,7 @@ Every `modify` should trace to a surface the spec named. A change that threads a
 
 ## Decompose
 
-A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. Order tasks so each builds on the prior green tree.
+A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate — fold setup, config, and doc edits into the task that needs them, and split only where a reviewer could reasonably reject one piece while approving its neighbor.
 
 When the spec's **Refactor scope** reshapes a module, plan test replacement, not accretion: the task that adds tests at the deepened interface also deletes the superseded tests the spec named — old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
 
@@ -95,10 +95,11 @@ Reuse the canonical helper for the job: if grounding (or the spec) surfaced an e
 Include whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
 
 - **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions).
+- **Global Constraints** — project-wide rules every task must honor: version floors, dependency limits, naming and copy rules, platform requirements — one line each, with the exact values copied verbatim from the spec. Every task's requirements implicitly include this section, and execute's per-task and final reviews run against it as a standing lens. Omit only if the spec names no such rule.
 - **Updates since spec** — drift you found while grounding. Omit if none.
 - **Refactor scope** — copy from the spec if present; the explicit allowlist of existing modules open to reshaping. Omit if the spec had none.
 - **File structure** — the table from Map the files.
-- **Tasks** — each with a `Files:` block followed by the checkbox steps.
+- **Tasks** — each with a `Files:` block, then an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty), then the checkbox steps.
 - **Coverage** — a table with one row per acceptance criterion in the spec (if the spec lacks a numbered list, enumerate the behaviors it describes yourself): `criterion | task # | verify step that proves it`. Every criterion gets a row; a row whose verify cell is empty must say why (e.g. human-only smoke check) — silence is a gap, not a pass. Execute walks this table before claiming completion.
 - **Smoke tests for the user** — anything the spec flagged as needing real-human verification. Omit if none.
 - **Out of scope** — copy from the spec.
@@ -108,7 +109,7 @@ Include whichever sections apply, scaled to the change (a small fix is 2–4 tas
 Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial plan review"`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
 
 <brief>
-Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation. Flag every instance of: **non-runnable steps** (path / command / expected / instruction not concrete enough to type code from), **coverage holes** (walk the spec yourself — every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation — and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason), **name / type / path inconsistencies** across tasks or against the codebase, **placeholder language** (`TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols), **dead-seam verify steps** (a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent), **spaghetti growth** (a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept), **bespoke duplication** (embedded code re-implements a helper the codebase already provides — grep to confirm, and rewrite the step to call the canonical one), **boundary smells** (embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract), and **order problems** (a task imports what no earlier task built). Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
+Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation. Flag every instance of: **non-runnable steps** (path / command / expected / instruction not concrete enough to type code from), **coverage holes** (walk the spec yourself — every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation — and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason), **name / type / path inconsistencies** across tasks or against the codebase, **placeholder language** (`TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols), **dead-seam verify steps** (a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent), **spaghetti growth** (a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept), **bespoke duplication** (embedded code re-implements a helper the codebase already provides — grep to confirm, and rewrite the step to call the canonical one), **boundary smells** (embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract), **interface drift** (a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses), **Global Constraints violations** (a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec), and **order problems** (a task imports what no earlier task built). Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
 </brief>
 
 Quote the reviewer's summary line back to the user.
