@@ -21,7 +21,7 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 <rules>
 - **Stay at design altitude.** A brainstorm settles the problem, the approach, the major pieces, and the consequential decisions — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
 - **Answer your own questions first.** If exploring the codebase or researching a topic could settle a question, dispatch a standard subagent to find out before asking the user. Reserve questions for what only the user knows — intent, priorities, preferences, external context.
-- **One question at a time.** Multiple-choice when you can, open-ended when you can't, always with your recommended answer and why. If a topic needs more, break it into several single questions — never stack them.
+- **One question at a time, in plain chat text** — ask, wait for the answer, then move on; stacking several at once is bewildering. Always lead with your recommended answer and why. Multiple-choice when the options are naturally discrete, open-ended when they're not — no forced lettering or length limits.
 - **Write the brief to a fresh OS temp file:** `$(mktemp -t crank-brainstorm).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
 </rules>
@@ -67,7 +67,7 @@ Before refining details, assess scope. If the idea describes several independent
 
 Walk the design tree branch by branch, resolving dependencies between decisions one at a time until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
 
-- **One question per message**, leading with your recommended answer and the reasoning behind it. Multiple-choice when the options are discrete.
+- **One question per message, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them.
 - **Explore before you ask.** If the codebase or a quick piece of research can answer it, dispatch a standard subagent and bring back the finding instead of putting the question to the user. Save their attention for intent, priorities, and preferences.
 - **Stay at altitude.** Grill the decisions that shape *what* gets built and *which* approach wins. A technical detail earns a question only when it's load-bearing for one of those decisions; otherwise it's an **Open question** the spec will ground and settle — note it and move on.
 - Focus on purpose, constraints, and success criteria — what done looks like, and what's explicitly not in this.
