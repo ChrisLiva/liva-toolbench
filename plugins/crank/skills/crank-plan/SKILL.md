@@ -1,5 +1,5 @@
 ---
-name: plan
+name: crank-plan
 description: Turn a spec — written by the spec skill or already in the conversation — into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user asks to break a spec into ordered tasks.
 argument-hint: "[optional path to spec.md]"
 ---

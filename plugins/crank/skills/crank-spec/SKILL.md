@@ -1,5 +1,5 @@
 ---
-name: spec
+name: crank-spec
 description: Synthesize the current conversation — grilling, brainstorming, prototyping — into one document that is part PRD, part technical spec, then adversarially review it in place. Use when the user asks to write up what you've been discussing.
 argument-hint: "[optional topic hint]"
 ---
@@ -70,7 +70,7 @@ Synthesize their findings into the Technical decisions section. The spec inherit
 
 Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them). Interview the user on each, one question at a time, leading with your recommended answer and the trade-off it accepts, until the decision is closed.
 
-This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see Subagents) rather than spending the user's attention on it. If the conversation came through `crank:brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to relitigate, and one less `Assumption:` line standing in for a real choice.
+This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see Subagents) rather than spending the user's attention on it. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to relitigate, and one less `Assumption:` line standing in for a real choice.
 
 Don't re-open decisions the conversation already settled, and don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 

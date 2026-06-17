@@ -1,4 +1,4 @@
-# HTML review artifact — shared by `crank:spec` and `crank:plan`
+# HTML review artifact — shared by `crank:crank-spec` and `crank:crank-plan`
 
 Render the finished spec / plan as a **single self-contained HTML page**, open it in the user's browser, and let them comment inline and ship those comments back with one click. The markdown temp file stays the source of truth — this HTML is a review *lens*, not a re-typeset of the doc.
 

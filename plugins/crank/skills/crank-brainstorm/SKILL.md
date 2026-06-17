@@ -1,12 +1,12 @@
 ---
-name: brainstorm
+name: crank-brainstorm
 description: Refine a raw idea into a high-level design brief the spec skill can build on — through collaborative dialogue, codebase exploration, and topic research. Use when the user wants to brainstorm, think an idea through, explore approaches, or figure out what to build before writing a spec.
 argument-hint: "[optional idea or topic]"
 ---
 
 # Brainstorm
 
-Turn a raw idea into a **high-level design brief** — the problem, the chosen approach, the major pieces and how they relate, the decisions that change everything downstream. The brief is the input to `crank:spec`, which grounds it in the codebase, grills the open technical decisions, and writes the full spec. Stay at design altitude: settle *what* you're building and *which shape* it takes, not the signatures and schemas the spec and plan will pin down.
+Turn a raw idea into a **high-level design brief** — the problem, the chosen approach, the major pieces and how they relate, the decisions that change everything downstream. The brief is the input to `crank:crank-spec`, which grounds it in the codebase, grills the open technical decisions, and writes the full spec. Stay at design altitude: settle *what* you're building and *which shape* it takes, not the signatures and schemas the spec and plan will pin down.
 
 <subagent-tiers>
 This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
@@ -97,9 +97,9 @@ Include whichever sections apply (omit ones that don't earn their place — this
 
 The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute). The natural next step is the spec, which turns this high-level brief into a full PRD-plus-technical-spec — grounding it in the codebase, grilling you on the **Open questions**, and adding acceptance criteria. In chat prose, offer:
 
-- **Continue to the spec** (recommended) — invoke `crank:spec` via the `Skill` tool. The approved brief is already in the conversation; tell the spec skill the brief's temp-file path so it can build straight on it.
+- **Continue to the spec** (recommended) — invoke `crank:crank-spec` via the `Skill` tool. The approved brief is already in the conversation; tell the spec skill the brief's temp-file path so it can build straight on it.
 - **Keep the temp file** — the path is known; the user can hand it to the spec skill later, feed it elsewhere, or move it.
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final brief into the chat and remove the temp file.
 
-Wait for the user's pick. Only invoke `crank:spec` if they choose to continue — don't auto-advance past the hand-off.
+Wait for the user's pick. Only invoke `crank:crank-spec` if they choose to continue — don't auto-advance past the hand-off.

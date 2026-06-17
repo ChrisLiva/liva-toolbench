@@ -37,21 +37,21 @@ Forces a spec → plan → execute sequence before any code is written. Each sta
 
 | Skill | Invoke | What it does |
 |---|---|---|
-| `crank:spec` | `/spec` | Takes an idea or prompt through a continuous one-question-at-a-time grill — exploring the codebase, sharpening decisions, updating CONTEXT.md inline, and offering ADRs sparingly. Produces an implementation-ready spec.md with a Key decisions section, exact interfaces, blast radius, size/risk, and validation plan. |
-| `crank:plan` | `/plan` | Takes a `spec.md` and decomposes it into ordered, bite-sized tasks — each with file paths, commands, exact test code, and expected output. Runs an adversarial subagent review before handing back. Produces `plan.md`. |
-| `crank:execute` | `/execute` | Executes a plan task-by-task — auto-triages between solo, sequential, or parallel subagents; runs TDD per task; gates on real verification evidence; writes retro.md. |
+| `crank:crank-spec` | `/crank-spec` | Takes an idea or prompt through a continuous one-question-at-a-time grill — exploring the codebase, sharpening decisions, updating CONTEXT.md inline, and offering ADRs sparingly. Produces an implementation-ready spec.md with a Key decisions section, exact interfaces, blast radius, size/risk, and validation plan. |
+| `crank:crank-plan` | `/crank-plan` | Takes a `spec.md` and decomposes it into ordered, bite-sized tasks — each with file paths, commands, exact test code, and expected output. Runs an adversarial subagent review before handing back. Produces `plan.md`. |
+| `crank:crank-execute` | `/crank-execute` | Executes a plan task-by-task — auto-triages between solo, sequential, or parallel subagents; runs TDD per task; gates on real verification evidence; writes retro.md. |
 | `crank:crank` | `/crank` | Runs the full pipeline (spec → plan → execute) autonomously from one prompt. Each phase runs in its own subagent inside a fresh git worktree. |
 
 **Typical flow:**
 
 ```text
-/spec I want to add rate limiting to the API
+/crank-spec I want to add rate limiting to the API
   → docs/crank/2026-05-06-rate-limiting/spec.md
 
-/plan
+/crank-plan
   → docs/crank/2026-05-06-rate-limiting/plan.md
 
-/execute
+/crank-execute
   → docs/crank/2026-05-06-rate-limiting/retro.md
 ```
 

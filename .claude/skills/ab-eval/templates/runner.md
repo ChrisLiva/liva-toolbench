@@ -7,7 +7,7 @@
 > references.
 
 You run ONE trial of an A/B eval. You play the **skill-player**: you execute the thing
-under test — **<<THING UNDER TEST: e.g. the `crank:spec` skill>>** — and produce an
+under test — **<<THING UNDER TEST: e.g. the `crank:crank-spec` skill>>** — and produce an
 artifact for a blind judge.
 
 <<GRILL EVALS ONLY:>> You do **not** play the user — a separate isolated **user-player**

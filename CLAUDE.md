@@ -107,7 +107,7 @@ preprocessing** — none of it runs under Codex:
 directory, **symlink** it into the other, and reference it with a relative link —
 `[FILE.md](FILE.md)` (the pattern mattpocock's skills use). Don't add a `_shared/`
 dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path. Example:
-`crank/skills/plan/HTML-REVIEW.md` symlinks to `../spec/HTML-REVIEW.md`, and both
+`crank/skills/crank-plan/HTML-REVIEW.md` symlinks to `../crank-spec/HTML-REVIEW.md`, and both
 `SKILL.md`s link to it relatively.
 
 > Symlinks only survive a `core.symlinks=true` checkout (macOS/Linux default). If a
@@ -304,7 +304,7 @@ Inside the session:
 When you land a load-bearing design choice inside a skill — a tradeoff a future
 review could plausibly reverse (offline vs CDN, port vs direct call, which library)
 — record it **inline in that skill's reference doc** with a `(per project decision:
-…)` marker, not just in chat. Example: `crank/skills/spec/HTML-REVIEW.md` notes
+…)` marker, not just in chat. Example: `crank/skills/crank-spec/HTML-REVIEW.md` notes
 Tailwind + Mermaid load via CDN "(per project decision)". This is what stops coding
 agents from re-suggesting the option you already ruled out.
 
