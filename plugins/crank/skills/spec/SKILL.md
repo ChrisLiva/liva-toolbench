@@ -18,7 +18,7 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 </subagent-tiers>
 
 <rules>
-- **Synthesize from the conversation; do not restart the interview.** If a real gap blocks the writeup, ask one targeted question; otherwise resolve it and note the assumption in the doc.
+- **Synthesize from the conversation; don't re-litigate what's settled.** But before drafting, grill the user on the open *technical* decisions (see Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **No placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question), or move it to **Out of scope** with a sentence on why.
 - **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
 - **Write the draft to a fresh OS temp file:** `$(mktemp -t crank-spec).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
@@ -50,6 +50,7 @@ Shared design language across the crank skills (spec → plan → execute). Use 
 Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
 
 - Ground in the codebase first (parallel standard subagents, one per layer)
+- Grill the open technical decisions (one at a time, recommendation each)
 - Draft (sections scaled to topic, design lens on in-scope modules)
 - Adversarially review (subagent edits the file in place)
 - Hand back
@@ -63,6 +64,14 @@ Investigate `<layer>` in this codebase. We're about to add `<one-sentence featur
 </brief>
 
 Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
+
+## Grill the technical decisions
+
+Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them). Interview the user on each, one question at a time, leading with your recommended answer and the trade-off it accepts, until the decision is closed.
+
+This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see Subagents) rather than spending the user's attention on it. If the conversation came through `crank:brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to relitigate, and one less `Assumption:` line standing in for a real choice.
+
+Don't re-open decisions the conversation already settled, and don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 
 ## Draft
 
