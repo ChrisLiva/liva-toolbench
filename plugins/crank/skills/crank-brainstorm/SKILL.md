@@ -84,7 +84,7 @@ Include whichever sections apply (omit ones that don't earn their place — this
 
 The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute). The natural next step is the spec, which turns this high-level brief into a full PRD-plus-technical-spec — grounding it in the codebase, grilling you on the **Open questions**, and adding acceptance criteria. In chat prose, offer:
 
-- **Continue to the spec** (recommended) — invoke `crank:crank-spec` via the `Skill` tool. The approved brief is already in the conversation; tell the spec skill the brief's temp-file path so it can build straight on it.
+- **Continue to the spec** (recommended) — run the `crank:crank-spec` skill. The approved brief is already in the conversation; tell the spec skill the brief's temp-file path so it can build straight on it.
 - **Keep the temp file** — the path is known; the user can hand it to the spec skill later, feed it elsewhere, or move it.
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final brief into the chat and remove the temp file.
