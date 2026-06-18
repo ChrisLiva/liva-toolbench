@@ -30,7 +30,7 @@ If exploring the codebase could answer a question — an exact signature, prior 
 
 ## Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, and **spaghetti growth** — read their meanings there.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
 
 ## Workflow
 
@@ -58,7 +58,7 @@ Every `modify` should trace to a surface the spec named. A change that threads a
 
 ## Decompose
 
-A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate — fold setup, config, and doc edits into the task that needs them, and split only where a reviewer could reasonably reject one piece while approving its neighbor.
+A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate — fold setup, config, and doc edits into the task that needs them, and split only where a reviewer could reasonably reject one piece while approving its neighbor.
 
 When the spec's **Refactor scope** reshapes a module, plan test replacement, not accretion: the task that adds tests at the deepened interface also deletes the superseded tests the spec named — old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
 
@@ -75,6 +75,8 @@ Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`).
 </tradeoff>
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
+
+Order the steps as **tracer bullets**: each test step is immediately followed by the implementation step that makes it pass and its verify — a multi-behavior task reads `test A → impl A → verify → test B → impl B → verify`, never every test up front then every implementation. The embedded test is a behavior spec, but the step *order* is the red-green rhythm. And an embedded test drives the **seam** the spec named, never an **implementation-detail test**: it must not mock an internal collaborator, assert on call counts or order, reach a private method, or verify through a back channel instead of the interface.
 
 Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
 
@@ -99,7 +101,25 @@ Include whichever sections apply, scaled to the change (a small fix is 2–4 tas
 Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial plan review"`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
 
 <brief>
-Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation. Flag every instance of: **non-runnable steps** (path / command / expected / instruction not concrete enough to type code from), **coverage holes** (walk the spec yourself — every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation — and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason), **name / type / path inconsistencies** across tasks or against the codebase, **placeholder language** (`TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols), **dead-seam verify steps** (a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent), **spaghetti growth** (a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept), **bespoke duplication** (embedded code re-implements a helper the codebase already provides — grep to confirm, and rewrite the step to call the canonical one), **boundary smells** (embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract), **interface drift** (a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses), **Global Constraints violations** (a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec), and **order problems** (a task imports what no earlier task built). Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
+Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation.
+
+Flag every instance of:
+
+- **non-runnable steps** — path / command / expected / instruction not concrete enough to type code from.
+- **coverage holes** — walk the spec yourself (every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation) and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason.
+- **name / type / path inconsistencies** — across tasks or against the codebase.
+- **placeholder language** — `TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols.
+- **dead-seam verify steps** — a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent.
+- **horizontal slicing** — a multi-behavior task whose steps list two or more tests before any implementation, instead of interleaving `test → impl` per behavior; reorder into vertical slices.
+- **implementation-detail tests** — an embedded test that mocks an internal collaborator, asserts on call counts or order, reaches a private method, or verifies through a back channel instead of the interface; rewrite it to drive the seam.
+- **spaghetti growth** — a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept.
+- **bespoke duplication** — embedded code re-implements a helper the codebase already provides; grep to confirm, and rewrite the step to call the canonical one.
+- **boundary smells** — embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract.
+- **interface drift** — a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses.
+- **Global Constraints violations** — a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec.
+- **order problems** — a task imports what no earlier task built.
+
+Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
 </brief>
 
 Quote the reviewer's summary line back to the user.

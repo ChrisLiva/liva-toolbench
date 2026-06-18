@@ -30,7 +30,7 @@ If exploring the codebase could answer a question — does this surface exist, w
 
 ## Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, and **port** / **adapter** — read their meanings there.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **port** / **adapter**, and the **implementation-detail test** — read their meanings there.
 
 ## Workflow
 
@@ -47,7 +47,16 @@ Create a task for each step below and mark each one complete as you finish it �
 Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
 
 <brief>
-Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`. Find one or two existing features that do something analogous and report: the exact surface they use (database, api, frontend, tests, etc.), the `file:line` of that surface, and one sentence on the convention you observed. Also report any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists. Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
+Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`.
+
+Find one or two existing features that do something analogous and report:
+
+- the exact surface they use (database, api, frontend, tests, etc.);
+- the `file:line` of that surface;
+- one sentence on the convention you observed;
+- any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
+
+Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
 </brief>
 
 Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
@@ -69,7 +78,7 @@ Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a 
 - **User stories** — `As an <actor>, I want <feature>, so that <benefit>`. Exhaustive within the scope discussed.
 - **Acceptance criteria** — a numbered list of independently checkable statements, one per behavior: every interaction, keybinding, alias, edge case, state transition, and validation. Each criterion must be falsifiable by an agent or a named human smoke check — "works correctly" is not a criterion; "pressing `Esc` closes the dialog without saving" is. This list is the contract the plan's Coverage table and execute's final review key off: a behavior not listed here is invisible to every downstream check.
 - **Technical decisions** — every architecturally-meaningful call landed on: modules touched, interfaces, schemas, data flow, dependencies (pinned), failure modes. Name the chosen option and one sentence on why; when a real alternative was on the table, also name what the chosen option gives up — a decision recorded with only its upside reads as unexamined and invites relitigating. For each layer touched (DB, IPC, renderer state, renderer queries), name the existing surface the change goes through and cite the prior-art `file:line` — `repository function: …`, `IPC endpoint: …`, `renderer hook: …`, `query key: …`. If the grounding subagents reported no analogous surface, say so explicitly. Inline prototype snippets when they pin a decision more precisely than prose (type shape, reducer, schema, query) — the decisive slice, not a demo.
-- **Testing approach** — what makes a good test for this work (external behavior, not internals), which seams to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element. A test that fires synthetic events past the production seam is a dead feature in disguise.
+- **Testing approach** — what makes a good test for this work (external behavior, not internals), which seams to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element. A test that fires synthetic events past the production seam is a dead feature in disguise. Name the tells of an **implementation-detail test** so the plan and the implementer steer clear: mocking an internal collaborator, asserting on call counts or order, reaching a private method, or verifying through a back channel (a direct DB read) instead of reading back through the interface — such a test breaks on a behavior-preserving refactor and passes while the feature is broken. The acceptance criteria already enumerate behaviors one apiece; that list is what the plan slices into separate test-then-code cycles, so keep each criterion a single falsifiable behavior.
 - **Refactor scope** (architecture-improvement specs only) — when the spec's goal *is* to change existing structure (deepen a module, consolidate, extract, re-seam), name the existing modules / files / boundaries that are intentionally in play, each with the `path` and one line on the reshape intended. This is the explicit allowlist that opens those modules to redesign downstream; anything not listed keeps its current boundary. Tests move with the seam: name the existing tests the reshape supersedes — the plan deletes them and writes new ones at the deepened interface, rather than layering new over old. Omit this section entirely for ordinary feature/fix specs.
 - **Out of scope** — what was discussed and explicitly punted.
 
@@ -105,7 +114,27 @@ Keep the interface as the test surface (see Testing approach): the seam you name
 Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial spec review"`) and pass it the spec's absolute path. Pass this brief verbatim:
 
 <brief>
-Read the spec at `<path>`. Flag every instance of: **ambiguity** (two engineers could implement it meaningfully differently), **inaccuracy** (a claim that contradicts the codebase — verify against the repo), **criteria gaps** (a behavior the spec body describes — interaction, keybinding, edge case, state transition, validation — with no matching numbered acceptance criterion, or a criterion too vague to falsify), **off-pattern** (a layer is touched without naming the existing surface for that layer — repository function, renderer hook, query key, IPC shape — that analogous features in the codebase use; grep one or two analogous files to confirm), **shallow module** (a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test: removing it would not scatter complexity, so it's a pass-through that should fold into its caller — don't flag existing modules outside the Refactor scope, their boundaries are settled), **missed simplification** (complexity the spec itself introduces — a new mode, flag, wrapper, or special-case branch in an existing flow — where a reframing would let an existing module absorb the behavior; flag only when you can name the simpler shape, and don't flag a decision the spec records with its tradeoff), **bespoke duplication** (the spec designs a helper or utility the codebase already provides — grep to confirm, and name the canonical one), **boundary smells** (a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit), **placeholder language** (`TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved), and **missing technical detail** that would block an implementer. Don't re-open settled decisions. Then edit the file in place to fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, resolve placeholders or move them to **Out of scope**, fill in missing detail. End your reply with a one-line summary of what changed.
+Read the spec at `<path>`.
+
+Flag every instance of:
+
+- **ambiguity** — two engineers could implement it meaningfully differently.
+- **inaccuracy** — a claim that contradicts the codebase; verify against the repo.
+- **criteria gaps** — a behavior the spec body describes (interaction, keybinding, edge case, state transition, validation) with no matching numbered acceptance criterion, or a criterion too vague to falsify.
+- **off-pattern** — a layer is touched without naming the existing surface for that layer (repository function, renderer hook, query key, IPC shape) that analogous features in the codebase use; grep one or two analogous files to confirm.
+- **shallow module** — a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test (removing it would not scatter complexity, so it's a pass-through that should fold into its caller). Don't flag existing modules outside the Refactor scope; their boundaries are settled.
+- **missed simplification** — complexity the spec itself introduces (a new mode, flag, wrapper, or special-case branch in an existing flow) where a reframing would let an existing module absorb the behavior; flag only when you can name the simpler shape, and don't flag a decision the spec records with its tradeoff.
+- **bespoke duplication** — the spec designs a helper or utility the codebase already provides; grep to confirm, and name the canonical one.
+- **boundary smells** — a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit.
+- **implementation-detail testing approach** — the Testing approach prescribes a test coupled to internals (mocking an internal collaborator, asserting on call counts or order, a private method, or a back-channel DB read) instead of driving the production seam a real caller reaches.
+- **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved.
+- **missing technical detail** — anything that would block an implementer.
+
+Don't re-open settled decisions.
+
+Then edit the file in place to fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, rewrite an implementation-detail testing approach to drive the seam, resolve placeholders or move them to **Out of scope**, fill in missing detail.
+
+End your reply with a one-line summary of what changed.
 </brief>
 
 Quote the reviewer's summary line back to the user.
