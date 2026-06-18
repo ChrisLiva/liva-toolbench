@@ -61,7 +61,7 @@ Walk the design tree branch by branch, resolving dependencies between decisions 
 
 ## Propose approaches
 
-Once the shape is clear enough, propose **2–3 genuinely different approaches**, conversationally, with trade-offs. Lead with your recommendation and why. Reach for the Vocabulary here: prefer the approach whose central piece is *deeper* (more behavior behind a smaller interface), and name the leverage and locality the chosen shape buys over its alternative. If an approach's key piece fails the deletion test, say so — that's a reason to drop it.
+Once the shape is clear enough, propose **2–3 approaches, each optimizing for a different thing**, conversationally, with trade-offs — name the axis each one wins on (e.g. one minimizes the moving parts, one stays most flexible for the likely next ask, one hugs the existing idiom closest). Two approaches that optimize for the same thing are the same approach — drop one. If two genuinely combine, propose the hybrid as your recommendation rather than leaving the user to merge them. Lead with your recommendation and why. Reach for the Vocabulary here: prefer the approach whose central piece is *deeper* (more behavior behind a smaller interface), and name the leverage and locality the chosen shape buys over its alternative. If an approach's key piece fails the deletion test, say so — that's a reason to drop it.
 
 ## Draft the high-level brief
 
