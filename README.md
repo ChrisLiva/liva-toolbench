@@ -15,6 +15,7 @@ Once added, install any plugin by name:
 
 ```bash
 /plugin install crank
+/plugin install effective-html
 ```
 
 ## Load a plugin without installing (for development)
@@ -31,31 +32,47 @@ Then `/reload-plugins` after any edits.
 
 ### `crank` — design-first development pipeline
 
-Forces a spec → plan → execute sequence before any code is written. Each stage produces a markdown artifact in `docs/crank/<slug>/` that feeds the next, so every implementation decision is documented and reviewable.
+Forces a **spec → plan → execute** sequence before any code is written. Each stage produces a markdown artifact (spec → plan → retro) that feeds the next, so every implementation decision is written down and reviewable before it ships. Artifacts are written to OS temp files by default; each skill offers to copy them into the repo at hand-back.
+
+`crank` ships **cross-harness** — the same `skills/` tree runs under both Claude Code and Codex (it carries both a `.claude-plugin/` and a `.codex-plugin/` manifest).
 
 **Skills:**
 
 | Skill | Invoke | What it does |
 |---|---|---|
-| `crank:crank-spec` | `/crank-spec` | Takes an idea or prompt through a continuous one-question-at-a-time grill — exploring the codebase, sharpening decisions, updating CONTEXT.md inline, and offering ADRs sparingly. Produces an implementation-ready spec.md with a Key decisions section, exact interfaces, blast radius, size/risk, and validation plan. |
-| `crank:crank-plan` | `/crank-plan` | Takes a `spec.md` and decomposes it into ordered, bite-sized tasks — each with file paths, commands, exact test code, and expected output. Runs an adversarial subagent review before handing back. Produces `plan.md`. |
-| `crank:crank-execute` | `/crank-execute` | Executes a plan task-by-task — auto-triages between solo, sequential, or parallel subagents; runs TDD per task; gates on real verification evidence; writes retro.md. |
-| `crank:crank` | `/crank` | Runs the full pipeline (spec → plan → execute) autonomously from one prompt. Each phase runs in its own subagent inside a fresh git worktree. |
+| `crank:crank-brainstorm` | `/crank-brainstorm` | Turns a raw idea into a high-level **design brief** through dialogue, codebase exploration, and research — settling the problem, approach, and consequential decisions before the spec. Optional front door to the pipeline. |
+| `crank:crank-spec` | `/crank-spec` | Writes the conversation up as a **spec** (part PRD, part technical spec) — grounds it in the codebase, grills the open technical decisions one at a time, then adversarially reviews it in place. Produces `spec.md`. |
+| `crank:crank-plan` | `/crank-plan` | Decomposes a spec into ordered, bite-sized, **TDD-flavored tasks** — each with file paths, commands, embedded test code, and exact expected output — then adversarially reviews the plan in place. Produces `plan.md`. |
+| `crank:crank-execute` | `/crank-execute` | Executes a plan **task-by-task** — picks a solo / sequential / parallel shape, runs TDD where a real seam exists, gates every "done" on verification evidence, runs a fresh-eyes final review, and writes `retro.md`. |
+| `crank:crank` | `/crank` | Runs the **full pipeline** (spec → plan → execute) autonomously from one prompt. Each phase runs in its own subagent inside a fresh git worktree; artifacts hand off through a shared run directory. |
 
-**Typical flow:**
+**Typical flow (standalone skills):**
 
 ```text
-/crank-spec I want to add rate limiting to the API
-  → docs/crank/2026-05-06-rate-limiting/spec.md
+/crank-spec  add rate limiting to the API
+  → /tmp/crank-spec.<rand>.md     (spec — a temp file)
 
-/crank-plan
-  → docs/crank/2026-05-06-rate-limiting/plan.md
+/crank-plan  /tmp/crank-spec.<rand>.md
+  → /tmp/crank-plan.<rand>.md     (plan)
 
-/crank-execute
-  → docs/crank/2026-05-06-rate-limiting/retro.md
+/crank-execute  /tmp/crank-plan.<rand>.md
+  → /tmp/crank-retro.<rand>.md    (retro)
 ```
 
-Then execute the plan task-by-task in a fresh session.
+Or run all three autonomously in one shot:
+
+```text
+/crank  add rate limiting to the API
+  → spec → plan → execute in a fresh git worktree, then a cleanup offer (merge / PR / leave / discard)
+```
+
+### `effective-html` — single-file HTML communication artifacts
+
+A user-summoned skill that nudges the coding agent to answer with a **single self-contained `.html` file** — a review, report, explainer, or throwaway editor — instead of a wall of markdown, when that's the better medium. Distilled from `anthropics/html-effectiveness`. Artifacts are offline-safe: one file, inline CSS, system fonts, no CDN.
+
+| Skill | Invoke | What it does |
+|---|---|---|
+| `effective-html:effective-html` | `/effective-html <what to make>` | Produces one offline-safe HTML artifact for the thing you describe. User-invoked only. |
 
 ---
 
@@ -63,12 +80,23 @@ Then execute the plan task-by-task in a fresh session.
 
 ```
 .claude-plugin/
-  marketplace.json       # marketplace catalog
+  marketplace.json              # Claude Code marketplace catalog
+.agents/plugins/
+  marketplace.json              # Codex marketplace index (cross-harness plugins)
 plugins/
   crank/
-    .claude-plugin/
-      plugin.json
+    .claude-plugin/plugin.json  # Claude manifest
+    .codex-plugin/plugin.json   # Codex manifest (cross-harness)
     skills/
-      spec/SKILL.md
-      plan/SKILL.md
+      crank/SKILL.md
+      crank-brainstorm/SKILL.md
+      crank-spec/SKILL.md       # owns the shared reference docs —
+      crank-plan/SKILL.md       #   VOCABULARY.md, SUBAGENT-TIERS.md, HTML-REVIEW.md,
+      crank-execute/SKILL.md    #   symlinked into the sibling skill dirs
+  effective-html/
+    .claude-plugin/plugin.json
+    .codex-plugin/plugin.json
+    skills/effective-html/SKILL.md
 ```
+
+See `CLAUDE.md` for authoring conventions, the cross-harness rules, and the version-bump checklist.
