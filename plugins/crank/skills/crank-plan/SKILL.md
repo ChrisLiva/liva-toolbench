@@ -1,6 +1,6 @@
 ---
 name: crank-plan
-description: Turn a spec — written by the spec skill or already in the conversation — into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user asks to break a spec into ordered tasks.
+description: Turn a spec into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user asks to plan a spec or break it into ordered, committable tasks.
 argument-hint: "[optional path to spec.md]"
 ---
 
@@ -9,13 +9,7 @@ argument-hint: "[optional path to spec.md]"
 Turn the spec into something a coding agent can execute task-by-task with no further design conversation. **Bite-sized tasks. TDD rhythm. Frequent commits. No placeholders.**
 
 <subagent-tiers>
-This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
-
-- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
-- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
-- **Cursor** — spawn a subagent and set its `model` per tier: standard → `cursor-composer-2-5`, heavy → `gpt-5.5-high`. Set per spawn; nothing else to configure.
-
-Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
 </subagent-tiers>
 
 <rules>
@@ -31,17 +25,12 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context.
 
 <tradeoff>
-**Dispatching** keeps your context free to hold the plan's structure, and the subagent's window — not yours — absorbs the source it reads. It costs dispatch latency and requires writing a self-contained brief. **Main-thread reading** is faster for a single lookup and keeps full conversational nuance — at the cost of crowding the window you need for plan-writing. Default: a one-symbol lookup in a known file, do yourself; wide reads, dispatch.
+**Default:** a one-symbol lookup in a known file you do yourself; wide reads you dispatch. Dispatch keeps your context free for the plan's structure and lets the subagent's window absorb the source; main-thread reading is faster for a single lookup but crowds the window you need for plan-writing.
 </tradeoff>
 
 ## Vocabulary
 
-Shared design language across the crank skills (the spec skill defines the full set). The terms this skill leans on:
-
-- **Deletion test** — imagine the module gone. If its complexity simply vanishes, it was a pass-through; if that complexity reappears across many callers, the boundary earned its place.
-- **Seam** — a place where behavior can be swapped without editing in that place; the location of an interface, and the surface tests drive (the production node/endpoint/entry point a real user reaches, never a synthetic stand-in).
-- **Dead seam** — a verify step that drives a node, handler, or endpoint the production code never wires up. It passes even if the feature is absent — worse than no check, because it hides the gap.
-- **Spaghetti growth** — a one-off conditional, flag, or special case bolted onto a flow the spec never named. A design problem, not a style nit: route the behavior behind the module that owns the concept, or surface the spec gap.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, and **spaghetti growth** — read their meanings there.
 
 ## Workflow
 

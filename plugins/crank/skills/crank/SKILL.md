@@ -9,13 +9,7 @@ argument-hint: "<idea or feature description>"
 You drive `$ARGUMENTS` end-to-end through `crank:crank-spec` → `crank:crank-plan` → `crank:crank-execute` without stopping to ask the user. Each phase runs in its own subagent; phases hand off via `spec.md` / `plan.md` / `retro.md` in a shared run directory (`RUN_DIR`) you create in Phase 0. You write nothing yourself — subagents own the docs.
 
 <subagent-tiers>
-This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
-
-- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
-- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
-- **Cursor** — spawn a subagent and set its `model` per tier: standard → `cursor-composer-2-5`, heavy → `gpt-5.5-high`. Set per spawn; nothing else to configure.
-
-Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+Each phase runs in one subagent at one of two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **heavy** = the spec phase; **standard** = the plan and execute phases.
 </subagent-tiers>
 
 ## Hard rules

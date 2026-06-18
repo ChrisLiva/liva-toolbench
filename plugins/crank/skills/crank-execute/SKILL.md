@@ -1,6 +1,6 @@
 ---
 name: crank-execute
-description: Execute an implementation plan task-by-task — TDD where the seam exists, verification evidence before every "done" claim, optional per-task subagents — then write a retro. Use when the user types /crank-execute or hands you a plan to ship.
+description: Execute an implementation plan task-by-task — TDD where a seam exists, verification evidence before every "done" claim — then write a retro. Use when the user types /crank-execute or hands you a plan to ship.
 argument-hint: "[optional path to plan.md]"
 ---
 
@@ -9,13 +9,7 @@ argument-hint: "[optional path to plan.md]"
 Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 
 <subagent-tiers>
-This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
-
-- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
-- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
-- **Cursor** — spawn a subagent and set its `model` per tier: standard → `cursor-composer-2-5`, heavy → `gpt-5.5-high`. Set per spawn; nothing else to configure.
-
-Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = exploration, implementation, per-task review; **heavy** = the final cross-task review (and a one-time escalation for a `BLOCKED` task).
 </subagent-tiers>
 
 <rules>
@@ -34,17 +28,12 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 Bias toward dispatch over main-thread work: exploring the codebase to settle a question, validating a plan claim against the source, implementing tasks, reviewing diffs.
 
 <tradeoff>
-**Dispatching** gives each task a clean, fresh context — implementation quality doesn't degrade as the session grows, and reviewers see the diff with fresh eyes. It costs dispatch overhead and forces you to write self-contained briefs (the subagent knows nothing you don't pass it). **Main-thread work** keeps in-flight state (an import you just added, a convention you just noticed) at zero handoff cost — but every task's source and noise accumulates in your window, and your own review of your own work is the weakest kind. Lean toward dispatch as task count grows; stay on-thread for quick fixes that share state.
+**Default:** stay on-thread for quick fixes that share in-flight state; lean toward dispatch as task count grows. Dispatch gives each task a clean, fresh context — quality doesn't degrade as the session grows, and reviewers see the diff with fresh eyes — at the cost of self-contained briefs; main-thread work keeps in-flight state at zero handoff cost but accumulates every task's noise in your window, and your review of your own work is the weakest kind.
 </tradeoff>
 
 ## Vocabulary
 
-Shared design language across the crank skills (the spec skill defines the full set). The terms this skill leans on:
-
-- **Depth** — how much an interface hides. A **deep** module exposes a small interface over substantial behavior; a **shallow** one exposes nearly as much as it hides.
-- **Deletion test** — imagine the module gone. If its complexity simply vanishes, it was a pass-through; if that complexity reappears across many callers, the boundary earned its place.
-- **Seam** — a place where behavior can be swapped without editing in that place; the location of an interface, and the surface tests drive (the production node/endpoint/entry point a real user reaches, never a synthetic stand-in).
-- **Spaghetti growth** — a one-off conditional, flag, or special case bolted onto a flow the plan never named. A design problem, not a style nit: route the behavior behind the module that owns the concept.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **depth**, the **deletion test**, **seam**, and **spaghetti growth** — read their meanings there.
 
 ## Workflow
 

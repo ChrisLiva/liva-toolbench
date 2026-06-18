@@ -1,6 +1,6 @@
 ---
 name: crank-brainstorm
-description: Refine a raw idea into a high-level design brief the spec skill can build on — through collaborative dialogue, codebase exploration, and topic research. Use when the user wants to brainstorm, think an idea through, explore approaches, or figure out what to build before writing a spec.
+description: Brainstorm a raw idea into a high-level design brief before writing a spec — through dialogue, codebase exploration, and research. Use when the user wants to brainstorm, think an idea through, or explore approaches before building.
 argument-hint: "[optional idea or topic]"
 ---
 
@@ -9,19 +9,12 @@ argument-hint: "[optional idea or topic]"
 Turn a raw idea into a **high-level design brief** — the problem, the chosen approach, the major pieces and how they relate, the decisions that change everything downstream. The brief is the input to `crank:crank-spec`, which grounds it in the codebase, grills the open technical decisions, and writes the full spec. Stay at design altitude: settle *what* you're building and *which shape* it takes, not the signatures and schemas the spec and plan will pin down.
 
 <subagent-tiers>
-This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
-
-- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
-- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
-- **Cursor** — spawn a subagent and set its `model` per tier: standard → `cursor-composer-2-5`, heavy → `gpt-5.5-high`. Set per spawn; nothing else to configure.
-
-Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, topic research. **heavy** = work that rewards the strongest reasoning — reserved for the downstream skills; brainstorm rarely needs it.
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = grounding, exploration, topic research; **heavy** = the downstream skills (brainstorm rarely needs it).
 </subagent-tiers>
 
 <rules>
 - **Stay at design altitude.** A brainstorm settles the problem, the approach, the major pieces, and the consequential decisions — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
 - **Answer your own questions first.** If exploring the codebase or researching a topic could settle a question, dispatch a standard subagent to find out before asking the user. Reserve questions for what only the user knows — intent, priorities, preferences, external context.
-- **One question at a time, in plain chat text** — ask, wait for the answer, then move on; stacking several at once is bewildering. Always lead with your recommended answer and why. Multiple-choice when the options are naturally discrete, open-ended when they're not — no forced lettering or length limits.
 - **Write the brief to a fresh OS temp file:** `$(mktemp -t crank-brainstorm).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
 </rules>
@@ -31,18 +24,12 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 Lean on subagents for two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this) — the latter can use web search. Dispatch one the moment a question is answerable without the user, rather than asking them or guessing.
 
 <tradeoff>
-**Dispatching** keeps your context clean for synthesis and lets explorations run in parallel — at the cost of dispatch latency and a subagent that lacks the conversation's nuance. **Main-thread reading** keeps that nuance and is faster for a single lookup — at the cost of filling your window with source you'll never need again. Default: a one-symbol lookup in a known file, do yourself; anything wider — a pattern sweep, a library comparison, prior-art research — dispatch.
+**Default:** a one-symbol lookup in a known file you do yourself; anything wider — a pattern sweep, a library comparison, prior-art research — you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
 </tradeoff>
 
 ## Vocabulary
 
-Shared design language across the crank skills (brainstorm → spec → plan → execute; the spec skill defines the full set). The terms this skill leans on when weighing one shape against another:
-
-- **Module** — anything with an interface and an implementation: a function, class, file, or larger slice.
-- **Interface** — the full contract a caller must understand: signatures, invariants, ordering, errors, config.
-- **Depth** — how much an interface hides. A **deep** module exposes a small interface over substantial behavior; a **shallow** one exposes nearly as much as it hides. Prefer the deeper shape — more capability behind a smaller interface.
-- **Leverage / locality** — the two payoffs of depth. Callers get **leverage**: more behavior per unit of interface they must learn. Maintainers get **locality**: change, bugs, and knowledge concentrate in one place. Use these words when recording why a chosen approach beat its alternative.
-- **Deletion test** — imagine a proposed piece gone. If its complexity simply vanishes, it's a pass-through and shouldn't be its own piece; if that complexity reappears across many callers, the boundary earned its place.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (and its payoffs, **leverage** / **locality**), and the **deletion test** when weighing one shape against another — read their meanings there.
 
 ## Workflow
 
@@ -67,7 +54,7 @@ Before refining details, assess scope. If the idea describes several independent
 
 Walk the design tree branch by branch, resolving dependencies between decisions one at a time until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
 
-- **One question per message, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them.
+- **One question per message, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them — no forced lettering or length limits.
 - **Explore before you ask.** If the codebase or a quick piece of research can answer it, dispatch a standard subagent and bring back the finding instead of putting the question to the user. Save their attention for intent, priorities, and preferences.
 - **Stay at altitude.** Grill the decisions that shape *what* gets built and *which* approach wins. A technical detail earns a question only when it's load-bearing for one of those decisions; otherwise it's an **Open question** the spec will ground and settle — note it and move on.
 - Focus on purpose, constraints, and success criteria — what done looks like, and what's explicitly not in this.

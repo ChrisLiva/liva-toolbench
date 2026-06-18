@@ -1,6 +1,6 @@
 ---
 name: crank-spec
-description: Synthesize the current conversation — grilling, brainstorming, prototyping — into one document that is part PRD, part technical spec, then adversarially review it in place. Use when the user asks to write up what you've been discussing.
+description: Write up the conversation as a spec — part PRD, part technical spec — then adversarially review it in place. Use when the user asks to spec out or write up what you've been discussing.
 argument-hint: "[optional topic hint]"
 ---
 
@@ -9,13 +9,7 @@ argument-hint: "[optional topic hint]"
 Turn what you and the user have been discussing into a single self-contained spec — part PRD (user-facing intent), part technical spec (decisions already settled).
 
 <subagent-tiers>
-This skill delegates work to subagents at two capability tiers. Where the body says to spawn a **standard** or **heavy** subagent, resolve the tier for the harness you are running in:
-
-- **Claude Code** — spawn via the `Agent` tool and set `model` per tier: standard → `model: sonnet`, heavy → `model: opus`. Set per spawn; nothing else to configure.
-- **Codex** — spawn a subagent and set its reasoning effort per tier on `gpt-5.5`: standard → `medium`, heavy → `high`. Set per spawn; nothing else to configure.
-- **Cursor** — spawn a subagent and set its `model` per tier: standard → `cursor-composer-2-5`, heavy → `gpt-5.5-high`. Set per spawn; nothing else to configure.
-
-Tier intent (harness-independent): **standard** = bulk work — codebase grounding, exploration, per-task review. **heavy** = work that rewards the strongest reasoning — spec drafting, adversarial review, final cross-task review.
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = spec drafting and the adversarial review.
 </subagent-tiers>
 
 <rules>
@@ -31,20 +25,12 @@ Tier intent (harness-independent): **standard** = bulk work — codebase groundi
 If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context.
 
 <tradeoff>
-**Dispatching** keeps your context clean for synthesis and lets explorations run in parallel — at the cost of dispatch latency and a subagent that lacks the conversation's nuance. **Main-thread reading** keeps that nuance and is faster for a single lookup — at the cost of filling your window with source you'll never need again. Default: a one-symbol lookup in a known file, do yourself; anything wider, dispatch.
+**Default:** a one-symbol lookup in a known file you do yourself; anything wider you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
 </tradeoff>
 
 ## Vocabulary
 
-Shared design language across the crank skills (spec → plan → execute). Use these terms with these meanings:
-
-- **Module** — anything with an interface and an implementation: a function, class, file, or larger slice.
-- **Interface** — the full contract a caller must understand: signatures, invariants, ordering, errors, config.
-- **Depth** — how much an interface hides. A **deep** module exposes a small interface over substantial behavior; a **shallow** one exposes nearly as much as it hides. Depth lives in the interface, not the implementation — a deep module may be built of many small internal parts, so long as they don't show through.
-- **Leverage / locality** — the two payoffs of depth. Callers get **leverage**: more behavior per unit of interface they must learn. Maintainers get **locality**: change, bugs, and knowledge concentrate in one place instead of spreading across callers. Use these words when recording why a chosen design beat its alternative.
-- **Deletion test** — imagine the module gone. If its complexity simply vanishes, it was a pass-through; if that complexity reappears across many callers, the boundary earned its place.
-- **Seam** — a place where behavior can be swapped without editing in that place; the location of an interface, and the surface tests drive (the production node/endpoint/entry point a real user reaches, never a synthetic stand-in).
-- **Port / adapter** — a seam that crosses a dependency: the **port** is the interface, an **adapter** is a concrete fill (production HTTP/db vs. in-memory test double). Two adapters justify a port; one is just indirection.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, and **port** / **adapter** — read their meanings there.
 
 ## Workflow
 
