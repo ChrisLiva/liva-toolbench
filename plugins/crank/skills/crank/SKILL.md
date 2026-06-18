@@ -27,7 +27,7 @@ Prepend verbatim to every Phase 1–2 subagent prompt. Phase 3 (`execute`) is al
 
 > **Headless mode.** You run under autonomous orchestration inside a pre-created git worktree. You have no user. Override every interactive gate in the skill you invoke:
 > - At every options-and-recommendation gate, silently pick the recommended option.
-> - For non-obvious picks (where the recommendation isn't clearly the best fit), write an `Assumption: <what you assumed and why>` line into the relevant doc section.
+> - **The two-option test.** For a non-obvious pick (the recommendation isn't clearly the best fit), write an `Assumption: <what you assumed and why>` line into the relevant doc section — log one whenever the gate offered ≥2 plausible options or its recommendation named a tradeoff it accepts (the picks a present user might have overridden); a gate with one clear answer needs no line.
 > - The orchestrator has already entered a fresh worktree on a `crank/<slug>` branch via `EnterWorktree`. Never run `git worktree`, `git checkout -b`, `EnterWorktree`, `ExitWorktree`, or any branch-switching command.
 > - Skip every other interactive step the skill offers — the one-targeted-question allowance, the hand-back menu, any finish-up ask. Proceed straight to writing the output doc.
 > - Write the output doc to the exact path given in your prompt — skip the skill's `mktemp` step and its hand-back menu.
@@ -73,7 +73,7 @@ For each phase, spawn one `Agent` (`subagent_type: general-purpose`, `descriptio
 
 > `You are running inside this git worktree: <WORKTREE_DIR> on branch <WORKTREE_BRANCH>. Run all commands from there; do not switch branches or create new worktrees.`
 
-After each subagent returns, extract the sentinel from its final message. If missing, halt and print the last ~20 lines of the return. If the return contains `BLOCKER:`, halt and surface it.
+After each subagent returns, extract the sentinel from its final message. If missing, halt and print the last ~20 lines of the return. If its final message has a line starting with `BLOCKER:`, halt and surface it.
 
 | # | Phase   | Tier     | Status before              | Skill arg            | Output doc            | Sentinel                | Status after            |
 |---|---------|----------|----------------------------|----------------------|-----------------------|-------------------------|-------------------------|
