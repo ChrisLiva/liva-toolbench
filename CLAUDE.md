@@ -115,6 +115,30 @@ dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path. Example:
 
 ---
 
+## Bumping a plugin version
+
+A plugin's version is **duplicated across several files that must be kept in sync by hand** — bump them together in one commit, or installers read a stale version. For a plugin named `<name>`:
+
+| File | What to change | Applies to |
+| ---- | -------------- | ---------- |
+| `plugins/<name>/.claude-plugin/plugin.json` | top-level `"version"` | every plugin |
+| `.claude-plugin/marketplace.json` → the plugin's entry in `plugins[]` | that entry's `"version"` | every plugin |
+| `plugins/<name>/.codex-plugin/plugin.json` | top-level `"version"` | **cross-harness plugins only** |
+
+So a **Claude-only** plugin has **two** version strings to bump; a **cross-harness** plugin (e.g. `crank`) has **three**. Forgetting the marketplace-catalog copy is the easy miss — the per-plugin manifest and the catalog entry are separate files.
+
+`.agents/plugins/marketplace.json` (the Codex marketplace index) carries **no** `version` field — it only lists `source`/`category`, so there is nothing to bump there. After a cross-harness bump, re-run `codex plugin add <name>@liva-toolbench` to refresh its snapshot instead.
+
+Verify every copy agrees before committing — all should show the **same new** version with no straggler on the old number:
+
+```bash
+grep -rn --include='*.json' '"version"' plugins/<name> .claude-plugin/marketplace.json
+```
+
+(The `marketplace.json` grep also lists sibling plugins; read the line for `<name>`.)
+
+---
+
 ## Magic syntax cheat sheet
 
 > **Claude-only.** Everything in this section is Claude Code preprocessing — it does
