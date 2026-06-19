@@ -76,7 +76,7 @@ Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`).
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
 
-Order the steps as **tracer bullets**: each test step is immediately followed by the implementation step that makes it pass and its verify — a multi-behavior task reads `test A → impl A → verify → test B → impl B → verify`, never every test up front then every implementation. The embedded test is a behavior spec, but the step *order* is the red-green rhythm. And an embedded test drives the **seam** the spec named, never an **implementation-detail test**: it must not mock an internal collaborator, assert on call counts or order, reach a private method, or verify through a back channel instead of the interface.
+Order the steps as **tracer bullets**: each test step is immediately followed by the implementation step that makes it pass and its verify — a multi-behavior task reads `test A → impl A → verify → test B → impl B → verify`, never every test up front then every implementation. The embedded test is a behavior spec, but the step *order* is the red-green rhythm. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
 
 Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
 
@@ -136,6 +136,6 @@ In chat prose, offer:
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final contents into the chat and remove the temp file (and its `.html` sibling, if one was rendered).
 
-When the user pastes a block beginning `> Source: <path>`, apply each `## <heading>` comment to that markdown and resolve every `Out of scope → requested IN scope` item (fold it into the plan as a real task/step, or push back with a reason — never drop it silently), then re-render the HTML and reopen it. See HTML-REVIEW.md's "Applying a pasted review."
+When the user pastes a block beginning `> Source: <path>`, apply it per HTML-REVIEW.md's "Applying a pasted review" — in a plan, a `requested IN scope` item folds in as a real task / step (or push back with a reason; never drop it silently).
 
 Then stop. Do not auto-invoke other skills or continue past the handback.

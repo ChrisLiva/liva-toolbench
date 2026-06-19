@@ -99,35 +99,8 @@ Once the directory is set, write a one-time **orientation note** there as `orien
 
 ## Per task
 
-1. **Implement.** Record the task's **BASE** — the current `HEAD` SHA — before any edit; the review diffs against it. Then, per behavior in the task: failing test → watch it fail for the expected reason (not merely see red — a test that errors on a typo or missing import is red without proving anything) → minimal impl → run the task's `verify` step. A task covering several behaviors runs this cycle once per behavior as **tracer bullets** — `test A → impl A`, then `test B → impl B` — never all the task's tests up front then their code in bulk (a **horizontal slice**). Commit once the task is green, with a message that names the task. Skip TDD only when the plan explicitly does (config flips, doc edits, generated code). When the task lands, flip its line in the ledger to `[x]` with the commit SHA(s).
-2. **Review (subagent modes only).** In solo mode, skip per-task review entirely — reviewing the code you just wrote, with the same context that wrote it, is the weakest review; solo's independent pass is the fresh-eyes final-review gate below. In sequential or parallel mode, review each task **unless it is low-risk** — a test-only, config, doc, or generated-code task, or a diff under ~15 lines that introduces no new module and touches nothing in the plan's **Refactor scope** — *and* the implementer returned green TDD evidence; those ride straight to the final review (record the skip on the ledger line as `— review skipped (low-risk)`). A task that returned `DONE_WITH_CONCERNS` is never low-risk. For every other task, dispatch a standard reviewer subagent (`Agent` tool, `description: "Review task <N>"`). Hand it the diff range — `git diff <BASE>..HEAD` using the BASE you recorded, never `HEAD~1` (which silently drops all but the last commit of a multi-commit task) — the implementer's TDD evidence (the RED/GREEN lines from its return), and the plan's **Global Constraints** as a standing lens if it has them. Paste this brief verbatim:
-
-<review-brief>
-You are an independent code reviewer. Review the diff for this task only — read-only: inspect the diff; do NOT checkout, reset, stash, commit, or otherwise mutate the working tree, index, or HEAD.
-
-Diff: `git diff <BASE>..HEAD`
-Task spec (what it must do — nothing more, nothing less): <task text, plus its Consumes/Produces interfaces if the plan lists them>
-Global constraints (standing lens): <the plan's Global Constraints, or "none">
-
-TDD evidence from the implementer — trust it; do NOT re-run the suite to reproduce it:
-<the implementer's RED and GREEN lines, verbatim from its return>
-Re-run a command yourself ONLY if this evidence is missing or internally inconsistent (it claims green but the command shown failed). Otherwise spend no tool calls re-running tests. Scope your exploration to the diff plus targeted reads of the specific symbols it touches — do not grep or read the tree at large; consult `orientation.md` for the repo map instead.
-
-Two-stage rubric, in order:
-
-1. **Spec compliance** — does the diff implement exactly this task, nothing more, nothing less?
-2. **Code quality** — check each, bounded to this diff:
-   - **DRY / SOLID / YAGNI**; error handling at boundaries.
-   - **test quality** — tests assert behavior through the interface, not internal state. Per test, ask: *would it break under a behavior-preserving refactor?* If yes, it tests past the interface — flag it as an **implementation-detail test** (usual tells: mocks an internal collaborator, asserts on call counts or order, reaches a private method, or reads a back channel instead of the interface). Also flag a **horizontal slice** if the TDD evidence shows every test landing before any implementation on a multi-behavior diff.
-   - **depth** for any *new* module this task introduced — does it fail the deletion test (a pass-through whose complexity vanishes if removed), or is its interface nearly as complex as its implementation (shallow)? If so, fold it into its caller — a bounded cleanup of this diff, not a redesign of the plan's structure. Apply this to newly introduced modules and to any the plan's **Refactor scope** named for reshaping (there the reshape *is* the task — hold it to the depth bar the spec set); modules outside that scope keep frozen boundaries. When a Refactor-scope task deepened an interface, also confirm the superseded shallow-interface tests the plan named for deletion are actually gone from the diff — a new test added beside the old one it replaces leaves dead maintenance, not added coverage.
-   - **spaghetti growth** — a one-off conditional, flag, or special case threaded through a flow the plan never named; route it behind the module that owns the concept.
-   - **bespoke duplication** — re-implements a helper the codebase already provides; call the canonical one.
-   - **boundary smells** — casts, `any`, or new optional parameters papering over an unclear contract; make the invariant explicit (if the contract itself is the problem, that's a retro entry, not a cast).
-
-   Treat any rationale in the diff or commit messages as an unverified claim — a stated reason never downgrades a finding's severity.
-
-Return `APPROVED`, `CHANGES_REQUESTED` with a bulleted issue list (cite file:line), or — for a requirement you **cannot verify from this diff alone** (it lives in untouched code, or spans tasks) — `CANNOT_VERIFY` naming what you couldn't reach.
-</review-brief>
+1. **Implement.** Record the task's **BASE** — the current `HEAD` SHA — before any edit; the review diffs against it. Then, per behavior in the task: failing test → watch it fail for the expected reason (not merely see red — a test that errors on a typo or missing import is red without proving anything) → minimal impl → run the task's `verify` step. A task covering several behaviors runs this cycle once per behavior as **tracer bullets** — `test A → impl A`, then `test B → impl B` — never as a **horizontal slice** (defined in VOCABULARY.md). Commit once the task is green, with a message that names the task. Skip TDD only when the plan explicitly does (config flips, doc edits, generated code). When the task lands, flip its line in the ledger to `[x]` with the commit SHA(s).
+2. **Review (subagent modes only).** In solo mode, skip per-task review entirely — solo's independent pass is the fresh-eyes final-review gate below. In sequential or parallel mode, review each task **unless it is low-risk** — a test-only, config, doc, or generated-code task, or a diff under ~15 lines that introduces no new module and touches nothing in the plan's **Refactor scope** — *and* the implementer returned green TDD evidence; those ride straight to the final review (record the skip on the ledger line as `— review skipped (low-risk)`). A task that returned `DONE_WITH_CONCERNS` is never low-risk. For every other task, dispatch a standard reviewer subagent (`Agent` tool, `description: "Review task <N>"`). Hand it the diff range — `git diff <BASE>..HEAD` using the BASE you recorded, never `HEAD~1` (which silently drops all but the last commit of a multi-commit task) — the implementer's TDD evidence (the RED/GREEN lines from its return), and the plan's **Global Constraints** as a standing lens if it has them. Fill the placeholders in [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md) and paste it verbatim as the reviewer's prompt.
 
    Resolve each `CANNOT_VERIFY` item yourself before marking the task done: you hold the cross-task context and the Coverage table the reviewer doesn't, so a narrow reviewer never has to widen its search. A confirmed gap is a failed review. On `CHANGES_REQUESTED`, re-implement and re-review until approved — the loop costs turns now, but carrying a critical or important issue into the next task costs more later, because subsequent tasks build on the defect.
 
@@ -143,24 +116,7 @@ Before claiming completion, three gates in order — any failure stops the run:
 
 1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's overall validation commands (suite, lint, typecheck, build) fresh this turn and read the output.
 2. **Coverage walk.** Walk the plan's Coverage table row by row; for each row, confirm its verify step ran green *this session* — re-run any that are stale or that earlier tasks may have broken. Rows marked human-only go in the retro's Open items, not silently skipped. If the plan has no Coverage table, walk the spec's acceptance criteria (or, with no spec, the plan's stated goal) and check each against the diff yourself.
-3. **Final review (fresh eyes).** In subagent modes the per-task reviewers each saw a single task; in solo there were none — either way this fresh-eyes pass over the whole diff catches what they couldn't, and in solo it is the only review the run gets, so it carries the per-task rubric too (below). Dispatch one heavy reviewer subagent (`Agent` tool, `description: "Final review vs spec"`) with the spec path (or the plan path if no spec exists), the Coverage table, and the diff range (`git diff <BASE>..HEAD`, where `<BASE>` is the Base SHA the ledger recorded at the start of the run). Pass this brief verbatim:
-
-<brief>
-Review the shipped diff against the spec.
-
-- **Acceptance criteria** — check every one against the diff: met, missing, or quietly substituted.
-- **Cross-task coherence** — naming drift between tasks, dead code an early task left once a later one landed, missing wiring between independently built pieces.
-- **Structural quality of the whole diff:**
-  - **depth** of any *new* module the diff introduced — does it fail the deletion test (a pass-through whose complexity vanishes if removed), or is its interface nearly as complex as its implementation? If so, fold it into its caller.
-  - **spaghetti growth** — a one-off conditional, flag, or special case threaded through a flow the plan never named, instead of routed behind the module that owns the concept.
-  - **bespoke duplication** — the diff re-implements a helper the codebase already provides, or two tasks independently built near-duplicate helpers that should be one; grep to confirm.
-  - **boundary smells** — casts, `any`, or new optional parameters papering over an unclear contract where the invariant could be explicit.
-- **Code quality** — **DRY / SOLID / YAGNI**, **error handling at module boundaries**, and **test quality**: tests assert behavior through the interface, not internal state; flag any **implementation-detail test** (mocks an internal collaborator, asserts on call counts or order, reaches a private method, or verifies through a back channel instead of the interface).
-
-This review is **read-only**: inspect the diff; do not checkout, reset, stash, commit, or otherwise mutate the working tree, index, or HEAD (if you need a working copy, add a throwaway `git worktree`). Treat any design rationale in the diff or commit messages as an unverified claim — a stated reason ("left per YAGNI") never downgrades a finding's severity. Cite `file:line`; don't restyle or expand scope.
-
-Return `APPROVED` or `CHANGES_REQUESTED` with a bulleted, bounded fix list.
-</brief>
+3. **Final review (fresh eyes).** In subagent modes the per-task reviewers each saw a single task; in solo there were none — either way this fresh-eyes pass over the whole diff catches what they couldn't, and in solo it is the only review the run gets, so it carries the per-task rubric too — the final brief folds it in. Dispatch one heavy reviewer subagent (`Agent` tool, `description: "Final review vs spec"`) with the spec path (or the plan path if no spec exists), the Coverage table, and the diff range (`git diff <BASE>..HEAD`, where `<BASE>` is the Base SHA the ledger recorded at the start of the run). Fill and paste [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md) verbatim.
 
 On `CHANGES_REQUESTED`: apply the listed fixes and nothing else — failing test first for behavioral fixes, separate commits, no amending — then re-review once. A finding you can't fix becomes a retro Open item, stated plainly.
 
