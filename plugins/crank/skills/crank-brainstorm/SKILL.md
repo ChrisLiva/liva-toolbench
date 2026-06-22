@@ -34,6 +34,36 @@ Lean on subagents for two jobs: **explore the codebase** (does this surface exis
 **Default:** a one-symbol lookup in a known file you do yourself; anything wider — a pattern sweep, a library comparison, prior-art research — you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
 </tradeoff>
 
+Dispatch each job with the matching brief, filled in.
+
+**Explore the codebase:**
+
+<brief>
+Explore `<area or claim>` in this codebase. We're brainstorming `<one-sentence idea>`.
+
+Report:
+
+- whether the surface or pattern in question exists, and the `file:line` where it lives (or "not found");
+- one or two existing features that do something analogous, and the convention each follows (`file:line`);
+- any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (`file:line`).
+
+Don't propose a design — just surface what already exists and what's true. If the claim I'm checking is wrong, say so plainly.
+</brief>
+
+**Research a topic** (web search in scope):
+
+<brief>
+Research `<question>` to inform a design decision. We're weighing `<the options on the table>`.
+
+Report:
+
+- the leading approaches or libraries, and for each what it optimizes for and its main trade-off;
+- how comparable projects solve this, with a source link each;
+- a recommendation for our context (`<one line of constraints>`) and what it gives up.
+
+Cite sources, and flag what you're unsure of rather than asserting it.
+</brief>
+
 This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = grounding, exploration, topic research; **heavy** = the downstream skills (brainstorm rarely needs it).
 
 ### Vocabulary
@@ -68,7 +98,7 @@ Before refining details, assess scope. If the idea describes several independent
 Walk the design tree branch by branch, resolving dependencies between decisions one at a time until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
 
 - **One question per message, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them — no forced lettering or length limits.
-- **Explore before you ask** (see References → Subagents): if the codebase or a quick search can settle a question, dispatch a standard subagent rather than spend the user's attention on it.
+- **Explore before you ask.** If the codebase or a quick search can settle a question, dispatch a subagent rather than spend the user's attention on it.
 - **Stay at altitude.** A technical detail earns a question only when it's load-bearing for a *what*/*which-approach* decision; otherwise note it as an **Open question** for the spec and move on.
 - Focus on purpose, constraints, and success criteria — what done looks like, and what's explicitly not in this.
 

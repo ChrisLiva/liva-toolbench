@@ -44,6 +44,8 @@ If exploring the codebase could answer a question — an exact signature, prior 
 
 This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
 
+Set the tier explicitly on every spawn — never leave it to default. (In Claude Code an unset `model` silently inherits the orchestrator's heavy/opus tier, spending heavy budget on bulk work; SUBAGENT-TIERS.md carries the per-harness values.)
+
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
@@ -84,7 +86,7 @@ Every `modify` should trace to a surface the spec named. A change that threads a
 
 ### 3. Decompose
 
-A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate — fold setup, config, and doc edits into the task that needs them, and split only where a reviewer could reasonably reject one piece while approving its neighbor.
+A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that ends on a green tree and carries its own test cycle. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
 
 When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones. Old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
 
@@ -96,7 +98,7 @@ Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Wh
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
 
-Order the steps as **tracer bullets**: each test step is immediately followed by the implementation step that makes it pass and its verify — a multi-behavior task reads `test A → impl A → verify → test B → impl B → verify`, never every test up front then every implementation. The embedded test is a behavior spec, but the step *order* is the red-green rhythm. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
+Keep the step *order* in the **tracer-bullet** rhythm set in Decompose — each test step immediately followed by the implementation step that makes it pass and its verify (`test A → impl A → verify → test B → impl B → verify`), never every test up front. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
 
 Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
 

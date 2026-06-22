@@ -13,7 +13,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 ## Hard Rules
 
 - **Before drafting, grill the user on the open *technical* decisions** (see Flow → Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
-- **No placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
+- **Placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
 - **Every subagent this skill spawns runs at the standard tier** (see References → Subagents) unless otherwise specified.
 - **Write the draft to a fresh OS temp file:** `$(mktemp -t crank-spec).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Reference real files as `path:line`** wherever you have them.
@@ -24,7 +24,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 
 ### Simplify first
 
-Before locking Technical decisions, hunt for the re-framing that makes the change smaller — not the design that best organizes its complexity. The strongest version of a feature is often a natural extension of a module that already exists, where branches, modes, and layers disappear instead of accumulating. Prefer the design that deletes complexity over the one that rearranges it.
+Before locking Technical decisions, hunt for the re-framing that makes the change smaller — not the design that best organizes its complexity. The strongest version of a feature is often a natural extension of a module that already exists; prefer the design that deletes complexity over the one that rearranges it.
 
 Treat each of these as a design problem to resolve in the spec, never a detail to leave for the implementer:
 
@@ -39,8 +39,8 @@ Working code that makes the surrounding code harder to reason about is a spec bu
 
 Apply to any module that is **new** (the grounding subagents reported no analogous surface) **or named in the Refactor scope** (an existing module the spec intends to reshape). For a module that merely extends existing prior art and isn't in the Refactor scope, follow the established pattern and skip this lens. For an in-scope module, before you name the chosen design:
 
-- **Deletion test.** Imagine the new module gone. If its complexity simply vanishes, it's a pass-through — fold it into its caller and don't spec it as a module. It earns a boundary only if deleting it would scatter that complexity across many callers.
-- **Design it twice.** Sketch the module two ways under *different binding constraints* so they genuinely diverge — e.g. one *minimize the interface*: 1–3 entry points, max capability each; the other *maximize flexibility*: let the caller compose the behavior. Pick the deeper one — more capability behind a smaller interface. Record the chosen shape, one sentence on why it beat the alternative, and one sentence on what it gives up (the alternative's strongest property). A second sketch that's a near-twin of the first means the constraint wasn't binding — re-sketch it.
+- **Deletion test** (VOCABULARY.md). Run it on the module: if deleting it wouldn't scatter complexity across its callers, it's a pass-through — fold it into the caller and don't spec it as a module.
+- **Design it twice.** Sketch the module two ways under *different binding constraints* so they genuinely diverge — e.g. one *minimize the interface*: 1–3 entry points, max capability each; the other *maximize flexibility*: let the caller compose the behavior. Pick the **deeper** one. Record the chosen shape, one sentence on why it beat the alternative, and one sentence on what it gives up (the alternative's strongest property). A second sketch that's a near-twin of the first means the constraint wasn't binding — re-sketch it.
 - **Seam & dependencies.** Classify each dependency the module crosses: **in-process** (no seam — test through the interface directly), **local-substitutable** (test stand-in like PGLite/in-memory FS — internal seam), **remote-but-owned** or **true-external** (define a port at the seam; production adapter + test adapter).
 
 <tradeoff>
@@ -60,6 +60,8 @@ If exploring the codebase could answer a question — does this surface exist, w
 </tradeoff>
 
 This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review.
+
+Set the tier explicitly on every spawn — never leave it to default. (In Claude Code an unset `model` silently inherits the orchestrator's heavy/opus tier, spending heavy budget on bulk work; SUBAGENT-TIERS.md carries the per-harness values.)
 
 ### Vocabulary
 
