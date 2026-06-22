@@ -6,84 +6,21 @@ argument-hint: "[optional topic hint]"
 
 # Spec
 
+## Goal
+
 Turn what you and the user have been discussing, or the user's idea, into a single self-contained spec — part PRD (user-facing intent), part technical spec (decisions already settled).
 
-<subagent-tiers>
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review.
-</subagent-tiers>
+## Hard Rules
 
-<rules>
-- **Synthesize from the conversation; don't re-litigate what's settled.**
-- **Before drafting, grill the user on the open *technical* decisions** (see Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
+- **Before drafting, grill the user on the open *technical* decisions** (see Flow → Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **No placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
-- **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
+- **Every subagent this skill spawns runs at the standard tier** (see References → Subagents) unless otherwise specified.
 - **Write the draft to a fresh OS temp file:** `$(mktemp -t crank-spec).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Reference real files as `path:line`** wherever you have them.
-</rules>
 
-## Subagents
+## Guidelines
 
-If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context.
-
-<tradeoff>
-**Default:** a one-symbol lookup in a known file you do yourself; anything wider you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
-</tradeoff>
-
-## Vocabulary
-
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **port** / **adapter**, and the **implementation-detail test** — read their meanings there.
-
-## Workflow
-
-Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
-
-- Ground in the codebase first (parallel standard subagents, one per layer)
-- Grill the open technical decisions (one at a time, recommendation each)
-- Draft (sections scaled to topic, design lens on in-scope modules)
-- Adversarially review (subagent edits the file in place)
-- Hand back
-
-## Ground in the codebase first
-
-Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
-
-<brief>
-Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`.
-
-Find one or two existing features that do something analogous and report:
-
-- the exact surface they use (database, api, frontend, tests, etc.);
-- the `file:line` of that surface;
-- one sentence on the convention you observed;
-- any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
-
-Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
-</brief>
-
-Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
-
-## Grill the technical decisions
-
-Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
-
-Interview the user on each, one question at a time, in plain chat text — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the trade-off it accepts, and wait for the response before the next question. Offer discrete options to frame a genuine choice, never as a neutral menu — your pick still leads.
-
-This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see Subagents) rather than spending the user's attention on it. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
-
-Don't re-open decisions the conversation already settled, and don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
-
-## Draft
-
-Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
-
-- **Problem** — what the user is trying to solve, in their words.
-- **Solution** — the proposed change, in user-facing terms.
-- **User stories** — `As an <actor>, I want <feature>, so that <benefit>`. Exhaustive within the scope discussed.
-- **Acceptance criteria** — a numbered list of independently checkable statements, one per behavior: every interaction, keybinding, alias, edge case, state transition, and validation. Each criterion must be falsifiable by an agent or a named human smoke check — "works correctly" is not a criterion; "pressing `Esc` closes the dialog without saving" is. This list is the contract the plan's Coverage table and execute's final review key off: a behavior not listed here is invisible to every downstream check.
-- **Technical decisions** — every architecturally-meaningful call landed on: modules touched, interfaces, schemas, data flow, dependencies (pinned), failure modes. Name the chosen option and one sentence on why; when a real alternative was on the table, also name what the chosen option gives up — a decision recorded with only its upside reads as unexamined and invites re-litigating. For each layer touched (DB, IPC, renderer state, renderer queries), name the existing surface the change goes through and cite the prior-art `file:line` — `repository function: …`, `IPC endpoint: …`, `renderer hook: …`, `query key: …`. If the grounding subagents reported no analogous surface, say so explicitly. Inline prototype snippets when they pin a decision more precisely than prose (type shape, reducer, schema, query) — the decisive slice, not a demo.
-- **Testing approach** — what makes a good test for this work (external behavior, not internals), which seams to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element. A test that fires synthetic events past the production seam is a dead feature in disguise. Steer the plan and implementer away from an **implementation-detail test** (defined in VOCABULARY.md) toward a behavior test driven through the seam. The plan slices the acceptance criteria into separate test-then-code cycles, so this section sets the bar each cycle's test must clear — it doesn't restate the criteria.
-- **Refactor scope** (architecture-improvement specs only) — when the spec's goal *is* to change existing structure (deepen a module, consolidate, extract, re-seam), name the existing modules / files / boundaries that are intentionally in play, each with the `path` and one line on the reshape intended. This is the explicit allowlist that opens those modules to redesign downstream; anything not listed keeps its current boundary. Tests move with the seam: name the existing tests the reshape supersedes — the plan deletes them and writes new ones at the deepened interface, rather than layering new over old. Omit this section entirely for ordinary feature/fix specs.
-- **Out of scope** — what was discussed and explicitly punted.
+- **Synthesize from the conversation; don't re-litigate what's settled.**
 
 ### Simplify first
 
@@ -110,9 +47,79 @@ Apply to any module that is **new** (the grounding subagents reported no analogo
 **A port** buys swappability and a clean test seam — at the cost of an extra layer every reader must traverse. **Direct use** keeps the call path flat and obvious — at the cost of coupling tests to the real dependency. That second adapter is exactly what the **remote-but-owned** / **true-external** rows above buy you — outside them a single-adapter seam pays the indirection cost and buys nothing.
 </tradeoff>
 
-Keep the interface as the test surface (see Testing approach): the seam you name here is the one the tests drive.
+Keep the interface as the test surface (see Deliverables → Testing approach): the seam you name here is the one the tests drive.
 
-## Adversarially review
+## References
+
+### Subagents
+
+If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context.
+
+<tradeoff>
+**Default:** a one-symbol lookup in a known file you do yourself; anything wider you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
+</tradeoff>
+
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review.
+
+### Vocabulary
+
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **port** / **adapter**, and the **implementation-detail test** — read their meanings there.
+
+### HTML review guide
+
+The interactive-review render steps live in [HTML-REVIEW.md](HTML-REVIEW.md); Flow → Hand back follows it when the user opts in.
+
+## Deliverables
+
+A single self-contained spec written to the temp file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
+
+- **Problem** — what the user is trying to solve, in their words.
+- **Solution** — the proposed change, in user-facing terms.
+- **User stories** — `As an <actor>, I want <feature>, so that <benefit>`. Exhaustive within the scope discussed.
+- **Acceptance criteria** — a numbered list of independently checkable statements, one per behavior: every interaction, keybinding, alias, edge case, state transition, and validation. Each criterion must be falsifiable by an agent or a named human smoke check — "works correctly" is not a criterion; "pressing `Esc` closes the dialog without saving" is. This list is the contract the plan's Coverage table and execute's final review key off: a behavior not listed here is invisible to every downstream check.
+- **Technical decisions** — every architecturally-meaningful call landed on: modules touched, interfaces, schemas, data flow, dependencies (pinned), failure modes. Name the chosen option and one sentence on why; when a real alternative was on the table, also name what the chosen option gives up — a decision recorded with only its upside reads as unexamined and invites re-litigating. For each layer touched (DB, IPC, renderer state, renderer queries), name the existing surface the change goes through and cite the prior-art `file:line` — `repository function: …`, `IPC endpoint: …`, `renderer hook: …`, `query key: …`. If the grounding subagents reported no analogous surface, say so explicitly. Inline prototype snippets when they pin a decision more precisely than prose (type shape, reducer, schema, query) — the decisive slice, not a demo.
+- **Testing approach** — what makes a good test for this work (external behavior, not internals), which seams to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element. A test that fires synthetic events past the production seam is a dead feature in disguise. Steer the plan and implementer away from an **implementation-detail test** (defined in VOCABULARY.md) toward a behavior test driven through the seam. The plan slices the acceptance criteria into separate test-then-code cycles, so this section sets the bar each cycle's test must clear — it doesn't restate the criteria.
+- **Refactor scope** (architecture-improvement specs only) — when the spec's goal *is* to change existing structure (deepen a module, consolidate, extract, re-seam), name the existing modules / files / boundaries that are intentionally in play, each with the `path` and one line on the reshape intended. This is the explicit allowlist that opens those modules to redesign downstream; anything not listed keeps its current boundary. Tests move with the seam: name the existing tests the reshape supersedes — the plan deletes them and writes new ones at the deepened interface, rather than layering new over old. Omit this section entirely for ordinary feature/fix specs.
+- **Out of scope** — what was discussed and explicitly punted.
+
+## Flow
+
+Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress.
+
+### 1. Ground in the codebase
+
+Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
+
+<brief>
+Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`.
+
+Find one or two existing features that do something analogous and report:
+
+- the exact surface they use (database, api, frontend, tests, etc.);
+- the `file:line` of that surface;
+- one sentence on the convention you observed;
+- any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
+
+Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
+</brief>
+
+Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
+
+### 2. Grill the technical decisions
+
+Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
+
+Interview the user on each, one question at a time, in plain chat text — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the trade-off it accepts, and wait for the response before the next question. Offer discrete options to frame a genuine choice, never as a neutral menu — your pick still leads.
+
+This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see References → Subagents) rather than spending the user's attention on it. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
+
+Don't re-open decisions the conversation already settled, and don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
+
+### 3. Draft
+
+Write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
+
+### 4. Adversarially review
 
 Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial spec review"`) and pass it the spec's absolute path. Pass this brief verbatim:
 
@@ -142,11 +149,11 @@ End your reply with a one-line summary of what changed.
 
 Quote the reviewer's summary line back to the user.
 
-## Hand back
+### 5. Hand back
 
-**Ask first, then offer the file menu.** Before rendering anything, ask the user — in plain chat prose, **not** `AskUserQuestion` — whether they'd like an interactive HTML review of the spec. Recommend it (it's the easiest way to comment per acceptance criterion and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
+**Ask first, then offer the file menu.** Before rendering anything, ask the user whether they'd like an interactive HTML review of the spec. Recommend it (it's the easiest way to comment per acceptance criterion and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
 
-**Open the review (only if the user opted in).** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the spec as the `.html` sibling of the temp file and open it — give each acceptance criterion its own comment box. Tell the user the HTML path and that they can comment per section, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the spec and re-render. (Under `/crank`/headless the whole Hand back step is skipped, so this question is never asked and the browser never opens mid-pipeline.)
+**Open the review (only if the user opted in).** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the spec as the `.html` sibling of the temp file and open it — give each acceptance criterion its own comment box. Tell the user the HTML path and that they can comment per section, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the spec and re-render.
 
 In chat prose, offer:
 

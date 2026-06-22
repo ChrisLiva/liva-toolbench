@@ -6,21 +6,35 @@ argument-hint: "[optional path to spec.md]"
 
 # Plan
 
+## Goal
+
 Turn the spec into something a coding agent can execute task-by-task with no further design conversation. **Bite-sized tasks. TDD rhythm. Frequent commits. No placeholders.**
 
-<subagent-tiers>
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
-</subagent-tiers>
+## Hard Rules
 
-<rules>
 - If `$ARGUMENTS` is a path, read the spec from there; otherwise use the spec already in the conversation.
 - **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
-- **Every subagent this skill spawns runs at the standard tier** (see <subagent-tiers>) unless otherwise specified.
+- **Every subagent this skill spawns runs at the standard tier** (see References → Subagents) unless otherwise specified.
 - **No placeholders.** No `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", or references to symbols no task defines. Show code in every code step.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
-</rules>
 
-## Subagents
+## Guidelines
+
+### Test-first or lightest-check
+
+<tradeoff>
+**Test-first** pins the intended behavior before code exists and leaves a regression net behind — at the cost of upfront time, and of awkward contortions where no real seam exists. **Lightest-check** (typecheck, build, curl, render) is fast and honest for work with no behavioral seam (config, docs, CSS, refactor-only) — at the cost of leaving no net. Choose per task by whether a real seam exists; don't manufacture fake tests, because a test against a manufactured seam costs maintenance and protects nothing (see Dead seam).
+</tradeoff>
+
+### Embedded code or prose
+
+<tradeoff>
+**Embedded code** removes ambiguity — the executor types what the plan shows — at the cost of plan length and of going stale if the codebase moves before execution. **Prose-with-signature** stays short and drift-tolerant — at the cost of delegating construction to the executor. Embed when the shape matters (tests, non-obvious signatures, regexes, migrations, structural templates); use prose when the change is mechanical (`change < to <= at foo.ts:18`).
+</tradeoff>
+
+## References
+
+### Subagents
 
 If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context.
 
@@ -28,63 +42,19 @@ If exploring the codebase could answer a question — an exact signature, prior 
 **Default:** a one-symbol lookup in a known file you do yourself; wide reads you dispatch. Dispatch keeps your context free for the plan's structure and lets the subagent's window absorb the source; main-thread reading is faster for a single lookup but crowds the window you need for plan-writing.
 </tradeoff>
 
-## Vocabulary
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
+
+### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
 
-## Workflow
+### HTML review guide
 
-Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress:
+The interactive-review render steps live in [HTML-REVIEW.md](HTML-REVIEW.md); Flow → Hand back follows it when the user opts in.
 
-- Ground: spec-named files read, signatures captured (delegate wide reads); Global Constraints lifted from the spec
-- File map: every touched file has path / action / responsibility
-- Tasks decomposed and ordered (each independently committable), each naming its Consumes / Produces interfaces
-- Steps written: code embedded where shape matters, exact verify lines
-- Coverage table: every spec criterion has a row
-- Adversarially reviewed (subagent edits the file in place)
-- Hand back
+## Deliverables
 
-## Ground first
-
-Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. **Bias toward delegating** wide reads (see Subagents) so the subagent's context — not yours — holds the source.
-
-## Map the files
-
-For every file the plan touches, record **path / action (`create` / `modify` / `delete`) / responsibility (one line)**. One clear responsibility per file. Follow established patterns; don't unilaterally restructure unless a file you're already modifying has grown unwieldy (a task that would push it past ~1,000 lines is the canonical trigger — plan the decomposition, don't defer it) or the spec's **Refactor scope** names it for reshaping.
-
-If you can't state a `create`'d file's responsibility without "passes X to Y" or "wraps Z", it fails the deletion test — fold it into its caller rather than adding a pass-through module. (This applies to new files and to files named in the spec's **Refactor scope**, which are deliberately open to reshaping; files outside that scope keep their established boundaries.)
-
-Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is spaghetti growth — route the behavior behind the module that owns the concept, or record the spec gap in **Updates since spec**; don't tangle the shared path.
-
-## Decompose
-
-A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate — fold setup, config, and doc edits into the task that needs them, and split only where a reviewer could reasonably reject one piece while approving its neighbor.
-
-When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones. Old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
-
-<tradeoff>
-**Test-first** pins the intended behavior before code exists and leaves a regression net behind — at the cost of upfront time, and of awkward contortions where no real seam exists. **Lightest-check** (typecheck, build, curl, render) is fast and honest for work with no behavioral seam (config, docs, CSS, refactor-only) — at the cost of leaving no net. Choose per task by whether a real seam exists; don't manufacture fake tests, because a test against a manufactured seam costs maintenance and protects nothing (see Dead seam).
-</tradeoff>
-
-## Write the steps
-
-Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`).
-
-<tradeoff>
-**Embedded code** removes ambiguity — the executor types what the plan shows — at the cost of plan length and of going stale if the codebase moves before execution. **Prose-with-signature** stays short and drift-tolerant — at the cost of delegating construction to the executor. Embed when the shape matters (tests, non-obvious signatures, regexes, migrations, structural templates); use prose when the change is mechanical (`change < to <= at foo.ts:18`).
-</tradeoff>
-
-Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
-
-Order the steps as **tracer bullets**: each test step is immediately followed by the implementation step that makes it pass and its verify — a multi-behavior task reads `test A → impl A → verify → test B → impl B → verify`, never every test up front then every implementation. The embedded test is a behavior spec, but the step *order* is the red-green rhythm. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
-
-Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
-
-**Bar.** Every behavior the spec lists must land in a task step or a verify line — and the proof is the **Coverage table** (see Document shape): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one.
-
-## Document shape
-
-Include whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
+A single self-contained implementation plan written to the temp file (see Hard Rules). Include whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
 
 - **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions).
 - **Global Constraints** — project-wide rules every task must honor: version floors, dependency limits, naming and copy rules, platform requirements — one line each, with the exact values copied verbatim from the spec. Every task's requirements implicitly include this section, and execute's per-task and final reviews run against it as a standing lens. Omit only if the spec names no such rule.
@@ -96,7 +66,43 @@ Include whichever sections apply, scaled to the change (a small fix is 2–4 tas
 - **Smoke tests for the user** — anything the spec flagged as needing real-human verification. Omit if none.
 - **Out of scope** — copy from the spec.
 
-## Adversarially review
+## Flow
+
+Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress.
+
+### 1. Ground first
+
+Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
+
+### 2. Map the files
+
+For every file the plan touches, record **path / action (`create` / `modify` / `delete`) / responsibility (one line)**. One clear responsibility per file. Follow established patterns; don't unilaterally restructure unless a file you're already modifying has grown unwieldy (a task that would push it past ~1,000 lines is the canonical trigger — plan the decomposition, don't defer it) or the spec's **Refactor scope** names it for reshaping.
+
+If you can't state a `create`'d file's responsibility without "passes X to Y" or "wraps Z", it fails the deletion test — fold it into its caller rather than adding a pass-through module. (This applies to new files and to files named in the spec's **Refactor scope**, which are deliberately open to reshaping; files outside that scope keep their established boundaries.)
+
+Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is spaghetti growth — route the behavior behind the module that owns the concept, or record the spec gap in **Updates since spec**; don't tangle the shared path.
+
+### 3. Decompose
+
+A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that carries its own test cycle and is worth a fresh reviewer's gate — fold setup, config, and doc edits into the task that needs them, and split only where a reviewer could reasonably reject one piece while approving its neighbor.
+
+When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones. Old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
+
+Whether a given task is **test-first** or a **lightest-check** is a per-task call — see Guidelines → Test-first or lightest-check.
+
+### 4. Write the steps
+
+Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
+
+Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
+
+Order the steps as **tracer bullets**: each test step is immediately followed by the implementation step that makes it pass and its verify — a multi-behavior task reads `test A → impl A → verify → test B → impl B → verify`, never every test up front then every implementation. The embedded test is a behavior spec, but the step *order* is the red-green rhythm. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
+
+Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
+
+**Bar.** Every behavior the spec lists must land in a task step or a verify line — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one.
+
+### 5. Adversarially review
 
 Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial plan review"`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
 
@@ -124,11 +130,11 @@ Don't re-open spec-level decisions. Then edit the file in place to fix every ite
 
 Quote the reviewer's summary line back to the user.
 
-## Hand back
+### 6. Hand back
 
-**Ask first, then offer the file menu.** Before rendering anything, ask the user — in plain chat prose, **not** `AskUserQuestion` — whether they'd like an interactive HTML review of the plan. Recommend it (it's the easiest way to comment per task and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
+**Ask first, then offer the file menu.** Before rendering anything, ask the user whether they'd like an interactive HTML review of the plan. Recommend it (it's the easiest way to comment per task and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
 
-**Open the review (only if the user opted in).** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the plan as the `.html` sibling of the temp file and open it. Tell the user the HTML path and that they can comment per task, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the plan and re-render. (Under `/crank`/headless the whole Hand back step is skipped, so this question is never asked and the browser never opens mid-pipeline.)
+**Open the review (only if the user opted in).** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the plan as the `.html` sibling of the temp file and open it. Tell the user the HTML path and that they can comment per task, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the plan and re-render.
 
 In chat prose, offer:
 
