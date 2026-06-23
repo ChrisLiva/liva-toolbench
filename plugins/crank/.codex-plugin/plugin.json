@@ -1,6 +1,6 @@
 {
   "name": "crank",
-  "version": "6.1.3",
+  "version": "6.1.4",
   "description": "Design-first development pipeline: spec → plan → execute, taking an idea from sketch to shipped code",
   "keywords": ["crank", "code", "agent"],
   "interface": {
