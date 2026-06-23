@@ -19,6 +19,7 @@ Each phase runs in one subagent at one of two tiers — resolve each to your har
 - **One subagent per phase**, spawned via `Agent` at the tier below (see <subagent-tiers>).
 - **File handoff.** You tell each subagent the exact artifact path to write inside `RUN_DIR`; its sentinel line confirms it. Pass `RUN_DIR` to the next phase.
 - **Halt on blocker, don't retry.** If a subagent's final message contains a line starting with `BLOCKER:`, surface it with whatever artifacts exist and stop.
+- **Surface blockers, never backfill.** Don't invent intent or codebase facts to push a phase through. You write nothing yourself and you don't explore the code — that's the subagent's job. If a phase halts, pass the blocker up as-is; making up the missing context breaks the file-handoff contract.
 - One short status line before each phase, one after. No verbose narration.
 
 ## Headless override block

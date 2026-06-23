@@ -1,6 +1,6 @@
 ---
 name: crank-brainstorm
-description: Brainstorm a raw idea into a high-level design brief before writing a spec — through dialogue, codebase exploration, and research. Use when the user wants to brainstorm, think an idea through, or explore approaches before building.
+description: Pin down the consequential decisions in a raw idea and shape it into a high-level design brief before writing a spec — through dialogue, codebase exploration, and research. Use when the user wants to brainstorm, think an idea through, or explore approaches before building.
 argument-hint: "[optional idea or topic]"
 ---
 

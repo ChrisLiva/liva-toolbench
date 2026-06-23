@@ -76,6 +76,7 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 - Do not push.
 - Do not amend earlier commits.
 - Do not rewrite history.
+- Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, note that in the report's Concerns so the reviewer knows the codebase was searched.
 - Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command.
 - For multi-behavior tasks, work as tracer bullets: test A -> impl A -> test B -> impl B.
 
