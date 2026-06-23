@@ -54,6 +54,14 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 The interactive-review render steps live in [HTML-REVIEW.md](HTML-REVIEW.md); Flow → Hand back follows it when the user opts in.
 
+### Plan skeleton
+
+The compact markdown skeleton lives in [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md); Flow → Write the steps uses it as the starting shape, then scales or omits sections per Deliverables.
+
+### Adversarial review brief
+
+The heavy review prompt lives in [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md); Flow → Adversarially review loads it only at that step.
+
 ## Deliverables
 
 A single self-contained implementation plan written to the temp file (see Hard Rules). Include whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
@@ -94,7 +102,7 @@ Whether a given task is **test-first** or a **lightest-check** is a per-task cal
 
 ### 4. Write the steps
 
-Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
 
@@ -106,29 +114,7 @@ Reuse the canonical helper for the job: if grounding (or the spec) surfaced an e
 
 ### 5. Adversarially review
 
-Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial plan review"`) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass this brief verbatim:
-
-<brief>
-Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation.
-
-Flag every instance of:
-
-- **non-runnable steps** — path / command / expected / instruction not concrete enough to type code from.
-- **coverage holes** — walk the spec yourself (every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation) and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason.
-- **name / type / path inconsistencies** — across tasks or against the codebase.
-- **placeholder language** — `TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols.
-- **dead-seam verify steps** — a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent.
-- **horizontal slicing** — a multi-behavior task whose steps list two or more tests before any implementation, instead of interleaving `test → impl` per behavior; reorder into vertical slices.
-- **implementation-detail tests** — an embedded test that mocks an internal collaborator, asserts on call counts or order, reaches a private method, or verifies through a back channel instead of the interface; rewrite it to drive the seam.
-- **spaghetti growth** — a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept.
-- **bespoke duplication** — embedded code re-implements a helper the codebase already provides; grep to confirm, and rewrite the step to call the canonical one.
-- **boundary smells** — embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract.
-- **interface drift** — a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses.
-- **Global Constraints violations** — a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec.
-- **order problems** — a task imports what no earlier task built.
-
-Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
-</brief>
+Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass the resulting brief verbatim.
 
 Quote the reviewer's summary line back to the user.
 

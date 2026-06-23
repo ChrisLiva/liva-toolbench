@@ -71,13 +71,21 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 The interactive-review render steps live in [HTML-REVIEW.md](HTML-REVIEW.md); Flow → Hand back follows it when the user opts in.
 
+### Spec skeleton
+
+The compact markdown skeleton lives in [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md); Flow → Draft uses it as the starting shape, then scales or omits sections per Deliverables.
+
+### Adversarial review brief
+
+The heavy review prompt lives in [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md); Flow → Adversarially review loads it only at that step.
+
 ## Deliverables
 
 A single self-contained spec written to the temp file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
 
 - **Problem** — what the user is trying to solve, in their words.
 - **Solution** — the proposed change, in user-facing terms.
-- **User stories** — `As an <actor>, I want <feature>, so that <benefit>`. Exhaustive within the scope discussed.
+- **User stories** — `As an <actor>, I want <feature>, so that <benefit>`, when distinct actors or user goals clarify the scope. Omit for small bugs, internal refactors, or technical changes where the real contract is the acceptance criteria plus Technical decisions.
 - **Acceptance criteria** — a numbered list of independently checkable statements, one per behavior: every interaction, keybinding, alias, edge case, state transition, and validation. Each criterion must be falsifiable by an agent or a named human smoke check — "works correctly" is not a criterion; "pressing `Esc` closes the dialog without saving" is. This list is the contract the plan's Coverage table and execute's final review key off: a behavior not listed here is invisible to every downstream check.
 - **Technical decisions** — every architecturally-meaningful call landed on: modules touched, interfaces, schemas, data flow, dependencies (pinned), failure modes. Name the chosen option and one sentence on why; when a real alternative was on the table, also name what the chosen option gives up — a decision recorded with only its upside reads as unexamined and invites re-litigating. For each layer touched (DB, IPC, renderer state, renderer queries), name the existing surface the change goes through and cite the prior-art `file:line` — `repository function: …`, `IPC endpoint: …`, `renderer hook: …`, `query key: …`. If the grounding subagents reported no analogous surface, say so explicitly. Inline prototype snippets when they pin a decision more precisely than prose (type shape, reducer, schema, query) — the decisive slice, not a demo.
 - **Testing approach** — what makes a good test for this work (external behavior, not internals), which seams to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element. A test that fires synthetic events past the production seam is a dead feature in disguise. Steer the plan and implementer away from an **implementation-detail test** (defined in VOCABULARY.md) toward a behavior test driven through the seam. The plan slices the acceptance criteria into separate test-then-code cycles, so this section sets the bar each cycle's test must clear — it doesn't restate the criteria.
@@ -119,35 +127,11 @@ Don't re-open decisions the conversation already settled, and don't grill on det
 
 ### 3. Draft
 
-Write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
 
 ### 4. Adversarially review
 
-Spawn one heavy subagent via the `Agent` tool (`description: "Adversarial spec review"`) and pass it the spec's absolute path. Pass this brief verbatim:
-
-<brief>
-Read the spec at `<path>`.
-
-Flag every instance of:
-
-- **ambiguity** — two engineers could implement it meaningfully differently.
-- **inaccuracy** — a claim that contradicts the codebase; verify against the repo.
-- **criteria gaps** — a behavior the spec body describes (interaction, keybinding, edge case, state transition, validation) with no matching numbered acceptance criterion, or a criterion too vague to falsify.
-- **off-pattern** — a layer is touched without naming the existing surface for that layer (repository function, renderer hook, query key, IPC shape) that analogous features in the codebase use; grep one or two analogous files to confirm.
-- **shallow module** — a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test (removing it would not scatter complexity, so it's a pass-through that should fold into its caller). Don't flag existing modules outside the Refactor scope; their boundaries are settled.
-- **missed simplification** — complexity the spec itself introduces (a new mode, flag, wrapper, or special-case branch in an existing flow) where a reframing would let an existing module absorb the behavior; flag only when you can name the simpler shape, and don't flag a decision the spec records with its tradeoff.
-- **bespoke duplication** — the spec designs a helper or utility the codebase already provides; grep to confirm, and name the canonical one.
-- **boundary smells** — a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit.
-- **implementation-detail testing approach** — the Testing approach prescribes a test coupled to internals (mocking an internal collaborator, asserting on call counts or order, a private method, or a back-channel DB read) instead of driving the production seam a real caller reaches.
-- **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved.
-- **missing technical detail** — anything that would block an implementer.
-
-Don't re-open settled decisions.
-
-Then edit the file in place to fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, rewrite an implementation-detail testing approach to drive the seam, resolve placeholders or move them to **Out of scope**, fill in missing detail.
-
-End your reply with a one-line summary of what changed.
-</brief>
+Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the spec's absolute path plus the brief verbatim.
 
 Quote the reviewer's summary line back to the user.
 
