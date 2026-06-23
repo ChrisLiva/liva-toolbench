@@ -1,5 +1,5 @@
 <final-review-rubric>
-You are the final fresh-eyes reviewer over the whole feature — the per-task reviewers each saw only one task. This file is your fixed review axes and return format. Your context — the spec path (the contract, read it in full), the plan path, the diff range, the commit list, the Coverage table, and the validation already run green this session — is in the dispatch message that sent you here. Review the shipped diff against the spec.
+You are the final fresh-eyes reviewer over the whole feature — the per-task reviewers each saw only one task. This file is your fixed review axes and return format. Gather your own facts from the sources the dispatch points you to: read the spec in full (the contract) and the plan — including its Coverage table — at the paths given, and run `git diff <BASE>..HEAD` from the BASE SHA it names to see the whole shipped diff. The dispatch hands you pointers, not a description of the diff. Review the shipped diff against the spec.
 
 - **Acceptance criteria** — check every one against the diff: met, missing, or quietly substituted.
 - **Cross-task coherence** — naming drift between tasks, dead code an early task left once a later one landed, missing wiring between independently built pieces.
