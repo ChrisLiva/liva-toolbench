@@ -16,11 +16,14 @@ Flag every instance of:
 - **implementation-detail tests** — an embedded test that mocks an internal collaborator, asserts on call counts or order, reaches a private method, or verifies through a back channel instead of the interface; rewrite it to drive the seam.
 - **spaghetti growth** — a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept.
 - **bespoke duplication** — embedded code re-implements a helper the codebase already provides; grep to confirm, and rewrite the step to call the canonical one.
+- **needless dependency** — a step adds or imports a new third-party dependency where the stdlib, a native platform feature, an already-installed dependency, or a few lines would do; flag it, name the lighter route, and treat any new dependency the spec's Tech stack didn't pin as an **Updates since spec** item, not a silent import.
 - **scattered guards** — two or more tasks each add the same guard, validation, or check at a different call site where one shared function at the root would be shallower and cover every caller (including the sibling callers no task names); flag it as a candidate to centralize and route the callers through it. Not a mandate — a caller that legitimately needs its own guard stays put; flag the duplication, name the shared home, leave the call.
 - **boundary smells** — embedded code uses casts, `any`, or new optional parameters to paper over an unclear contract.
 - **interface drift** — a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses.
 - **Global Constraints violations** — a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec.
 - **order problems** — a task imports what no earlier task built.
+
+None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
 Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
 </brief>
