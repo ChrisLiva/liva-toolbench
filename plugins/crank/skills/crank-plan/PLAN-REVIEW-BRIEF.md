@@ -25,5 +25,5 @@ Flag every instance of:
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
-Don't re-open spec-level decisions. Then edit the file in place to fix every item you flagged. End your reply with a one-line summary of what changed.
+Don't re-open spec-level decisions. Then edit **the plan file at `<plan-path>`** in place to fix every item you flagged — that plan file is the only artifact you may modify. You read the spec and grep the codebase **only to inform your plan edits**: never edit the spec, and never touch any production, test, or source file. A flagged duplication, inconsistency, or dead seam gets *rewritten in the plan step that describes it* — never fixed in the code itself. End your reply with a one-line summary of what changed.
 </brief>

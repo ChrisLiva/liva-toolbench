@@ -21,7 +21,7 @@ Flag every instance of:
 
 Don't re-open settled decisions.
 
-Then edit the file in place to fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, rewrite an implementation-detail testing approach to drive the seam, resolve placeholders or move them to **Out of scope**, fill in missing detail.
+Then edit **the spec file at `<path>`** in place to fix what you flagged — that spec file is the only artifact you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file. Fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, rewrite an implementation-detail testing approach to drive the seam, resolve placeholders or move them to **Out of scope**, fill in missing detail.
 
 End your reply with a one-line summary of what changed.
 </brief>
