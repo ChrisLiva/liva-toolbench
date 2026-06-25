@@ -1,6 +1,7 @@
 ---
 name: crank-plan
 description: Turn a spec into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user asks to plan a spec or break it into ordered, committable tasks.
+disable-model-invocation: true
 argument-hint: "[optional path to spec.md]"
 ---
 
