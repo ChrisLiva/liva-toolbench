@@ -12,7 +12,7 @@ argument-hint: "[what to review] [optional focus, e.g. 'especially simplicity']"
 A short list of findings you'd stake your name on — each one a senior engineer would hold the merge for. Three questions drive every finding:
 
 1. **Does this code do what it says, clearly?** — the names, types, comments, and commit/PR messages are the contract; does the implementation honor it, and would a reader be misled?
-2. **What can be deleted or refactored away?** — bias hard toward cutting: unnecessary code, comments, abstraction, and future debt.
+2. **What can be deleted, consolidated, or refactored away?** — for every structure and abstraction the diff introduces, ask *how could this be simpler and still mean the same thing?*; bias hard toward cutting and unifying — unnecessary code, comments, abstraction, future debt, and parallel structures that should be one.
 3. **What edge case slips through?** — the empty, the boundary, the error path, the invariant the diff quietly breaks.
 
 Precision over coverage. A review of three real problems beats one of thirty nits — the nits spend the trust the three needed.
@@ -21,7 +21,7 @@ Precision over coverage. A review of three real problems beats one of thirty nit
 
 - **High-confidence only — every finding survives refutation.** A finding ships only after an independent validator tried to refute it and couldn't. "Might be an issue" is not a finding; cut it.
 - **Not a linter.** Never raise what a compiler, type-checker, formatter, or linter already catches, nor a matter of taste (naming preference, ordering, "consider maybe"). Those are nits, and nits do not ship.
-- **Bias toward deletion — but never cut required behavior.** Prefer the finding that removes code over the one that rearranges it; a deletion ships only when the validator confirms the code is redundant, unreachable, or its absence changes nothing observable. Required behavior is never "unnecessary surface" — the brief's [_Never cut required behavior_](REVIEW-BRIEF.md) list names what that covers.
+- **Bias toward deletion and consolidation — but never cut required behavior.** Prefer the finding that removes or unifies code over the one that merely rearranges it — collapsing parallel structures into one counts as deletion. Such a finding ships only when the validator confirms the code is redundant, unreachable, or that the simpler shape preserves the same observable behavior. Required behavior is never "unnecessary surface" — the brief's [_Never cut required behavior_](REVIEW-BRIEF.md) list names what that covers.
 - **Read-only.** This skill reviews; it never edits, stages, commits, or mutates the tree. Fixes are a separate, approved step (see Flow → Report).
 - **Subagents pull their own facts.** Hand each finder and validator pointers — the BASE SHA, the rubric path, the cited `file:line` — never your characterization of the diff or a defense of a finding. They form their own read; you pre-judge nothing.
 - **Standard tier** for every subagent this skill spawns (see References → Subagents).
@@ -45,7 +45,7 @@ Capture the commit list once — `git log <BASE>..HEAD --oneline` — for the os
 Spawn standard finders, each pointed at [REVIEW-BRIEF.md](REVIEW-BRIEF.md) and the BASE SHA, each running the diff itself. Default to two lenses, matching the driving questions:
 
 - **Correctness & contract** — does the code do what it says; edge cases, error/empty/boundary inputs, broken invariants, tests that assert behavior through the seam.
-- **Simplicity & deletion** — what to cut or refactor: the deletion test, code judo, spaghetti growth, bespoke duplication, magic strings that should be constants, slop (dead comments, reflexive try/catch, `any`-casts, needless nesting), boundary smells, unnecessary surface.
+- **Simplicity & deletion** — what to cut, consolidate, or refactor, applying the standing question *how could this be simpler and still mean the same thing?* to every structure the diff adds: the deletion test, code judo, spaghetti growth, bespoke duplication, **fragmented representation** (parallel structures held in lockstep that should be one), magic strings that should be constants, slop (dead comments, reflexive try/catch, `any`-casts, needless nesting), boundary smells, unnecessary surface.
 
 Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a high-confidence correctness finding. Each finder returns candidate findings only (`file:line`, the claim, why it matters, the smallest fix) — no prose review, no manufactured findings to fill a clean diff.
 
