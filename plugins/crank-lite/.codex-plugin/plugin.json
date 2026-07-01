@@ -1,0 +1,25 @@
+{
+  "name": "crank-lite",
+  "version": "0.1.0",
+  "description": "Lightweight brainstorming, spec, planning, and execution skills for shaping work before shipping it.",
+  "keywords": ["crank", "lite", "brainstorm", "spec", "plan", "execute"],
+  "skills": "./skills/",
+  "author": {
+    "name": "Chris Liva",
+    "email": "chrislliva@gmail.com"
+  },
+  "license": "MIT",
+  "interface": {
+    "displayName": "Crank Lite",
+    "shortDescription": "Lightweight workflow skills for shaping and shipping code.",
+    "longDescription": "Crank Lite bundles focused brainstorming, spec, planning, and execution skills for moving from rough idea to implemented work with less ceremony than the full Crank pipeline.",
+    "developerName": "Chris Liva",
+    "category": "tools",
+    "capabilities": ["Skills", "Code"],
+    "defaultPrompt": [
+      "Use lite-brainstorm to shape my idea.",
+      "Use lite-spec to turn this into a spec.",
+      "Use lite-plan to make an implementation plan."
+    ]
+  }
+}

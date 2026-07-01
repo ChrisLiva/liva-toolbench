@@ -16,6 +16,14 @@
       "tags": ["crank", "code", "agent"]
     },
     {
+      "name": "crank-lite",
+      "source": "./plugins/crank-lite",
+      "description": "Lightweight brainstorming, spec, planning, and execution skills for shaping work before shipping it.",
+      "version": "0.1.0",
+      "category": "tools",
+      "tags": ["crank", "lite", "brainstorm", "spec", "plan", "execute"]
+    },
+    {
       "name": "effective-html",
       "source": "./plugins/effective-html",
       "description": "User-summoned skill that nudges the coding agent to produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown — distilled from anthropics/html-effectiveness.",

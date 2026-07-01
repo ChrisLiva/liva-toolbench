@@ -1,8 +1,8 @@
 # AGENTS.md — liva-toolbench
 
-This repo is a **plugin marketplace and development sandbox** for Claude Code. Each subdirectory under `plugins/` is a self-contained plugin you can install via this marketplace or load directly with `--plugin-dir` for fast iteration.
+This repo is a **plugin marketplace and development sandbox** for Claude Code and Codex. Each subdirectory under `plugins/` is a self-contained plugin you can install via the marketplace catalogs or load directly for fast iteration.
 
-When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins`) and treat `hello-world/` as the canonical reference for what a healthy plugin looks like.
+When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin).
 
 ---
 
@@ -11,11 +11,15 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 ```
 .
 ├── .claude-plugin/
-│   └── marketplace.json          # marketplace catalog (lists all plugins)
+│   └── marketplace.json          # Claude Code marketplace catalog
+├── .agents/
+│   └── plugins/marketplace.json  # Codex local marketplace index
 └── plugins/
     └── <plugin-name>/
         ├── .claude-plugin/
-        │   └── plugin.json        # plugin manifest (only file inside .claude-plugin/)
+        │   └── plugin.json        # Claude manifest (only file inside .claude-plugin/)
+        ├── .codex-plugin/
+        │   └── plugin.json        # Codex manifest for cross-harness plugins
         ├── skills/<name>/SKILL.md # model- or user-invoked skills
         ├── commands/<name>.md     # legacy slash commands (skills are preferred)
         ├── agents/<name>.md       # subagent definitions
@@ -28,7 +32,9 @@ When working in this repo, you are usually creating, editing, or testing plugin 
         └── scripts/               # arbitrary helper scripts (referenced via ${CLAUDE_PLUGIN_ROOT})
 ```
 
-> **Common mistake**: only `plugin.json` goes inside `.claude-plugin/`. Skills, commands, agents, and hooks live at the **plugin root**.
+The current plugins (`crank`, `crank-lite`, `effective-html`) all ship as cross-harness plugins and currently contain manifests plus `skills/`. Other component directories shown above are supported by the plugin format when a plugin needs them.
+
+> **Common mistake**: only `plugin.json` goes inside `.claude-plugin/` or `.codex-plugin/`. Skills, commands, agents, hooks, scripts, and other runtime files live at the **plugin root**.
 
 ---
 
@@ -47,25 +53,43 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 3. Add components (`skills/`, `agents/`, `hooks/`, …) at the plugin root.
 4. Register it in `.claude-plugin/marketplace.json` under `plugins[]`:
    ```json
-   { "name": "<name>", "source": "./plugins/<name>", "description": "..." }
+   { "name": "<name>", "source": "./plugins/<name>", "description": "...", "version": "0.1.0", "category": "tools" }
    ```
-5. Test locally without reinstalling:
+5. If the plugin should work in Codex too, add `plugins/<name>/.codex-plugin/plugin.json`:
+   ```json
+   {
+     "name": "<name>",
+     "version": "0.1.0",
+     "description": "...",
+     "keywords": ["..."],
+     "interface": { "displayName": "<Title Case>", "developerName": "Chris Liva" }
+   }
+   ```
+6. Register cross-harness plugins in `.agents/plugins/marketplace.json`:
+   ```json
+   { "name": "<name>", "source": { "source": "local", "path": "./plugins/<name>" }, "category": "tools" }
+   ```
+7. Test locally without reinstalling in Claude Code:
    ```bash
    claude --plugin-dir ./plugins/<name>
    ```
    Then `/reload-plugins` inside the session after edits.
+8. Test Codex installation after Codex manifest or marketplace changes:
+   ```bash
+   codex plugin add <name>@liva-toolbench
+   ```
 
 ---
 
 ## Cross-harness plugins (Claude Code + Codex)
 
-Some plugins ship for **both** Claude Code and Codex — they carry a
+Cross-harness plugins ship for **both** Claude Code and Codex — they carry a
 `.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`, and both manifests
-read the same `skills/` tree. `crank` is the cross-harness flagship; other plugins
-are Claude-only unless they grow a `.codex-plugin/`.
+read the same `skills/` tree. All current marketplace plugins are cross-harness:
+`crank`, `crank-lite`, and `effective-html`.
 
-**The Codex manifest** mirrors the Claude one (`name`, `version`, `description`,
-`keywords`) but swaps `author`/`license` for an `interface` block:
+**The Codex manifest** mirrors the Claude one for `name`, `version`, `description`,
+and `keywords`, and adds an `interface` block for Codex display metadata:
 
 ```json
 {
@@ -73,9 +97,16 @@ are Claude-only unless they grow a `.codex-plugin/`.
   "version": "<x.y.z>",
   "description": "...",
   "keywords": ["..."],
-  "interface": { "displayName": "<Title Case>", "developerName": "Chris Liva" }
+  "interface": {
+    "displayName": "<Title Case>",
+    "developerName": "Chris Liva"
+  }
 }
 ```
+
+`crank-lite` uses a richer Codex `interface` with `shortDescription`,
+`longDescription`, `category`, `capabilities`, and `defaultPrompt`; follow that shape
+when the plugin needs a better Codex marketplace presentation.
 
 **Two things make a plugin installable under Codex, not one** — a valid
 `.codex-plugin/plugin.json` is necessary but not sufficient:
@@ -107,7 +138,7 @@ preprocessing** — none of it runs under Codex:
 directory, **symlink** it into the other, and reference it with a relative link —
 `[FILE.md](FILE.md)` (the pattern mattpocock's skills use). Don't add a `_shared/`
 dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path. Example:
-`crank/skills/crank-plan/HTML-REVIEW.md` symlinks to `../crank-spec/HTML-REVIEW.md`, and both
+`plugins/crank/skills/crank-plan/HTML-REVIEW.md` symlinks to `../crank-spec/HTML-REVIEW.md`, and both
 `SKILL.md`s link to it relatively.
 
 > Symlinks only survive a `core.symlinks=true` checkout (macOS/Linux default). If a
@@ -125,7 +156,9 @@ A plugin's version is **duplicated across several files that must be kept in syn
 | `.claude-plugin/marketplace.json` → the plugin's entry in `plugins[]` | that entry's `"version"` | every plugin |
 | `plugins/<name>/.codex-plugin/plugin.json` | top-level `"version"` | **cross-harness plugins only** |
 
-So a **Claude-only** plugin has **two** version strings to bump; a **cross-harness** plugin (e.g. `crank`) has **three**. Forgetting the marketplace-catalog copy is the easy miss — the per-plugin manifest and the catalog entry are separate files.
+So a future **Claude-only** plugin has **two** version strings to bump; every current
+plugin is **cross-harness** and has **three**. Forgetting the marketplace-catalog copy
+is the easy miss — the per-plugin manifest and the catalog entry are separate files.
 
 `.agents/plugins/marketplace.json` (the Codex marketplace index) carries **no** `version` field — it only lists `source`/`category`, so there is nothing to bump there. After a cross-harness bump, re-run `codex plugin add <name>@liva-toolbench` to refresh its snapshot instead.
 
@@ -294,17 +327,19 @@ Common events: `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `
 
 ## Marketplace manifest (`.claude-plugin/marketplace.json`)
 
-Required: `name`, `owner.name`, `plugins[]`. Each plugin entry needs `name` + `source`. Source can be:
+Required: `name`, `owner.name`, `plugins[]`. Each plugin entry needs `name` + `source`. The current catalog uses local relative paths, but source can be:
 
 | Source kind   | Shape                                                          |
 | ------------- | -------------------------------------------------------------- |
-| Relative path | `"./plugins/foo"` (must start with `./`)                       |
+| Relative path | `"./plugins/foo"` (relative string sources must start with `./`) |
 | GitHub        | `{ "source": "github", "repo": "owner/repo", "ref": "v1" }`    |
 | Git URL       | `{ "source": "url", "url": "https://...", "sha": "..." }`      |
 | Git subdir    | `{ "source": "git-subdir", "url": "...", "path": "tools/..." }` |
 | npm           | `{ "source": "npm", "package": "@scope/pkg", "version": "1" }` |
 
-`source` must always start with `./` (schema enforces `^\./.*`). `metadata.pluginRoot` sets a base for relative sources but does not let you drop the `./` prefix — write `"source": "./foo"`, not `"source": "foo"`.
+For relative string sources, keep the `./` prefix — write `"source": "./plugins/foo"`,
+not `"source": "plugins/foo"`. Object sources use the shapes above instead of a
+relative string.
 
 ---
 
@@ -328,7 +363,7 @@ Inside the session:
 When you land a load-bearing design choice inside a skill — a tradeoff a future
 review could plausibly reverse (offline vs CDN, port vs direct call, which library)
 — record it **inline in that skill's reference doc** with a `(per project decision:
-…)` marker, not just in chat. Example: `crank/skills/crank-spec/HTML-REVIEW.md` notes
+…)` marker, not just in chat. Example: `plugins/crank/skills/crank-spec/HTML-REVIEW.md` notes
 Tailwind + Mermaid load via CDN "(per project decision)". This is what stops coding
 agents from re-suggesting the option you already ruled out.
 

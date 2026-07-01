@@ -10,6 +10,11 @@
       "category": "tools"
     },
     {
+      "name": "crank-lite",
+      "source": { "source": "local", "path": "./plugins/crank-lite" },
+      "category": "tools"
+    },
+    {
       "name": "effective-html",
       "source": { "source": "local", "path": "./plugins/effective-html" },
       "category": "tools"
