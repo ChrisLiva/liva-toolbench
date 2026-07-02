@@ -53,15 +53,9 @@ Keep the interface as the test surface (see Deliverables → Testing approach): 
 
 ### Subagents
 
-If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context.
+If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
-<tradeoff>
-**Default:** a one-symbol lookup in a known file you do yourself; anything wider you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
-</tradeoff>
-
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review.
-
-Set the tier explicitly on every spawn — never leave it to default. (In Claude Code an unset `model` silently inherits the orchestrator's heavy/opus tier, spending heavy budget on bulk work; SUBAGENT-TIERS.md carries the per-harness values.)
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review. Set the tier explicitly on every spawn — never leave it to default.
 
 ### Vocabulary
 
@@ -115,6 +109,8 @@ Don't propose a design — just surface what already exists. If no analogous sur
 
 Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
 
+Completion criterion: every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — no layer unreported.
+
 ### 2. Grill the technical decisions
 
 Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
@@ -125,15 +121,21 @@ This is targeted, not a fresh interview — only the open technical decisions, a
 
 Don't re-open decisions the conversation already settled, and don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 
+Completion criterion: every material, unsettled decision on your list has a user answer or a subagent-settled fact recorded — none carried into the draft as an implicit choice.
+
 ### 3. Draft
 
 Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
+
+Completion criterion: every Deliverables section that applies is written to the temp file, no template placeholder survives, and every in-scope module has been through both guidelines.
 
 ### 4. Adversarially review
 
 Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the spec's absolute path plus the brief verbatim.
 
 Quote the reviewer's summary line back to the user.
+
+Completion criterion: the reviewer's edits are in the spec file and its one-line summary is quoted back to the user.
 
 ### 5. Hand back
 
@@ -150,3 +152,5 @@ In chat prose, offer:
 When the user pastes a block beginning `> Source: <path>`, apply it per HTML-REVIEW.md's "Applying a pasted review" — in a spec, a `requested IN scope` item folds in as a real acceptance criterion / decision (or push back with a reason; never drop it silently).
 
 Then stop. Do not auto-invoke other skills or continue past the handback.
+
+Completion criterion: the user answered the HTML-review ask and picked from the file menu, and you did exactly what they picked — nothing rendered or invoked they didn't opt into.

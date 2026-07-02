@@ -42,9 +42,7 @@ Research is what makes each grilling question *informed* — you arrive with the
 - **Research an approach** — compare libraries or techniques, find prior art, see how comparable projects solve this. Web search in scope.
 - **Check current facts** — the latest stable version of a package, the current shape of an API, today's documentation for a tool the artifact will lean on. This is the antidote to a recommendation built on a stale training cutoff.
 
-<tradeoff>
-**Default:** a one-symbol lookup in a known file you do yourself; anything wider — a pattern sweep, a library comparison, a version check — you dispatch. Dispatch keeps your synthesis window clean and runs independent investigations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
-</tradeoff>
+Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
 Each job has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md) — read that file when you're about to dispatch a research subagent (Flow step 3), pick the brief that matches the job, and fill its slots.
 

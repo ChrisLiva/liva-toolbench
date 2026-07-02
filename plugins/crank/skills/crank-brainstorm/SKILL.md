@@ -28,11 +28,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 **Answer your own questions first.** If exploring the codebase or researching a topic could settle a question, dispatch a standard subagent to find out before asking the user. Reserve questions for what only the user knows — intent, priorities, preferences, external context.
 
-Lean on subagents for two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this) — the latter can use web search.
-
-<tradeoff>
-**Default:** a one-symbol lookup in a known file you do yourself; anything wider — a pattern sweep, a library comparison, prior-art research — you dispatch. Dispatch keeps your synthesis window clean and runs explorations in parallel; main-thread reading keeps the conversation's nuance but fills your window with source you'll never reread.
-</tradeoff>
+Lean on subagents for two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this) — the latter can use web search. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
 Dispatch each job with the matching brief, filled in.
 
@@ -89,9 +85,13 @@ Create a task for each step below and mark each one complete as you finish it �
 
 Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. **Bias toward delegating** wide reads to a standard subagent (see References → Subagents) so its window — not yours — holds the source. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches.
 
+Completion criterion: you can name the surfaces the idea touches and the established patterns it should follow — from exploration, not assumption.
+
 ### 2. Scope check
 
 Before refining details, assess scope. If the idea describes several independent subsystems (e.g., "a platform with chat, file storage, billing, and analytics"), flag it now — don't spend questions polishing one corner of a project that needs decomposing first. Help the user split it: name the independent pieces, how they relate, and what order to build them. Then brainstorm the first sub-project through the normal flow; each sub-project gets its own brief → spec → plan → execute cycle.
+
+Completion criterion: the idea is confirmed buildable as one project, or split — pieces named, order agreed, first sub-project chosen.
 
 ### 3. Grill the open questions
 
@@ -102,13 +102,19 @@ Walk the design tree branch by branch, resolving dependencies between decisions 
 - **Stay at altitude.** A technical detail earns a question only when it's load-bearing for a *what*/*which-approach* decision; otherwise note it as an **Open question** for the spec and move on.
 - Focus on purpose, constraints, and success criteria — what done looks like, and what's explicitly not in this.
 
+Completion criterion: every consequential design question is genuinely settled with the user or recorded as an **Open question** for the spec — none waved past.
+
 ### 4. Propose approaches
 
 Once the shape is clear enough, propose **2–3 approaches, each optimizing for a different thing**, conversationally, with trade-offs — name the axis each one wins on (e.g. one minimizes the moving parts, one stays most flexible for the likely next ask, one hugs the existing idiom closest). Two approaches that optimize for the same thing are the same approach — drop one. If two genuinely combine, propose the hybrid as your recommendation rather than leaving the user to merge them. Lead with your recommendation and why. Reach for the Vocabulary here: prefer the approach whose central piece is *deeper* (more behavior behind a smaller interface), and name the leverage and locality the chosen shape buys over its alternative. If an approach's key piece fails the deletion test, say so — that's a reason to drop it.
 
+Completion criterion: the user has explicitly picked an approach (or your recommended hybrid) — having heard the options isn't a pick.
+
 ### 5. Draft the high-level brief
 
 Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Present it in sections, scaled to the idea — a few sentences where it's straightforward, a paragraph where it's nuanced — and check after each section that it reads right before moving on. Capture the approved sections in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+
+Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
 
 ### 6. Hand off
 
@@ -120,3 +126,5 @@ The brief is the front door to the crank pipeline (brainstorm → spec → plan 
 - **Print inline and delete** — paste the final brief into the chat and remove the temp file.
 
 Wait for the user's pick. Only invoke `crank:crank-spec` if they choose to continue — don't auto-advance past the hand-off.
+
+Completion criterion: the user has picked, and you've done exactly what they picked — `crank:crank-spec` invoked only on an explicit "continue".

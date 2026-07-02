@@ -37,15 +37,9 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 
 ### Subagents
 
-If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context.
+If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
-<tradeoff>
-**Default:** a one-symbol lookup in a known file you do yourself; wide reads you dispatch. Dispatch keeps your context free for the plan's structure and lets the subagent's window absorb the source; main-thread reading is faster for a single lookup but crowds the window you need for plan-writing.
-</tradeoff>
-
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
-
-Set the tier explicitly on every spawn — never leave it to default. (In Claude Code an unset `model` silently inherits the orchestrator's heavy/opus tier, spending heavy budget on bulk work; SUBAGENT-TIERS.md carries the per-harness values.)
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review. Set the tier explicitly on every spawn — never leave it to default.
 
 ### Vocabulary
 
@@ -85,6 +79,8 @@ Create a task for each step below and mark each one complete as you finish it �
 
 Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
 
+Completion criterion: every file and symbol the spec names has been read (or its read delegated and returned) with exact signatures and import paths in hand, and any drift since the spec noted for **Updates since spec**.
+
 ### 2. Map the files
 
 For every file the plan touches, record **path / action (`create` / `modify` / `delete`) / responsibility (one line)**. One clear responsibility per file. Follow established patterns; don't unilaterally restructure unless a file you're already modifying has grown unwieldy (a task that would push it past ~1,000 lines is the canonical trigger — plan the decomposition, don't defer it) or the spec's **Refactor scope** names it for reshaping.
@@ -92,6 +88,8 @@ For every file the plan touches, record **path / action (`create` / `modify` / `
 If you can't state a `create`'d file's responsibility without "passes X to Y" or "wraps Z", it fails the deletion test — fold it into its caller rather than adding a pass-through module. (This applies to new files and to files named in the spec's **Refactor scope**, which are deliberately open to reshaping; files outside that scope keep their established boundaries.)
 
 Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is spaghetti growth — route the behavior behind the module that owns the concept, or record the spec gap in **Updates since spec**; don't tangle the shared path.
+
+Completion criterion: every file the plan touches has a path / action / responsibility row, every `create` passes the deletion test, and every `modify` traces to a spec-named surface.
 
 ### 3. Decompose
 
@@ -103,6 +101,8 @@ When the spec's **Refactor scope** reshapes a module, **replace tests, don't lay
 
 Whether a given task is **test-first** or a **lightest-check** is a per-task call — see Guidelines → Test-first or lightest-check.
 
+Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree — no task bundles two green-tree outcomes.
+
 ### 4. Write the steps
 
 Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
@@ -113,13 +113,15 @@ Keep the step *order* in the **tracer-bullet** rhythm set in Decompose — each 
 
 Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do, and a new dependency the spec's **Tech stack** didn't pin is an **Updates since spec** item to resolve, not a quiet import. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
 
-**Bar.** Every behavior the spec lists must land in a task step or a verify line — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
+**Completion criterion.** Every behavior the spec lists must land in a task step or a verify line — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
 ### 5. Adversarially review
 
 Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass the resulting brief verbatim.
 
 Quote the reviewer's summary line back to the user.
+
+Completion criterion: the reviewer's edits are in the plan file and its one-line summary is quoted back to the user.
 
 ### 6. Hand back
 
@@ -136,3 +138,5 @@ In chat prose, offer:
 When the user pastes a block beginning `> Source: <path>`, apply it per HTML-REVIEW.md's "Applying a pasted review" — in a plan, a `requested IN scope` item folds in as a real task / step (or push back with a reason; never drop it silently).
 
 Then stop. Do not auto-invoke other skills or continue past the handback.
+
+Completion criterion: the user answered the HTML-review ask and picked from the file menu, and you did exactly what they picked — nothing rendered or invoked they didn't opt into.
