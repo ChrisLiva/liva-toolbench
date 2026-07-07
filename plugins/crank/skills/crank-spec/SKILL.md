@@ -123,13 +123,19 @@ Don't re-open decisions the conversation already settled, and don't grill on det
 
 Completion criterion: every material, unsettled decision on your list has a user answer or a subagent-settled fact recorded — none carried into the draft as an implicit choice.
 
-### 3. Draft
+### 3. Read back the sections
+
+Grilling settled the decisions; before any of them hardens into a draft, read them back. Walk the user through the spec-to-be one Deliverables section at a time — for each, a tight digest of what it will say (the acceptance criteria as a list, each technical decision with its one-line why, the scope cuts), not finished prose. Pause after each piece so the user can question, refute, or change it, and fold each change in before moving on. A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
+
+Completion criterion: every section the draft will contain has been read back and user-approved piece by piece — objections resolved now, none carried into the draft.
+
+### 4. Draft
 
 Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
 
 Completion criterion: every Deliverables section that applies is written to the temp file, no template placeholder survives, and every in-scope module has been through both guidelines.
 
-### 4. Adversarially review
+### 5. Adversarially review
 
 Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the spec's absolute path plus the brief verbatim.
 
@@ -137,7 +143,7 @@ Quote the reviewer's summary line back to the user.
 
 Completion criterion: the reviewer's edits are in the spec file and its one-line summary is quoted back to the user.
 
-### 5. Hand back
+### 6. Hand back
 
 **Ask first, then offer the file menu.** Before rendering anything, ask the user whether they'd like an interactive HTML review of the spec. Recommend it (it's the easiest way to comment per acceptance criterion and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
 

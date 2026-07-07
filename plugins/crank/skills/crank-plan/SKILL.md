@@ -102,7 +102,13 @@ Whether a given task is **test-first** or a **lightest-check** is a per-task cal
 
 Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree — no task bundles two green-tree outcomes.
 
-### 4. Write the steps
+### 4. Read back the shape
+
+Decomposition settled the shape; before writing full steps, read it back. Walk the user through the plan-to-be piece by piece: the file map first, then each task in order — one line each on what it implements, the acceptance criteria it covers, and its test-first or lightest-check call. Pause after each piece so the user can question, refute, or change it, and fold each change in before moving on. A task cut or resequenced in the readback costs a line; the same change after the steps are written re-litigates the plan and the review.
+
+Completion criterion: the file map and every task have been read back and user-approved piece by piece — objections resolved now, none carried into the written steps.
+
+### 5. Write the steps
 
 Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
 
@@ -114,7 +120,7 @@ Reuse the canonical helper for the job: if grounding (or the spec) surfaced an e
 
 **Completion criterion.** Every behavior the spec lists must land in a task step or a verify line — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
-### 5. Adversarially review
+### 6. Adversarially review
 
 Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass the resulting brief verbatim.
 
@@ -122,7 +128,7 @@ Quote the reviewer's summary line back to the user.
 
 Completion criterion: the reviewer's edits are in the plan file and its one-line summary is quoted back to the user.
 
-### 6. Hand back
+### 7. Hand back
 
 **Ask first, then offer the file menu.** Before rendering anything, ask the user whether they'd like an interactive HTML review of the plan. Recommend it (it's the easiest way to comment per task and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
 

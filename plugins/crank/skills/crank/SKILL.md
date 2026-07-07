@@ -30,7 +30,7 @@ Prepend verbatim to every Phase 1–2 subagent prompt. Phase 3 (`execute`) is al
 > - At every options-and-recommendation gate, silently pick the recommended option.
 > - **The two-option test.** For a non-obvious pick (the recommendation isn't clearly the best fit), write an `Assumption: <what you assumed and why>` line into the relevant doc section — log one whenever the gate offered ≥2 plausible options or its recommendation named a tradeoff it accepts (the picks a present user might have overridden); a gate with one clear answer needs no line.
 > - The orchestrator has already entered a fresh worktree on a `crank/<slug>` branch via `EnterWorktree`. Never run `git worktree`, `git checkout -b`, `EnterWorktree`, `ExitWorktree`, or any branch-switching command.
-> - Skip every other interactive step the skill offers — the one-targeted-question allowance, the hand-back menu, any finish-up ask. Proceed straight to writing the output doc.
+> - Skip every other interactive step the skill offers — the one-targeted-question allowance, the pre-draft readback, the hand-back menu, any finish-up ask. Proceed straight to writing the output doc.
 > - Write the output doc to the exact path given in your prompt — skip the skill's `mktemp` step and its hand-back menu.
 > - Run the skill's adversarial review as written — it is your only review pass.
 > - **Never** emit a question. On a true blocker, write what you have, append a `## Blocker` section, and end your final message with `BLOCKER: <summary>` on one line and `<ARTIFACT>_PATH=<absolute path>` on the next.

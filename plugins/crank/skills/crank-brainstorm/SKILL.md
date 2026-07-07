@@ -112,7 +112,7 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 5. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Present it in sections, scaled to the idea — a few sentences where it's straightforward, a paragraph where it's nuanced — and check after each section that it reads right before moving on. Capture the approved sections in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands: present it scaled to the idea — a few sentences where it's straightforward, a paragraph where it's nuanced — and pause so the user can question, refute, or change it. Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
 Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
 
