@@ -115,7 +115,7 @@ Completion criterion: every layer the change touches has either a reported surfa
 
 Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
 
-Interview the user on each, one question at a time, in plain chat text — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the trade-off it accepts, and wait for the response before the next question. Offer discrete options to frame a genuine choice, never as a neutral menu — your pick still leads.
+Interview the user on each, one question at a time — exactly one question mark per message; a sub-question, clarifier, or "and also…" rider is the *next* message, sent after this answer lands. Ask in plain chat text — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the trade-off it accepts, and wait for the response before the next question. Offer discrete options to frame a genuine choice, never as a neutral menu — your pick still leads.
 
 This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see References → Subagents) rather than spending the user's attention on it. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
 
@@ -125,9 +125,9 @@ Completion criterion: every material, unsettled decision on your list has a user
 
 ### 3. Read back the sections
 
-Grilling settled the decisions; before any of them hardens into a draft, read them back. Walk the user through the spec-to-be one Deliverables section at a time — for each, a tight digest of what it will say (the acceptance criteria as a list, each technical decision with its one-line why, the scope cuts), not finished prose. Pause after each piece so the user can question, refute, or change it, and fold each change in before moving on. A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
+Grilling settled the decisions; before any of them hardens into a draft, read them back — the content itself, not a table of contents. Walk the spec-to-be one Deliverables section per message: the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name — material the user can strike or amend line by line, not finished prose. Pause after each section so the user can question, refute, or change it, and fold each change in before the next. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
 
-Completion criterion: every section the draft will contain has been read back and user-approved piece by piece — objections resolved now, none carried into the draft.
+Completion criterion: every section the draft will contain has had its actual content read back — one section per message — and user-approved piece by piece; objections resolved now, none carried into the draft.
 
 ### 4. Draft
 

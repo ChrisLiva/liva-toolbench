@@ -97,7 +97,7 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 Walk the design tree branch by branch, resolving dependencies between decisions one at a time until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
 
-- **One question per message, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them — no forced lettering or length limits.
+- **One question per message — exactly one question mark, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. A sub-question, clarifier, or "and also…" rider is the *next* message, sent after this answer lands. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them — no forced lettering or length limits.
 - **Explore before you ask.** If the codebase or a quick search can settle a question, dispatch a subagent rather than spend the user's attention on it.
 - **Stay at altitude.** A technical detail earns a question only when it's load-bearing for a *what*/*which-approach* decision; otherwise note it as an **Open question** for the spec and move on.
 - Focus on purpose, constraints, and success criteria — what done looks like, and what's explicitly not in this.
@@ -112,7 +112,7 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 5. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands: present it scaled to the idea — a few sentences where it's straightforward, a paragraph where it's nuanced — and pause so the user can question, refute, or change it. Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands — the section's actual content, one section per message, scaled to the idea (a few sentences where it's straightforward, a paragraph where it's nuanced) — and pause so the user can strike or amend specific lines. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
 Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
 

@@ -104,9 +104,9 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing full steps, read it back. Walk the user through the plan-to-be piece by piece: the file map first, then each task in order — one line each on what it implements, the acceptance criteria it covers, and its test-first or lightest-check call. Pause after each piece so the user can question, refute, or change it, and fold each change in before moving on. A task cut or resequenced in the readback costs a line; the same change after the steps are written re-litigates the plan and the review.
+Decomposition settled the shape; before writing full steps, read it back — the content itself, not a table of contents. Walk the plan-to-be one piece per message: the file map first (the actual path / action / responsibility rows), then each task in order — what it implements, the acceptance criteria it covers, and its test-first or lightest-check call — material the user can strike or amend line by line. Pause after each piece so the user can question, refute, or change it, and fold each change in before the next. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. A task cut or resequenced in the readback costs a line; the same change after the steps are written re-litigates the plan and the review.
 
-Completion criterion: the file map and every task have been read back and user-approved piece by piece — objections resolved now, none carried into the written steps.
+Completion criterion: the file map and every task have had their actual content read back — one piece per message — and user-approved piece by piece; objections resolved now, none carried into the written steps.
 
 ### 5. Write the steps
 
