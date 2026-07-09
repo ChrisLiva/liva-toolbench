@@ -8,9 +8,9 @@ Implement the work described in the plan (or PRD/spec) the user provides.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
-If the plan is large, or touches many files, spawn Sonnet/GPT-5.5-Medium subagents to implement tasks sequentially or in parallel. Provide the subagents brief, targeted instructions.
+If the plan is large, or touches many files, spawn Sonnet/GPT-5.6-Terra-Medium subagents to implement tasks sequentially or in parallel. Provide the subagents brief, targeted instructions.
 
-Once done implementing the entire plan, spawn an Opus/GPT-5.5-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
+Once done implementing the entire plan, spawn an Opus/GPT-5.6-Terra-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
 
 Before committing, inspect the worktree and stage only the files changed for this task. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
