@@ -1,7 +1,7 @@
 {
   "name": "crank-lite",
   "description": "Lightweight brainstorming, spec, planning, and execution skills for shaping work before shipping it.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {
     "name": "Chris Liva",
     "email": "chrislliva@gmail.com"

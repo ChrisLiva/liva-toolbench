@@ -127,7 +127,7 @@ Completion criterion: every material, unsettled decision on your list has a user
 
 Grilling settled the decisions; before any of them hardens into a draft, read them back — the content itself, not a table of contents. Walk the spec-to-be one Deliverables section per message: the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name — material the user can strike or amend line by line, not finished prose. Pause after each section so the user can question, refute, or change it, and fold each change in before the next. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
 
-Completion criterion: every section the draft will contain has had its actual content read back — one section per message — and user-approved piece by piece; objections resolved now, none carried into the draft.
+Completion criterion: every section the draft will contain has had its actual content read back — one section per message — and user-approved section by section; objections resolved now, none carried into the draft.
 
 ### 4. Draft
 
