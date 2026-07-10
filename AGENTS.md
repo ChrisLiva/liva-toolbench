@@ -134,6 +134,13 @@ preprocessing** — none of it runs under Codex:
 - `@file` includes
 - `` !`cmd` `` / ` ```! ` bang shell execution
 
+**Skill prose must be harness-agnostic, not just preprocessing-free.** Describe
+subagent work at the capability level ("dispatch a standard-tier subagent to …"),
+never with Claude-specific tool or agent-type names, and never by referencing this
+repo's internal agent definitions (`crank-*` agents). Per-harness specifics — the
+standard/heavy subagent model tiers and effort mappings for Claude Code, Codex, and
+Cursor — live in one small XML block per skill, not scattered through the body.
+
 **Sharing a reference file between two skills:** keep the real file in one skill's
 directory, **symlink** it into the other, and reference it with a relative link —
 `[FILE.md](FILE.md)` (the pattern mattpocock's skills use). Don't add a `_shared/`
@@ -349,6 +356,9 @@ relative string.
 # fast feedback while developing one plugin
 claude --plugin-dir ./plugins/<name>
 ```
+
+Headless runs (`claude -p …`) bill against the Claude subscription, not metered API
+spend — running smoke tests or eval trials is not a cost concern.
 
 Inside the session:
 - `/reload-plugins` — picks up edits to plugin files
