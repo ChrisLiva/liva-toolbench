@@ -2,7 +2,7 @@
 
 Render the finished spec / plan as a **single self-contained HTML page**, open it in the user's browser, and let them comment inline and ship those comments back with one click. The markdown temp file stays the source of truth — this HTML is a review *lens*, not a re-typeset of the doc.
 
-This runs only in the **Hand back** step of a standalone run, and only after the user opts into an HTML review when the skill asks. Under `/crank` (headless) the hand-back is skipped entirely, so this never fires — no browser pop-up mid-pipeline.
+This runs only in the **Hand back** step, and only after the user opts into an HTML review when the skill asks — it never fires unprompted.
 
 ## What the page is for — read this before you render anything
 

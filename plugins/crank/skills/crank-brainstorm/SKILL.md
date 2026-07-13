@@ -74,7 +74,7 @@ The high-level design brief, written to the temp file (see Hard Rules). Include 
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
 - **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them. High-level — no signatures or schemas. A rough sketch or short list, not a file map.
 - **Key decisions** — the consequential choices settled during brainstorming, each with one line on why. These are what the spec inherits and details.
-- **Open questions** — technical decisions deliberately left for the spec to ground and settle. This list becomes the spec's grilling agenda, so make each item a real, answerable question. *High-level design holes don't belong here — resolve those with the user before handing off; only genuinely spec-level detail goes on this list.*
+- **Open questions** — technical decisions deliberately left for the spec to ground and settle; this list becomes the spec's grilling agenda. The admission test: you can state the question precisely *now*, even though answering it is the spec's job. Anything you can't yet phrase that sharply is a design hole, not an open question — resolve it with the user before handing off. Only genuinely spec-level detail goes on this list.
 - **Out of scope** — what was discussed and explicitly cut.
 
 ## Flow
@@ -87,36 +87,45 @@ Before asking the user anything, learn the lay of the land: recent commits, rele
 
 Completion criterion: you can name the surfaces the idea touches and the established patterns it should follow — from exploration, not assumption.
 
-### 2. Scope check
+### 2. Name the destination
+
+Before refining anything, settle what reaching the end looks like: the problem being solved and what "done" means for the user, in one or two lines. The destination fixes scope — every later question, approach, and cut orients to it — so it's settled first. If the user's opening message already states it, read your one-or-two-line version back for confirmation instead of re-asking; if not, this is your first question.
+
+Completion criterion: a one-or-two-line destination the user has explicitly confirmed — it anchors the brief's **Idea / Problem** section and every scope call after it.
+
+### 3. Scope check
 
 Before refining details, assess scope. If the idea describes several independent subsystems (e.g., "a platform with chat, file storage, billing, and analytics"), flag it now — don't spend questions polishing one corner of a project that needs decomposing first. Help the user split it: name the independent pieces, how they relate, and what order to build them. Then brainstorm the first sub-project through the normal flow; each sub-project gets its own brief → spec → plan → execute cycle.
 
 Completion criterion: the idea is confirmed buildable as one project, or split — pieces named, order agreed, first sub-project chosen.
 
-### 3. Grill the open questions
+### 4. Grill the open questions
 
-Walk the design tree branch by branch, resolving dependencies between decisions one at a time until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
+**Survey breadth-first, then drill.** Before resolving anything, fan out: list the consequential decisions you can already name — a short agenda, one line each — and share it with the user (the agenda message asks nothing, so it's exempt from the one-question rule). The agenda keeps the first branch from silently eating the session, lets the user reorder or strike items, and shows what's left as the grilling proceeds. Keep it live: add decisions that answers surface, strike ones they moot. If the survey turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to `crank:crank-spec` rather than manufacture a brainstorm.
+
+Then walk the agenda one decision at a time, resolving dependencies between decisions until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
 
 - **One question per message — exactly one question mark, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. A sub-question, clarifier, or "and also…" rider is the *next* message, sent after this answer lands. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them — no forced lettering or length limits.
 - **Explore before you ask.** If the codebase or a quick search can settle a question, dispatch a subagent rather than spend the user's attention on it.
+- **Raise fidelity when words stall.** When a question is experiential — how something should look, behave, or read — a cheap throwaway artifact beats another round of prose: a sketch, a stub, a sample output or mock data shape the user can react to. Offer it in place of the next question, and record the reaction as the answer.
 - **Stay at altitude.** A technical detail earns a question only when it's load-bearing for a *what*/*which-approach* decision; otherwise note it as an **Open question** for the spec and move on.
-- Focus on purpose, constraints, and success criteria — what done looks like, and what's explicitly not in this.
+- Keep the destination in view — constraints and success criteria against it, and what's explicitly not in this.
 
-Completion criterion: every consequential design question is genuinely settled with the user or recorded as an **Open question** for the spec — none waved past.
+Completion criterion: the agenda is empty — every consequential design question genuinely settled with the user or recorded as an **Open question** for the spec, none waved past.
 
-### 4. Propose approaches
+### 5. Propose approaches
 
 Once the shape is clear enough, propose **2–3 approaches, each optimizing for a different thing**, conversationally, with trade-offs — name the axis each one wins on (e.g. one minimizes the moving parts, one stays most flexible for the likely next ask, one hugs the existing idiom closest). Two approaches that optimize for the same thing are the same approach — drop one. If two genuinely combine, propose the hybrid as your recommendation rather than leaving the user to merge them. Lead with your recommendation and why. Reach for the Vocabulary here: prefer the approach whose central piece is *deeper* (more behavior behind a smaller interface), and name the leverage and locality the chosen shape buys over its alternative. If an approach's key piece fails the deletion test, say so — that's a reason to drop it.
 
 Completion criterion: the user has explicitly picked an approach (or your recommended hybrid) — having heard the options isn't a pick.
 
-### 5. Draft the high-level brief
+### 6. Draft the high-level brief
 
 Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands — the section's actual content, one section per message, scaled to the idea (a few sentences where it's straightforward, a paragraph where it's nuanced) — and pause so the user can strike or amend specific lines. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
 Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
 
-### 6. Hand off
+### 7. Hand off
 
 The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute). The natural next step is the spec, which turns this high-level brief into a full PRD-plus-technical-spec — grounding it in the codebase, grilling you on the **Open questions**, and adding acceptance criteria. In chat prose, offer:
 

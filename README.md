@@ -44,9 +44,11 @@ Forces a **spec → plan → execute** sequence before any code is written. Each
 | `crank:crank-spec` | `/crank-spec` | Writes the conversation up as a **spec** (part PRD, part technical spec) — grounds it in the codebase, grills the open technical decisions one at a time, then adversarially reviews it in place. Produces `spec.md`. |
 | `crank:crank-plan` | `/crank-plan` | Decomposes a spec into ordered, bite-sized, **TDD-flavored tasks** — each with file paths, commands, embedded test code, and exact expected output — then adversarially reviews the plan in place. Produces `plan.md`. |
 | `crank:crank-execute` | `/crank-execute` | Executes a plan **task-by-task** — picks a solo / sequential / parallel shape, runs TDD where a real seam exists, gates every "done" on verification evidence, runs a fresh-eyes final review, and writes `retro.md`. |
-| `crank:crank` | `/crank` | Runs the **full pipeline** (spec → plan → execute) autonomously from one prompt. Each phase runs in its own subagent inside a fresh git worktree; artifacts hand off through a shared run directory. |
+| `crank:crank-refine` | `/crank-refine` | Grills an existing brainstorm, spec, or plan **at its own altitude** until nothing consequential is left undecided — one informed question at a time, sharpening the artifact in place. Standalone pass; doesn't advance the pipeline. |
+| `crank:crank-review` | `/crank-review` | Reviews a PR, commit range, or uncommitted changes for a **short list of high-confidence findings** — does the code do what it says, what can be deleted, what edge case slips through — each independently validated before it ships. |
+| `crank:crank-test-prune` | `/crank-test-prune` | Verdicts every test in scope **KEEP / DELETE / REFACTOR** so only behavior-pinning tests survive — redundancy judged suite-wide, expected values from an independent source of truth, full suite green after applying. |
 
-**Typical flow (standalone skills):**
+**Typical flow:**
 
 ```text
 /crank-spec  add rate limiting to the API
@@ -57,13 +59,6 @@ Forces a **spec → plan → execute** sequence before any code is written. Each
 
 /crank-execute  /tmp/crank-plan.<rand>.md
   → /tmp/crank-retro.<rand>.md    (retro)
-```
-
-Or run all three autonomously in one shot:
-
-```text
-/crank  add rate limiting to the API
-  → spec → plan → execute in a fresh git worktree, then a cleanup offer (merge / PR / leave / discard)
 ```
 
 ### `effective-html` — single-file HTML communication artifacts
