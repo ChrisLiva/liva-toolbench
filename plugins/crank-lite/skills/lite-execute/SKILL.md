@@ -14,4 +14,6 @@ Once done implementing the entire plan, spawn an Opus/GPT-5.6-Terra-High subagen
 
 Before committing, inspect the worktree and stage only the files changed for this task. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
-Once you've finished implementation and review, record a concise retro to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-retro-<slug>.md`) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, open items, and further suggestions when those sections earn their place. Tell the user the commit SHA and temp file path.
+Before the retro, close the loop — you ship finished work: settle every loose end (reviewer findings, plan risks, your own "worth noting" observations) with a command, read, or test this session; a loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation.
+
+Once you've finished implementation and review, record a concise retro to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-retro-<slug>.md`) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and temp file path; when nothing survived the loop-close, say the work is complete.
