@@ -6,9 +6,14 @@ disable-model-invocation: true
 
 Implement the work described in the plan (or PRD/spec) the user provides.
 
-Run typechecking regularly, single test files regularly, and the full test suite once at the end.
+**Before touching any file, pick the execution shape and state it** — count the plan's tasks and the areas of code it touches, then tell the user which shape you chose and why:
 
-If the plan is large, or touches many files, spawn Sonnet/GPT-5.6-Terra-Medium subagents to implement tasks sequentially or in parallel. Provide the subagents brief, targeted instructions.
+- **Solo** — ~3 tasks or fewer, one area of code, or tightly coupled edits that share in-flight state. Implement inline on this thread.
+- **Orchestrate** — the default above that: you are the orchestrator; Sonnet/GPT-5.6-Terra-High subagents implement. Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, and the verification command it must run and report output from. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation.
+
+A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
+
+Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
 Once done implementing the entire plan, spawn an Opus/GPT-5.6-Terra-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
 
