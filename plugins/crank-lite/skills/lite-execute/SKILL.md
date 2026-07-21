@@ -13,6 +13,8 @@ Implement the work described in the plan (or PRD/spec) the user provides.
 
 A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
 
+Track the run with your harness's task tracker (todo/plan tool): create one entry per plan task before starting work, mark it in progress when you begin it, and completed the moment it lands. Every run gets this, solo included — it is how the user sees progress mid-run and how an interrupted session knows where to resume.
+
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
 Once done implementing the entire plan, spawn an Opus/GPT-5.6-Terra-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
