@@ -5,12 +5,31 @@ description: "Plan implementation for a spec, PRD, or formed idea. Use when the 
 
 Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD until you reach a shared understanding of the build strategy, task order, code boundaries, risks, and verification approach.
 
-The interview should resolve all ambiguity and implementation decisions for bringing their vision to life. The implementation plan should keep the code minimal.
+## Interview
 
-Walk down each branch of the decision tree for their implementation, resolving dependencies between decisions one-by-one. For each question you have, provide your recommended answer.
+Resolve every implementation decision, and keep the planned code minimal.
 
-Only ask questions one at a time — exactly one question mark per message; a sub-question or "and also…" rider is the next message, sent after this answer lands — and wait for feedback before continuing.
+Walk down each branch of the decision tree for their implementation, resolving dependencies between decisions one-by-one.
 
-Proactively spawn Sonnet/GPT-5.6-Terra-Medium subagents to explore the codebase and investigate your own questions before resorting to asking the user: if a *fact* can be found in the codebase, look it up rather than asking. The *decisions*, though, are the user's — put each one to them and wait for their answer.
+Ask questions one at a time — exactly one question mark per message; a sub-question or "and also…" rider is the next message, sent after this answer lands — and wait for feedback before continuing. For each question, provide your recommended answer.
 
-Once you've reached a shared understanding, read the plan back to the user before writing anything: one logical section per message, showing that section's actual content — the tasks, the decisions behind them, and the risks themselves, so the user can strike or amend specific items — and pausing after each so they can question, refute, or change it. Optimize the readback for what the user actually vetoes: lead with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — commit sequencing and test breadth are background detail; don't enumerate every test or check you'll write. Where a task's logic or data flow is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII, not mermaid — chat renders mermaid as raw text) instead of prose. If the only possible reply is "sounds good", you've sent a summary, not a readback. When every section stands approved, record the concise implementation plan to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-plan-<slug>.md`) and stop. Keep the artifact light: include the goal, assumptions, ordered tasks, verification checks, and risks — each risk paired with the check that retires it during execution — when those sections earn their place. Carry any pseudo-code, call graph, or diagram the user approved during readback into the plan — the executing agent inherits the exact logic shape that was vetted, not a prose paraphrase of it. A risk no check can retire is a decision: put it to the user during the interview, not into the artifact. The interview resolves open questions; the plan ships without any. Tell the user the temp file path and recommend `lite-execute` next when the plan is ready to build.
+Proactively spawn Sonnet/GPT-5.6-Terra-Medium subagents to explore the codebase and investigate your own questions before resorting to asking the user: if a *fact* can be found in the codebase, look it up rather than asking. The *decisions* are the user's — put each one to them and wait for their answer.
+
+A risk no check can retire is a decision: put it to the user during the interview, not into the artifact. The interview resolves open questions; the plan ships without any.
+
+## Readback
+
+Once you've reached a shared understanding, read the plan back to the user before writing anything: one logical section per message, pausing after each so they can question, refute, or change it.
+
+- Show each section's actual content — the tasks, the decisions behind them, and the risks themselves — so the user can strike or amend specific items.
+- Optimize for what the user actually vetoes: lead with what the plan commits to build, what's explicitly out of scope, and anything still unsettled. Commit sequencing and test breadth stay background — a sentence, not a list.
+- Where a task's logic or data flow is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
+- If the only possible reply is "sounds good", you've sent a summary, not a readback.
+
+## Plan
+
+When every section stands approved, record the concise implementation plan to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-plan-<slug>.md`) and stop.
+
+Keep the artifact light: include the goal, assumptions, ordered tasks, verification checks, and risks — each risk paired with the check that retires it during execution — when those sections earn their place. Carry any pseudo-code, call graph, or diagram the user approved during readback into the plan — the executing agent inherits the exact logic shape that was vetted, not a prose paraphrase of it.
+
+Tell the user the temp file path and recommend `lite-execute` next when the plan is ready to build.
