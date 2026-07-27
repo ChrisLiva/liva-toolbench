@@ -44,10 +44,6 @@ This skill spawns subagents at two tiers — resolve each to your harness (Claud
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
 
-### HTML review guide
-
-The interactive-review render steps live in [HTML-REVIEW.md](HTML-REVIEW.md); Flow → Hand back follows it when the user opts in.
-
 ### Plan skeleton
 
 The compact markdown skeleton lives in [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md); Flow → Write the steps uses it as the starting shape, then scales or omits sections per Deliverables.
@@ -106,13 +102,20 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing full steps, read it back — the content itself, not a table of contents. Group the plan-to-be into logical sections and walk them one section per message: the file map first (the actual path / action / responsibility rows), then each section's tasks — what each implements and the consequential decisions behind it (sequencing, and a test-first vs. lightest-check call where that's a real judgment call), material the user can strike or amend. Optimize the readback for what the user actually vetoes: name the tasks and the decisions, not the test list — don't enumerate every test you'll write. Pause after each section so the user can question, refute, or change it, and fold each change in before the next. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. A task cut or resequenced in the readback costs a line; the same change after the steps are written re-litigates the plan and the review.
+Decomposition settled the shape; before writing full steps, read it back — the content itself, not a table of contents. Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them one section per message: the file map first (the actual path / action / responsibility rows), then each section's tasks. Pause after each section so the user can question, refute, or change it, and fold each change in before the next.
+
+- Show what each task implements and the consequential decisions behind it (sequencing, and a test-first vs. lightest-check call where that's a real judgment call) — material the user can strike or amend.
+- Commit sequencing and test breadth stay background — a sentence, not a list.
+- Where a task's logic or data flow is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
+- The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback.
+
+A task cut or resequenced in the readback costs a line; the same change after the steps are written re-litigates the plan and the review.
 
 Completion criterion: the file map and every task's content and decisions have been read back — grouped into logical sections, one section per message — and user-approved section by section; objections resolved now, none carried into the written steps.
 
 ### 5. Write the steps
 
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Carry any pseudo-code, call graph, or diagram the user approved during readback into the plan — the executor inherits the exact logic shape that was vetted, not a prose paraphrase of it. Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
 
@@ -132,18 +135,12 @@ Completion criterion: the reviewer's edits are in the plan file and its one-line
 
 ### 7. Hand back
 
-**Ask first, then offer the file menu.** Before rendering anything, ask the user whether they'd like an interactive HTML review of the plan. Recommend it (it's the easiest way to comment per task and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
-
-**Open the review (only if the user opted in).** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the plan as the `.html` sibling of the temp file and open it. Tell the user the HTML path and that they can comment per task, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the plan and re-render.
-
 In chat prose, offer:
 
 - **Keep the temp file** (default) — the path is known; user can execute it, feed it elsewhere, or move it later.
 - **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final contents into the chat and remove the temp file (and its `.html` sibling, if one was rendered).
-
-When the user pastes a block beginning `> Source: <path>`, apply it per HTML-REVIEW.md's "Applying a pasted review" — in a plan, a `requested IN scope` item folds in as a real task / step (or push back with a reason; never drop it silently).
+- **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 
 Then stop. Do not auto-invoke other skills or continue past the handback.
 
-Completion criterion: the user answered the HTML-review ask and picked from the file menu, and you did exactly what they picked — nothing rendered or invoked they didn't opt into.
+Completion criterion: the user picked from the file menu and you did exactly what they picked — nothing invoked they didn't opt into.

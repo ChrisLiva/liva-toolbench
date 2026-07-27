@@ -121,7 +121,13 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands — the section's actual content, one section per message, scaled to the idea (a few sentences where it's straightforward, a paragraph where it's nuanced) — and pause so the user can strike or amend specific lines. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands — one section per message, scaled to the idea (a few sentences where it's straightforward, a paragraph where it's nuanced) — and pause after each so the user can question, refute, or change it.
+
+- Show each section's actual content — the decisions, constraints, and shape themselves — so the user can strike or amend specific lines.
+- When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram (ASCII; chat renders mermaid as raw text): easier to veto than prose.
+- The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback.
+
+Capture each approved section in the temp file as you go, and carry any sketch or diagram the user approved during readback into the brief — the spec inherits the exact shape that was vetted, not a prose paraphrase of it. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
 Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
 

@@ -86,7 +86,7 @@ plugins/
       crank/SKILL.md
       crank-brainstorm/SKILL.md
       crank-spec/SKILL.md       # owns the shared reference docs —
-      crank-plan/SKILL.md       #   VOCABULARY.md, SUBAGENT-TIERS.md, HTML-REVIEW.md,
+      crank-plan/SKILL.md       #   VOCABULARY.md and SUBAGENT-TIERS.md,
       crank-execute/SKILL.md    #   symlinked into the sibling skill dirs
   effective-html/
     .claude-plugin/plugin.json

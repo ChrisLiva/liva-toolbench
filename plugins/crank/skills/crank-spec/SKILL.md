@@ -61,10 +61,6 @@ This skill spawns subagents at two tiers — resolve each to your harness (Claud
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **port** / **adapter**, and the **implementation-detail test** — read their meanings there.
 
-### HTML review guide
-
-The interactive-review render steps live in [HTML-REVIEW.md](HTML-REVIEW.md); Flow → Hand back follows it when the user opts in.
-
 ### Spec skeleton
 
 The compact markdown skeleton lives in [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md); Flow → Draft uses it as the starting shape, then scales or omits sections per Deliverables.
@@ -125,13 +121,19 @@ Completion criterion: every material, unsettled decision on your list has a user
 
 ### 3. Read back the sections
 
-Grilling settled the decisions; before any of them hardens into a draft, read them back — the content itself, not a table of contents. Walk the spec-to-be one Deliverables section per message: the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name — material the user can strike or amend line by line, not finished prose. Pause after each section so the user can question, refute, or change it, and fold each change in before the next. The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback. A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
+Grilling settled the decisions; before any of them hardens into a draft, read them back — the content itself, not a table of contents. Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. Then walk the spec-to-be one Deliverables section per message, pausing after each so the user can question, refute, or change it, and fold each change in before the next.
+
+- Show each section's actual content — the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name — material the user can strike or amend line by line, not finished prose.
+- Where an interface, data flow, or piece of logic is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
+- The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback.
+
+A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
 
 Completion criterion: every section the draft will contain has had its actual content read back — one section per message — and user-approved section by section; objections resolved now, none carried into the draft.
 
 ### 4. Draft
 
-Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Carry any pseudo-code, call graph, or diagram the user approved during readback into the spec — the plan inherits the exact shape that was vetted, not a prose paraphrase of it. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
 
 Completion criterion: every Deliverables section that applies is written to the temp file, no template placeholder survives, and every in-scope module has been through both guidelines.
 
@@ -145,18 +147,12 @@ Completion criterion: the reviewer's edits are in the spec file and its one-line
 
 ### 6. Hand back
 
-**Ask first, then offer the file menu.** Before rendering anything, ask the user whether they'd like an interactive HTML review of the spec. Recommend it (it's the easiest way to comment per acceptance criterion and tick scope cuts back in), but render the HTML only if they say yes. Then offer the file menu either way.
-
-**Open the review (only if the user opted in).** Read the rendering guide in this skill's directory — [HTML-REVIEW.md](HTML-REVIEW.md) — then follow it to render the spec as the `.html` sibling of the temp file and open it — give each acceptance criterion its own comment box. Tell the user the HTML path and that they can comment per section, tick any out-of-scope cut that should be in, hit **Export comments →**, and paste the block back — you'll apply it to the spec and re-render.
-
 In chat prose, offer:
 
 - **Keep the temp file** (default) — the path is already known; user can hand it to the plan skill, feed it elsewhere, or move it later.
 - **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final contents into the chat and remove the temp file (and its `.html` sibling, if one was rendered).
-
-When the user pastes a block beginning `> Source: <path>`, apply it per HTML-REVIEW.md's "Applying a pasted review" — in a spec, a `requested IN scope` item folds in as a real acceptance criterion / decision (or push back with a reason; never drop it silently).
+- **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 
 Then stop. Do not auto-invoke other skills or continue past the handback.
 
-Completion criterion: the user answered the HTML-review ask and picked from the file menu, and you did exactly what they picked — nothing rendered or invoked they didn't opt into.
+Completion criterion: the user picked from the file menu and you did exactly what they picked — nothing invoked they didn't opt into.

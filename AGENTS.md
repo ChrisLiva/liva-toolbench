@@ -145,7 +145,7 @@ Cursor — live in one small XML block per skill, not scattered through the body
 directory, **symlink** it into the other, and reference it with a relative link —
 `[FILE.md](FILE.md)` (the pattern mattpocock's skills use). Don't add a `_shared/`
 dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path. Example:
-`plugins/crank/skills/crank-plan/HTML-REVIEW.md` symlinks to `../crank-spec/HTML-REVIEW.md`, and both
+`plugins/crank/skills/crank-plan/SUBAGENT-TIERS.md` symlinks to `../crank-spec/SUBAGENT-TIERS.md`, and both
 `SKILL.md`s link to it relatively.
 
 > Symlinks only survive a `core.symlinks=true` checkout (macOS/Linux default). If a
@@ -373,8 +373,8 @@ Inside the session:
 When you land a load-bearing design choice inside a skill — a tradeoff a future
 review could plausibly reverse (offline vs CDN, port vs direct call, which library)
 — record it **inline in that skill's reference doc** with a `(per project decision:
-…)` marker, not just in chat. Example: `plugins/crank/skills/crank-spec/HTML-REVIEW.md` notes
-Tailwind + Mermaid load via CDN "(per project decision)". This is what stops coding
+…)` marker, not just in chat — e.g. a reference doc that pins a library choice notes
+it "(per project decision: …)" beside the choice. This is what stops coding
 agents from re-suggesting the option you already ruled out.
 
 ---
