@@ -23,7 +23,7 @@ Run typechecking regularly, single test files regularly, and the full test suite
 
 ## Review and commit
 
-Once done implementing the entire plan, spawn an Opus/GPT-5.6-Terra-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
+Once done implementing the entire plan, spawn an Opus/GPT-5.6-Sol-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
 
 Before committing, inspect the worktree and stage only the files changed for this task. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
