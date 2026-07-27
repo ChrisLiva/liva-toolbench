@@ -62,6 +62,10 @@ Cite sources, and flag what you're unsure of rather than asserting it.
 
 This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = grounding, exploration, topic research; **heavy** = the downstream skills (brainstorm rarely needs it).
 
+### Grilling and readback protocols
+
+The shared interview discipline lives in [GRILLING.md](GRILLING.md) and the shared readback discipline in [READBACK.md](READBACK.md); Flow → Grill the open questions and Flow → Draft the high-level brief each load theirs only at that step.
+
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (and its payoffs, **leverage** / **locality**), and the **deletion test** when weighing one shape against another — read their meanings there.
@@ -79,7 +83,7 @@ The high-level design brief, written to the temp file (see Hard Rules). Include 
 
 ## Flow
 
-Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress.
+Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
 
 ### 1. Explore project context
 
@@ -103,10 +107,8 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 **Survey breadth-first, then drill.** Before resolving anything, fan out: list the consequential decisions you can already name — a short agenda, one line each — and share it with the user (the agenda message asks nothing, so it's exempt from the one-question rule). The agenda keeps the first branch from silently eating the session, lets the user reorder or strike items, and shows what's left as the grilling proceeds. Keep it live: add decisions that answers surface, strike ones they moot. If the survey turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to `crank:crank-spec` rather than manufacture a brainstorm.
 
-Then walk the agenda one decision at a time, resolving dependencies between decisions until you and the user share a clear picture. This is the heart of the skill — keep at a question until it's genuinely settled, not waved past.
+Then walk the agenda one decision at a time per [GRILLING.md](GRILLING.md) (read it here), resolving dependencies between decisions until you and the user share a clear picture. This is the heart of the skill.
 
-- **One question per message — exactly one question mark, in plain chat text** — not the structured-question UI, so you have room to show your reasoning. A sub-question, clarifier, or "and also…" rider is the *next* message, sent after this answer lands. Lead with your recommended answer and the reasoning behind it, and wait for the response before the next question. Offer discrete options when the choice is genuinely between them — no forced lettering or length limits.
-- **Explore before you ask.** If the codebase or a quick search can settle a question, dispatch a subagent rather than spend the user's attention on it.
 - **Raise fidelity when words stall.** When a question is experiential — how something should look, behave, or read — a cheap throwaway artifact beats another round of prose: a sketch, a stub, a sample output or mock data shape the user can react to. Offer it in place of the next question, and record the reaction as the answer.
 - **Stay at altitude.** A technical detail earns a question only when it's load-bearing for a *what*/*which-approach* decision; otherwise note it as an **Open question** for the spec and move on.
 - Keep the destination in view — constraints and success criteria against it, and what's explicitly not in this.
@@ -121,13 +123,9 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**. Read each section back before it lands — one section per message, scaled to the idea (a few sentences where it's straightforward, a paragraph where it's nuanced) — and pause after each so the user can question, refute, or change it.
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading each section back before it lands per [READBACK.md](READBACK.md) (read it here) — scaled to the idea: a few sentences where it's straightforward, a paragraph where it's nuanced. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
-- Show each section's actual content — the decisions, constraints, and shape themselves — so the user can strike or amend specific lines.
-- When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram (ASCII; chat renders mermaid as raw text): easier to veto than prose.
-- The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback.
-
-Capture each approved section in the temp file as you go, and carry any sketch or diagram the user approved during readback into the brief — the spec inherits the exact shape that was vetted, not a prose paraphrase of it. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
 Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
 

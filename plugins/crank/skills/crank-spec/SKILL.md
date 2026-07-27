@@ -55,11 +55,15 @@ Keep the interface as the test surface (see Deliverables → Testing approach): 
 
 If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review. Set the tier explicitly on every spawn — never leave it to default.
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review.
 
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **port** / **adapter**, and the **implementation-detail test** — read their meanings there.
+
+### Grilling and readback protocols
+
+The shared interview discipline lives in [GRILLING.md](GRILLING.md) and the shared readback discipline in [READBACK.md](READBACK.md); Flow → Grill the technical decisions and Flow → Read back the sections each load theirs only at that step.
 
 ### Spec skeleton
 
@@ -84,7 +88,7 @@ A single self-contained spec written to the temp file (see Hard Rules). Include 
 
 ## Flow
 
-Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress.
+Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
 
 ### 1. Ground in the codebase
 
@@ -111,29 +115,21 @@ Completion criterion: every layer the change touches has either a reported surfa
 
 Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
 
-Interview the user on each, one question at a time — exactly one question mark per message; a sub-question, clarifier, or "and also…" rider is the *next* message, sent after this answer lands. Ask in plain chat text — not the structured-question UI, so you have room to show your reasoning. Lead with your recommended answer and the trade-off it accepts, and wait for the response before the next question. Offer discrete options to frame a genuine choice, never as a neutral menu — your pick still leads.
+Interview the user on each per [GRILLING.md](GRILLING.md) (read it here). This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
 
-This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. Explore first: if a subagent can settle a question, dispatch one (see References → Subagents) rather than spending the user's attention on it. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
-
-Don't re-open decisions the conversation already settled, and don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
+Don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 
 Completion criterion: every material, unsettled decision on your list has a user answer or a subagent-settled fact recorded — none carried into the draft as an implicit choice.
 
 ### 3. Read back the sections
 
-Grilling settled the decisions; before any of them hardens into a draft, read them back — the content itself, not a table of contents. Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. Then walk the spec-to-be one Deliverables section per message, pausing after each so the user can question, refute, or change it, and fold each change in before the next.
+Grilling settled the decisions; before any of them hardens into a draft, read them back per [READBACK.md](READBACK.md) (read it here). Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. Then walk the spec-to-be one Deliverables section per message: the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name.
 
-- Show each section's actual content — the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name — material the user can strike or amend line by line, not finished prose.
-- Where an interface, data flow, or piece of logic is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
-- The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback.
-
-A change caught in the readback costs a sentence; the same change after drafting re-litigates the draft and the review.
-
-Completion criterion: every section the draft will contain has had its actual content read back — one section per message — and user-approved section by section; objections resolved now, none carried into the draft.
+Completion criterion: every section the draft will contain has had its actual content read back and user-approved section by section; objections resolved now, none carried into the draft.
 
 ### 4. Draft
 
-Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Carry any pseudo-code, call graph, or diagram the user approved during readback into the spec — the plan inherits the exact shape that was vetted, not a prose paraphrase of it. Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Carry the material the readback approved into the spec as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
 
 Completion criterion: every Deliverables section that applies is written to the temp file, no template placeholder survives, and every in-scope module has been through both guidelines.
 

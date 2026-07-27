@@ -38,11 +38,15 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 
 If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review. Set the tier explicitly on every spawn — never leave it to default.
+This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
 
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
+
+### Readback protocol
+
+The shared readback discipline lives in [READBACK.md](READBACK.md); Flow → Read back the shape loads it only at that step.
 
 ### Plan skeleton
 
@@ -68,7 +72,7 @@ A single self-contained implementation plan written to the temp file (see Hard R
 
 ## Flow
 
-Create a task for each step below and mark each one complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress.
+Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
 
 ### 1. Ground first
 
@@ -90,8 +94,6 @@ Completion criterion: every file the plan touches has a path / action / responsi
 
 A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that ends on a green tree and carries its own test cycle. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
 
-For example, "Add profile editing" is not a task — it bundles two behaviors with no signatures, so there is no single green tree to land on. Split it into `updateProfile(userId, fields)` (persists name and bio; test: round-trips a changed bio) and `validateProfile(fields)` (rejects an empty name; test: empty name returns a field error), each its own task ending on its own green tree.
-
 When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones. Old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
 
 **Wide refactors are the exception to the one-task green tree.** A **wide refactor** is one mechanical change — rename a shared symbol, retype a column — whose blast radius fans across the codebase, so a single edit breaks call sites everywhere at once and no one task can land it green. Don't force it into one tracer bullet; sequence it as **expand–contract**: an *expand* task adds the new form beside the old so nothing breaks, *migrate* tasks move call sites over in batches sized by blast radius (per package, per directory) — each batch still ends on a green tree because the old form stands — and one *contract* task deletes the old form once no caller remains. If even the batches can't stay green alone, keep the sequence but say so in the plan: green is promised only at a final integrate-and-verify task.
@@ -102,20 +104,13 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing full steps, read it back — the content itself, not a table of contents. Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them one section per message: the file map first (the actual path / action / responsibility rows), then each section's tasks. Pause after each section so the user can question, refute, or change it, and fold each change in before the next.
+Decomposition settled the shape; before writing full steps, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them: the file map first (the actual path / action / responsibility rows), then each section's tasks — showing what each task implements and the consequential decisions behind it (sequencing, and a test-first vs. lightest-check call where that's a real judgment call). Commit sequencing and test breadth stay background — a sentence, not a list.
 
-- Show what each task implements and the consequential decisions behind it (sequencing, and a test-first vs. lightest-check call where that's a real judgment call) — material the user can strike or amend.
-- Commit sequencing and test breadth stay background — a sentence, not a list.
-- Where a task's logic or data flow is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
-- The test for each message: could the user veto a specific item from it? If all they can say is "sounds good", you've sent a summary, not a readback.
-
-A task cut or resequenced in the readback costs a line; the same change after the steps are written re-litigates the plan and the review.
-
-Completion criterion: the file map and every task's content and decisions have been read back — grouped into logical sections, one section per message — and user-approved section by section; objections resolved now, none carried into the written steps.
+Completion criterion: the file map and every task's content and decisions have been read back and user-approved section by section; objections resolved now, none carried into the written steps.
 
 ### 5. Write the steps
 
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Carry any pseudo-code, call graph, or diagram the user approved during readback into the plan — the executor inherits the exact logic shape that was vetted, not a prose paraphrase of it. Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Carry the material the readback approved into the plan as vetted (READBACK.md → Carry what was approved). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) — "tests pass" is not enough. The check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
 

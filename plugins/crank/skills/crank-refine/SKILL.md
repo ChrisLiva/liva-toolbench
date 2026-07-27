@@ -15,7 +15,7 @@ Take an existing crank artifact — a brainstorm brief, a spec, or a plan — an
 
 - **Grill at the artifact's altitude — never below it.** A brainstorm is sharpened at *design* altitude, a spec at *technical-decision* altitude, a plan at *implementation* altitude (see References → Grilling altitude by phase). A question that drops below the artifact's altitude doesn't belong in this pass — record it as a deferred item for the next phase and move on. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
 - **Sharpen in place.** Edit the input artifact file directly as decisions land. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a fresh OS temp file (`$(mktemp -t crank-refine).md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
-- **One question at a time, every question informed.** One question means exactly one question mark per message — a sub-question, clarifier, or "and also…" rider is the *next* message, sent after this answer lands. Lead with your recommended answer and the trade-off it accepts; ask in plain chat prose — not the structured-question UI, so you have room to show your reasoning and the grill can follow up on the answer; wait for the response before the next. A question you could answer yourself, you answer yourself first (see References → Subagents & research).
+- **One question at a time, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md). A question you could answer yourself, you answer yourself first (see References → Subagents & research).
 - **Every subagent this skill spawns runs at the standard tier** — grounding and research are bulk work that doesn't need heavy-tier budget (see References → Subagents & research) — unless otherwise specified.
 
 ## References
@@ -58,7 +58,7 @@ The same artifact, sharpened: every in-bounds ambiguity resolved, every conseque
 
 ## Flow
 
-Create a task for each step below and mark each complete as you finish it — update them live as you go, not in a batch at the end — so the user can watch progress.
+Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
 
 ### 1. Identify the artifact and its phase
 
@@ -80,9 +80,9 @@ Completion criterion: every agenda item a fact could settle has its fact in hand
 
 ### 4. Grill
 
-Walk the agenda, one question at a time, until every item is resolved. For each: lead with your researched recommendation and the trade-off it accepts, in plain chat prose; offer discrete options inline as prose when the choice is genuinely between them; wait for the user's answer before the next. Keep at a question until it's genuinely settled — a hedge or a "we'll see" is not a resolution.
+Walk the agenda per [GRILLING.md](GRILLING.md) (read it here), one question at a time, until every item is resolved — each question led by the recommendation your research produced.
 
-Two defaults keep the grill from stalling. **When the user overrides your recommendation,** record their choice and the reason they gave, then move on — a settled decision isn't reopened on a later question. **When a decision won't converge** after a real exchange, don't loop: name the deadlock, record the leading option as *provisional* with the open tension noted in the artifact, and move to the next item.
+Two defaults keep the grill from stalling. **When the user overrides your recommendation,** record their choice and the reason they gave, then move on. **When a decision won't converge** after a real exchange, don't loop: name the deadlock, record the leading option as *provisional* with the open tension noted in the artifact, and move to the next item.
 
 Hold altitude: the moment a question pulls below the artifact's phase, stop, record it as a deferred item, and move on. A dependency an answer surfaces gets inserted into the agenda in order.
 
