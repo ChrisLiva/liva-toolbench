@@ -1,1 +1,19 @@
-../crank-spec/VOCABULARY.md
+# Vocabulary
+
+Shared design language across the crank pipeline (brainstorm → spec → plan → execute). Defined once here; each skill points at this file and names the terms it leans on. Use these terms with these meanings.
+
+- **Module** — anything with an interface and an implementation: a function, class, file, or larger slice.
+- **Interface** — the full contract a caller must understand: signatures, invariants, ordering, errors, config.
+- **Depth** — how much an interface hides. A **deep** module exposes a small interface over substantial behavior; a **shallow** one exposes nearly as much as it hides. Depth lives in the interface, not the implementation — a deep module may be built of many small internal parts, so long as they don't show through. Prefer the deeper shape: more capability behind a smaller interface. Not a line ratio — padding the implementation buys no depth: a thin wrapper over a big library is shallow however many lines sit behind it, while a large internal implementation behind a tiny contract is deep.
+- **Leverage / locality** — the two payoffs of depth. Callers get **leverage**: more behavior per unit of interface they must learn. Maintainers get **locality**: change, bugs, and knowledge concentrate in one place instead of spreading across callers. Use these words when recording why a chosen design beat its alternative.
+- **Deletion test** — imagine the module gone. If its complexity simply vanishes, it was a pass-through and shouldn't be its own piece; if that complexity reappears across many callers, the boundary earned its place.
+- **Seam** — a place where behavior can be swapped without editing in that place; the location of an interface, and the surface tests drive (the production node/endpoint/entry point a real user reaches, never a synthetic stand-in).
+- **Port / adapter** — a seam that crosses a dependency: the **port** is the interface, an **adapter** is a concrete fill (production HTTP/db vs. in-memory test double). Two adapters justify a port; one is just indirection.
+- **Dead seam** — a verify step that drives a node, handler, or endpoint the production code never wires up. It passes even if the feature is absent — worse than no check, because it hides the gap.
+- **Implementation-detail test** — a test coupled to *how* the code works instead of *what* it does: it mocks an internal collaborator, asserts on call counts or call order, reaches a private method, or verifies through a back channel (reading the database directly) instead of reading back through the interface. It breaks on a refactor that changes no behavior, and passes while behavior is broken. The opposite is a behavior test driven through the **seam** — same input a real caller gives, same output a real caller reads.
+- **Tracer bullet / vertical slice** — one test, then the minimal code that passes it, then the next test, each test responding to what the last cycle revealed. A unit of work covering several behaviors is sliced this way: `test A → impl A → test B → impl B`. Its opposite is a **horizontal slice** — every test first, then all the implementation — which pins *imagined* behavior (data shapes, signatures), yields tests that pass when behavior breaks, and commits to test structure before the implementation has taught you anything.
+- **Spaghetti growth** — a one-off conditional, flag, or special case bolted onto a flow the spec/plan never named. A design problem, not a style nit: route the behavior behind the module that owns the concept, or surface the spec gap.
+
+---
+
+> **Maintainer note.** The adversarial-review briefs in `crank-spec` / `crank-plan` / `crank-execute` paraphrase these terms per phase (over a spec, a plan, a diff) — they are not copies of one rubric. When editing a brief, align its **meaning** with the definition here, not its wording; don't flatten a per-phase qualifier into a generic copy.

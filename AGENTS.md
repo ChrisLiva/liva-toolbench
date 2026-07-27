@@ -141,15 +141,24 @@ repo's internal agent definitions (`crank-*` agents). Per-harness specifics — 
 standard/heavy subagent model tiers and effort mappings for Claude Code, Codex, and
 Cursor — live in one small XML block per skill, not scattered through the body.
 
-**Sharing a reference file between two skills:** keep the real file in one skill's
-directory, **symlink** it into the other, and reference it with a relative link —
-`[FILE.md](FILE.md)` (the pattern mattpocock's skills use). Don't add a `_shared/`
-dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path. Example:
-`plugins/crank/skills/crank-plan/SUBAGENT-TIERS.md` symlinks to `../crank-spec/SUBAGENT-TIERS.md`, and both
-`SKILL.md`s link to it relatively.
+**Sharing a reference file between two skills:** keep the **canonical** file in one
+skill's directory and commit a **real copy** into every other skill that needs it,
+each `SKILL.md` referencing its own copy with a relative link — `[FILE.md](FILE.md)`.
+**Never symlink** (per project decision: the Codex plugin installer drops symlinks
+when it snapshots a plugin, so symlinked reference files silently vanish from Codex
+installs — real copies are the only shape that survives every harness). Don't add a
+`_shared/` dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path either. Example:
+the canonical `SUBAGENT-TIERS.md` lives in `plugins/crank/skills/crank-spec/`; the
+other crank skills carry identical copies.
 
-> Symlinks only survive a `core.symlinks=true` checkout (macOS/Linux default). If a
-> Windows checkout is in scope, commit a copy in each directory instead.
+Copies are synced by hand, like version strings: edit the canonical file, re-copy it
+over the others, and verify before committing (no output = in sync):
+
+```bash
+for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK}.md; do
+  diff -q "plugins/crank/skills/crank-spec/$(basename "$f")" "$f"
+done
+```
 
 ---
 
