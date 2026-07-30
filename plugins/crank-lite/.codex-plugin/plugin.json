@@ -1,6 +1,6 @@
 {
   "name": "crank-lite",
-  "version": "0.9.2",
+  "version": "1.0.0",
   "description": "Lightweight brainstorming, spec, planning, and execution skills for shaping work before shipping it.",
   "keywords": ["crank", "lite", "brainstorm", "spec", "plan", "execute"],
   "skills": "./skills/",
@@ -17,9 +17,9 @@
     "category": "tools",
     "capabilities": ["Skills", "Code"],
     "defaultPrompt": [
-      "Use lite-brainstorm to shape my idea.",
-      "Use lite-spec to turn this into a spec.",
-      "Use lite-plan to make an implementation plan."
+      "Use crank-lite to shape my idea — route it to the right phase.",
+      "Use crank-lite's spec route to turn this into a spec.",
+      "Use crank-lite's plan route to make an implementation plan."
     ]
   }
 }

@@ -1,14 +1,8 @@
----
-name: crank-brainstorm
-description: Pin down the consequential decisions in a raw idea and shape it into a high-level design brief before writing a spec — through dialogue, codebase exploration, and research. Use when the user wants to brainstorm, think an idea through, or explore approaches before building.
-argument-hint: "[optional idea or topic]"
----
-
-# Brainstorm
+# Phase: Brainstorm
 
 ## Goal
 
-Turn a raw idea into a **high-level design brief** — the problem, the chosen approach, the major pieces and how they relate, and the decisions that change everything downstream, all at **design altitude**. It's the input to `crank:crank-spec`, which turns the brief into a full spec.
+Turn a raw idea into a **high-level design brief** — the problem, the chosen approach, the major pieces and how they relate, and the decisions that change everything downstream, all at **design altitude**. It's the input to the spec phase ([SPEC.md](SPEC.md)), which turns the brief into a full spec.
 
 ## Hard Rules
 
@@ -105,7 +99,7 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 ### 4. Grill the open questions
 
-**Survey breadth-first, then drill.** Before resolving anything, fan out: list the consequential decisions you can already name — a short agenda, one line each — and share it with the user (the agenda message asks nothing, so it's exempt from the one-question rule). The agenda keeps the first branch from silently eating the session, lets the user reorder or strike items, and shows what's left as the grilling proceeds. Keep it live: add decisions that answers surface, strike ones they moot. If the survey turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to `crank:crank-spec` rather than manufacture a brainstorm.
+**Survey breadth-first, then drill.** Before resolving anything, fan out: list the consequential decisions you can already name — a short agenda, one line each — and share it with the user (the agenda message asks nothing, so it's exempt from the one-question rule). The agenda keeps the first branch from silently eating the session, lets the user reorder or strike items, and shows what's left as the grilling proceeds. Keep it live: add decisions that answers surface, strike ones they moot. If the survey turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to the spec phase rather than manufacture a brainstorm.
 
 Then walk the agenda one decision at a time per [GRILLING.md](GRILLING.md) (read it here), resolving dependencies between decisions until you and the user share a clear picture. This is the heart of the skill.
 
@@ -131,13 +125,13 @@ Completion criterion: every Deliverables section that applies is user-approved a
 
 ### 7. Hand off
 
-The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute). The natural next step is the spec, which turns this high-level brief into a full PRD-plus-technical-spec — grounding it in the codebase, grilling you on the **Open questions**, and adding acceptance criteria. In chat prose, offer:
+The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute). The natural next step is the spec phase, which turns this high-level brief into a full PRD-plus-technical-spec — grounding it in the codebase, grilling you on the **Open questions**, and adding acceptance criteria. In chat prose, offer:
 
-- **Continue to the spec** (recommended) — run the `crank:crank-spec` skill. The approved brief is already in the conversation; tell the spec skill the brief's temp-file path so it can build straight on it.
-- **Keep the temp file** — the path is known; the user can hand it to the spec skill later, feed it elsewhere, or move it.
+- **Continue to the spec** (recommended) — read [SPEC.md](SPEC.md) and run its flow. The approved brief is already in the conversation and its temp-file path known; the spec phase builds straight on it.
+- **Keep the temp file** — the path is known; the user can bring it back to the spec phase later, feed it elsewhere, or move it.
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final brief into the chat and remove the temp file.
 
-Wait for the user's pick. Only invoke `crank:crank-spec` if they choose to continue — don't auto-advance past the hand-off.
+Wait for the user's pick. Only load the spec phase if they choose to continue — don't auto-advance past the hand-off.
 
-Completion criterion: the user has picked, and you've done exactly what they picked — `crank:crank-spec` invoked only on an explicit "continue".
+Completion criterion: the user has picked, and you've done exactly what they picked — the spec phase loaded only on an explicit "continue".

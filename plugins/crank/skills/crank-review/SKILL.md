@@ -89,7 +89,7 @@ Render the validated review in this shape — survivors first (ordered by severi
 - `<file:line>` — <why the validator killed it, or "already covered in PR thread">
 ```
 
-Then **offer the handoff**: ask whether to hand the valid findings to the `crank:crank-plan` skill for a fix plan (recommended). Make no edits without approval.
+Then **offer the handoff**: ask whether to hand the valid findings to the `crank` skill's plan route for a fix plan (recommended). Make no edits without approval.
 
 **Done when:** the report is rendered in this shape and the handoff is offered.
 

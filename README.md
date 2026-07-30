@@ -40,9 +40,7 @@ Forces a **spec → plan → execute** sequence before any code is written. Each
 
 | Skill | Invoke | What it does |
 |---|---|---|
-| `crank:crank-brainstorm` | `/crank-brainstorm` | Turns a raw idea into a high-level **design brief** through dialogue, codebase exploration, and research — settling the problem, approach, and consequential decisions before the spec. Optional front door to the pipeline. |
-| `crank:crank-spec` | `/crank-spec` | Writes the conversation up as a **spec** (part PRD, part technical spec) — grounds it in the codebase, grills the open technical decisions one at a time, then adversarially reviews it in place. Produces `spec.md`. |
-| `crank:crank-plan` | `/crank-plan` | Decomposes a spec into ordered, bite-sized, **TDD-flavored tasks** — each with file paths, commands, embedded test code, and exact expected output — then adversarially reviews the plan in place. Produces `plan.md`. |
+| `crank:crank` | `/crank [brainstorm\|spec\|plan]` | The pipeline's **front door and router**. Takes an explicit route, or triages the ask itself — a raw idea routes to **brainstorm** (design brief), a formed idea or brief to **spec** (PRD + technical spec, adversarially reviewed), a settled design or scoped bug fix to **plan** (ordered TDD-flavored tasks, adversarially reviewed). Each phase hands off to the next only on an explicit "continue". |
 | `crank:crank-execute` | `/crank-execute` | Executes a plan **task-by-task** — picks a solo / sequential / parallel shape, runs TDD where a real seam exists, gates every "done" on verification evidence, runs a fresh-eyes final review, and writes `retro.md`. |
 | `crank:crank-refine` | `/crank-refine` | Grills an existing brainstorm, spec, or plan **at its own altitude** until nothing consequential is left undecided — one informed question at a time, sharpening the artifact in place. Standalone pass; doesn't advance the pipeline. |
 | `crank:crank-review` | `/crank-review` | Reviews a PR, commit range, or uncommitted changes for a **short list of high-confidence findings** — does the code do what it says, what can be deleted, what edge case slips through — each independently validated before it ships. |
@@ -51,11 +49,11 @@ Forces a **spec → plan → execute** sequence before any code is written. Each
 **Typical flow:**
 
 ```text
-/crank-spec  add rate limiting to the API
-  → /tmp/crank-spec.<rand>.md     (spec — a temp file)
-
-/crank-plan  /tmp/crank-spec.<rand>.md
-  → /tmp/crank-plan.<rand>.md     (plan)
+/crank  add rate limiting to the API
+  → routes to spec ("formed idea"), grills, writes
+    /tmp/crank-spec.<rand>.md     (spec — a temp file)
+  → on "continue", the plan phase produces
+    /tmp/crank-plan.<rand>.md     (plan)
 
 /crank-execute  /tmp/crank-plan.<rand>.md
   → /tmp/crank-retro.<rand>.md    (retro)
@@ -83,11 +81,12 @@ plugins/
     .claude-plugin/plugin.json  # Claude manifest
     .codex-plugin/plugin.json   # Codex manifest (cross-harness)
     skills/
-      crank/SKILL.md
-      crank-brainstorm/SKILL.md
-      crank-spec/SKILL.md       # owns the shared reference docs —
-      crank-plan/SKILL.md       #   VOCABULARY.md and SUBAGENT-TIERS.md,
-      crank-execute/SKILL.md    #   symlinked into the sibling skill dirs
+      crank/SKILL.md            # router; BRAINSTORM.md / SPEC.md / PLAN.md
+                                #   phase files beside it, plus the canonical
+                                #   shared reference docs (VOCABULARY.md,
+                                #   SUBAGENT-TIERS.md, GRILLING.md, READBACK.md)
+      crank-execute/SKILL.md    # carries hand-synced real copies of the
+                                #   shared docs (never symlinks)
   effective-html/
     .claude-plugin/plugin.json
     .codex-plugin/plugin.json

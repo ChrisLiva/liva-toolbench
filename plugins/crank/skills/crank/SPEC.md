@@ -1,10 +1,4 @@
----
-name: crank-spec
-description: Write up the conversation as a spec — part PRD, part technical spec — then adversarially review it in place. Use when the user asks to spec out or write up what you've been discussing.
-argument-hint: "[optional topic hint]"
----
-
-# Spec
+# Phase: Spec
 
 ## Goal
 
@@ -115,7 +109,7 @@ Completion criterion: every layer the change touches has either a reported surfa
 
 Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
 
-Interview the user on each per [GRILLING.md](GRILLING.md) (read it here). This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. If the conversation came through `crank:crank-brainstorm`, the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
+Interview the user on each per [GRILLING.md](GRILLING.md) (read it here). This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. If the conversation came through the brainstorm phase (or the user handed you a brainstorm brief), the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
 
 Don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 
@@ -143,12 +137,13 @@ Completion criterion: the reviewer's edits are in the spec file and its one-line
 
 ### 6. Hand back
 
-In chat prose, offer:
+The natural next step is the plan phase, which decomposes this spec into ordered, committable, TDD-flavored tasks. In chat prose, offer:
 
-- **Keep the temp file** (default) — the path is already known; user can hand it to the plan skill, feed it elsewhere, or move it later.
+- **Continue to the plan** (recommended when the spec is ready to build) — read [PLAN.md](PLAN.md) and run its flow. The spec's temp-file path is already known; the plan phase builds straight on it.
+- **Keep the temp file** — the path is already known; user can bring it back to the plan phase later, feed it elsewhere, or move it.
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 
-Then stop. Do not auto-invoke other skills or continue past the handback.
+Wait for the user's pick. Only load the plan phase if they choose to continue — don't auto-advance past the hand-back.
 
-Completion criterion: the user picked from the file menu and you did exactly what they picked — nothing invoked they didn't opt into.
+Completion criterion: the user has picked, and you've done exactly what they picked — the plan phase loaded only on an explicit "continue".

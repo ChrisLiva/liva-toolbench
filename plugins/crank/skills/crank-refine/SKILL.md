@@ -30,7 +30,7 @@ The artifact's phase sets what a question may reach for. Settle everything *in b
 | **Spec** | Acceptance criteria, the technical decisions (contracts and data shapes at the interface level, library/approach choice, error and edge behavior), and what "done" looks like. | File-by-file breakdown, concrete code, task ordering. Defer to the plan. |
 | **Plan** | Task decomposition and ordering, the concrete code or approach in each step, file targets, the test seam for each task, and any placeholder or hand-wave (`TODO`, "similar to Task N", a symbol no task defines). | Nothing — a plan is the bottom of the pipeline. Grill until every task is executable with no further design conversation. |
 
-This restates, in one place, the altitude each crank phase owns; for the full design rules behind a phase, read that phase's skill (`crank-brainstorm`, `crank-spec`, `crank-plan`).
+This restates, in one place, the altitude each crank phase owns; for the full design rules behind a phase, read that phase's file in the `crank` skill's directory (`BRAINSTORM.md`, `SPEC.md`, `PLAN.md`).
 
 ### Subagents & research
 
@@ -98,7 +98,7 @@ Completion criterion: re-reading the artifact end to end, no resolved decision i
 
 The artifact is sharp and the file already holds every decision. Offer in chat prose:
 
-- **Continue in the pipeline** — the natural next phase. From a sharpened brainstorm, run `crank:crank-spec`; from a sharpened spec, run `crank:crank-plan`; from a sharpened plan, run `crank:crank-execute`. Tell the next skill the artifact's path.
+- **Continue in the pipeline** — the natural next phase. From a sharpened brainstorm or spec, run the `crank` skill with the artifact's path — its triage routes an artifact to the next phase (brief → spec, spec → plan). From a sharpened plan, run the `crank-execute` skill with the path.
 - **Keep the file as-is** (default) — it's already updated in place; iterate further or hand it off later.
 - **Print the changes inline** — summarize what the grill resolved and show the key edits, for a quick review without opening the file.
 

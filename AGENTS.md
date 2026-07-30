@@ -148,15 +148,16 @@ each `SKILL.md` referencing its own copy with a relative link — `[FILE.md](FIL
 when it snapshots a plugin, so symlinked reference files silently vanish from Codex
 installs — real copies are the only shape that survives every harness). Don't add a
 `_shared/` dir reached by an absolute or `${CLAUDE_PLUGIN_ROOT}` path either. Example:
-the canonical `SUBAGENT-TIERS.md` lives in `plugins/crank/skills/crank-spec/`; the
-other crank skills carry identical copies.
+the canonical `SUBAGENT-TIERS.md` lives in `plugins/crank/skills/crank/` (the
+coordinator skill's directory, alongside the phase files); the other crank skills
+carry identical copies.
 
 Copies are synced by hand, like version strings: edit the canonical file, re-copy it
 over the others, and verify before committing (no output = in sync):
 
 ```bash
 for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK}.md; do
-  diff -q "plugins/crank/skills/crank-spec/$(basename "$f")" "$f"
+  diff -q "plugins/crank/skills/crank/$(basename "$f")" "$f"
 done
 ```
 

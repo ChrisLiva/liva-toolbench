@@ -16,4 +16,4 @@ Shared design language across the crank pipeline (brainstorm → spec → plan �
 
 ---
 
-> **Maintainer note.** The adversarial-review briefs in `crank-spec` / `crank-plan` / `crank-execute` paraphrase these terms per phase (over a spec, a plan, a diff) — they are not copies of one rubric. When editing a brief, align its **meaning** with the definition here, not its wording; don't flatten a per-phase qualifier into a generic copy.
+> **Maintainer note.** The adversarial-review briefs in the `crank` skill's spec and plan phases and in `crank-execute` paraphrase these terms per phase (over a spec, a plan, a diff) — they are not copies of one rubric. When editing a brief, align its **meaning** with the definition here, not its wording; don't flatten a per-phase qualifier into a generic copy.

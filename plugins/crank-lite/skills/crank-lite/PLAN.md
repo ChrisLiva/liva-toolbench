@@ -1,7 +1,4 @@
----
-name: lite-plan
-description: "Plan implementation for a spec, PRD, or formed idea. Use when the user is ready to decide how to build: ordered tasks, code boundaries, verification, and sequencing."
----
+# Phase: Plan
 
 Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD until you reach a shared understanding of the build strategy, task order, code boundaries, risks, and verification approach.
 

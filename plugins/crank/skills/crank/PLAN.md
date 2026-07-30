@@ -1,10 +1,4 @@
----
-name: crank-plan
-description: Turn a spec into a bite-sized, TDD-flavored implementation plan, then adversarially review it in place. Use when the user asks to plan a spec or break it into ordered, committable tasks.
-argument-hint: "[optional path to spec.md]"
----
-
-# Plan
+# Phase: Plan
 
 ## Goal
 
@@ -12,7 +6,7 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 
 ## Hard Rules
 
-- If `$ARGUMENTS` is a path, read the spec from there; otherwise use the spec already in the conversation.
+- If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
 - **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Every subagent this skill spawns runs at the standard tier** (see References → Subagents) unless otherwise specified.
 - **No placeholders.** No `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", or references to symbols no task defines. Show code in every code step.
@@ -130,12 +124,12 @@ Completion criterion: the reviewer's edits are in the plan file and its one-line
 
 ### 7. Hand back
 
-In chat prose, offer:
+The plan is the bottom of this skill's pipeline; recommend the `crank-execute` skill as the next step when the plan is ready to build. In chat prose, offer:
 
-- **Keep the temp file** (default) — the path is known; user can execute it, feed it elsewhere, or move it later.
+- **Keep the temp file** (default) — the path is known; user can hand it to `crank-execute`, feed it elsewhere, or move it later.
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 
-Then stop. Do not auto-invoke other skills or continue past the handback.
+Then stop. Do not auto-invoke other skills or continue past the handback — executing is a deliberate act the user starts explicitly.
 
 Completion criterion: the user picked from the file menu and you did exactly what they picked — nothing invoked they didn't opt into.
