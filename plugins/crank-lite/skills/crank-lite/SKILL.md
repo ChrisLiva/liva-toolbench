@@ -2,6 +2,7 @@
 name: crank-lite
 description: Front door to the crank-lite pipeline — routes the ask to the right phase and runs it. Phases: brainstorm (explore a raw idea at design altitude), spec (turn an idea or brainstorm into a PRD plus technical spec), plan (turn a spec or formed idea into ordered tasks, boundaries, and verification). Use when the user wants to brainstorm or explore an idea, spec out what's been discussed, plan how to build something, or crank on an idea, feature, or bug.
 argument-hint: "[brainstorm|spec|plan] [idea, topic, or artifact path]"
+disable-model-invocation: true
 ---
 
 # Crank Lite

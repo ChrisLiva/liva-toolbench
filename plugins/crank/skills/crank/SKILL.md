@@ -2,6 +2,7 @@
 name: crank
 description: Front door to the crank design pipeline — routes the ask to the right phase and runs it. Phases: brainstorm (shape a raw idea into a design brief), spec (write the conversation up as a PRD-plus-technical-spec, adversarially reviewed), plan (decompose a spec into bite-sized, TDD-flavored tasks, adversarially reviewed). Use when the user wants to brainstorm or think an idea through, spec out or write up what's been discussed, plan a spec into ordered committable tasks, or crank on an idea, feature, or bug.
 argument-hint: "[brainstorm|spec|plan] [idea, topic, or artifact path]"
+disable-model-invocation: true
 ---
 
 # Crank
