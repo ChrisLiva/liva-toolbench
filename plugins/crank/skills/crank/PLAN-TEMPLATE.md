@@ -9,6 +9,7 @@ Spec: <absolute path, when one exists>
 Goal: <one sentence>
 Architecture: <2-3 sentences>
 Tech stack: <pinned versions>
+Gates: <exact test / lint / typecheck / build commands, each proven to run>
 
 ## Global Constraints
 

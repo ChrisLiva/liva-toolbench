@@ -35,7 +35,7 @@ This skill spawns subagents at two tiers — resolve each to your harness (Claud
 
 ### Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **depth**, the **deletion test**, **seam**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **depth**, the **deletion test**, **seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
 
 ### Implementer artifacts
 
@@ -132,7 +132,7 @@ Implementer status: `DONE` → review; `DONE_WITH_CONCERNS` → read first, addr
 
 Before claiming completion, three gates in order — any failure stops the run:
 
-1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's overall validation commands (suite, lint, typecheck, build) fresh this turn and read the output.
+1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's gate commands — its `Gates:` header line, or suite / lint / typecheck / build if the plan predates one — fresh this turn and read the output.
 2. **Coverage walk.** Walk the plan's Coverage table row by row; for each row, confirm its verify step ran green *this session* — re-run any that are stale or that earlier tasks may have broken. Rows marked human-only go in the retro's Open items, not silently skipped. If the plan has no Coverage table, walk the spec's acceptance criteria (or, with no spec, the plan's stated goal) and check each against the diff yourself.
 3. **Final review (fresh eyes).** In subagent modes the per-task reviewers each saw a single task; in solo there were none — either way this fresh-eyes pass over the whole diff catches what they couldn't, and in solo it is the only review the run gets, so it carries the per-task rubric too — the final brief folds it in. Dispatch one heavy reviewer subagent for the final review, per the **Reviewers judge independently** rule. Give it: the **spec path** (or the plan path if no spec exists) and the **plan path**, and tell it to read them itself — including the plan's Coverage table; the **BASE SHA** the ledger recorded at the start of the run, and tell it to run `git diff <BASE>..HEAD` itself; and `final-review-rubric.md` in the brief dir for its review axes and return format.
 

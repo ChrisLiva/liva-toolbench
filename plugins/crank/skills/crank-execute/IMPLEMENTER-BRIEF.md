@@ -4,7 +4,7 @@ Use these templates only in subagent execution modes. They keep verbose task con
 
 ## `orientation.md`
 
-Write this once per run, after the brief/report directory is chosen. Keep it compact: a repo map, not a second plan.
+Write this once per run, after the brief/report directory is chosen. Keep it compact: a repo map, not a second plan. The Commands block copies the plan's `Gates:` header line when the plan carries one — don't re-discover the toolchain.
 
 ```md
 # Crank execute orientation
@@ -78,6 +78,7 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 - Do not rewrite history.
 - Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, note that in the report's Concerns so the reviewer knows the codebase was searched.
 - Before reaching for a new third-party dependency, exhaust the lighter options in order: an existing in-repo helper, the stdlib, a native platform feature, then a dependency already in the manifest. Don't add a dependency for what a few lines do; if the task genuinely needs one the plan didn't name, return `NEEDS_CONTEXT` instead of importing it silently.
+- A probe step (a throwaway deterministic check the plan embeds) runs from the OS temp dir, never the working tree: watch it fail once, run it green, paste its output into the report's Verification, and delete it — `git status` shows no probe artifact at commit time.
 - Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command.
 - For multi-behavior tasks, work as tracer bullets: test A -> impl A -> test B -> impl B.
 

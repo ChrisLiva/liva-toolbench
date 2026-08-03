@@ -28,6 +28,7 @@ Use this as the starting shape for the temp-file spec. Keep only sections that e
 ## Testing approach
 
 - <Behavior seam to test, using the same path real users or callers hit. Prior art: `<path>:<line>`.>
+- <Oracle for checkable logic (known-good examples, naive reference, round-trip inverse, invariant), when one applies.>
 
 ## Refactor scope
 

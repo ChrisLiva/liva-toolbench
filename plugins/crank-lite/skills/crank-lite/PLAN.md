@@ -27,6 +27,6 @@ Once you've reached a shared understanding, read the plan back to the user befor
 
 When every section stands approved, record the concise implementation plan to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-plan-<slug>.md`) and stop.
 
-Keep the artifact light: include the goal, assumptions, ordered tasks, verification checks, and risks — each risk paired with the check that retires it during execution — when those sections earn their place. Carry any pseudo-code, call graph, or diagram the user approved during readback into the plan — the executing agent inherits the exact logic shape that was vetted, not a prose paraphrase of it.
+Keep the artifact light: include the goal, assumptions, ordered tasks, verification checks, and risks — each risk paired with the check that retires it during execution — when those sections earn their place. Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or — where no committed test fits — a throwaway probe script that asserts exact outputs and exits non-zero on failure, deleted before commit; the check that retires a risk names one of these instruments. Carry any pseudo-code, call graph, or diagram the user approved during readback into the plan — the executing agent inherits the exact logic shape that was vetted, not a prose paraphrase of it.
 
 Tell the user the temp file path and recommend `lite-execute` next when the plan is ready to build.

@@ -12,6 +12,7 @@ Flag every instance of:
 - **name / type / path inconsistencies** — across tasks or against the codebase.
 - **placeholder language** — `TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols.
 - **dead-seam verify steps** — a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent.
+- **eyeball verification** — a verify step whose success can't be read from an exit code or exact output ("looks right", "renders correctly") outside the plan's human-only smoke rows, or a throwaway-check (probe) step missing its oracle, its exact expected output, or its deletion before commit; rewrite it as a deterministic check.
 - **horizontal slicing** — a multi-behavior task whose steps list two or more tests before any implementation, instead of interleaving `test → impl` per behavior; reorder into vertical slices.
 - **implementation-detail tests** — an embedded test that mocks an internal collaborator, asserts on call counts or order, reaches a private method, or verifies through a back channel instead of the interface; rewrite it to drive the seam.
 - **spaghetti growth** — a step threads a one-off conditional, flag, or special case through a file or flow the spec never named, instead of routing it behind the module that owns the concept.
