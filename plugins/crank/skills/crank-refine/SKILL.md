@@ -1,6 +1,6 @@
 ---
 name: crank-refine
-description: Grill an existing brainstorm, spec, or plan to resolve every ambiguity and settle the decisions that belong to its phase — research-backed, at the right altitude, sharpened in place.
+description: Grill an existing brainstorm, spec, or plan until nothing consequential is left undecided at its altitude — sharpened in place.
 disable-model-invocation: true
 argument-hint: "[path to a brainstorm, spec, or plan .md]"
 ---
@@ -16,7 +16,6 @@ Take an existing crank artifact — a brainstorm brief, a spec, or a plan — an
 - **Grill at the artifact's altitude — never below it.** A brainstorm is sharpened at *design* altitude, a spec at *technical-decision* altitude, a plan at *implementation* altitude (see References → Grilling altitude by phase). A question that drops below the artifact's altitude doesn't belong in this pass — record it as a deferred item for the next phase and move on. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
 - **Sharpen in place.** Edit the input artifact file directly as decisions land. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a fresh OS temp file (`$(mktemp -t crank-refine).md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
 - **One question at a time, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md). A question you could answer yourself, you answer yourself first (see References → Subagents & research).
-- **Every subagent this skill spawns runs at the standard tier** — grounding and research are bulk work that doesn't need heavy-tier budget (see References → Subagents & research) — unless otherwise specified.
 
 ## References
 
@@ -98,10 +97,10 @@ Completion criterion: re-reading the artifact end to end, no resolved decision i
 
 The artifact is sharp and the file already holds every decision. Offer in chat prose:
 
-- **Continue in the pipeline** — the natural next phase. From a sharpened brainstorm or spec, run the `crank` skill with the artifact's path — its triage routes an artifact to the next phase (brief → spec, spec → plan). From a sharpened plan, run the `crank-execute` skill with the path.
+- **Continue in the pipeline** — point the user at the command for the natural next phase: from a sharpened brainstorm or spec, `/crank <artifact path>` (its triage routes the artifact to the next phase — brief → spec, spec → plan); from a sharpened plan, `/crank-execute <path>`.
 - **Keep the file as-is** (default) — it's already updated in place; iterate further or hand it off later.
 - **Print the changes inline** — summarize what the grill resolved and show the key edits, for a quick review without opening the file.
 
-Wait for the user's pick. Only invoke the next skill if they choose to continue — don't auto-advance past the hand-back.
+Wait for the user's pick. The next pipeline skill is user-invoked — recommend its command for the user to run; never invoke it yourself.
 
-Completion criterion: the user has picked, and you've done exactly what they picked — the next skill invoked only on an explicit "continue", nothing auto-advanced.
+Completion criterion: the user has picked, and you've done exactly what they picked — the pipeline advanced only by the user running the next command.

@@ -2,6 +2,7 @@
 name: crank-test-prune
 description: Prune a test suite for utility — verdict every test KEEP, DELETE, or REFACTOR so only behavior-pinning tests survive.
 argument-hint: "[scope, default: the whole test tree]"
+disable-model-invocation: true
 ---
 
 # Test Prune
@@ -17,7 +18,6 @@ A leaner suite where every surviving test pins a distinct, observable behavior t
 - **Redundancy is judged suite-wide, not per file** — two tests pinning the same behavior at the same seam are one KEEP and one DELETE, even when they live in different files.
 - **Tests only.** This skill edits and deletes test code; production code is never touched. A pruning pass that surfaces a production bug reports it, it doesn't fix it.
 - **Green gate.** The full suite runs after applying; the pass isn't done until it's green.
-- **Standard tier** for every subagent this skill spawns (see References → Subagents).
 
 ## Verdicts
 

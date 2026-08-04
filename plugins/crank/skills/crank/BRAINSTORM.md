@@ -8,7 +8,6 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 - **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
 - **Write the brief to a fresh OS temp file:** `$(mktemp -t crank-brainstorm).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
-- **Every subagent this skill spawns runs at the standard tier** (see References → Subagents) unless otherwise specified.
 
 ## Guidelines
 

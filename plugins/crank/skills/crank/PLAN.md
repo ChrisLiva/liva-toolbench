@@ -8,7 +8,6 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 
 - If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
 - **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
-- **Every subagent this skill spawns runs at the standard tier** (see References → Subagents) unless otherwise specified.
 - **No placeholders.** No `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", or references to symbols no task defines. Show code in every code step.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 
@@ -124,9 +123,9 @@ Completion criterion: the reviewer's edits are in the plan file and its one-line
 
 ### 7. Hand back
 
-The plan is the bottom of this skill's pipeline; recommend the `crank-execute` skill as the next step when the plan is ready to build. In chat prose, offer:
+The plan is the bottom of this skill's pipeline; recommend the user run `/crank-execute` when the plan is ready to build. In chat prose, offer:
 
-- **Keep the temp file** (default) — the path is known; user can hand it to `crank-execute`, feed it elsewhere, or move it later.
+- **Keep the temp file** (default) — the path is known; user can hand it to `/crank-execute`, feed it elsewhere, or move it later.
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 

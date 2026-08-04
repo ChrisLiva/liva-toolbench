@@ -11,7 +11,7 @@ Implement the work described in the plan (or PRD/spec) the user provides.
 **Before touching any file, pick the execution shape and state it** — count the plan's tasks and the areas of code it touches, then tell the user which shape you chose and why:
 
 - **Solo** — ~3 tasks or fewer, one area of code, or tightly coupled edits that share in-flight state. Implement inline on this thread.
-- **Orchestrate** — the default above that: you are the orchestrator; Sonnet/GPT-5.6-Terra-High subagents implement. Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, and the verification command it must run and report output from. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation.
+- **Orchestrate** — the default above that: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, and the verification command it must run and report output from. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation.
 
 A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
 
@@ -23,7 +23,7 @@ Run typechecking regularly, single test files regularly, and the full test suite
 
 ## Review and commit
 
-Once done implementing the entire plan, spawn an Opus/GPT-5.6-Sol-High subagent to adversarially review your work against the original plan. Address confirmed findings before committing.
+Once done implementing the entire plan, spawn a heavy-tier subagent (see Subagent tiers) to adversarially review your work against the original plan. Address confirmed findings before committing.
 
 Before committing, inspect the worktree and stage only the files changed for this task. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
@@ -34,3 +34,12 @@ Before the retro, close the loop — you ship finished work: settle every loose 
 ## Retro
 
 Once you've finished implementation and review, record a concise retro to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-retro-<slug>.md`) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and temp file path; when nothing survived the loop-close, say the work is complete.
+
+## Subagent tiers
+
+The user's own configuration wins: if their global or project instructions state subagent model preferences, map the tiers onto them. Otherwise resolve per harness:
+
+<subagent-tiers>
+- **standard** (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
+- **heavy** (adversarial review): Claude Code `model: opus` · Codex GPT-5.6-Sol at high effort · Cursor GPT-5.6-Sol at high effort
+</subagent-tiers>
