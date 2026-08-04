@@ -46,7 +46,7 @@ Spawn standard finders, each pointed at [REVIEW-BRIEF.md](REVIEW-BRIEF.md) and t
 - **Correctness & contract** — the brief's questions 1 and 3: does the code do what it says, and what edge case slips through.
 - **Simplicity & deletion** — the brief's question 2: what to cut, consolidate, or refactor, per its Deletion, Magic strings, and smell-baseline sections.
 
-Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a high-confidence correctness finding. Each finder returns candidate findings only (`file:line`, the claim, why it matters, the smallest fix) — no prose review, no manufactured findings to fill a clean diff.
+Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a high-confidence correctness finding. Each finder returns candidate findings only (`file:line`, the claim, why it matters, the smallest fix).
 
 **Done when:** every finder has returned and you've deduped identical claims into one candidate each.
 

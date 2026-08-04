@@ -44,25 +44,11 @@ Keep the interface as the test surface (see Deliverables → Testing approach): 
 
 ### Subagents
 
-If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
-
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review.
+If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review. Resolve each tier to your harness (Claude Code / Codex / Cursor), and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **port** / **adapter**, the **probe**, and the **implementation-detail test** — read their meanings there.
-
-### Grilling and readback protocols
-
-The shared interview discipline lives in [GRILLING.md](GRILLING.md) and the shared readback discipline in [READBACK.md](READBACK.md); Flow → Grill the technical decisions and Flow → Read back the sections each load theirs only at that step.
-
-### Spec skeleton
-
-The compact markdown skeleton lives in [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md); Flow → Draft uses it as the starting shape, then scales or omits sections per Deliverables.
-
-### Adversarial review brief
-
-The heavy review prompt lives in [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md); Flow → Adversarially review loads it only at that step.
 
 ## Deliverables
 
@@ -141,6 +127,6 @@ The natural next step is the plan phase, which decomposes this spec into ordered
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 
-Wait for the user's pick. Only load the plan phase if they choose to continue — don't auto-advance past the hand-back.
+Wait for the user's pick.
 
 Completion criterion: the user has picked, and you've done exactly what they picked — the plan phase loaded only on an explicit "continue".

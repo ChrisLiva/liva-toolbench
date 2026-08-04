@@ -29,7 +29,7 @@ The artifact's phase sets what a question may reach for. Settle everything *in b
 | **Spec** | Acceptance criteria, the technical decisions (contracts and data shapes at the interface level, library/approach choice, error and edge behavior), and what "done" looks like. | File-by-file breakdown, concrete code, task ordering. Defer to the plan. |
 | **Plan** | Task decomposition and ordering, the concrete code or approach in each step, file targets, the test seam for each task, and any placeholder or hand-wave (`TODO`, "similar to Task N", a symbol no task defines). | Nothing — a plan is the bottom of the pipeline. Grill until every task is executable with no further design conversation. |
 
-This restates, in one place, the altitude each crank phase owns; for the full design rules behind a phase, read that phase's file in the `crank` skill's directory (`BRAINSTORM.md`, `SPEC.md`, `PLAN.md`).
+For the full design rules behind a phase, read that phase's file in the `crank` skill's directory (`BRAINSTORM.md`, `SPEC.md`, `PLAN.md`).
 
 ### Subagents & research
 

@@ -21,7 +21,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 **Answer your own questions first.** If exploring the codebase or researching a topic could settle a question, dispatch a standard subagent to find out before asking the user. Reserve questions for what only the user knows — intent, priorities, preferences, external context.
 
-Lean on subagents for two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this) — the latter can use web search. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
+Lean on subagents for two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this) — the latter can use web search. Both run at the **standard** tier; resolve the tier to your harness (Claude Code / Codex / Cursor), and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 Dispatch each job with the matching brief, filled in.
 
@@ -52,12 +52,6 @@ Report:
 
 Cite sources, and flag what you're unsure of rather than asserting it.
 </brief>
-
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = grounding, exploration, topic research; **heavy** = the downstream skills (brainstorm rarely needs it).
-
-### Grilling and readback protocols
-
-The shared interview discipline lives in [GRILLING.md](GRILLING.md) and the shared readback discipline in [READBACK.md](READBACK.md); Flow → Grill the open questions and Flow → Draft the high-level brief each load theirs only at that step.
 
 ### Vocabulary
 
@@ -116,7 +110,7 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading each section back before it lands per [READBACK.md](READBACK.md) (read it here) — scaled to the idea: a few sentences where it's straightforward, a paragraph where it's nuanced. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading each section back before it lands per [READBACK.md](READBACK.md) (read it here). When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
 Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
@@ -131,6 +125,6 @@ The brief is the front door to the crank pipeline (brainstorm → spec → plan 
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final brief into the chat and remove the temp file.
 
-Wait for the user's pick. Only load the spec phase if they choose to continue — don't auto-advance past the hand-off.
+Wait for the user's pick.
 
 Completion criterion: the user has picked, and you've done exactly what they picked — the spec phase loaded only on an explicit "continue".

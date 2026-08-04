@@ -16,12 +16,12 @@ Flag every instance of:
 - **bespoke duplication** — the spec designs a helper or utility the codebase already provides; grep to confirm, and name the canonical one.
 - **boundary smells** — a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit.
 - **implementation-detail testing approach** — the Testing approach prescribes a test coupled to internals (mocking an internal collaborator, asserting on call counts or order, a private method, or a back-channel DB read) instead of driving the production seam a real caller reaches.
-- **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved.
+- **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved; resolve it or move it to **Out of scope**.
 - **missing technical detail** — anything that would block an implementer.
 
 Don't re-open settled decisions.
 
-Then edit **the spec file at `<path>`** in place to fix what you flagged — that spec file is the only artifact you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file. Fix what you flagged: tighten ambiguous language, correct inaccuracies, add or sharpen acceptance criteria for any criteria gap, name the surface and `file:line` for any off-pattern flag, rewrite a missed simplification to the simpler shape you named, replace bespoke duplications with the canonical helper, make the invariant explicit for any boundary smell, rewrite an implementation-detail testing approach to drive the seam, resolve placeholders or move them to **Out of scope**, fill in missing detail.
+Then edit **the spec file at `<path>`** in place to fix every item you flagged — that spec file is the only artifact you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file.
 
 End your reply with a one-line summary of what changed.
 </brief>

@@ -15,9 +15,9 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
 - **Plan is frozen** during execution — surprises become retro entries, not silent reroutes.
-- **Progress is durable.** Track task completion in the progress ledger (see Deliverables → Progress ledger), not only in your todos. On resume, trust the ledger and `git log`; never re-dispatch a task the ledger already marks complete.
-- **Reviewers judge independently.** A reviewer pulls its own facts: it runs the diff, reads its task from the plan, reads the implementer's evidence from the report file, and applies the fixed rubric file. Your dispatch hands it only pointers and the BASE SHA — no description, characterization, or defense of the diff, no reproduced or annotated rubric: anything you add beyond pointers pre-judges the review you asked for. Your read of the diff belongs at the resolution step, after the verdict returns — never in the dispatch.
-- **Verify once; trust the evidence.** A task's TDD evidence (the implementer's RED/GREEN output) is the suite's authoritative run for that task — per-task reviewers trust it and do not re-run the suite, re-running a command only when the evidence is missing or self-contradictory. The final gate's plan-and-coverage walk is the single authoritative re-run across the whole diff.
+- **Progress is durable.** Track task completion in the progress ledger (see Deliverables → Progress ledger), not only in your todos.
+- **Reviewers judge independently.** A reviewer pulls its own facts: it runs the diff, reads its task from the plan, reads the implementer's evidence from the report file, and applies the fixed rubric file. Your dispatch hands it only pointers and the BASE SHA — no description, characterization, or defense of the diff, no reproduced or annotated rubric: anything you add beyond pointers pre-judges the review you asked for.
+- **Verify once; trust the evidence.** A task's TDD evidence (the implementer's RED/GREEN output) is the suite's authoritative run for that task; the final gate's plan-and-coverage walk is the single authoritative re-run across the whole diff.
 - **A stated dispatch binds you to spawn.** The moment your output says a task gets a subagent — or the run's chosen shape says so — your *next* action is that spawn, never the work done inline. If main-thread work is the right call, say you're staying on-thread and why (for a shape change, re-state the shape) instead of announcing a dispatch.
 - **Oscillation stops the loop.** A review round that demands reversing what a prior round required is oscillation, not progress — never flip the code blind; stop and surface both verdicts to the user with your recommendation.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
@@ -37,18 +37,6 @@ This skill spawns subagents at two tiers — resolve each to your harness (Claud
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **depth**, the **deletion test**, **seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
-
-### Implementer artifacts
-
-The orientation note, task brief, task report, and thin implementer return templates live in [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md); Flow → Pick the execution shape tells you when to read it before writing any subagent brief.
-
-### Per-task review rubric
-
-The fixed per-task review rubric lives in [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md). Flow → Pick the execution shape copies it into the brief dir verbatim; Flow → Per task points each reviewer at that copy.
-
-### Final review rubric
-
-The fixed final cross-task review rubric lives in [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md). Flow → Pick the execution shape copies it into the brief dir verbatim; Flow → Verify the whole points the final reviewer at that copy.
 
 ## Deliverables
 
@@ -100,7 +88,7 @@ Before starting, scan the plan once for two kinds of problem and raise whatever 
 
 If you find either, surface them together and stop — don't push through. Then check `git status --short` and the current branch; if you're on `main`/`master` with a non-trivial change, ask once before committing.
 
-Open the progress ledger (see Deliverables → Progress ledger). If one already exists for this worktree from an interrupted run, read it: tasks it marks complete are done — confirm each against `git log` and do not re-dispatch them. Otherwise start a fresh ledger.
+Open the progress ledger (see Deliverables → Progress ledger); if one already exists for this worktree from an interrupted run, resume from it per that section, otherwise start fresh.
 
 ### 2. Pick the execution shape
 
@@ -112,7 +100,7 @@ You decide based on the plan — there is no required mode. State the choice in 
 
 Once stated, the shape binds the run (Hard Rules → A stated dispatch binds you to spawn): in a subagent mode, each task's first action is the implementer dispatch and each task's review a dispatched reviewer — never work silently absorbed onto the main thread.
 
-If you chose a subagent mode, ask the user once, before the first dispatch, where this run's **briefs and reports** should go: a temp directory (default — `$(mktemp -d -t crank-exec)`) or a `.crank/` directory at the working root (keeps them beside the code for inspection; not auto-ignored). Hold the chosen path for the run. Solo mode dispatches nothing, so it needs neither the question nor the directory. This choice does not touch the progress ledger — that always lives in the git directory (see Deliverables → Progress ledger).
+If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — as `$(mktemp -d -t crank-exec)` and state the path once. (If the user asks to keep them beside the code for inspection, use a `.crank/` directory at the working root instead; not auto-ignored.) Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that always lives in the git directory (see Deliverables → Progress ledger).
 
 Once the directory is set, read [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md) and write its `orientation.md` template there — a compact repo map every brief points to so implementers and reviewers don't each re-discover the codebase from scratch. Spend a few reads on it now; it pays back on every dispatch. In the same step, place the two review rubrics in the brief dir as fixed reference files: copy [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md) to `review-rubric.md` and [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md) to `final-review-rubric.md`, **verbatim** — a byte-for-byte copy, never a retype or a "fill it in." Do this now, before any task is implemented: with no diff yet in view there is nothing to pre-judge, so the rubrics freeze clean.
 

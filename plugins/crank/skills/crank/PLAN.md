@@ -29,25 +29,11 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 
 ### Subagents
 
-If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
-
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review.
+If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review. Resolve each tier to your harness (Claude Code / Codex / Cursor), and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 ### Vocabulary
 
 Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
-
-### Readback protocol
-
-The shared readback discipline lives in [READBACK.md](READBACK.md); Flow → Read back the shape loads it only at that step.
-
-### Plan skeleton
-
-The compact markdown skeleton lives in [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md); Flow → Write the steps uses it as the starting shape, then scales or omits sections per Deliverables.
-
-### Adversarial review brief
-
-The heavy review prompt lives in [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md); Flow → Adversarially review loads it only at that step.
 
 ## Deliverables
 
@@ -85,7 +71,7 @@ Completion criterion: every file the plan touches has a path / action / responsi
 
 ### 3. Decompose
 
-A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — `test A → impl A → test B → impl B`, one **tracer bullet** at a time, each test followed immediately by the code that passes it — never every test first then every implementation (a **horizontal slice**, which pins imagined behavior and yields tests that pass when the feature breaks). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that ends on a green tree and carries its own test cycle. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
+A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — one **tracer bullet** at a time, never a **horizontal slice** (both defined in VOCABULARY.md). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that ends on a green tree and carries its own test cycle. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
 
 When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones. Old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
 
@@ -107,7 +93,7 @@ Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. 
 
 Every `verify` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** (embed the probe's code like any test, with its oracle, exact expected output, and a final delete) — "tests pass" is not enough. A test-driven check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
 
-Keep the step *order* in the **tracer-bullet** rhythm set in Decompose — each test step immediately followed by the implementation step that makes it pass and its verify (`test A → impl A → verify → test B → impl B → verify`), never every test up front. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
+Keep the step *order* in the **tracer-bullet** rhythm set in Decompose — each test step immediately followed by the implementation step that makes it pass and its verify. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
 
 Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do, and a new dependency the spec's **Tech stack** didn't pin is an **Updates since spec** item to resolve, not a quiet import. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
 
@@ -129,6 +115,6 @@ The plan is the bottom of this skill's pipeline; recommend the user run `/crank-
 - **Copy into the repo** — copy to a user-named path under the working directory.
 - **Print inline and delete** — paste the final contents into the chat and remove the temp file.
 
-Then stop. Do not auto-invoke other skills or continue past the handback — executing is a deliberate act the user starts explicitly.
+Then stop — executing is a deliberate act the user starts explicitly.
 
 Completion criterion: the user picked from the file menu and you did exactly what they picked — nothing invoked they didn't opt into.

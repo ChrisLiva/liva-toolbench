@@ -6,6 +6,7 @@ The shared discipline for every crank-lite phase. Each phase file says *what* to
 
 - Ask questions one at a time — exactly one question mark per message; a sub-question or "and also…" rider is the next message, sent after this answer lands — and wait for feedback before continuing.
 - Lead every question with your recommended answer.
+- Walk each branch of the decision tree one decision at a time, resolving dependencies between decisions one-by-one.
 - Answer your own questions first: if a *fact* can be found in the codebase or docs, dispatch a standard-tier subagent (see Subagent tiers) to look it up rather than asking. The *decisions* are the user's — put each one to them and wait for their answer.
 
 ## Readback
@@ -15,6 +16,7 @@ Once you've reached a shared understanding, read the artifact back to the user b
 - Show each section's actual content — the decisions, criteria, constraints, and cuts themselves — so the user can strike or amend specific items.
 - Lead with what the artifact commits to, what's explicitly out of scope, and what remains open — those are what the user vetoes.
 - Where a shape, interface, flow, or piece of logic is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
+- Carry what was approved: a sketch, pseudo-code, call graph, or diagram approved during readback goes into the artifact as vetted — the next phase inherits the exact shape, not a prose paraphrase of it.
 - If the only possible reply is "sounds good", you've sent a summary, not a readback.
 
 ## Subagent tiers
