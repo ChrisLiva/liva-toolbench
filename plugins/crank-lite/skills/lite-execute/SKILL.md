@@ -11,7 +11,7 @@ Implement the work described in the plan (or PRD/spec) the user provides.
 **Before touching any file, pick the execution shape and state it** — count the plan's tasks and the areas of code it touches, then tell the user which shape you chose and why:
 
 - **Solo** — ~3 tasks or fewer, one area of code, or tightly coupled edits that share in-flight state. Implement inline on this thread.
-- **Orchestrate** — the default above that: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, and the verification command it must run and report output from. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation.
+- **Orchestrate** — the default above that: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, the verification command it must run and report output from, and the detour rule from Implement below — with any detour taken reported back in its return. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation.
 
 A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
 
@@ -20,6 +20,8 @@ A stated shape binds the run: if you said orchestrate, the first action on each 
 Track the run with tasks: create one entry per plan task before starting work, mark it in progress when you begin it, and completed the moment it lands. Every run gets this, solo included — it is how the user sees progress mid-run and how an interrupted session knows where to resume.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end. When a change has no test seam, validate it with a probe — a small throwaway script in the OS temp dir that asserts exact outputs and exits non-zero on failure; watch it fail once before trusting its pass, treat its output as the verification evidence, and delete it before commit.
+
+The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a detour — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations. A fix that would change what ships is a reroute: stop and surface it with your recommendation. Pre-existing bugs off the plan's path stay retro notes, never side quests.
 
 ## Review and commit
 

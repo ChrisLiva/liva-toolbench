@@ -14,7 +14,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 ## Hard Rules
 
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
-- **Plan is frozen** during execution — surprises become retro entries, not silent reroutes.
+- **Destination frozen, road flexible.** What the plan ships — each task's goal, its contract, the architecture — is frozen. The road there is not: when a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a **detour** — the smallest change that still ships exactly what the task promises — and log it on the ledger line and in the retro's Deviations. A fix that would change what ships is a **reroute**: stop and surface it with your recommendation. Off-path surprises (a pre-existing bug the task doesn't hit) stay retro entries, never side quests.
 - **Progress is durable.** Track task completion in the progress ledger (see Deliverables → Progress ledger), not only in your todos.
 - **Reviewers judge independently.** A reviewer pulls its own facts: it runs the diff, reads its task from the plan, reads the implementer's evidence from the report file, and applies the fixed rubric file. Your dispatch hands it only pointers and the BASE SHA — no description, characterization, or defense of the diff, no reproduced or annotated rubric: anything you add beyond pointers pre-judges the review you asked for.
 - **Verify once; trust the evidence.** A task's TDD evidence (the implementer's RED/GREEN output) is the suite's authoritative run for that task; the final gate's plan-and-coverage walk is the single authoritative re-run across the whole diff.
@@ -61,14 +61,14 @@ Base: <the HEAD SHA when the run started>
 - [ ] Task 2: <subject>
 ```
 
-Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and review verdict — `- [x] Task 1: <subject> — <sha> — APPROVED`. On resume, an `[x]` line means done: confirm it against `git log` and skip it; never re-dispatch it. The ledger applies in every execution shape, solo included — compaction can strike a solo run too.
+Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and review verdict — `- [x] Task 1: <subject> — <sha> — APPROVED`. A task that took a detour appends it too — `— detour: <one line>` — so the retro's Deviations survive compaction. On resume, an `[x]` line means done: confirm it against `git log` and skip it; never re-dispatch it. The ledger applies in every execution shape, solo included — compaction can strike a solo run too.
 
 ### Retro
 
 Written to a fresh OS temp file (see Flow → Retro). Sections:
 
 - **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
-- **Deviations** — anywhere the diff meaningfully differs from the plan and why. "None" if none.
+- **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
 - **Final review** — verdict, findings fixed (with commit SHAs), findings dismissed as false positives (each with the wider-context reasoning that disproved it), findings deferred (including any non-blocking Notes).
 - **Open items** — only what survived Flow → Close the loop: each entry is a decision the user must make or an action only a human can perform, stated as that decision with your recommendation. Deferred findings and dismissals stay in the Final review section above — this section holds nothing you could have settled yourself.
 - **Validation evidence** — commands run, outcomes.
@@ -84,7 +84,7 @@ If `$ARGUMENTS` is a path, read it; otherwise use the plan already in the conver
 Before starting, scan the plan once for two kinds of problem and raise whatever you find as a **single batched question**, not one interrupt per discovery:
 
 - **Blockers** — missing context, ambiguous step, undefined symbol, contradiction with the codebase.
-- **Plan-mandated defects** — places the plan instructs you to write something the review rubric would reject: a test that asserts nothing, verbatim duplication of a helper the codebase already provides, a cast or `any` papering over a contract. The plan is frozen, so you can't quietly "fix" these mid-run — surface them and let the user say which governs.
+- **Plan-mandated defects** — places the plan instructs you to write something the review rubric would reject: a test that asserts nothing, verbatim duplication of a helper the codebase already provides, a cast or `any` papering over a contract. Overriding what the plan explicitly instructs is a reroute, never a detour — surface them and let the user say which governs.
 
 If you find either, surface them together and stop — don't push through. Then check `git status --short` and the current branch; if you're on `main`/`master` with a non-trivial change, ask once before committing.
 
@@ -115,7 +115,7 @@ Once the directory is set, read [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md) and
 
 Require the template's **thin return** — under ~15 lines, with status, commit SHA(s), test summary, concerns, report path, and TDD evidence. The verbose report goes to the file, not into your window. For multi-behavior tasks, the return must carry one RED→GREEN pair per behavior; one bulk RED→GREEN pair is a `CHANGES_REQUESTED`.
 
-Implementer status: `DONE` → review; `DONE_WITH_CONCERNS` → read first, address if they affect correctness; `NEEDS_CONTEXT` → provide and re-dispatch; `BLOCKED` → escalate to the heavy tier once (the sole exception to the standard-tier default), then surface to the user. When a reviewer returns `CHANGES_REQUESTED`, the fixer re-runs the verify step after applying the fixes and appends the fresh output to its report before re-review — reviewers do not re-run tests for you.
+Implementer status: `DONE` → review; `DONE_WITH_CONCERNS` → read first, address if they affect correctness; `NEEDS_CONTEXT` → provide and re-dispatch; `BLOCKED` → a report naming a reroute (the destination itself must move) surfaces to the user directly; otherwise escalate to the heavy tier once (the sole exception to the standard-tier default), then surface to the user. When a reviewer returns `CHANGES_REQUESTED`, the fixer re-runs the verify step after applying the fixes and appends the fresh output to its report before re-review — reviewers do not re-run tests for you.
 
 ### 4. Verify the whole
 
