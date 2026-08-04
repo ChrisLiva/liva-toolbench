@@ -1,6 +1,6 @@
 # Phase: Plan
 
-Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD until you reach a shared understanding of the build strategy, task order, code boundaries, risks, and verification approach.
+Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD until you reach a shared understanding of the build strategy, code boundaries, risks, and verification approach.
 
 ## Interview
 
@@ -18,8 +18,8 @@ A risk no check can retire is a decision: put it to the user during the intervie
 
 Once you've reached a shared understanding, read the plan back to the user before writing anything: one logical section per message, pausing after each so they can question, refute, or change it.
 
-- Show each section's actual content — the tasks, the decisions behind them, and the risks themselves — so the user can strike or amend specific items.
-- Optimize for what the user actually vetoes: lead with what the plan commits to build, what's explicitly out of scope, and anything still unsettled. Commit sequencing and test breadth stay background — a sentence, not a list.
+- Show each section's actual content — the decisions behind it and the risks themselves — so the user can strike or amend specific items.
+- Optimize for what the user actually vetoes: lead with what the plan commits to build, what's explicitly out of scope, and anything still unsettled.
 - Where a task's logic or data flow is easier to veto in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
 - If the only possible reply is "sounds good", you've sent a summary, not a readback.
 

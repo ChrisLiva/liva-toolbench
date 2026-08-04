@@ -98,9 +98,9 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing full steps, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them: the file map first (the actual path / action / responsibility rows), then each section's tasks — showing what each task implements and the consequential decisions behind it (sequencing, and a test-first vs. lightest-check call where that's a real judgment call). Commit sequencing and test breadth stay background — a sentence, not a list.
+Decomposition settled the shape; before writing full steps, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them: the file map first (the actual path / action / responsibility rows), then each section — showing what it builds and the consequential decisions behind it (a test-first vs. lightest-check call where that's a real judgment call).
 
-Completion criterion: the file map and every task's content and decisions have been read back and user-approved section by section; objections resolved now, none carried into the written steps.
+Completion criterion: the file map and every section's content and decisions have been read back and user-approved section by section; objections resolved now, none carried into the written steps.
 
 ### 5. Write the steps
 
