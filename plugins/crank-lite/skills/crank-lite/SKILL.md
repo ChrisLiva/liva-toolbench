@@ -30,3 +30,5 @@ First rule that applies wins:
 ## Phase gates
 
 Load one phase file at a time. Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue" — never auto-advance. A user returning later with a phase's artifact is triage rule 2.
+
+Continuing keeps this conversation as the next phase's primary source, so recommend it while enough context window remains for the next phase to fit; deep in a long session, recommend a fresh session invoked with the artifact instead — each artifact is self-contained by design, so the file carries everything the next phase needs.

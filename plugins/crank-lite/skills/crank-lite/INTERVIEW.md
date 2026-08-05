@@ -4,10 +4,10 @@ The shared discipline for every crank-lite phase. Each phase file says *what* to
 
 ## Interview
 
-- Ask questions one at a time — exactly one question mark per message; a sub-question or "and also…" rider is the next message, sent after this answer lands — and wait for feedback before continuing.
-- Lead every question with your recommended answer.
-- Walk each branch of the decision tree one decision at a time, resolving dependencies between decisions one-by-one.
-- Answer your own questions first: if a *fact* can be found in the codebase or docs, dispatch a standard-tier subagent (see Subagent tiers) to look it up rather than asking. The *decisions* are the user's — put each one to them and wait for their answer.
+- Map what's open as a decision tree and interview in **rounds**: each round asks the whole **frontier** — every question whose prerequisites are already settled — as a numbered list in plain chat prose, then waits for the user's answers. Recompute the frontier from the answers and ask the next round; a question that depends on one still open in this round waits for a later round.
+- Format each question `❓ **Q1 — <title>**: <body>`, with your recommended answer on its own `➡️` line beneath, so the user can answer by number. Offer discrete options when the choice is genuinely between them — never as a neutral menu; your pick still leads.
+- Answer your own questions first: if a *fact* can be found in the codebase or docs, dispatch a standard-tier subagent (see Subagent tiers) to look it up rather than asking — and don't block the round on it: only questions downstream of the lookup wait; ask the rest of the frontier now. The *decisions* are the user's — put each one to them and wait for their answer.
+- Settled means settled: a hedge or a "we'll see" is not a resolution, and a resolved decision doesn't reopen in a later round. The interview is done when the frontier is empty.
 
 ## Readback
 

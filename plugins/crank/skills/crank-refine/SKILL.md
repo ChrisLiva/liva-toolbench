@@ -9,13 +9,13 @@ argument-hint: "[path to a brainstorm, spec, or plan .md]"
 
 ## Goal
 
-Take an existing crank artifact — a brainstorm brief, a spec, or a plan — and **sharpen it until nothing consequential is left undecided at its altitude**. The engine is a relentless **grill**: an informed, one-question-at-a-time interview that walks the artifact's open decisions to the ground, each question led by a recommendation you've already researched. The artifact is sharpened in place. This is a standalone pass — it does not advance the pipeline; it hands a sharper artifact to whatever comes next.
+Take an existing crank artifact — a brainstorm brief, a spec, or a plan — and **sharpen it until nothing consequential is left undecided at its altitude**. The engine is a relentless **grill**: an informed, round-by-round interview that walks the artifact's open decisions to the ground, each question led by a recommendation you've already researched. The artifact is sharpened in place. This is a standalone pass — it does not advance the pipeline; it hands a sharper artifact to whatever comes next.
 
 ## Hard Rules
 
 - **Grill at the artifact's altitude — never below it.** A brainstorm is sharpened at *design* altitude, a spec at *technical-decision* altitude, a plan at *implementation* altitude (see References → Grilling altitude by phase). A question that drops below the artifact's altitude doesn't belong in this pass — record it as a deferred item for the next phase and move on. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
 - **Sharpen in place.** Edit the input artifact file directly as decisions land. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-refine-<slug>.md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
-- **One question at a time, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md). A question you could answer yourself, you answer yourself first (see References → Subagents & research).
+- **Grill in rounds, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md): each round asks every open item whose prerequisites are settled. A question you could answer yourself, you answer yourself first (see References → Subagents & research).
 
 ## References
 
@@ -79,7 +79,7 @@ Completion criterion: every agenda item a fact could settle has its fact in hand
 
 ### 4. Grill
 
-Walk the agenda per [GRILLING.md](GRILLING.md) (read it here), one question at a time, until every item is resolved — each question led by the recommendation your research produced.
+Walk the agenda per [GRILLING.md](GRILLING.md) (read it here), round by round — the agenda is the decision tree; each round asks every item whose prerequisites are settled — until every item is resolved, each question led by the recommendation your research produced.
 
 Two defaults keep the grill from stalling. **When the user overrides your recommendation,** record their choice and the reason they gave, then move on. **When a decision won't converge** after a real exchange, don't loop: name the deadlock, record the leading option as *provisional* with the open tension noted in the artifact, and move to the next item.
 

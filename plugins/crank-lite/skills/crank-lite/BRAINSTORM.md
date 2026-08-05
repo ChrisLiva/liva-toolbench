@@ -8,9 +8,9 @@ Settle the destination first: one or two lines on the problem and what "done" lo
 
 For greenfield, ask about user experience, design, workflows. For existing projects, ask how their idea fits into the current project, and if the current project needs to change significantly to incorporate their idea.
 
-Survey before you drill: share a short agenda of the consequential decisions you can already name, then walk it one decision at a time, keeping questions and decisions at a high level. Keep the agenda live — add decisions as answers surface them, strike ones they moot. If the survey turns up nothing genuinely open, say so and recommend jumping straight to the spec phase.
+Survey before you drill: share a short agenda of the consequential decisions you can already name, then walk it in rounds per [INTERVIEW.md](INTERVIEW.md), keeping questions and decisions at a high level. Keep the agenda live — add decisions as answers surface them, strike ones they moot. If the survey turns up nothing genuinely open, say so and recommend jumping straight to the spec phase.
 
-When a question is experiential — how something should look, behave, or read — offer a cheap throwaway artifact (a sketch, stub, or sample output) to react to instead of another prose question.
+When a question is experiential — how something should look, behave, or read — offer a cheap throwaway artifact to react to instead of another prose question: a sketch, a sample output, or for interactive behavior a single self-contained HTML file the user double-clicks. If it settles a key decision, offer to commit it to a throwaway `prototype/<slug>` branch and note the branch beside the decision in the brief.
 
 ## Brief
 
