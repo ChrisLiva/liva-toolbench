@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Review"
+  short_description: "Review code into independently validated findings"
+  default_prompt: "Use $crank:crank-review to review these changes and return only independently validated findings."
+
+policy:
+  allow_implicit_invocation: false

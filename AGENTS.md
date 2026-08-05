@@ -20,9 +20,11 @@ When working in this repo, you are usually creating, editing, or testing plugin 
         │   └── plugin.json        # Claude manifest (only file inside .claude-plugin/)
         ├── .codex-plugin/
         │   └── plugin.json        # Codex manifest for cross-harness plugins
-        ├── skills/<name>/SKILL.md # model- or user-invoked skills
+        ├── skills/<name>/
+        │   ├── SKILL.md             # shared skill instructions + frontmatter
+        │   └── agents/openai.yaml   # Codex skill UI/invocation metadata
         ├── commands/<name>.md     # legacy slash commands (skills are preferred)
-        ├── agents/<name>.md       # subagent definitions
+        ├── agents/<name>.md       # Claude Code subagent definitions
         ├── hooks/hooks.json       # event hooks
         ├── .mcp.json              # MCP server configs
         ├── .lsp.json              # LSP server configs
@@ -67,7 +69,15 @@ The current plugins (`crank`, `crank-lite`, `effective-html`) all ship as cross-
    ```
 6. Register cross-harness plugins in `.agents/plugins/marketplace.json`:
    ```json
-   { "name": "<name>", "source": { "source": "local", "path": "./plugins/<name>" }, "category": "tools" }
+   {
+     "name": "<name>",
+     "source": { "source": "local", "path": "./plugins/<name>" },
+     "category": "tools",
+     "policy": {
+       "installation": "AVAILABLE",
+       "authentication": "ON_INSTALL"
+     }
+   }
    ```
 7. Test locally without reinstalling in Claude Code:
    ```bash
@@ -119,7 +129,15 @@ when the plugin needs a better Codex marketplace presentation.
    *"not found in marketplace."* Add a `local` source entry beside the others:
 
    ```json
-   { "name": "<name>", "source": { "source": "local", "path": "./plugins/<name>" }, "category": "tools" }
+   {
+     "name": "<name>",
+     "source": { "source": "local", "path": "./plugins/<name>" },
+     "category": "tools",
+     "policy": {
+       "installation": "AVAILABLE",
+       "authentication": "ON_INSTALL"
+     }
+   }
    ```
 
    Then `codex plugin add <name>@liva-toolbench` to install (re-run after a version bump
@@ -127,12 +145,35 @@ when the plugin needs a better Codex marketplace presentation.
    `.claude-plugin/marketplace.json` and must be kept in sync by hand — it's easy to ship
    a `.codex-plugin/` manifest and forget to register the plugin here.
 
+**Cross-harness skills keep shared instructions but use per-harness metadata.**
+Keep the Claude Code fields a skill needs in `SKILL.md`; Codex tolerating an unknown
+frontmatter key does not make that key a Codex control. Put Codex-specific UI and
+invocation metadata in the skill-local `skills/<skill-name>/agents/openai.yaml` —
+not the plugin root's `agents/` directory:
+
+```yaml
+interface:
+  display_name: "My Skill"
+  short_description: "A 25-64 character UI description"
+  default_prompt: "Use $my-skill to ..."
+
+policy:
+  allow_implicit_invocation: false
+```
+
+Quote string values. `default_prompt` must mention the skill as `$<skill-name>`
+(including the plugin namespace when installed from a plugin). Codex defaults
+`allow_implicit_invocation` to `true`; set it to `false` whenever the shared
+`SKILL.md` has Claude Code's `disable-model-invocation: true`. One field does not
+configure the other harness.
+
 **In a cross-harness plugin, skill/agent bodies must not depend on Claude-only
 preprocessing** — none of it runs under Codex:
 
 - `${CLAUDE_PLUGIN_ROOT}`, `${CLAUDE_SKILL_DIR}`, and every other `${CLAUDE_*}` substitution
 - `@file` includes
 - `` !`cmd` `` / ` ```! ` bang shell execution
+- `$ARGUMENTS`, `$0`, `$1`, and named argument substitution
 
 **Skill prose must be harness-agnostic, not just preprocessing-free.** Describe
 subagent work at the capability level ("dispatch a standard-tier subagent to …"),
@@ -177,7 +218,7 @@ So a future **Claude-only** plugin has **two** version strings to bump; every cu
 plugin is **cross-harness** and has **three**. Forgetting the marketplace-catalog copy
 is the easy miss — the per-plugin manifest and the catalog entry are separate files.
 
-`.agents/plugins/marketplace.json` (the Codex marketplace index) carries **no** `version` field — it only lists `source`/`category`, so there is nothing to bump there. After a cross-harness bump, re-run `codex plugin add <name>@liva-toolbench` to refresh its snapshot instead.
+`.agents/plugins/marketplace.json` (the Codex marketplace index) carries **no** `version` field, so there is nothing to bump there; its `source`, `category`, and `policy` metadata are unversioned. After a cross-harness bump, re-run `codex plugin add <name>@liva-toolbench` to refresh its snapshot instead.
 
 Verify every copy agrees before committing — all should show the **same new** version with no straggler on the old number:
 
@@ -265,28 +306,37 @@ allowed-tools: Bash(git add *) Bash(git status *)   # narrow Bash matchers
 
 ---
 
-## Skill frontmatter (most-used fields)
+## Skill frontmatter (portable fields + Claude Code extensions)
+
+`name` and `description` are required portable Agent Skills fields;
+`allowed-tools` is portable but experimental. The remaining fields shown below
+are Claude Code extensions. Cross-harness skills may retain them for Claude Code,
+but must use `agents/openai.yaml` for Codex-specific UI and invocation policy.
 
 ```yaml
 ---
-name: my-skill                       # default: directory name
-description: When to use this skill  # required-ish; drives auto-invocation
-when_to_use: Extra trigger phrases   # appended to description for matching
-argument-hint: "[name] [format]"     # autocomplete hint
-arguments: name format               # named positional args (space-sep or YAML list)
-disable-model-invocation: true       # only the user can invoke (good for /deploy, /commit)
-user-invocable: false                # only Claude can invoke (good for background context)
-allowed-tools: Read Grep             # pre-approved tools while active
-model: sonnet                        # override model for this skill's turn
-effort: high                         # low | medium | high | xhigh | max
-context: fork                        # run in a forked subagent context
-agent: Explore                       # which subagent type to use (with context: fork)
-paths: "src/**/*.ts"                 # only auto-load when working with matching files
-hooks: { PreToolUse: [...] }         # skill-scoped hooks
+name: my-skill                       # portable; must match the directory name
+description: When to use this skill  # portable and required; drives matching
+when_to_use: Extra trigger phrases   # Claude Code
+argument-hint: "[name] [format]"     # Claude Code autocomplete hint
+arguments: name format               # Claude Code positional arguments
+disable-model-invocation: true       # Claude Code explicit-only; mirror in openai.yaml
+user-invocable: false                # Claude Code model-only invocation
+allowed-tools: Read Grep             # portable but experimental
+model: sonnet                        # Claude Code model override
+effort: high                         # Claude Code effort override
+context: fork                        # Claude Code forked context
+agent: Explore                       # Claude Code subagent type
+paths: "src/**/*.ts"                 # Claude Code path-scoped loading
+hooks: { PreToolUse: [...] }         # Claude Code skill-scoped hooks
 ---
 ```
 
 **Rule of thumb for descriptions**: lead with the use case, include trigger phrases the user is likely to say, keep combined `description` + `when_to_use` under ~1,500 chars (it gets truncated).
+
+For cross-harness skills, keep `description` itself within the portable Agent
+Skills limit of 1,024 characters and put the Codex trigger conditions directly
+in it; Codex does not use Claude Code's `when_to_use` extension.
 
 ---
 
@@ -391,6 +441,10 @@ agents from re-suggesting the option you already ruled out.
 
 ## Official documentation
 
+- OpenAI plugins: <https://developers.openai.com/plugins>
+- OpenAI plugin packaging and marketplace metadata: <https://developers.openai.com/plugins/build/plugins>
+- OpenAI skill authoring and metadata: <https://learn.chatgpt.com/docs/build-skills>
+- Portable Agent Skills specification: <https://agentskills.io/specification>
 - Plugins: <https://code.claude.com/docs/en/plugins>
 - Plugins reference (full schema): <https://code.claude.com/docs/en/plugins-reference>
 - Plugin marketplaces: <https://code.claude.com/docs/en/plugin-marketplaces>

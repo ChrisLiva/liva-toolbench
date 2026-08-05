@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Lite"
+  short_description: "Route work through the lightweight design pipeline"
+  default_prompt: "Use $crank-lite:crank-lite to route this request to brainstorm, spec, or plan."
+
+policy:
+  allow_implicit_invocation: false

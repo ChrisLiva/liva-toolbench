@@ -1,0 +1,7 @@
+interface:
+  display_name: "Lite Execute"
+  short_description: "Implement, verify, review, and commit a plan"
+  default_prompt: "Use $crank-lite:lite-execute to implement, verify, review, and commit the work described by the provided PRD, spec, or plan."
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Refine"
+  short_description: "Grill and sharpen a crank artifact in place"
+  default_prompt: "Use $crank:crank-refine to grill and sharpen the provided crank brainstorm, spec, or plan in place."
+
+policy:
+  allow_implicit_invocation: false

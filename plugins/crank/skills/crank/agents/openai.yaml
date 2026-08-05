@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank"
+  short_description: "Route work through brainstorm, spec, or plan"
+  default_prompt: "Use $crank:crank to route this request to the appropriate brainstorm, spec, or plan phase."
+
+policy:
+  allow_implicit_invocation: false

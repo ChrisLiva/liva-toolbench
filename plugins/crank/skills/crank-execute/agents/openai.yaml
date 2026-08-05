@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Execute"
+  short_description: "Execute plans with TDD, reviews, and a retro"
+  default_prompt: "Use $crank:crank-execute to execute the provided implementation plan task by task with TDD, independent reviews, and a retro."
+
+policy:
+  allow_implicit_invocation: false
