@@ -1,6 +1,6 @@
 # Plan markdown skeleton
 
-Use this as the starting shape for the temp-file plan. Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `SKILL.md`.
+Use this as the starting shape for the temp-file plan. Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `PLAN.md`. A behavior carries pseudo-code or embedded code beneath its line only where the ladder in Guidelines → Prose, pseudo-code, or embedded code says so — embedded code with its evidence line.
 
 ```markdown
 # <Plan title>
@@ -40,16 +40,17 @@ Interfaces:
 - Consumes: `<signature or contract>`
 - Produces: `<signature or contract>`
 
-- [ ] Step 1: <failing behavior test or lightest-check setup>
-- [ ] Step 2: <minimal implementation or mechanical change>
-- [ ] Step 3: Verify <exact command/result>, seam: <production seam>
-- [ ] Step 4: Commit: `<message>`
+Check: <test-first | lightest-check | probe>
+
+- [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
+- [ ] Behavior 2: <next behavior in tracer-bullet order — or a directive line for a mechanical change>
+- [ ] Verify: `<exact command>` → <exact success reading>
 
 ## Coverage
 
 | criterion | task # | verify step that proves it |
 |---|---|---|
-| <acceptance criterion> | Task 1 | Step 3 |
+| <acceptance criterion> | Task 1 | <behavior or verify line that proves it> |
 
 ## Smoke tests for the user
 

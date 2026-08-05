@@ -27,7 +27,7 @@ The artifact's phase sets what a question may reach for. Settle everything *in b
 | --- | --- | --- |
 | **Brainstorm brief** | The problem, the chosen approach vs. its alternatives, the major pieces and how they relate, and the consequential decisions that change everything downstream. | Signatures, schemas, field names, file maps, exact libraries/versions — *unless one is load-bearing for an approach decision*. Defer to the spec. |
 | **Spec** | Acceptance criteria, the technical decisions (contracts and data shapes at the interface level, library/approach choice, error and edge behavior), and what "done" looks like. | File-by-file breakdown, concrete code, task ordering. Defer to the plan. |
-| **Plan** | Task decomposition and ordering, the concrete code or approach in each step, file targets, the test seam for each task, and any placeholder or hand-wave (`TODO`, "similar to Task N", a symbol no task defines). | Nothing — a plan is the bottom of the pipeline. Grill until every task is executable with no further design conversation. |
+| **Plan** | Task decomposition and ordering, each behavior's oracle and the prose, pseudo-code, or surveyed code carried with it, file targets, the test seam for each task, and any placeholder or hand-wave (`TODO`, "similar to Task N", a symbol no task defines). | Nothing — a plan is the bottom of the pipeline. Grill until every task is executable with no further design conversation. |
 
 For the full design rules behind a phase, read that phase's file in the `crank` skill's directory (`BRAINSTORM.md`, `SPEC.md`, `PLAN.md`).
 

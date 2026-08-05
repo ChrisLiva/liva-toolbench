@@ -2,13 +2,13 @@
 
 ## Goal
 
-Turn the spec into something a coding agent can execute task-by-task with no further design conversation. **Bite-sized tasks. TDD rhythm. Frequent commits. No placeholders.**
+Turn the spec into something a coding agent can execute task-by-task with no further design conversation. The plan resolves every implementation *decision* — boundaries, contracts, checks — and leaves construction to the executor. **Bite-sized tasks. Exact contracts. Oracles, not placeholders. Code only where surveyed.**
 
 ## Hard Rules
 
 - If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
 - **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
-- **No placeholders.** No `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", or references to symbols no task defines. Show code in every code step.
+- **Oracles, not placeholders.** A step may omit code; it never omits proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 
 ## Guidelines
@@ -16,14 +16,18 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 ### Test-first or lightest-check
 
 <tradeoff>
-**Test-first** pins the intended behavior before code exists and leaves a regression net behind — at the cost of upfront time, and of awkward contortions where no real seam exists. **Lightest-check** (typecheck, build, curl, render) is fast and honest for work with no behavioral seam (config, docs, CSS, refactor-only) — at the cost of leaving no net. Between them sits the **probe** (VOCABULARY.md): behavior that deserves a deterministic check but has no seam worth a committed test — a migration's row counts, a one-shot transform, a regex over a corpus — gets a probe step: embed its code like any test, name its oracle and exact expected output, and end the step with its deletion. Choose per task by whether a real seam exists; where none does but the logic still has an oracle, plan a probe rather than manufacture a fake test — a test against a manufactured seam costs maintenance and protects nothing (see Dead seam).
+**Test-first** pins the intended behavior before code exists and leaves a regression net behind — at the cost of upfront time, and of awkward contortions where no real seam exists. **Lightest-check** (typecheck, build, curl, render) is fast and honest for work with no behavioral seam (config, docs, CSS, refactor-only) — at the cost of leaving no net. Between them sits the **probe** (VOCABULARY.md): behavior that deserves a deterministic check but has no seam worth a committed test — a migration's row counts, a one-shot transform, a regex over a corpus — gets a probe step: name its oracle and exact expected output, and end the step with its deletion; its code is embedded only when grounding already ran it (see Prose, pseudo-code, or embedded code). Choose per task by whether a real seam exists; where none does but the logic still has an oracle, plan a probe rather than manufacture a fake test — a test against a manufactured seam costs maintenance and protects nothing (see Dead seam).
 </tradeoff>
 
-### Embedded code or prose
+### Prose, pseudo-code, or embedded code
+
+Three rungs, climbed only as far as the decision demands (per project decision: the executor constructs code from a pinned contract — the plan stopped scripting keystrokes):
 
 <tradeoff>
-**Embedded code** removes ambiguity — the executor types what the plan shows — at the cost of plan length and of going stale if the codebase moves before execution. **Prose-with-signature** stays short and drift-tolerant — at the cost of delegating construction to the executor. Embed when the shape matters (tests, non-obvious signatures, regexes, migrations, structural templates); use prose when the change is mechanical (`change < to <= at foo.ts:18`).
+**Prose-with-contract** — behavior, oracle, exact signatures — is the default: short and drift-tolerant, trusting construction to the executor. **Pseudo-code** pins an algorithm's shape — the tricky loop, ordering, or state machine that is itself a design decision — without forging unverified code; a sketch the readback approved carries in verbatim. **Embedded code** fixes exact text — at the cost of length, and of shipping the planner's unverified first draft: stale embedded code is where execute's detours start. Embed only the **surveyed** — verified during grounding (a regex probed against a corpus, migration SQL run and checked, a signature read from the live file) — and text that *is* the requirement (a public API signature, user-facing copy, config values); embedded code names its evidence in the step ("probed, output below", "read from `foo.ts:12`"). A purely mechanical change needs none of the three: a directive line (`change < to <= at foo.ts:18`) is enough.
 </tradeoff>
+
+Tests follow the same ladder: state the test *cases* — the oracle's exact inputs → expected outputs and the seam the test drives — and let the executor write the test to the repo's conventions; embed test code only when the harness shape itself was surveyed (a subtle async fixture, a mock grounding worked out).
 
 ## References
 
@@ -33,7 +37,7 @@ If exploring the codebase could answer a question — an exact signature, prior 
 
 ### Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
+Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), and the **implementation-detail test** — read their meanings there.
 
 ## Deliverables
 
@@ -44,7 +48,7 @@ A single self-contained implementation plan written to the temp file (see Hard R
 - **Updates since spec** — drift you found while grounding. Omit if none.
 - **Refactor scope** — copy from the spec if present; the explicit allowlist of existing modules open to reshaping. Omit if the spec had none.
 - **File structure** — the table from Map the files.
-- **Tasks** — each with a `Files:` block, then an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty), then the checkbox steps.
+- **Tasks** — each with a `Files:` block; an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty); a `Check:` line naming the per-task call (test-first / lightest-check / probe); then one checkbox per behavior — each carrying its oracle and, where a test drives it, its seam — ending on the task's `Verify:` step.
 - **Coverage** — a table with one row per acceptance criterion in the spec (if the spec lacks a numbered list, enumerate the behaviors it describes yourself): `criterion | task # | verify step that proves it`. Every criterion gets a row; a row whose verify cell is empty must say why (e.g. human-only smoke check) — silence is a gap, not a pass. Execute walks this table before claiming completion.
 - **Smoke tests for the user** — anything the spec flagged as needing real-human verification. Omit if none.
 - **Out of scope** — copy from the spec.
@@ -55,9 +59,9 @@ Create a task for each step below and mark each complete as you finish it, live,
 
 ### 1. Ground first
 
-Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
+Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. Grounding is also where anything the plan will embed gets **surveyed**: run it (a probe), or read it from the live tree, and keep the evidence for the step. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
 
-Completion criterion: every file and symbol the spec names has been read (or its read delegated and returned) with exact signatures and import paths in hand, any drift since the spec noted for **Updates since spec**, and every `Gates:` command captured and proven to run.
+Completion criterion: every file and symbol the spec names has been read (or its read delegated and returned) with exact signatures and import paths in hand, any drift since the spec noted for **Updates since spec**, every `Gates:` command captured and proven to run, and every artifact the plan will embed surveyed with its evidence in hand.
 
 ### 2. Map the files
 
@@ -71,7 +75,7 @@ Completion criterion: every file the plan touches has a path / action / responsi
 
 ### 3. Decompose
 
-A **task** is independently committable (green tree at end), implements one cohesive thing. Default rhythm per task: **failing test → minimal impl → verify → commit**. When a task covers more than one behavior, its steps slice **vertically** — one **tracer bullet** at a time, never a **horizontal slice** (both defined in VOCABULARY.md). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that ends on a green tree and carries its own test cycle. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
+A **task** is independently committable (green tree at end), implements one cohesive thing. Execute supplies the working rhythm — failing test → minimal impl → verify → commit — so size tasks to that cycle rather than scripting it. When a task covers more than one behavior, its steps slice **vertically** — one **tracer bullet** at a time, never a **horizontal slice** (both defined in VOCABULARY.md). Order tasks so each builds on the prior green tree. Right-size it: a task is the smallest unit that ends on a green tree and carries its own test cycle. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
 
 When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones. Old shallow-module tests left layered under new ones are maintenance cost protecting nothing.
 
@@ -83,21 +87,19 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing full steps, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them: the file map first (the actual path / action / responsibility rows), then each section — showing what it builds and the consequential decisions behind it (a test-first vs. lightest-check call where that's a real judgment call).
+Decomposition settled the shape; before writing the tasks in full, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them: the file map first (the actual path / action / responsibility rows), then each section — showing what it builds and the consequential decisions behind it (a test-first vs. lightest-check call where that's a real judgment call).
 
 Completion criterion: the file map and every section's content and decisions have been read back and user-approved section by section; objections resolved now, none carried into the written steps.
 
-### 5. Write the steps
+### 5. Write the tasks
 
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Each step is one bite-sized action, checkbox syntax (`- [ ] Step N: <what>`). Carry the material the readback approved into the plan as vetted (READBACK.md → Carry what was approved). Whether to **embed** the code or describe it in **prose** is a per-step call — see Guidelines → Embedded code or prose.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape, carrying the material the readback approved in as vetted (READBACK.md → Carry what was approved). Each task: the `Files:` block, the Interfaces block, the `Check:` call from Decompose (test-first, lightest-check, or probe), then one checkbox per behavior in **tracer-bullet** order, ending on the task's `Verify:` step. A behavior line states what the code must do, its oracle, and — where a test drives it — the seam; how far to climb from prose toward embedded code is a per-behavior call (see Guidelines → Prose, pseudo-code, or embedded code). Execute owns the keystroke rhythm; the plan states what each behavior must do and how to prove it.
 
-Every `verify` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** (embed the probe's code like any test, with its oracle, exact expected output, and a final delete) — "tests pass" is not enough. A test-driven check must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the verify step so the test and the production wiring point at the same place.
+Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** (its oracle and exact expected output pinned here, ending in its deletion) — "tests pass" is not enough. A test must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the behavior line so the specified test and the production wiring point at the same place; a test case specified in prose can still be an **implementation-detail test** — an oracle read through a back channel instead of the seam is one.
 
-Keep the step *order* in the **tracer-bullet** rhythm set in Decompose — each test step immediately followed by the implementation step that makes it pass and its verify. And an embedded test drives the **seam** the spec named, never an **implementation-detail test** (defined in VOCABULARY.md).
+Route reuse by name: if grounding (or the spec) surfaced an existing utility, the task names it and the contract goes through it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do, and a new dependency the spec's **Tech stack** didn't pin is an **Updates since spec** item to resolve, not a quiet import. And a contract that only types with a cast, `any`, or a new optional parameter is unclear: an **Updates since spec** item to resolve, not something to paper over inline.
 
-Reuse the canonical helper for the job: if grounding (or the spec) surfaced an existing utility, embedded code calls it rather than re-implementing it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do, and a new dependency the spec's **Tech stack** didn't pin is an **Updates since spec** item to resolve, not a quiet import. And embedded code never reaches for a cast, `any`, or a new optional parameter to make types fit: an unclear contract is an **Updates since spec** item to resolve, not something to paper over inline.
-
-**Completion criterion.** Every behavior the spec lists must land in a task step or a verify line — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
+**Completion criterion.** Every behavior the spec lists must land in a task's behavior line or verify — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
 ### 6. Adversarially review
 
