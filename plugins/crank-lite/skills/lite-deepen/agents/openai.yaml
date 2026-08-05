@@ -1,0 +1,7 @@
+interface:
+  display_name: "Lite Deepen"
+  short_description: "Find and grill deepening opportunities in chat"
+  default_prompt: "Use $crank-lite:lite-deepen to scan this codebase for deepening opportunities, present cards in chat, and grill through my pick into a brief."
+
+policy:
+  allow_implicit_invocation: false

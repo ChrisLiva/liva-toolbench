@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Deepen"
+  short_description: "Find and grill architecture deepening opportunities"
+  default_prompt: "Use $crank:crank-deepen to scan this codebase for deepening opportunities, review the HTML report, and grill through my pick into a brief."
+
+policy:
+  allow_implicit_invocation: false
