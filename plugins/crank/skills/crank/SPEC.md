@@ -8,7 +8,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 
 - **Before drafting, grill the user on the open *technical* decisions** (see Flow → Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **Placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
-- **Write the draft to a fresh OS temp file:** `$(mktemp -t crank-spec).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
+- **Write the draft to a new temp file** (e.g. `${TMPDIR:-/tmp}/crank-spec-<slug>.md`). Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Reference real files as `path:line`** wherever you have them.
 
 ## Guidelines

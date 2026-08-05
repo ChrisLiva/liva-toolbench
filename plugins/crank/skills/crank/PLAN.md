@@ -7,7 +7,7 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 ## Hard Rules
 
 - If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
-- **Write the plan to a fresh OS temp file:** `$(mktemp -t crank-plan).md`. Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
+- **Write the plan to a new temp file** (e.g. `${TMPDIR:-/tmp}/crank-plan-<slug>.md`). Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
 - **Oracles, not placeholders.** A step may omit code; it never omits proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 

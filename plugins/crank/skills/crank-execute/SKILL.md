@@ -100,7 +100,7 @@ You decide based on the plan — there is no required mode. State the choice in 
 
 Once stated, the shape binds the run (Hard Rules → A stated dispatch binds you to spawn): in a subagent mode, each task's first action is the implementer dispatch and each task's review a dispatched reviewer — never work silently absorbed onto the main thread.
 
-If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — as `$(mktemp -d -t crank-exec)` and state the path once. (If the user asks to keep them beside the code for inspection, use a `.crank/` directory at the working root instead; not auto-ignored.) Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that always lives in the git directory (see Deliverables → Progress ledger).
+If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — as a new temp directory (e.g. `${TMPDIR:-/tmp}/crank-exec-<slug>/`) and state the path once. (If the user asks to keep them beside the code for inspection, use a `.crank/` directory at the working root instead; not auto-ignored.) Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that always lives in the git directory (see Deliverables → Progress ledger).
 
 Once the directory is set, read [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md) and write its `orientation.md` template there — a compact repo map every brief points to so implementers and reviewers don't each re-discover the codebase from scratch. Spend a few reads on it now; it pays back on every dispatch. In the same step, place the two review rubrics in the brief dir as fixed reference files: copy [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md) to `review-rubric.md` and [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md) to `final-review-rubric.md`, **verbatim** — a byte-for-byte copy, never a retype or a "fill it in." Do this now, before any task is implemented: with no diff yet in view there is nothing to pre-judge, so the rubrics freeze clean.
 
@@ -139,7 +139,7 @@ Completion criterion: every loose end is settled, fixed, or written as a decisio
 
 ### 6. Retro
 
-Write a retro to a fresh OS temp file: `$(mktemp -t crank-retro).md`, with the sections listed in **Deliverables → Retro**.
+Write a retro to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-retro-<slug>.md`), with the sections listed in **Deliverables → Retro**.
 
 ### 7. Hand back
 
