@@ -1,7 +1,7 @@
 interface:
   display_name: "Crank Test Prune"
   short_description: "Prune tests to observable, behavior-pinning coverage"
-  default_prompt: "Use $crank:crank-test-prune to apply KEEP, DELETE, or REFACTOR verdicts to this test scope."
+  default_prompt: "Use $crank:crank-test-prune to apply KEEP, DELETE, REFACTOR, or MERGE verdicts to this test scope."
 
 policy:
   allow_implicit_invocation: false
