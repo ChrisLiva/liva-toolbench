@@ -14,8 +14,8 @@ When a question is experiential — how something should look, behave, or read �
 
 ## Brief
 
-When every readback section stands approved, record the concise brainstorm brief to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-brainstorm-<slug>.md`) and stop.
+When every readback section stands approved, record the concise brainstorm brief to `.crank/brainstorm-<slug>.md` at the working root — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control; only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/lite-brainstorm-<slug>.md`) and say so — and stop.
 
 Keep the artifact light: include the idea, goals/constraints, chosen shape, key decisions, open questions, and suggested next step when those sections earn their place. An open question earns its place only when it's stated sharply enough for the spec to answer it — anything you can't phrase that precisely yet is a design hole to resolve here first.
 
-Tell the user the temp file path and offer to continue to the spec phase ([SPEC.md](SPEC.md)) — or the plan phase ([PLAN.md](PLAN.md)) if the idea is already implementation-ready.
+State the path and the next step — continue to the spec phase ([SPEC.md](SPEC.md)) in this session, or in a fresh one: `/crank-lite spec .crank/brainstorm-<slug>.md` (route to the plan phase instead if the idea is already implementation-ready). Close with a single trailing sentence noting the brief can be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question.

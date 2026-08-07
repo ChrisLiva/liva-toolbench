@@ -7,7 +7,7 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 ## Hard Rules
 
 - If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
-- **Write the plan to a new temp file** (e.g. `${TMPDIR:-/tmp}/crank-plan-<slug>.md`). Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
+- **Write the plan to `.crank/plan-<slug>.md` at the working root** — the durable artifact directory every crank phase shares, so `/crank-execute` resumes from the file, not from a pasted path. Create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control. Only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/crank-plan-<slug>.md`) and say so. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
 - **Oracles, not placeholders.** A step may omit code; it never omits proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 
@@ -41,7 +41,7 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Deliverables
 
-A single self-contained implementation plan written to the temp file (see Hard Rules). Include whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
+A single self-contained implementation plan written to the `.crank/` file (see Hard Rules). Include whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
 
 - **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions), `Gates:` (the repo's test / lint / typecheck / build commands, each proven to run during grounding — execute's final walk and every implementer inherit them from here).
 - **Global Constraints** — project-wide rules every task must honor: version floors, dependency limits, naming and copy rules, platform requirements — one line each, with the exact values copied verbatim from the spec. Every task's requirements implicitly include this section, and execute's per-task and final reviews run against it as a standing lens. Omit only if the spec names no such rule.
@@ -87,9 +87,9 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing the tasks in full, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then group the plan-to-be into logical sections and walk them: the file map first (the actual path / action / responsibility rows), then each section — showing what it builds and the consequential decisions behind it (a test-first vs. lightest-check call where that's a real judgment call).
+Decomposition settled the shape; before writing the tasks in full, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then walk the plan-to-be under READBACK.md's selection rule and message cap: the file map first (the actual path / action / responsibility rows), then the task sections grouped to fit the cap — each showing what it builds and the judgment calls behind it (a test-first vs. lightest-check call where that's a real call, with the rejected option named) — while spec-inherited content and interview-settled decisions carry as one-line `settled:` restatements, not re-reads.
 
-Completion criterion: the file map and every section's content and decisions have been read back and user-approved section by section; objections resolved now, none carried into the written steps.
+Completion criterion: the file map and everything READBACK.md selects have been read back and user-approved; objections resolved now, none carried into the written steps.
 
 ### 5. Write the tasks
 
@@ -111,12 +111,11 @@ Completion criterion: the reviewer's edits are in the plan file and its one-line
 
 ### 7. Hand back
 
-The plan is the bottom of this skill's pipeline; recommend the user run `/crank-execute` when the plan is ready to build. In chat prose, offer:
+The plan is the bottom of this skill's pipeline. Don't ask how to file the artifact — state the default and hand over the resume command:
 
-- **Keep the temp file** (default) — the path is known; user can hand it to `/crank-execute`, feed it elsewhere, or move it later.
-- **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final contents into the chat and remove the temp file.
+- The plan stays at its `.crank/` path (one line, with the path).
+- **Next:** `/crank-execute .crank/plan-<slug>.md` — in this session or a fresh one; the plan is self-contained.
 
-Then stop — executing is a deliberate act the user starts explicitly.
+Close with a single trailing sentence noting the plan can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question. Then stop — executing is a deliberate act the user starts explicitly.
 
-Completion criterion: the user picked from the file menu and you did exactly what they picked — nothing invoked they didn't opt into.
+Completion criterion: the path and the `/crank-execute` command are stated and you've stopped — nothing invoked the user didn't opt into.

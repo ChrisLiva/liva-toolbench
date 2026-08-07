@@ -74,6 +74,7 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 ## Constraints
 
 - Do not push, amend earlier commits, or rewrite history.
+- Return only when every command you started has finished. Run long verifications synchronously and read their output in the same turn you report it — work parked behind a background watcher at return time is work not done.
 - The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Deviations. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute; a detour needing files outside the block returns `NEEDS_CONTEXT` first.
 - Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, note that in the report's Concerns so the reviewer knows the codebase was searched.
 - Before reaching for a new third-party dependency, exhaust the lighter options in order: an existing in-repo helper, the stdlib, a native platform feature, then a dependency already in the manifest. Don't add a dependency for what a few lines do; if the task genuinely needs one the plan didn't name, return `NEEDS_CONTEXT` instead of importing it silently.

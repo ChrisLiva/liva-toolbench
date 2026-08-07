@@ -1,23 +1,26 @@
 ---
 name: lite-execute
 description: "Execute a PRD, spec, or implementation plan: implement, verify, review, and commit the work."
+argument-hint: "[path to plan.md, or a .crank/ plan slug]"
 disable-model-invocation: true
 ---
 
-Implement the work described in the plan (or PRD/spec) the user provides.
+Implement the work described in the plan (or PRD/spec) the user provides. A path argument is read as-is; a bare slug resolves to `.crank/plan-<slug>.md` at the working root; invoked with no argument and no plan in the conversation, list the plans in `.crank/` and ask which to run.
 
 ## Execution shape
 
-**Before touching any file, pick the execution shape and state it** — count the plan's tasks and the areas of code it touches, then tell the user which shape you chose and why:
+**Before touching any file, pick the execution shape and state it** — you decide based on the plan's coupling, not its task count; there is no required mode:
 
-- **Solo** — ~3 tasks or fewer, one area of code, or tightly coupled edits that share in-flight state. Implement inline on this thread.
-- **Orchestrate** — the default above that: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, the verification command it must run and report output from, and the detour rule from Implement below — with any detour taken reported back in its return. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation.
+- **Solo** — the work is confined to one module or one area of code, or the tasks share deep in-flight state — whatever the task count. Implement inline on this thread.
+- **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, the verification command it must run and report output from, the detour rule from Implement below — with any detour taken reported back in its return — and the return rule: return only when every command it started has finished; long verifications run synchronously, their output read in the same turn that reports them. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation. When a dispatched agent is out past the point you expected it back, reconcile against durable state — `git log`, the Progress block, its report — then resume it or surface the stall; a "standing by" turn is never the move.
 
 A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
 
 ## Implement
 
-Track the run with tasks: create one entry per plan task before starting work, mark it in progress when you begin it, and completed the moment it lands. Every run gets this, solo included — it is how the user sees progress mid-run and how an interrupted session knows where to resume.
+Track the run with tasks: create one entry per plan task before starting work, mark it in progress when you begin it, and completed the moment it lands. Every run gets this, solo included — it is how the user sees progress mid-run.
+
+Durable progress lives in the plan file, not the task list (which dies with the session). Before the first task, add a `## Progress` block at the top of the plan — one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` the moment that task's commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it. This block is how an interrupted run resumes in a fresh session.
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end. When a change has no test seam, validate it with a probe — a small throwaway script in the OS temp dir that asserts exact outputs and exits non-zero on failure; watch it fail once before trusting its pass, treat its output as the verification evidence, and delete it before commit.
 
@@ -37,7 +40,7 @@ Before the retro, close the loop — you ship finished work: settle every loose 
 
 ## Retro
 
-Once you've finished implementation and review, record a concise retro to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-retro-<slug>.md`) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and temp file path; when nothing survived the loop-close, say the work is complete.
+Once you've finished implementation and review, record a concise retro to `.crank/retro-<slug>.md` at the working root (create `.crank/` if missing, with a `.crank/.gitignore` containing `*`; only outside a git repo, fall back to a temp file and say so) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
 
 ## Subagent tiers
 

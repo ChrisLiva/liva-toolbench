@@ -17,6 +17,7 @@ A leaner suite where every surviving test pins a distinct, observable behavior t
 - **Expected values come from an independent source of truth** — a hand-verified literal from a real fixture or committed snapshot — never recomputed with the same formula the code under test uses (a tautological assertion passes by construction and can never disagree with the code).
 - **Redundancy is judged suite-wide, not per file** — two tests pinning the same behavior at the same seam are one KEEP and one DELETE, even when they live in different files. Which one keeps: the test at the truer seam; at equal seam fidelity, the cheaper, faster one — a slow end-to-end test duplicating behavior already pinned lower survives only as one of a handful of happy-path journeys.
 - **Tests only.** This skill edits and deletes test code; production code is never touched. A pruning pass that surfaces a production bug reports it, it doesn't fix it.
+- **Baselines come from a throwaway worktree, never `git stash`.** When any step needs a clean-tree comparison (formatter, lint, suite at HEAD), run it in a disposable `git worktree add` checkout of HEAD and remove it after. `git stash` is banned for the whole run — coordinator and subagents alike — because it sweeps uncommitted user work into state a later drop destroys.
 - **Green gate.** The full suite runs after applying; the pass isn't done until it's green.
 
 ## Verdicts
@@ -38,7 +39,7 @@ Fan out standard subagents — one per directory or module on a large suite — 
 
 ### 3. Apply
 
-Apply the DELETEs, REFACTORs, and MERGEs. **Done when:** every DELETE, REFACTOR, and MERGE row is applied.
+Apply the DELETEs, REFACTORs, and MERGEs. Every apply agent's instruction carries three standing constraints: touch only the test files in your assigned verdict rows; never move, rename, or delete repository configuration (formatter configs, hooks, manifests) to work around tooling — report the interference and stop instead; and siblings are editing the same tree concurrently, so unexplained `git status` entries are expected — leave them alone, never investigate or revert them. **Done when:** every DELETE, REFACTOR, and MERGE row is applied.
 
 ### 4. Verify
 

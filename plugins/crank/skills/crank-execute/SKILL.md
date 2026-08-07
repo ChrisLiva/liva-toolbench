@@ -1,7 +1,7 @@
 ---
 name: crank-execute
 description: Execute an implementation plan task-by-task with TDD, independent reviews, and a retro.
-argument-hint: "[optional path to plan.md]"
+argument-hint: "[optional path to plan.md, or a .crank/ plan slug]"
 disable-model-invocation: true
 ---
 
@@ -20,6 +20,9 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 - **Verify once; trust the evidence.** A task's TDD evidence (the implementer's RED/GREEN output) is the suite's authoritative run for that task; the final gate's plan-and-coverage walk is the single authoritative re-run across the whole diff.
 - **A stated dispatch binds you to spawn.** The moment your output says a task gets a subagent — or the run's chosen shape says so — your *next* action is that spawn, never the work done inline. If main-thread work is the right call, say you're staying on-thread and why (for a shape change, re-state the shape) instead of announcing a dispatch.
 - **Oscillation stops the loop.** A review round that demands reversing what a prior round required is oscillation, not progress — never flip the code blind; stop and surface both verdicts to the user with your recommendation.
+- **A stop instruction bounds the unit of work, not the phase.** When the user says "do X, then stop," the run ends after X's verification, whatever X uncovers — newly discovered defects become surfaced findings with a recommendation, never a new fix round.
+- **Off-plan fixes are bounded.** A fix that isn't a plan task gets exactly one investigation, one test-first fix, one review — routed through this skill's own dispatch shapes, never an ad-hoc harness workflow — then stop and report, whatever that review finds.
+- **A quiet dispatch is reconciled, not narrated.** When a subagent is out past the point you expected it back, reconcile against durable state — `git log` since BASE, the ledger, its report file on disk — then resume the agent or surface the stall with your recommendation; a "standing by" turn is never the move.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
 
 ## References
@@ -44,11 +47,17 @@ The primary deliverable is **shipped code** — the task-by-task commits, record
 
 ### Progress ledger
 
-The ledger is your durable record of what has shipped — it survives compaction, where your todos and conversation memory do not. Keep it at a fixed, re-findable path inside the git directory (never the working tree, so it is never committed and never clutters a PR):
+The ledger is your durable record of what has shipped — it survives compaction, where your todos and conversation memory do not. Its home is a **probe, not a prescription** — try the git directory first, and on refusal fall back to the ignored `.crank/` directory, never the session scratchpad (which dies with the session):
 
-```
-mkdir -p "$(git rev-parse --git-path crank)"   # ledger path: $(git rev-parse --git-path crank)/progress.md
-```
+1. Print the git-directory path, then create it — two plain commands, not a compound one-liner (sandboxes that guard the worktree reject compound shells):
+
+   ```
+   git rev-parse --git-path crank
+   mkdir -p <the path it printed>
+   ```
+
+   The ledger is `<that dir>/progress.md`.
+2. If the harness refuses writes there — worktree isolation guards the shared `.git` path — use `.crank/progress.md` at the worktree root instead: create `.crank/` with a `.crank/.gitignore` containing `*`, and note the fallback once.
 
 One ledger per worktree. It opens with the run's anchor, then one line per plan task:
 
@@ -65,7 +74,7 @@ Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and 
 
 ### Retro
 
-Written to a fresh OS temp file (see Flow → Retro). Sections:
+Written to a fresh file in `.crank/` (see Flow → Retro). Sections:
 
 - **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
 - **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
@@ -79,7 +88,7 @@ Track progress with live tasks the user can watch — but every task update cost
 
 ### 1. Load and critically review
 
-If the user supplied a plan path in the request, read it; otherwise use the plan already in the conversation. Read it in full. If the plan's header names a spec (`Spec:` line), read that too — it is the contract the final review runs against; the plan is only its decomposition. If the plan has a **Global Constraints** section, treat its values as binding on every task — they are the attention lens the per-task and final reviews run against.
+If the user supplied a plan path in the request, read it; a bare slug resolves to `.crank/plan-<slug>.md` at the working root. With no argument, use the plan already in the conversation — and if there is none, list the plans in `.crank/` and ask which to run. Read the plan in full. If the plan's header names a spec (`Spec:` line), read that too — it is the contract the final review runs against; the plan is only its decomposition. If the plan has a **Global Constraints** section, treat its values as binding on every task — they are the attention lens the per-task and final reviews run against.
 
 Before starting, scan the plan once for two kinds of problem and raise whatever you find as a **single batched question**, not one interrupt per discovery:
 
@@ -100,7 +109,7 @@ You decide based on the plan — there is no required mode. State the choice in 
 
 Once stated, the shape binds the run (Hard Rules → A stated dispatch binds you to spawn): in a subagent mode, each task's first action is the implementer dispatch and each task's review a dispatched reviewer — never work silently absorbed onto the main thread.
 
-If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — as a new temp directory (e.g. `${TMPDIR:-/tmp}/crank-exec-<slug>/`) and state the path once. (If the user asks to keep them beside the code for inspection, use a `.crank/` directory at the working root instead; not auto-ignored.) Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that always lives in the git directory (see Deliverables → Progress ledger).
+If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — at `.crank/exec-<slug>/` under the working root (create `.crank/` with a `.crank/.gitignore` containing `*` if missing; outside a git repo, fall back to a temp directory like `${TMPDIR:-/tmp}/crank-exec-<slug>/`) and state the path once. Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that resolves its own home (see Deliverables → Progress ledger).
 
 Once the directory is set, read [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md) and write its `orientation.md` template there — a compact repo map every brief points to so implementers and reviewers don't each re-discover the codebase from scratch. Spend a few reads on it now; it pays back on every dispatch. In the same step, place the two review rubrics in the brief dir as fixed reference files: copy [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md) to `review-rubric.md` and [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md) to `final-review-rubric.md`, **verbatim** — a byte-for-byte copy, never a retype or a "fill it in." Do this now, before any task is implemented: with no diff yet in view there is nothing to pre-judge, so the rubrics freeze clean.
 
@@ -139,16 +148,15 @@ Completion criterion: every loose end is settled, fixed, or written as a decisio
 
 ### 6. Retro
 
-Write a retro to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-retro-<slug>.md`), with the sections listed in **Deliverables → Retro**.
+Write a retro to `.crank/retro-<slug>.md` at the working root (create `.crank/` with a `.crank/.gitignore` containing `*` if missing; outside a git repo, fall back to a temp file), with the sections listed in **Deliverables → Retro**.
 
 ### 7. Hand back
 
-Report finished work: what shipped, the verification that proves it, and — only when items survived Close the loop — each one stated as the decision it is, with your recommendation. When none survived, say the work is complete and stop there; the retro file holds the full record.
+Report finished work: what shipped, the verification that proves it, and — only when items survived Close the loop — each one stated as the decision it is, with your recommendation.
 
-In chat prose, offer for the retro:
+Don't end on a disposition menu — take the safe defaults, state them, and lead with the durable next step:
 
-- **Keep the temp file** (default) — the path is known; user can move it or feed it elsewhere later.
-- **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final contents and remove the temp file.
+- The retro stays at its `.crank/` path; commits stay local on `<branch>` — one line each, stated, not asked.
+- **Next:** the single command or decision that moves the work forward — e.g. `git merge <branch>` from the base branch, or the one surviving decision from Close the loop.
 
-For the branch and commits, **ask the user how to finish** (merge / PR / leave / discard) — never force-push, amend, rewrite history, or delete a branch without explicit approval. Then stop.
+Close with a single trailing sentence noting the alternatives on request (open a PR, discard the branch, copy or print the retro) — prose, not a numbered question. Never force-push, amend, rewrite history, or delete a branch without explicit approval. Then stop.

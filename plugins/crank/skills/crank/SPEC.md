@@ -8,7 +8,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 
 - **Before drafting, grill the user on the open *technical* decisions** (see Flow → Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **Placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
-- **Write the draft to a new temp file** (e.g. `${TMPDIR:-/tmp}/crank-spec-<slug>.md`). Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
+- **Write the draft to `.crank/spec-<slug>.md` at the working root** — the durable artifact directory every crank phase shares, so a later session resumes from the file, not from a pasted path. Create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control. Only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/crank-spec-<slug>.md`) and say so. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
 - **Reference real files as `path:line`** wherever you have them.
 
 ## Guidelines
@@ -52,7 +52,7 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Deliverables
 
-A single self-contained spec written to the temp file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
+A single self-contained spec written to the `.crank/` file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
 
 - **Problem** — what the user is trying to solve, in their words.
 - **Solution** — the proposed change, in user-facing terms.
@@ -110,15 +110,15 @@ Completion criterion: every material, unsettled decision on your list has a user
 
 ### 3. Read back the sections
 
-Grilling settled the decisions; before any of them hardens into a draft, read them back per [READBACK.md](READBACK.md) (read it here). Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. Then walk the spec-to-be one Deliverables section per message: the acceptance criteria as a numbered list, each technical decision with its one-line why, the scope cuts by name.
+Grilling settled the decisions; before any of them hardens into a draft, read them back per [READBACK.md](READBACK.md) (read it here). Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. Then walk the spec-to-be under READBACK.md's selection rule and message cap: the acceptance criteria as a numbered list, each judgment-call technical decision with its rejected alternative named, the scope cuts by name — with inherited brief content and interview-settled decisions carried as one-line `settled:` restatements, not re-read.
 
-Completion criterion: every section the draft will contain has had its actual content read back and user-approved section by section; objections resolved now, none carried into the draft.
+Completion criterion: everything READBACK.md selects for this draft has had its actual content read back and user-approved; objections resolved now, none carried into the draft.
 
 ### 4. Draft
 
-Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to the temp file, section by section per **Deliverables**, scaled to the topic. Carry the material the readback approved into the spec as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**, scaled to the topic. Carry the material the readback approved into the spec as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply the **Simplify first** and **Design lens** guidelines (see Guidelines) to every in-scope module.
 
-Completion criterion: every Deliverables section that applies is written to the temp file, no template placeholder survives, and every in-scope module has been through both guidelines.
+Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, and every in-scope module has been through both guidelines.
 
 ### 5. Adversarially review
 
@@ -130,13 +130,11 @@ Completion criterion: the reviewer's edits are in the spec file and its one-line
 
 ### 6. Hand back
 
-The natural next step is the plan phase, which decomposes this spec into ordered, committable, TDD-flavored tasks. In chat prose, offer:
+The natural next step is the plan phase, which decomposes this spec into ordered, committable, TDD-flavored tasks. Don't ask how to file the artifact — state the default and hand over the resume command:
 
-- **Continue to the plan** (recommended when the spec is ready to build) — read [PLAN.md](PLAN.md) and run its flow. The spec's temp-file path is already known; the plan phase builds straight on it.
-- **Keep the temp file** — the path is already known; user can bring it back to the plan phase later, feed it elsewhere, or move it.
-- **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final contents into the chat and remove the temp file.
+- The spec stays at its `.crank/` path (one line, with the path).
+- **Next:** continue to the plan now — say "continue" and you'll read [PLAN.md](PLAN.md) and run its flow on the approved spec — or in a fresh session: `/crank plan .crank/spec-<slug>.md`.
 
-Wait for the user's pick.
+Close with a single trailing sentence noting the spec can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question — then stop.
 
-Completion criterion: the user has picked, and you've done exactly what they picked — the plan phase loaded only on an explicit "continue".
+Completion criterion: the path and resume command are stated and you've stopped — the plan phase loaded only on an explicit "continue".

@@ -7,7 +7,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 ## Hard Rules
 
 - **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
-- **Write the brief to a new temp file** (e.g. `${TMPDIR:-/tmp}/crank-brainstorm-<slug>.md`). Do not write into the working directory unless the user explicitly asks. Tell the user the path once.
+- **Write the brief to `.crank/brainstorm-<slug>.md` at the working root** — the durable artifact directory every crank phase shares, so a later session resumes from the file, not from a pasted path. Create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control. Only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/crank-brainstorm-<slug>.md`) and say so. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
 
 ## Guidelines
 
@@ -28,7 +28,7 @@ Dispatch each job with the matching brief, filled in.
 **Explore the codebase:**
 
 <brief>
-Explore `<area or claim>` in this codebase. We're brainstorming `<one-sentence idea>`.
+Explore `<area or claim>` in this codebase. We're brainstorming `<one-sentence idea>`. Read-only: change nothing in the codebase or on the machine.
 
 Report:
 
@@ -42,7 +42,7 @@ Don't propose a design — just surface what already exists and what's true. If 
 **Research a topic** (web search in scope):
 
 <brief>
-Research `<question>` to inform a design decision. We're weighing `<the options on the table>`.
+Research `<question>` to inform a design decision. We're weighing `<the options on the table>`. Read-only: you may fetch and read, but do not install, uninstall, run vendor install scripts, or delete anything outside your own temp dir — anything that would require installing something is reported as an open question instead.
 
 Report:
 
@@ -59,7 +59,7 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Deliverables
 
-The high-level design brief, written to the temp file (see Hard Rules). Include whichever sections apply (omit ones that don't earn their place — this is a brief, not a spec):
+The high-level design brief, written to the `.crank/` file (see Hard Rules). Include whichever sections apply (omit ones that don't earn their place — this is a brief, not a spec):
 
 - **Idea / Problem** — what the user wants and why, in their words.
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
@@ -110,21 +110,19 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading each section back before it lands per [READBACK.md](READBACK.md) (read it here). When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading the material back before it lands per [READBACK.md](READBACK.md) (read it here) — its selection rule and message cap decide what earns a pause; decisions the grilling already locked carry as one-line `settled:` restatements, not re-reads. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
-Capture each approved section in the temp file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 
-Completion criterion: every Deliverables section that applies is user-approved and captured in the temp file.
+Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file.
 
 ### 7. Hand off
 
-The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute). The natural next step is the spec phase, which turns this high-level brief into a full PRD-plus-technical-spec — grounding it in the codebase, grilling you on the **Open questions**, and adding acceptance criteria. In chat prose, offer:
+The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute); the natural next step is the spec phase, which turns it into a full PRD-plus-technical-spec. Don't ask how to file the artifact — state the default and hand over the resume command:
 
-- **Continue to the spec** (recommended) — read [SPEC.md](SPEC.md) and run its flow. The approved brief is already in the conversation and its temp-file path known; the spec phase builds straight on it.
-- **Keep the temp file** — the path is known; the user can bring it back to the spec phase later, feed it elsewhere, or move it.
-- **Copy into the repo** — copy to a user-named path under the working directory.
-- **Print inline and delete** — paste the final brief into the chat and remove the temp file.
+- The brief stays at its `.crank/` path (one line, with the path).
+- **Next:** continue to the spec now — say "continue" and you'll read [SPEC.md](SPEC.md) and run its flow on the approved brief — or in a fresh session: `/crank spec .crank/brainstorm-<slug>.md`.
 
-Wait for the user's pick.
+Close with a single trailing sentence noting the brief can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question — then stop.
 
-Completion criterion: the user has picked, and you've done exactly what they picked — the spec phase loaded only on an explicit "continue".
+Completion criterion: the path and resume command are stated and you've stopped — the spec phase loaded only on an explicit "continue".

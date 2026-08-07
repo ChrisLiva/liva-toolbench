@@ -18,7 +18,7 @@ The run is: scope → parallel explorers → a visual HTML report of the candida
 
 ## Hard Rules
 
-- **The target repo is read-only.** This run scans, it doesn't refactor. The report and the brief go to the OS temp dir; the only things that may land in the working tree are the two deliberate side effects the user approves during the grill — a term written into `CONTEXT.md`, and an offered ADR. Nothing else, and neither of them silently.
+- **The target repo is read-only.** This run scans, it doesn't refactor. The report goes to the OS temp dir; the brief goes to the ignored `.crank/` directory at the working root; the only things that may land in the tracked tree are the two deliberate side effects the user approves during the grill — a term written into `CONTEXT.md`, and an offered ADR. Nothing else, and neither of them silently.
 - **The report is presentation only.** It exists to let the user *see* the candidates and pick one. It is never re-read as a source of truth — not by a later step of this run, not by the spec phase, not by a fresh session. Everything downstream needs travels in the brief.
 - **One candidate per grill loop.** The user picks one card; the grill walks that one to ground. Re-entry is cheap for as long as the report file survives — when a loop ends, offer to reopen the report and pick another card rather than rescanning by reflex.
 - **No interfaces before the grill.** Explorers don't propose them and cards don't commit to them. The single permitted exception is a card's **structural** pseudo-code panel — what a module exposes and what it hides — with no parameter lists, no return types, and no names anyone will be held to. Signatures are earned in the grill, not before it.
@@ -115,7 +115,7 @@ Completion criterion: the frontier is empty — every agenda branch visited, bot
 
 ### 5. Brief
 
-Once the grill's frontier is empty and the user has approved the shape, write the brief to a new temp file in the OS temp dir — e.g. `${TMPDIR:-/tmp}/deepen-brief-<slug>.md`. Nothing else lands in the repo. Tell the user the path once.
+Once the grill's frontier is empty and the user has approved the shape, write the brief to `.crank/deepen-brief-<slug>.md` at the working root — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control (outside a git repo, fall back to a temp file and say so). Nothing else lands in the repo. Tell the user the path once.
 
 Sections, omitting any that didn't earn its place:
 
@@ -143,7 +143,7 @@ before                                after
 
 **No acceptance criteria** — those belong to the spec phase.
 
-End by recommending the next step: run `/crank` on this brief and take the **spec** route. A brainstorm brief is exactly what its triage sends there, and the brief is self-contained, so a fresh session works as well as this one.
+End by recommending the next step: `/crank spec .crank/deepen-brief-<slug>.md`. A brainstorm brief is exactly what that route consumes, and the brief is self-contained, so a fresh session works as well as this one.
 
 Completion criterion: the brief file exists with every section that earned its place, its path is stated once, and the spec route is recommended — the next phase is the user's to start, never yours.
 

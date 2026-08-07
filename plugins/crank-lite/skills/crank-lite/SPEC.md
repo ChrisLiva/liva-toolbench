@@ -10,8 +10,8 @@ Before closing the interview, walk the failure catalogue — absence, permission
 
 ## Spec
 
-When every readback section stands approved, record the concise spec to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-spec-<slug>.md`) and stop.
+When every readback section stands approved, record the concise spec to `.crank/spec-<slug>.md` at the working root — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control; only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/lite-spec-<slug>.md`) and say so — and stop.
 
 Keep the artifact light: include the problem, proposed solution, acceptance criteria, key technical decisions, testing/validation, out of scope, and open questions when those sections earn their place.
 
-Tell the user the temp file path and offer to continue to the plan phase ([PLAN.md](PLAN.md)) when implementation planning is the natural next step.
+State the path and the next step — continue to the plan phase ([PLAN.md](PLAN.md)) in this session, or in a fresh one: `/crank-lite plan .crank/spec-<slug>.md`. Close with a single trailing sentence noting the spec can be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question.

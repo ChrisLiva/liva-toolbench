@@ -123,7 +123,7 @@ Two side effects land on the target repo during the grill. Offer each inline as 
 
 ## Brief
 
-When the readback stands approved, write the brief to a new temp file in the OS temp dir — e.g. `${TMPDIR:-/tmp}/deepen-brief-<slug>.md`. Nothing else lands in the repo. Tell the user the path once.
+When the readback stands approved, write the brief to `.crank/deepen-brief-<slug>.md` at the working root — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control (outside a git repo, fall back to a temp file and say so). Nothing else lands in the repo. Tell the user the path once.
 
 Sections, omitting any that didn't earn its place:
 
@@ -136,7 +136,7 @@ Sections, omitting any that didn't earn its place:
 
 **No acceptance criteria** — those belong to the spec phase.
 
-End by recommending the next step: run `/crank-lite` on this brief and take the **spec** route. A brainstorm brief is exactly what its triage sends there, and the brief is self-contained, so a fresh session works as well as this one.
+End by recommending the next step: `/crank-lite spec .crank/deepen-brief-<slug>.md`. A brainstorm brief is exactly what that route consumes, and the brief is self-contained, so a fresh session works as well as this one.
 
 ## Subagent tiers
 
