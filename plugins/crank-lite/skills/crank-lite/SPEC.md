@@ -6,6 +6,8 @@ Interview the user relentlessly at a PRD/Spec level about every aspect of their 
 
 Resolve the key technical decisions: data structures, interfaces/seams, test methodology, validation strategies, and the general shape an implementation might take. When speccing existing codebases, proactively suggest refactors, simplifications, or new codebase designs that would improve the codebase as a whole and also accomplish the user's idea.
 
+Before closing the interview, walk the failure catalogue — absence, permission siblings, staleness, destruction, limits — each item settled by a fact lookup, asked as a policy question, or landed as an acceptance criterion.
+
 ## Spec
 
 When every readback section stands approved, record the concise spec to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-spec-<slug>.md`) and stop.

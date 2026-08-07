@@ -8,6 +8,8 @@ Resolve every implementation decision, and keep the planned code minimal.
 
 A risk no check can retire is a decision: put it to the user during the interview, not into the artifact. The interview resolves open questions; the plan ships without any.
 
+Probe, don't recall: any build-tool, CLI-flag, or pinned-dependency behavior the plan leans on gets run once during the interview's fact lookups — never asserted from memory. And when the work keys, transforms, or migrates data that already exists, run the proposed invariant over the full real dataset and record the count checked; canned fixtures can't stand in for it.
+
 ## Plan
 
 When every readback section stands approved, record the concise implementation plan to a new temp file (e.g. `${TMPDIR:-/tmp}/lite-plan-<slug>.md`) and stop.

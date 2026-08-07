@@ -96,7 +96,17 @@ Interview the user on each per [GRILLING.md](GRILLING.md) (read it here). This i
 
 Don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 
-Completion criterion: every material, unsettled decision on your list has a user answer or a subagent-settled fact recorded — none carried into the draft as an implicit choice.
+Before declaring the frontier empty, walk the **failure catalogue** — check each item has a settled answer or a question in the round:
+
+- **absence** — the stored resource is missing, deleted, or empty
+- **permission family** — which sibling failures get the same treatment (EPERM beside EACCES)
+- **staleness** — what events invalidate this state, and who refreshes it
+- **destruction** — what user-owned content the operation touches, and what it must preserve
+- **limits** — each threshold's value and check order
+
+Each item lands as a grounded fact, a policy question in the round, or an acceptance criterion — *which* failures exist is a fact to enumerate (dispatch a subagent); only the policy call goes to the user, and the answer lands as an acceptance criterion so the plan's Coverage table forces a verify step for it.
+
+Completion criterion: every material, unsettled decision on your list has a user answer or a subagent-settled fact recorded — none carried into the draft as an implicit choice — and the failure catalogue walked, each item settled or asked.
 
 ### 3. Read back the sections
 
