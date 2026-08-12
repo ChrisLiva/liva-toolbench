@@ -100,7 +100,7 @@ This skill spawns finders and validators at the **standard** tier — resolve it
 
 ### Vocabulary
 
-Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, **spaghetti growth**, **bespoke duplication**, **boundary smells**, the **seam**, and the **implementation-detail test** — read their meanings there.
+Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, **spaghetti growth**, **bespoke duplication**, **boundary smells**, the **seam**, the **implementation-detail test**, the **redundant test**, and the **journey test** — read their meanings there.
 
 ### Review rubric
 
