@@ -87,6 +87,7 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 - When modifying user-owned files (configs, gitignores), assert the lines your change doesn't touch survive byte-identical.
 - Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command.
 - For multi-behavior tasks, work as tracer bullets: test A -> impl A -> test B -> impl B.
+- The brief's behavior lines are the test list — write those tests, no more. A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
 
 ## Return
 

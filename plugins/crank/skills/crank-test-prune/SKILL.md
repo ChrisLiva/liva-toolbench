@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 ## Goal
 
-A leaner suite where every surviving test pins a distinct, observable behavior through a **seam**. The keep test: would this test still earn its place if the implementation were rewritten in another language? Tests exist to catch behavior regressions, not to pin the shape of the code — prune aggressively; a suite of fewer, sharper tests beats a thicker one that resists refactoring. Fewer, longer tests too: a test that follows one meaningful workflow end-to-end earns as many assertions as the journey needs — splitting that flow into one-assertion fragments multiplies setup without adding coverage.
+A leaner suite where every surviving test pins a distinct, observable behavior through a **seam**. The keep bar is the **rewrite test**: would this test still earn its place if the implementation were rewritten in another language? Tests exist to catch behavior regressions, not to pin the shape of the code — prune aggressively; a suite of fewer, sharper tests beats a thicker one that resists refactoring. Fewer, longer tests too: behaviors along one workflow belong as assertions on its **journey test** — splitting that flow into one-assertion fragments multiplies setup without adding coverage.
 
 ## Hard Rules
 
@@ -22,10 +22,10 @@ A leaner suite where every surviving test pins a distinct, observable behavior t
 
 ## Verdicts
 
-- **KEEP** — pins a distinct observable behavior at a seam.
-- **DELETE** — an **implementation-detail test**, a tautological assertion, contract-shaped (asserts structure, types, or wiring rather than behavior — including re-checking what the type system or schema validation already guarantees), **copy-pinning** (asserts that incidental prose appears — a description, label, warning, or log message; when the behavior behind the copy matters, a kept test pins the behavior or a stable structured contract, not the wording), or redundant with a kept test.
+- **KEEP** — passes the **rewrite test**: pins a distinct observable behavior at a seam.
+- **DELETE** — an **implementation-detail test**, a tautological assertion, contract-shaped (asserts structure, types, or wiring rather than behavior — including re-checking what the type system or schema validation already guarantees), **copy-pinning** (asserts that incidental prose appears — a description, label, warning, or log message; when the behavior behind the copy matters, a kept test pins the behavior or a stable structured contract, not the wording), or a **redundant test** beside a kept one.
 - **REFACTOR** — behavior worth pinning, assertion too weak to pin it. The common weak shape: scanning all values for a property instead of asserting one known concrete case — replace "no value in the map is undefined" with "this specific known key resolves to this hand-verified literal."
-- **MERGE** — behavior worth pinning, test not worth its own setup. The common shapes: a run of tests each rebuilding the same state to check one step of a single workflow, or an isolated test pinning an incidental transition state a broader workflow passes through anyway. Fold the assertions into the test that walks the workflow end-to-end and delete the shell; the verdict row names the destination test.
+- **MERGE** — behavior worth pinning, test not worth its own setup. The common shapes: a run of tests each rebuilding the same state to check one step of a single workflow, or an isolated test pinning an incidental transition state a broader workflow passes through anyway. Fold the assertions into the **journey test** that walks the workflow end-to-end and delete the shell; the verdict row names the destination test.
 
 ## Flow
 
@@ -57,4 +57,4 @@ This skill spawns verdict subagents at the **standard** tier — resolve it to y
 
 ### Vocabulary
 
-Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **seam** and the **implementation-detail test** — read their meanings there.
+Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **seam**, the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test** — read their meanings there.

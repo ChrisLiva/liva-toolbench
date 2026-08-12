@@ -6,6 +6,8 @@ Interview the user relentlessly at a PRD/Spec level about every aspect of their 
 
 Resolve the key technical decisions: data structures, interfaces/seams, test methodology, validation strategies, and the general shape an implementation might take. When speccing existing codebases, proactively suggest refactors, simplifications, or new codebase designs that would improve the codebase as a whole and also accomplish the user's idea.
 
+Settle the test methodology as a minimalist: every test the spec calls for pins a distinct observable behavior through a seam and would survive a rewrite of the implementation in another language; acceptance criteria that fall along one workflow share one end-to-end journey test that accretes their assertions, rather than a test per criterion.
+
 Before closing the interview, walk the failure catalogue — absence, permission siblings, staleness, destruction, limits — each item settled by a fact lookup, asked as a policy question, or landed as an acceptance criterion.
 
 ## Spec
