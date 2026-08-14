@@ -5,7 +5,16 @@ argument-hint: "[path to plan.md, or a .crank/ plan slug]"
 disable-model-invocation: true
 ---
 
-Implement the work described in the plan (or PRD/spec) the user provides. A path argument is read as-is; a bare slug resolves to `.crank/plan-<slug>.md` at the working root; invoked with no argument and no plan in the conversation, list the plans in `.crank/` and ask which to run.
+Implement the work described in the plan (or PRD/spec) the user provides. Resolve the plan first — every effort's artifacts live in one directory, `.crank/<slug>/` at the working root:
+
+1. **Explicit path** — read it as-is; the slug is the plan's parent directory name.
+2. **Bare slug** — resolves to `.crank/<slug>/plan.md`.
+3. **No argument, plan in the conversation** — use it; derive a slug from the plan's title — its artifacts live in `.crank/<slug>/`.
+4. **No argument, exactly one plan on disk** — use it without asking.
+5. **No argument, several plans** — ask via a structured question listing each plan with its derived status: *not started* (no `## Progress` block), *in progress* (unchecked boxes remain), *done* (all `[x]`). An effort directory without a `plan.md` (e.g. spec-only) shows as "no plan yet" and is not executable.
+6. **No argument, no plans anywhere** — say so and recommend the plan phase (`/crank-lite plan …`).
+
+**Adopt legacy artifacts on encounter.** Resolving an artifact checks the per-plan path first, then the legacy flat path (`.crank/<phase>-<slug>.md`). On a legacy hit, move the file into `.crank/<slug>/…` and state the new path so a user's saved link is updated once. Never clobber: if both the legacy and per-plan copies exist, stop and ask instead of overwriting either.
 
 ## Execution shape
 
@@ -40,7 +49,7 @@ Before the retro, close the loop — you ship finished work: settle every loose 
 
 ## Retro
 
-Once you've finished implementation and review, record a concise retro to `.crank/retro-<slug>.md` at the working root (create `.crank/` if missing, with a `.crank/.gitignore` containing `*`; only outside a git repo, fall back to a temp file and say so) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
+Once you've finished implementation and review, record a concise retro to `.crank/<slug>/retro.md` at the working root (create `.crank/` if missing, with a `.crank/.gitignore` containing `*`; only outside a git repo, fall back to `${TMPDIR:-/tmp}/lite-<slug>/retro.md` and say so) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
 
 ## Subagent tiers
 

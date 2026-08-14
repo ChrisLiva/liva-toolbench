@@ -12,8 +12,8 @@ Before closing the interview, walk the failure catalogue — absence, permission
 
 ## Spec
 
-When every readback section stands approved, record the concise spec to `.crank/spec-<slug>.md` at the working root — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control; only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/lite-spec-<slug>.md`) and say so — and stop.
+When every readback section stands approved, record the concise spec to `.crank/<slug>/spec.md` at the working root — one directory per effort; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/lite-<slug>/spec.md` and say so; handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path — and stop.
 
 Keep the artifact light: include the problem, proposed solution, acceptance criteria, key technical decisions, testing/validation, out of scope, and open questions when those sections earn their place.
 
-State the path and the next step — continue to the plan phase ([PLAN.md](PLAN.md)) in this session, or in a fresh one: `/crank-lite plan .crank/spec-<slug>.md`. Close with a single trailing sentence noting the spec can be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question.
+State the path and the next step — continue to the plan phase ([PLAN.md](PLAN.md)) in this session, or in a fresh one: `/crank-lite plan .crank/<slug>/spec.md`. Close with a single trailing sentence noting the spec can be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question.

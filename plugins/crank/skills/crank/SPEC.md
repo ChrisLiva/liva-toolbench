@@ -8,7 +8,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 
 - **Before drafting, grill the user on the open *technical* decisions** (see Flow → Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **Placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
-- **Write the draft to `.crank/spec-<slug>.md` at the working root** — the durable artifact directory every crank phase shares, so a later session resumes from the file, not from a pasted path. Create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control. Only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/crank-spec-<slug>.md`) and say so. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
+- **Write the draft to `.crank/<slug>/spec.md` at the working root** — one directory per effort, the durable artifact home every crank phase shares, so a later session resumes from the file, not from a pasted path; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/spec.md` and say so. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
 - **Reference real files as `path:line`** wherever you have them.
 
 ## Guidelines
@@ -133,7 +133,7 @@ Completion criterion: the reviewer's edits are in the spec file and its one-line
 The natural next step is the plan phase, which decomposes this spec into ordered, committable, TDD-flavored tasks. Don't ask how to file the artifact — state the default and hand over the resume command:
 
 - The spec stays at its `.crank/` path (one line, with the path).
-- **Next:** continue to the plan now — say "continue" and you'll read [PLAN.md](PLAN.md) and run its flow on the approved spec — or in a fresh session: `/crank plan .crank/spec-<slug>.md`.
+- **Next:** continue to the plan now — say "continue" and you'll read [PLAN.md](PLAN.md) and run its flow on the approved spec — or in a fresh session: `/crank plan .crank/<slug>/spec.md`.
 
 Close with a single trailing sentence noting the spec can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question — then stop.
 

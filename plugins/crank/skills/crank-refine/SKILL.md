@@ -14,7 +14,7 @@ Take an existing crank artifact — a brainstorm brief, a spec, or a plan — an
 ## Hard Rules
 
 - **Grill at the artifact's altitude — never below it.** A brainstorm is sharpened at *design* altitude, a spec at *technical-decision* altitude, a plan at *implementation* altitude (see References → Grilling altitude by phase). A question that drops below the artifact's altitude doesn't belong in this pass — record it as a deferred item for the next phase and move on. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
-- **Sharpen in place.** Edit the input artifact file directly as decisions land. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-refine-<slug>.md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
+- **Sharpen in place.** Edit the input artifact file directly as decisions land. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home (`.crank/<slug>/<artifact>.md`) first, state the new path, then sharpen it there. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-<slug>/<artifact>.md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
 - **Grill in rounds, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md): each round asks every open item whose prerequisites are settled. A question you could answer yourself, you answer yourself first (see References → Subagents & research).
 
 ## References

@@ -56,14 +56,14 @@ The ledger is your durable record of what has shipped — it survives compaction
    mkdir -p <the path it printed>
    ```
 
-   The ledger is `<that dir>/progress.md`.
-2. If the harness refuses writes there — worktree isolation guards the shared `.git` path — use `.crank/progress.md` at the worktree root instead: create `.crank/` with a `.crank/.gitignore` containing `*`, and note the fallback once.
+   The ledger is `<that dir>/progress-<slug>.md` — slug-keyed, so several plans' ledgers coexist; the slug is the plan's parent directory name.
+2. If the harness refuses writes there — worktree isolation guards the shared `.git` path — use `.crank/<slug>/progress.md` at the worktree root instead: create `.crank/` with a `.crank/.gitignore` containing `*`, and note the fallback once.
 
-One ledger per worktree. It opens with the run's anchor, then one line per plan task:
+One ledger per plan per worktree. It opens with the run's anchor, then one line per plan task:
 
 ```
 # Crank execute — <branch>
-Plan: <plan path>
+Plan: <plan path, normally .crank/<slug>/plan.md>
 Base: <the HEAD SHA when the run started>
 
 - [ ] Task 1: <subject>
@@ -74,7 +74,7 @@ Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and 
 
 ### Retro
 
-Written to a fresh file in `.crank/` (see Flow → Retro). Sections:
+Written to the effort's `.crank/<slug>/` directory (see Flow → Retro). Sections:
 
 - **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
 - **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
@@ -88,7 +88,18 @@ Track progress with live tasks the user can watch — but every task update cost
 
 ### 1. Load and critically review
 
-If the user supplied a plan path in the request, read it; a bare slug resolves to `.crank/plan-<slug>.md` at the working root. With no argument, use the plan already in the conversation — and if there is none, list the plans in `.crank/` and ask which to run. Read the plan in full. If the plan's header names a spec (`Spec:` line), read that too — it is the contract the final review runs against; the plan is only its decomposition. If the plan has a **Global Constraints** section, treat its values as binding on every task — they are the attention lens the per-task and final reviews run against.
+Resolve the plan first — every effort's artifacts live in one directory, `.crank/<slug>/` at the working root:
+
+1. **Explicit path** — read it as-is; the slug is the plan's parent directory name, and the ledger and `exec/` dir resolve deterministically from it.
+2. **Bare slug** — resolves to `.crank/<slug>/plan.md`.
+3. **No argument, plan in the conversation** — use it; derive a slug from the plan's title — its artifacts live in `.crank/<slug>/`.
+4. **No argument, exactly one plan on disk** — use it without asking.
+5. **No argument, several plans** — ask via a structured question listing each plan with its derived status: *not started* (no ledger in either home), *in progress* (unchecked boxes remain), *done* (all `[x]`). An effort directory without a `plan.md` (e.g. spec-only) shows as "no plan yet" and is not executable.
+6. **No argument, no plans anywhere** — say so and recommend the plan phase (`/crank plan …`).
+
+**Adopt legacy artifacts on encounter.** Resolving an artifact checks the per-plan path first, then the legacy flat path (`.crank/plan-<slug>.md`, `.crank/exec-<slug>/`, a fixed-name ledger — `<git-dir>/crank/progress.md` or worktree-root `.crank/progress.md`). On a legacy hit, move the file(s) into `.crank/<slug>/…`, rewrite the ledger's `Plan:` header to the new plan path, rename a fixed-name git-dir `progress.md` to `progress-<slug>.md` (slug taken from its `Plan:` header) — a legacy worktree-root `.crank/progress.md` moves to `.crank/<slug>/progress.md` the same way — and announce every new path so a user's saved link is updated once. Never clobber: if both the legacy and per-plan copies of an artifact exist, stop and ask instead of overwriting either. A git-dir ledger whose slug matches no `.crank/<slug>/` directory (plan deleted) is stale — surface it and offer deletion, never silently resume it.
+
+Read the plan in full. If the plan's header names a spec (`Spec:` line), read that too — it is the contract the final review runs against; the plan is only its decomposition. If the plan has a **Global Constraints** section, treat its values as binding on every task — they are the attention lens the per-task and final reviews run against.
 
 Before starting, scan the plan once for two kinds of problem and raise whatever you find as a **single batched question**, not one interrupt per discovery:
 
@@ -97,7 +108,7 @@ Before starting, scan the plan once for two kinds of problem and raise whatever 
 
 If you find either, surface them together and stop — don't push through. Then check `git status --short` and the current branch; if you're on `main`/`master` with a non-trivial change, ask once before committing.
 
-Open the progress ledger (see Deliverables → Progress ledger); if one already exists for this worktree from an interrupted run, resume from it per that section, otherwise start fresh.
+Open the progress ledger (see Deliverables → Progress ledger); if one already exists for this plan in this worktree from an interrupted run, resume from it per that section, otherwise start fresh.
 
 ### 2. Pick the execution shape
 
@@ -109,7 +120,7 @@ You decide based on the plan — there is no required mode. State the choice in 
 
 Once stated, the shape binds the run (Hard Rules → A stated dispatch binds you to spawn): in a subagent mode, each task's first action is the implementer dispatch and each task's review a dispatched reviewer — never work silently absorbed onto the main thread.
 
-If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — at `.crank/exec-<slug>/` under the working root (create `.crank/` with a `.crank/.gitignore` containing `*` if missing; outside a git repo, fall back to a temp directory like `${TMPDIR:-/tmp}/crank-exec-<slug>/`) and state the path once. Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that resolves its own home (see Deliverables → Progress ledger).
+If you chose a subagent mode, create this run's **brief directory** — where briefs and reports go — at `.crank/<slug>/exec/` under the working root (create `.crank/` with a `.crank/.gitignore` containing `*` if missing; outside a git repo, fall back to a temp directory like `${TMPDIR:-/tmp}/crank-<slug>/exec/`) and state the path once. Hold the path for the run. Solo mode dispatches nothing, so it needs no brief directory. This choice does not touch the progress ledger — that resolves its own home (see Deliverables → Progress ledger).
 
 Once the directory is set, read [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md) and write its `orientation.md` template there — a compact repo map every brief points to so implementers and reviewers don't each re-discover the codebase from scratch. Spend a few reads on it now; it pays back on every dispatch. In the same step, place the two review rubrics in the brief dir as fixed reference files: copy [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md) to `review-rubric.md` and [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md) to `final-review-rubric.md`, **verbatim** — a byte-for-byte copy, never a retype or a "fill it in." Do this now, before any task is implemented: with no diff yet in view there is nothing to pre-judge, so the rubrics freeze clean.
 
@@ -148,7 +159,7 @@ Completion criterion: every loose end is settled, fixed, or written as a decisio
 
 ### 6. Retro
 
-Write a retro to `.crank/retro-<slug>.md` at the working root (create `.crank/` with a `.crank/.gitignore` containing `*` if missing; outside a git repo, fall back to a temp file), with the sections listed in **Deliverables → Retro**.
+Write a retro to `.crank/<slug>/retro.md` at the working root (create `.crank/` with a `.crank/.gitignore` containing `*` if missing; outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/retro.md`), with the sections listed in **Deliverables → Retro**.
 
 ### 7. Hand back
 
@@ -156,7 +167,7 @@ Report finished work: what shipped, the verification that proves it, and — onl
 
 Don't end on a disposition menu — take the safe defaults, state them, and lead with the durable next step:
 
-- The retro stays at its `.crank/` path; commits stay local on `<branch>` — one line each, stated, not asked.
+- The retro stays at its `.crank/<slug>/` path; commits stay local on `<branch>` — one line each, stated, not asked.
 - **Next:** the single command or decision that moves the work forward — e.g. `git merge <branch>` from the base branch, or the one surviving decision from Close the loop.
 
 Close with a single trailing sentence noting the alternatives on request (open a PR, discard the branch, copy or print the retro) — prose, not a numbered question. Never force-push, amend, rewrite history, or delete a branch without explicit approval. Then stop.

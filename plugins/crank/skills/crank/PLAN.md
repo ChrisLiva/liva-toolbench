@@ -7,7 +7,7 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 ## Hard Rules
 
 - If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
-- **Write the plan to `.crank/plan-<slug>.md` at the working root** — the durable artifact directory every crank phase shares, so `/crank-execute` resumes from the file, not from a pasted path. Create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control. Only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/crank-plan-<slug>.md`) and say so. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
+- **Write the plan to `.crank/<slug>/plan.md` at the working root** — one directory per effort, the durable artifact home every crank phase shares, so `/crank-execute` resumes from the file, not from a pasted path; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/plan.md` and say so. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
 - **Oracles, not placeholders.** A step may omit code; it never omits proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 
@@ -116,7 +116,7 @@ Completion criterion: the reviewer's edits are in the plan file and its one-line
 The plan is the bottom of this skill's pipeline. Don't ask how to file the artifact — state the default and hand over the resume command:
 
 - The plan stays at its `.crank/` path (one line, with the path).
-- **Next:** `/crank-execute .crank/plan-<slug>.md` — in this session or a fresh one; the plan is self-contained.
+- **Next:** `/crank-execute .crank/<slug>/plan.md` — in this session or a fresh one; the plan is self-contained.
 
 Close with a single trailing sentence noting the plan can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question. Then stop — executing is a deliberate act the user starts explicitly.
 

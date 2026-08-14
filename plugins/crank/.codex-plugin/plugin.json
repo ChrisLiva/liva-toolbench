@@ -1,6 +1,6 @@
 {
   "name": "crank",
-  "version": "9.13.0",
+  "version": "9.14.0",
   "description": "Design-first development pipeline behind one routing front door: brainstorm → spec → plan → execute, taking an idea from sketch to shipped code",
   "keywords": ["crank", "code", "agent"],
   "interface": {

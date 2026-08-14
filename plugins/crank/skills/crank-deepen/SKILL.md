@@ -115,7 +115,7 @@ Completion criterion: the frontier is empty — every agenda branch visited, bot
 
 ### 5. Brief
 
-Once the grill's frontier is empty and the user has approved the shape, write the brief to `.crank/deepen-brief-<slug>.md` at the working root — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control (outside a git repo, fall back to a temp file and say so). Nothing else lands in the repo. Tell the user the path once.
+Once the grill's frontier is empty and the user has approved the shape, write the brief to `.crank/<slug>/deepen-brief.md` at the working root — one directory per effort; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control (only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/deepen-brief.md` and say so). Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Nothing else lands in the repo. Tell the user the path once.
 
 Sections, omitting any that didn't earn its place:
 
@@ -143,7 +143,7 @@ before                                after
 
 **No acceptance criteria** — those belong to the spec phase.
 
-End by recommending the next step: `/crank spec .crank/deepen-brief-<slug>.md`. A brainstorm brief is exactly what that route consumes, and the brief is self-contained, so a fresh session works as well as this one.
+End by recommending the next step: `/crank spec .crank/<slug>/deepen-brief.md`. A brainstorm brief is exactly what that route consumes, and the brief is self-contained, so a fresh session works as well as this one.
 
 Completion criterion: the brief file exists with every section that earned its place, its path is stated once, and the spec route is recommended — the next phase is the user's to start, never yours.
 

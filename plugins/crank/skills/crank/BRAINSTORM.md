@@ -7,7 +7,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 ## Hard Rules
 
 - **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
-- **Write the brief to `.crank/brainstorm-<slug>.md` at the working root** — the durable artifact directory every crank phase shares, so a later session resumes from the file, not from a pasted path. Create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control. Only outside a git repo, fall back to a temp file (`${TMPDIR:-/tmp}/crank-brainstorm-<slug>.md`) and say so. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
+- **Write the brief to `.crank/<slug>/brainstorm.md` at the working root** — one directory per effort, the durable artifact home every crank phase shares, so a later session resumes from the file, not from a pasted path; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/brainstorm.md` and say so. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
 
 ## Guidelines
 
@@ -121,7 +121,7 @@ Completion criterion: every Deliverables section that applies is user-approved a
 The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute); the natural next step is the spec phase, which turns it into a full PRD-plus-technical-spec. Don't ask how to file the artifact — state the default and hand over the resume command:
 
 - The brief stays at its `.crank/` path (one line, with the path).
-- **Next:** continue to the spec now — say "continue" and you'll read [SPEC.md](SPEC.md) and run its flow on the approved brief — or in a fresh session: `/crank spec .crank/brainstorm-<slug>.md`.
+- **Next:** continue to the spec now — say "continue" and you'll read [SPEC.md](SPEC.md) and run its flow on the approved brief — or in a fresh session: `/crank spec .crank/<slug>/brainstorm.md`.
 
 Close with a single trailing sentence noting the brief can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question — then stop.
 
