@@ -14,7 +14,7 @@ Map what's open as a **decision tree** — every decision branches into the deci
 
   Every question leads with your pick on its `➡️` line — options are never a neutral menu. A question whose answer depends on another question still open in this round belongs to a *later* round.
 - **Recompute between rounds.** Wait for the user's answers; they reshape the tree — settled decisions push the frontier outward and unblock what hung on them, and new branches an answer surfaces join it. Then ask the next frontier.
-- **Facts are yours; decisions are the user's.** If the codebase, current docs, or a search can settle a question, dispatch a subagent rather than spend the user's attention on it — and don't block the round on it: a running lookup is an unsettled prerequisite, so only the questions downstream of it wait while you ask the rest of the frontier now. Fold the finding into the next round's recommendations.
+- **Facts are yours; decisions are the user's.** If the codebase, current docs, or a search can settle a question, dispatch a subagent rather than spend the user's attention on it. Lookups precede questions: send the round's lookups as one parallel batch, and the batch is a blocking call — compose the round only after every lookup has returned, each finding folded into the recommendation it informs, some questions retired outright by what came back. The user receives one grounded round per turn, every recommendation already informed.
 - **Settled means settled.** Keep at a question until it's genuinely resolved, not waved past — a hedge or a "we'll see" is not a resolution. Once resolved, don't reopen it in a later round.
 
 The grill is done when the frontier is empty — every branch visited, nothing left silently assumed.
