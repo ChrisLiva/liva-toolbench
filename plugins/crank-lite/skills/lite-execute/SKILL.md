@@ -55,7 +55,7 @@ Once you've finished implementation and review, record a concise retro to `.cran
 
 ## Subagent tiers
 
-The user's own configuration wins: if their global or project instructions state subagent model preferences, map the tiers onto them. Otherwise resolve per harness:
+Check the user's own configuration first: a subagent model preference stated in their global or project instructions (user-level `AGENTS.md`/`CLAUDE.md`, harness settings) is binding — map the tiers onto it, and it wins even when it names a weaker model than a fallback below; a tier is never a license to escalate past the user's stated choice (if they say Terra only, the heavy review runs on Terra). The fallbacks apply only when no such preference exists:
 
 <subagent-tiers>
 - **standard** (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`

@@ -140,7 +140,7 @@ End by recommending the next step: `/crank-lite spec .crank/<slug>/deepen-brief.
 
 ## Subagent tiers
 
-The user's own configuration wins: if their global or project instructions state subagent model preferences, map the tier onto them. Otherwise resolve per harness:
+Check the user's own configuration first: a subagent model preference stated in their global or project instructions (user-level `AGENTS.md`/`CLAUDE.md`, harness settings) is binding — map the tier onto it, and it wins even when it names a weaker model than the fallback below; never escalate past it. The fallback applies only when no such preference exists:
 
 <subagent-tiers>
 - **standard** (codebase exploration): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
