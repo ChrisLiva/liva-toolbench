@@ -113,7 +113,18 @@ Open the progress ledger (see Deliverables → Progress ledger); if one already 
 
 ### 2. Pick the execution shape
 
-You decide based on the plan — there is no required mode. State the choice in one sentence and proceed.
+You decide based on the plan — there is no required mode. State the choice as the run's **pre-flight check**: print the block below and proceed — it is a statement of record, not an approval gate. It prints on every invocation, resumed runs included, so a fresh session re-anchors on the same facts:
+
+```
+**Pre-flight**
+- Plan: .crank/<slug>/plan.md (spec: spec.md · brainstorm: brainstorm.md)
+- Branch: <current branch>
+- Shape: <solo | sequential | parallel>
+- Subagents: standard = <model> (implement, per-task review) · heavy = <model> (final review)
+- Tasks: <N> (<M> remaining)
+```
+
+Line rules: the Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names — omit it when there are none. Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied for this harness, never bare tier labels. In solo the Subagents line reads `heavy = <model> (final review) — implementation inline` — solo still dispatches the fresh-eyes final reviewer. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`.
 
 - **Solo (in this session)** — *Gains:* zero dispatch overhead; full in-flight state carries between tasks; no per-task review, since reviewing your own just-written code is the weakest review — solo's one review is the fresh-eyes final gate. *Costs:* every task's source and noise stays in your window, degrading later tasks; a defect can ride forward into later tasks until that final gate catches it. *Fits:* small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes.
 - **Sequential subagents** — *Gains:* fresh context per task; an independent reviewer per diff. *Costs:* each dispatch pays re-orientation; you must brief completely or the implementer guesses. *Fits:* the default for >3 tasks.

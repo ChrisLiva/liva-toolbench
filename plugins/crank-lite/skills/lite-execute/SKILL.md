@@ -18,7 +18,20 @@ Implement the work described in the plan (or PRD/spec) the user provides. Resolv
 
 ## Execution shape
 
-**Before touching any file, pick the execution shape and state it** — you decide based on the plan's coupling, not its task count; there is no required mode:
+**Before touching any file, pick the execution shape and state it as the run's pre-flight check** — print the block below and proceed; it is informational, never a gate to wait at, and it prints on every invocation, resumed runs included:
+
+```
+**Pre-flight**
+- Plan: .crank/<slug>/plan.md (spec: spec.md · brainstorm: brainstorm.md)
+- Branch: <current branch>
+- Shape: <solo | orchestrate>
+- Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review)
+- Tasks: <N> (<M> remaining)
+```
+
+The Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/` — drop it when there are none. Models are the resolved names (see Subagent tiers — the user's binding preference included), never bare tier labels. Solo still dispatches the heavy adversarial reviewer, so its Subagents line reads `heavy = <model> (adversarial review) — implementation inline`. `<M> remaining` counts the `## Progress` block's unchecked boxes; a fresh run has `M = N`.
+
+You decide based on the plan's coupling, not its task count; there is no required mode:
 
 - **Solo** — the work is confined to one module or one area of code, or the tasks share deep in-flight state — whatever the task count. Implement inline on this thread.
 - **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task (parallel only when tasks touch disjoint files), each with a brief, targeted instruction: the task text, the relevant file paths, the verification command it must run and report output from, the detour rule from Implement below — with any detour taken reported back in its return — and the return rule: return only when every command it started has finished; long verifications run synchronously, their output read in the same turn that reports them. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff — keep this thread's context for coordination, not implementation. When a dispatched agent is out past the point you expected it back, reconcile against durable state — `git log`, the Progress block, its report — then resume it or surface the stall; a "standing by" turn is never the move.
