@@ -8,7 +8,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 
 - **Before drafting, grill the user on the open *technical* decisions** (see Flow → Grill the technical decisions) — material choices the conversation left unresolved that the codebase can't settle. Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **Placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
-- **Write the draft to `.crank/<slug>/spec.md` at the working root** — one directory per effort, the durable artifact home every crank phase shares, so a later session resumes from the file, not from a pasted path; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/spec.md` and say so. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
+- **Write the draft to `.crank/<slug>/spec.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 - **Reference real files as `path:line`** wherever you have them.
 
 ## Guidelines
@@ -30,7 +30,7 @@ Working code that makes the surrounding code harder to reason about is a spec bu
 
 Apply to any module that is **new** (the grounding subagents reported no analogous surface) **or named in the Refactor scope** (an existing module the spec intends to reshape). For a module that merely extends existing prior art and isn't in the Refactor scope, follow the established pattern and skip this lens. For an in-scope module, before you name the chosen design:
 
-- **Deletion test** (VOCABULARY.md). Run it on the module: if deleting it wouldn't scatter complexity across its callers, it's a pass-through — fold it into the caller and don't spec it as a module.
+- **Deletion test** (VOCABULARY.md). Run it on the module: one that fails folds into its caller — don't spec it as a module.
 - **Design it twice.** Sketch the module two ways under *different binding constraints* so they genuinely diverge — e.g. one *minimize the interface*: 1–3 entry points, max capability each; the other *maximize flexibility*: let the caller compose the behavior. Pick the **deeper** one. Record the chosen shape, one sentence on why it beat the alternative, and one sentence on what it gives up (the alternative's strongest property). A second sketch that's a near-twin of the first means the constraint wasn't binding — re-sketch it.
 - **Seam & dependencies.** Classify each dependency the module crosses: **in-process** (no seam — test through the interface directly), **local-substitutable** (test stand-in like PGLite/in-memory FS — internal seam), **remote-but-owned** or **true-external** (define a port at the seam; production adapter + test adapter).
 
@@ -44,7 +44,7 @@ Keep the interface as the test surface (see Deliverables → Testing approach): 
 
 ### Subagents
 
-If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review. Resolve each tier to your harness (Claude Code / Codex / Cursor), and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+If exploring the codebase could answer a question — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial spec review. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 ### Vocabulary
 
@@ -110,7 +110,7 @@ Completion criterion: every material, unsettled decision on your list has a user
 
 ### 3. Read back the sections
 
-Grilling settled the decisions; before any of them hardens into a draft, read them back per [READBACK.md](READBACK.md) (read it here). Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. Then walk the spec-to-be under READBACK.md's selection rule and message cap: the acceptance criteria as a numbered list, each judgment-call technical decision with its rejected alternative named, the scope cuts by name — with inherited brief content and interview-settled decisions carried as one-line `settled:` restatements, not re-read.
+Grilling settled the decisions; before any of them hardens into a draft, read them back per [READBACK.md](READBACK.md) (read it here). Open with what the spec commits to, what's explicitly out of scope, and which questions remain open — those are what the user vetoes. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, and the scope cuts by name.
 
 Completion criterion: everything READBACK.md selects for this draft has had its actual content read back and user-approved; objections resolved now, none carried into the draft.
 

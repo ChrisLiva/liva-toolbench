@@ -7,7 +7,7 @@ Turn the spec into something a coding agent can execute task-by-task with no fur
 ## Hard Rules
 
 - If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
-- **Write the plan to `.crank/<slug>/plan.md` at the working root** — one directory per effort, the durable artifact home every crank phase shares, so `/crank-execute` resumes from the file, not from a pasted path; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/plan.md` and say so. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
+- **Write the plan to `.crank/<slug>/plan.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 - **Oracles, not placeholders.** A step may omit code; it never omits proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **Tasks must be readable out of order.** Repeat structure across tasks rather than back-referencing.
 
@@ -35,7 +35,7 @@ Tests follow the same ladder: state the test *cases* — the oracle's exact inpu
 
 ### Subagents
 
-If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review. Resolve each tier to your harness (Claude Code / Codex / Cursor), and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 ### Vocabulary
 
@@ -71,7 +71,7 @@ For every file the plan touches, record **path / action (`create` / `modify` / `
 
 If you can't state a `create`'d file's responsibility without "passes X to Y" or "wraps Z", it fails the deletion test — fold it into its caller rather than adding a pass-through module. (This applies to new files and to files named in the spec's **Refactor scope**, which are deliberately open to reshaping; files outside that scope keep their established boundaries.)
 
-Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is spaghetti growth — route the behavior behind the module that owns the concept, or record the spec gap in **Updates since spec**; don't tangle the shared path.
+Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is **spaghetti growth** (VOCABULARY.md) — record the spec gap in **Updates since spec** rather than tangling the shared path.
 
 Completion criterion: every file the plan touches has a path / action / responsibility row, every `create` passes the deletion test, and every `modify` traces to a spec-named surface.
 
@@ -89,7 +89,7 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing the tasks in full, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. Then walk the plan-to-be under READBACK.md's selection rule and message cap: the file map first (the actual path / action / responsibility rows), then the task sections grouped to fit the cap — each showing what it builds and the judgment calls behind it (a test-first vs. lightest-check call where that's a real call, with the rejected option named) — while spec-inherited content and interview-settled decisions carry as one-line `settled:` restatements, not re-reads.
+Decomposition settled the shape; before writing the tasks in full, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. The material to walk: the file map first (the actual path / action / responsibility rows), then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
 
 Completion criterion: the file map and everything READBACK.md selects have been read back and user-approved; objections resolved now, none carried into the written steps.
 

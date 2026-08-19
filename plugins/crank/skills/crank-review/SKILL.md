@@ -11,9 +11,9 @@ argument-hint: "[what to review] [optional focus, e.g. 'especially simplicity']"
 
 A short list of findings you'd stake your name on — each one a senior engineer would hold the merge for. Three questions drive every finding, defined in full in [REVIEW-BRIEF.md](REVIEW-BRIEF.md):
 
-1. **Does this code do what it says, clearly?** — the contract in the names, types, and messages vs. what the implementation does.
-2. **What can be deleted, consolidated, or refactored away?** — *how could this be simpler and still mean the same thing?*
-3. **What edge case slips through?** — the empty, the boundary, the error path, the broken invariant.
+1. **Does this code do what it says, clearly?**
+2. **What can be deleted, consolidated, or refactored away?**
+3. **What edge case slips through?**
 
 Precision over coverage. A review of three real problems beats one of thirty nits — the nits spend the trust the three needed.
 
@@ -96,7 +96,7 @@ Then **recommend the handoff**: suggest the user run `/crank plan` to turn the s
 
 ### Subagents
 
-This skill spawns finders and validators at the **standard** tier — resolve it to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). Bias toward dispatch: each finder and validator gets a clean, fresh context and sees the diff with fresh eyes, which is the whole point of independent validation. **Fan out in small waves** — a handful of concurrent spawns at a time, letting one wave return before launching the next; a large concurrent burst (one validator per candidate on a big diff) trips transient API errors. (Step 4's reconciliation — the oscillation walk and, for a PR, the thread read — is a factual read; keep it on-thread or dispatch one standard agent, your call.)
+This skill spawns finders and validators at the **standard** tier — resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). Bias toward dispatch: each finder and validator gets a clean, fresh context and sees the diff with fresh eyes, which is the whole point of independent validation. **Fan out in small waves** — a handful of concurrent spawns at a time, letting one wave return before launching the next; a large concurrent burst (one validator per candidate on a big diff) trips transient API errors. (Step 4's reconciliation — the oscillation walk and, for a PR, the thread read — is a factual read; keep it on-thread or dispatch one standard agent, your call.)
 
 ### Vocabulary
 

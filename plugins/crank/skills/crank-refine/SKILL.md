@@ -13,7 +13,7 @@ Take an existing crank artifact — a brainstorm brief, a spec, or a plan — an
 
 ## Hard Rules
 
-- **Grill at the artifact's altitude — never below it.** A brainstorm is sharpened at *design* altitude, a spec at *technical-decision* altitude, a plan at *implementation* altitude (see References → Grilling altitude by phase). A question that drops below the artifact's altitude doesn't belong in this pass — record it as a deferred item for the next phase and move on. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
+- **Grill at the artifact's altitude — never below it.** The altitude table (References → Grilling altitude by phase) sets what each artifact's questions may reach for; a below-altitude item is recorded as a deferred item for the next phase, never grilled. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
 - **Sharpen in place.** Edit the input artifact file directly as decisions land. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home (`.crank/<slug>/<artifact>.md`) first, state the new path, then sharpen it there. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-<slug>/<artifact>.md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
 - **Grill in rounds, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md): each round asks every open item whose prerequisites are settled. A question you could answer yourself, you answer yourself first (see References → Subagents & research).
 
@@ -33,19 +33,13 @@ For the full design rules behind a phase, read that phase's file in the `crank` 
 
 ### Subagents & research
 
-**Answer your own questions first.** Before a question reaches the user, ask whether the codebase, the current docs, or a web search could settle it — if so, dispatch a subagent and fold the finding into your recommendation. The user's attention is for what only they know: intent, priorities, preferences, external constraints. Everything else is research.
-
-Research is what makes each grilling question *informed* — you arrive with the current fact, not a guess, so the user decides against a real recommendation. Three jobs:
+**Answer your own questions first.** The user's attention is for what only they know — intent, priorities, preferences, external constraints; anything the codebase, the current docs, or a web search could settle is research, and research is what makes each grilling question *informed*: you arrive with the current fact, not a guess, so the user decides against a real recommendation. Three jobs:
 
 - **Explore the codebase** — does this surface exist, what pattern do analogous features follow, is a claim the artifact makes actually true.
 - **Research an approach** — compare libraries or techniques, find prior art, see how comparable projects solve this. Web search in scope.
 - **Check current facts** — the latest stable version of a package, the current shape of an API, today's documentation for a tool the artifact will lean on. This is the antidote to a recommendation built on a stale training cutoff.
 
-Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
-
-Each job has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md) — read that file when you're about to dispatch a research subagent (Flow step 3), pick the brief that matches the job, and fill its slots.
-
-This skill spawns subagents at the **standard** tier — resolve it to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread. Each job has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md), read at Flow step 3. This skill spawns subagents at the **standard** tier — resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 ### Vocabulary
 
@@ -67,7 +61,7 @@ Completion criterion: the artifact's phase is fixed and its grilling altitude se
 
 ### 2. Build the grilling agenda
 
-Scan the artifact for what's unsettled *at its altitude*: vague or hedged language, decisions named but not made, alternatives raised but not chosen, assumptions stated without grounding, and gaps where a consequential decision is simply missing. Each becomes an agenda item. Order them so dependencies come first — a decision that constrains others is grilled before them. Below-altitude detail never goes on the agenda; it goes straight to the deferred list.
+Scan the artifact for what's unsettled *at its altitude*: vague or hedged language, decisions named but not made, alternatives raised but not chosen, assumptions stated without grounding, and gaps where a consequential decision is simply missing. Each becomes an agenda item. Order them so dependencies come first — a decision that constrains others is grilled before them.
 
 Completion criterion: every consequential decision the phase owns is either already settled in the artifact or on the agenda — none left implicit.
 
@@ -79,11 +73,11 @@ Completion criterion: every agenda item a fact could settle has its fact in hand
 
 ### 4. Grill
 
-Walk the agenda per [GRILLING.md](GRILLING.md) (read it here), round by round — the agenda is the decision tree; each round asks every item whose prerequisites are settled — until every item is resolved, each question led by the recommendation your research produced.
+Walk the agenda per [GRILLING.md](GRILLING.md) (read it here) — the agenda is its decision tree — until every item is resolved, each question led by the recommendation your research produced.
 
 Two defaults keep the grill from stalling. **When the user overrides your recommendation,** record their choice and the reason they gave, then move on. **When a decision won't converge** after a real exchange, don't loop: name the deadlock, record the leading option as *provisional* with the open tension noted in the artifact, and move to the next item.
 
-Hold altitude: the moment a question pulls below the artifact's phase, stop, record it as a deferred item, and move on. A dependency an answer surfaces gets inserted into the agenda in order.
+A dependency an answer surfaces gets inserted into the agenda in order.
 
 Completion criterion: every agenda item is resolved or explicitly deferred — nothing left hanging.
 

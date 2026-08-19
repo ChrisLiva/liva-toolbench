@@ -14,7 +14,7 @@ When a question is experiential — how something should look, behave, or read �
 
 ## Brief
 
-When every readback section stands approved, record the concise brainstorm brief to `.crank/<slug>/brainstorm.md` at the working root — one directory per effort; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/lite-<slug>/brainstorm.md` and say so; handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path — and stop.
+When every readback section stands approved, record the concise brainstorm brief to `.crank/<slug>/brainstorm.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file — and stop.
 
 Keep the artifact light: include the idea, goals/constraints, chosen shape, key decisions, open questions, and suggested next step when those sections earn their place. An open question earns its place only when it's stated sharply enough for the spec to answer it — anything you can't phrase that precisely yet is a design hole to resolve here first.
 

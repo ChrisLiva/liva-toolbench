@@ -82,7 +82,7 @@ Synthesis happens **here, on this thread** — each explorer saw one territory; 
 
 Dedupe and rank the returns yourself: merge overlapping candidates into the strongest version of the same idea, drop anything you can't back with a `file:line`, and keep the **3–6** the evidence actually supports, strongest first. Then pick the one you'd tackle first and say why in a sentence — that's the report's top recommendation.
 
-Read [VOCABULARY.md](VOCABULARY.md) (References → Vocabulary) before you write a card, and the target repo's `CONTEXT.md` names the domain nouns: if it defines "Order", the candidate is about "the Order intake module", not "the FooBarHandler" and not "the Order service".
+Read [VOCABULARY.md](VOCABULARY.md) before you write a card, and hold the References → Vocabulary rules: architecture nouns from the glossary, domain nouns from the target repo's `CONTEXT.md`.
 
 Render the report per [HTML-REPORT.md](HTML-REPORT.md) — read that file here — as a single self-contained HTML file in the OS temp dir: `${TMPDIR:-/tmp}/deepen-report-<timestamp>.html`, a fresh file per run so an earlier report is never overwritten. Nothing lands in the repo.
 
@@ -115,7 +115,7 @@ Completion criterion: the frontier is empty — every agenda branch visited, bot
 
 ### 5. Brief
 
-Once the grill's frontier is empty and the user has approved the shape, write the brief to `.crank/<slug>/deepen-brief.md` at the working root — one directory per effort; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control (only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/deepen-brief.md` and say so). Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Nothing else lands in the repo. Tell the user the path once.
+Once the grill's frontier is empty and the user has approved the shape, write the brief to `.crank/<slug>/deepen-brief.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 
 Sections, omitting any that didn't earn its place:
 
@@ -151,7 +151,7 @@ Completion criterion: the brief file exists with every section that earned its p
 
 ### Subagents
 
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = the read-only explorers of Flow step 2, the bulk of the run's dispatch; **heavy** = the design-it-twice interface proposals of Flow step 4, the only heavy dispatch this skill makes and only on the user's say-so.
+This skill spawns subagents at two tiers — resolve each to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = the read-only explorers of Flow step 2, the bulk of the run's dispatch; **heavy** = the design-it-twice interface proposals of Flow step 4, the only heavy dispatch this skill makes and only on the user's say-so.
 
 ### Vocabulary
 

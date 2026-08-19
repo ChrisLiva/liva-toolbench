@@ -7,7 +7,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 ## Hard Rules
 
 - **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
-- **Write the brief to `.crank/<slug>/brainstorm.md` at the working root** — one directory per effort, the durable artifact home every crank phase shares, so a later session resumes from the file, not from a pasted path; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so the directory never enters version control; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/brainstorm.md` and say so. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Tell the user the path once. Write nothing else into the working tree unless the user explicitly asks.
+- **Write the brief to `.crank/<slug>/brainstorm.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 
 ## Guidelines
 
@@ -19,9 +19,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 ### Subagents
 
-**Answer your own questions first.** If exploring the codebase or researching a topic could settle a question, dispatch a standard subagent to find out before asking the user. Reserve questions for what only the user knows — intent, priorities, preferences, external context.
-
-Lean on subagents for two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this) — the latter can use web search. Both run at the **standard** tier; resolve the tier to your harness (Claude Code / Codex / Cursor), and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+**Answer your own questions first** — reserve the user for what only they know: intent, priorities, preferences, external context. Two jobs: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this — web search in scope). Both run at the **standard** tier; resolve the tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 Dispatch each job with the matching brief, filled in.
 
@@ -94,7 +92,7 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 **Survey breadth-first, then drill.** Before resolving anything, fan out: list the consequential decisions you can already name — a short agenda, one line each — and share it with the user, bare or atop the first round of questions. The agenda keeps the first branch from silently eating the session, lets the user reorder or strike items, and shows what's left as the grilling proceeds. Keep it live: add decisions that answers surface, strike ones they moot. If the survey turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to the spec phase rather than manufacture a brainstorm.
 
-Then walk the agenda in rounds per [GRILLING.md](GRILLING.md) (read it here) — the agenda is the decision tree; each round asks every item whose prerequisites are already settled — until you and the user share a clear picture. This is the heart of the skill.
+Then walk the agenda per [GRILLING.md](GRILLING.md) (read it here) — the agenda is its decision tree — until you and the user share a clear picture. This is the heart of the skill.
 
 - **Raise fidelity when words stall.** When a question is experiential — how something should look, behave, or read — a cheap throwaway artifact beats another round of prose: a sketch, a sample output or mock data shape, or — when the behavior itself is the question — a single self-contained HTML file (plain HTML/CSS/JS, no build, no server) the user double-clicks and drives. Offer it in place of the question, and record the reaction as the answer. An artifact that settled a key decision is a primary source: offer to commit it to a throwaway `prototype/<slug>` branch and note the branch beside the decision in the brief — the brief keeps the decision, the branch keeps the evidence.
 - **Stay at altitude.** A technical detail earns a question only when it's load-bearing for a *what*/*which-approach* decision; otherwise note it as an **Open question** for the spec and move on.
@@ -110,7 +108,7 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading the material back before it lands per [READBACK.md](READBACK.md) (read it here) — its selection rule and message cap decide what earns a pause; decisions the grilling already locked carry as one-line `settled:` restatements, not re-reads. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
+Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading the material back before it lands per [READBACK.md](READBACK.md) (read it here). When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
 Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 

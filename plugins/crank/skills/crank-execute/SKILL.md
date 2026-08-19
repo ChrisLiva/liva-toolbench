@@ -30,7 +30,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 
 ### Subagents
 
-This skill spawns subagents at two tiers — resolve each to your harness (Claude Code / Codex / Cursor) per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = exploration, implementation, per-task review; **heavy** = the final cross-task review (and a one-time escalation for a `BLOCKED` task). Dispatch-vs-main-thread for exploration lives there too; for implementation and review, the execution shape (Flow step 2) decides.
+This skill spawns subagents at two tiers — resolve each to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = exploration, implementation, per-task review; **heavy** = the final cross-task review (and a one-time escalation for a `BLOCKED` task). Dispatch-vs-main-thread for exploration lives there too; for implementation and review, the execution shape (Flow step 2) decides.
 
 ### Vocabulary
 

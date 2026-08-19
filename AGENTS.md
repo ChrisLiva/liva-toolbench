@@ -197,7 +197,8 @@ Copies are synced by hand, like version strings: edit the canonical file, re-cop
 over the others, and verify before committing (no output = in sync):
 
 ```bash
-for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK}.md; do
+for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK,ARTIFACT-HOME}.md \
+         plugins/crank-lite/skills/*/ARTIFACT-HOME.md; do
   diff -q "plugins/crank/skills/crank/$(basename "$f")" "$f"
 done
 diff -q plugins/crank/skills/crank/VOCABULARY.md plugins/crank-lite/skills/lite-deepen/VOCABULARY.md

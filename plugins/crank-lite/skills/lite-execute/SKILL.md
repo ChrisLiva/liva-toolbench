@@ -64,7 +64,7 @@ Before the retro, close the loop — you ship finished work: settle every loose 
 
 ## Retro
 
-Once you've finished implementation and review, record a concise retro to `.crank/<slug>/retro.md` at the working root (create `.crank/` if missing, with a `.crank/.gitignore` containing `*`; only outside a git repo, fall back to `${TMPDIR:-/tmp}/lite-<slug>/retro.md` and say so) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
+Once you've finished implementation and review, record a concise retro to `.crank/<slug>/retro.md` at the working root (create `.crank/` if missing, with a `.crank/.gitignore` containing `*`; only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/retro.md` and say so) and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
 
 ## Subagent tiers
 

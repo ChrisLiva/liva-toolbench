@@ -123,7 +123,7 @@ Two side effects land on the target repo during the grill. Offer each inline as 
 
 ## Brief
 
-When the readback stands approved, write the brief to `.crank/<slug>/deepen-brief.md` at the working root — one directory per effort; if `.crank/<slug>/` already holds a *different* effort (judge by content, not name), use `<slug>-2`, `<slug>-3`, …, never renaming an existing directory — create `.crank/` if missing, with a `.crank/.gitignore` containing `*` so it never enters version control (only outside a git repo, fall back to `${TMPDIR:-/tmp}/lite-<slug>/deepen-brief.md` and say so). Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home first and state the new path. Nothing else lands in the repo. Tell the user the path once.
+When the readback stands approved, write the brief to `.crank/<slug>/deepen-brief.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 
 Sections, omitting any that didn't earn its place:
 
