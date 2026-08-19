@@ -91,7 +91,16 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 
 ## Return
 
-Return only the thin summary described in this file's "Thin implementer return" template. Put the full detail in the report path above.
+Put the full detail in the report path above. Return only this thin summary, filled in (under ~15 lines):
+
+    Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
+    Commits:
+    - <sha> <subject>
+    Tests: <one-line summary>
+    TDD: <RED/GREEN evidence summary; one pair per behavior, or "skipped: <reason>">
+    Deviations: <none, or one-line detour summary>
+    Concerns: <none, or one-line summary>
+    Report: <path to task-<N>-report.md>
 ```
 
 ## `task-<N>-report.md`
@@ -133,20 +142,3 @@ TDD skipped because: <plan explicitly allowed config/doc/generated/no-behavior c
 
 - <concern, or "none">
 ```
-
-## Thin implementer return
-
-The chat return must stay under about 15 lines:
-
-```md
-Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
-Commits:
-- <sha> <subject>
-Tests: <one-line summary>
-TDD: <RED/GREEN evidence summary; one pair per behavior, or "skipped: <reason>">
-Deviations: <none, or one-line detour summary>
-Concerns: <none, or one-line summary>
-Report: <path to task-<N>-report.md>
-```
-
-If TDD applies and the return lacks RED/GREEN evidence, or a multi-behavior task shows only one bulk RED/GREEN pair, treat the task as `CHANGES_REQUESTED`.

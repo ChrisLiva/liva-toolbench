@@ -42,7 +42,7 @@ Every dispatch — implementer or reviewer — is a blocking call: from spawn to
 
 ## Implement
 
-Track the run with tasks: create one entry per plan task before starting work, mark it in progress when you begin it, and completed the moment it lands. Every run gets this, solo included — it is how the user sees progress mid-run.
+Track the run with tasks — one entry per plan task, created before work starts and flipped complete the moment the task lands. Every run gets this, solo included — it is how the user sees progress mid-run.
 
 Durable progress lives in the plan file, not the task list (which dies with the session). Before the first task, add a `## Progress` block at the top of the plan — one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` the moment that task's commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it. This block is how an interrupted run resumes in a fresh session.
 
@@ -68,7 +68,7 @@ Once you've finished implementation and review, record a concise retro to `.cran
 
 ## Subagent tiers
 
-Check the user's own configuration first: a subagent model preference stated in their global or project instructions (user-level `AGENTS.md`/`CLAUDE.md`, harness settings) is binding — map the tiers onto it, and it wins even when it names a weaker model than a fallback below; a tier is never a license to escalate past the user's stated choice (if they say Terra only, the heavy review runs on Terra). The fallbacks apply only when no such preference exists:
+Check the user's own configuration first: a subagent model preference stated in their global or project instructions (user-level `AGENTS.md`/`CLAUDE.md`, harness settings) is binding — map the tiers onto it, and it wins even when it names a weaker model than a fallback below; never escalate past it. The fallbacks apply only when no such preference exists:
 
 <subagent-tiers>
 - **standard** (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
