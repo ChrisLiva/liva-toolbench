@@ -33,11 +33,11 @@ From the argument, settle exactly what "the changes" are and pin a single BASE S
 
 - **PR** — `gh pr view <n> --json headRefName,baseRefName` then `gh pr diff <n>`; BASE = the merge-base with the PR's base branch. Also fetch the PR's **prior review** — `gh pr view <n> --json comments,reviews` plus inline thread comments via `gh api repos/{owner}/{repo}/pulls/<n>/comments`, and — since the REST comments don't carry it — each thread's **resolution state** via GraphQL (`gh api graphql` over `repository.pullRequest.reviewThreads.nodes { isResolved comments }`). Carry it all into step 4, every thread tagged resolved or unresolved.
 - **Commit range / branch vs main** — `git diff main...HEAD` (three-dot: compares against the merge-base, so unrelated `main` commits don't pollute the diff). A given range like `A..B` works too.
-- **Uncommitted** — `git diff HEAD` (staged + unstaged working-tree changes). The user's "branch with uncommitted changes" lands here; include it when uncommitted work is present.
+- **Uncommitted** — `git diff HEAD` (staged + unstaged working-tree changes), plus untracked files from `git status --short` read in full — `git diff` never shows them. The user's "branch with uncommitted changes" lands here; include it when uncommitted work is present.
 
 Capture the commit list once — `git log <BASE>..HEAD --oneline` — for the oscillation walk (step 4). If the target is genuinely ambiguous (committed work *and* uncommitted changes both present), state which you're reviewing and why.
 
-**Done when:** BASE SHA, the exact diff command, and the commit list are pinned and stated.
+**Done when:** BASE SHA, the exact diff command (with the untracked-files list for the uncommitted shape), and the commit list are pinned and stated.
 
 ### 2. Find — fan out the finders
 
@@ -100,7 +100,7 @@ This skill spawns finders and validators at the **standard** tier — resolve it
 
 ### Vocabulary
 
-Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, **spaghetti growth**, **bespoke duplication**, **boundary smells**, the **seam**, the **implementation-detail test**, the **redundant test**, and the **journey test** — read their meanings there.
+Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, **spaghetti growth**, the **seam**, the **implementation-detail test**, the **redundant test**, and the **journey test** — read their meanings there. **Bespoke duplication** and **boundary smells** are review-specific smells defined in [REVIEW-BRIEF.md](REVIEW-BRIEF.md)'s Code judo section, not in the shared vocabulary.
 
 ### Review rubric
 
