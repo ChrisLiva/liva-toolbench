@@ -38,7 +38,7 @@ You decide based on the plan's coupling, not its task count; there is no require
 
 A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
 
-Every dispatch — implementer or reviewer — is a blocking call: from spawn to return the subagent owns the work, and your next action is reading its return; everything else queues behind it. Parallel dispatches go out in one message and block as one, every return read before anything else moves. The wait breaks only for the stalled-dispatch reconcile above.
+Every dispatch — implementer or reviewer — is a blocking call: from spawn to return the subagent owns the work, and everything else queues behind reading its return. Parallel dispatches go out in one message and block as one. The wait breaks only for the stalled-dispatch reconcile above.
 
 ## Implement
 
@@ -54,7 +54,7 @@ The plan's destination is frozen; the road is not. When a bug, stale detail (ren
 
 ## Review and commit
 
-Once done implementing the entire plan, spawn a heavy-tier subagent (see Subagent tiers) — a blocking call like any dispatch — to adversarially review your work against the original plan. Address confirmed findings before committing.
+Once done implementing the entire plan, spawn a heavy-tier subagent (see Subagent tiers) to adversarially review your work against the original plan. Address confirmed findings before committing.
 
 Before committing, inspect the worktree and stage only the files this plan's work changed. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
