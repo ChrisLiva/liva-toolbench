@@ -1,0 +1,7 @@
+interface:
+  display_name: "Lite Review"
+  short_description: "Review changes into validated findings"
+  default_prompt: "Use $crank-lite:lite-review to review these changes and return validated findings."
+
+policy:
+  allow_implicit_invocation: false

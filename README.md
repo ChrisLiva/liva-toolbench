@@ -76,6 +76,7 @@ The same brainstorm → spec → plan → execute shape as `crank`, with less ce
 | `crank-lite:crank-lite` | `/crank-lite [brainstorm\|spec\|plan]` | Front door and router — triages the ask to brainstorm, spec, or plan and runs that phase. |
 | `crank-lite:lite-execute` | `/lite-execute` | Executes a PRD, spec, or plan: implement, verify, review, and commit the work. |
 | `crank-lite:lite-deepen` | `/lite-deepen` | The lightweight deepening scan — presents opportunities as chat cards with ASCII before/after diagrams and emits a brainstorm brief for the pipeline. |
+| `crank-lite:lite-review` | `/lite-review` | Reviews a PR, commit range, or uncommitted changes into a short list of validated findings — one adversarial validation pass, then an offer to apply the fixes. |
 
 ### `effective-html` — single-file HTML communication artifacts
 
@@ -115,6 +116,7 @@ plugins/
       crank-lite/SKILL.md       # router + BRAINSTORM/SPEC/PLAN phase files
       lite-execute/SKILL.md
       lite-deepen/SKILL.md
+      lite-review/SKILL.md
   effective-html/
     .claude-plugin/plugin.json
     .codex-plugin/plugin.json

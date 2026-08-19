@@ -202,6 +202,7 @@ for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK,ART
   diff -q "plugins/crank/skills/crank/$(basename "$f")" "$f"
 done
 diff -q plugins/crank/skills/crank/VOCABULARY.md plugins/crank-lite/skills/lite-deepen/VOCABULARY.md
+diff -q plugins/crank/skills/crank/VOCABULARY.md plugins/crank-lite/skills/lite-review/VOCABULARY.md
 diff -q plugins/crank-lite/skills/crank-lite/INTERVIEW.md plugins/crank-lite/skills/lite-deepen/INTERVIEW.md
 ```
 
