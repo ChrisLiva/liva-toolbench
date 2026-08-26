@@ -14,6 +14,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 ## Hard Rules
 
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
+- **Every run opens with the pre-flight callout.** Fresh or resumed, the filled pre-flight block (Flow step 2) appears as reply text the user reads, ahead of the brief directory, the first edit, and the first dispatch. A block that exists only inside a tool call, the ledger, or your own reasoning has not been called out.
 - **Destination frozen, road flexible.** What the plan ships — each task's goal, its contract, the architecture — is frozen. The road there is not: when a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a **detour** — the smallest change that still ships exactly what the task promises — and log it on the ledger line. A fix that would change what ships is a **reroute**: stop and surface it with your recommendation. Off-path surprises (a pre-existing bug the task doesn't hit) stay retro entries, never side quests.
 - **Progress is durable.** Track task completion in the progress ledger (see Deliverables → Progress ledger), not only in your todos.
 - **Reviewers judge independently.** A reviewer pulls its own facts: it runs the diff, reads its task from the plan, reads the implementer's evidence from the report file, and applies the fixed rubric file. Your dispatch hands it only pointers and the BASE SHA — anything more (a description or defense of the diff, a reproduced or annotated rubric) pre-judges the review you asked for.
@@ -115,9 +116,9 @@ If you find either, stop until answered. Then check `git status --short` and the
 
 Open the progress ledger (see Deliverables → Progress ledger); if one already exists for this plan in this worktree from an interrupted run, resume from it per that section, otherwise start fresh.
 
-### 2. Pick the execution shape
+### 2. Pre-flight
 
-You decide based on the plan — there is no required mode. State the choice as the run's **pre-flight check**: print the block below and proceed — it is a statement of record, not an approval gate. It prints on every invocation, resumed runs included, so a fresh session re-anchors on the same facts:
+Pick the execution shape from the plan — there is no required mode — and **call it out**: write the block below into your reply, every line filled, then continue in the same turn. The callout is a statement of record the user reads, so it lands in reply text, ahead of the brief directory and the first dispatch; a tool call, a ledger line, or private reasoning is not a callout. Every invocation calls it out, resumed runs included, so a fresh session re-anchors on the same facts. Completion criterion: the filled block is visible in your reply and no task work has started.
 
 ```
 **Pre-flight**

@@ -18,7 +18,7 @@ Implement the work described in the plan (or PRD/spec) the user provides. Every 
 
 ## Execution shape
 
-**Before touching any file, pick the execution shape and print the pre-flight block below**, then go straight into the work; every invocation prints it, resumed runs included:
+Pick the execution shape and **call out the pre-flight**: write the block below into your reply, every line filled, then continue in the same turn. The callout is reply text the user reads, and it comes before any file is touched — the Progress block, the first edit, and the first dispatch all follow it; a tool call or private reasoning is not a callout. Every invocation calls it out, resumed runs included. Completion criterion: the filled block is visible in your reply and no task work has started.
 
 ```
 **Pre-flight**
