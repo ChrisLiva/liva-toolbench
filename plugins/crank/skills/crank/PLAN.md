@@ -34,11 +34,26 @@ Tests follow the same ladder: state the test *cases* — the oracle's exact inpu
 
 ### Subagents
 
-If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. The adversarial review is this phase's only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+This phase dispatches **standard** subagents for what the codebase can answer — an exact signature, prior art for a pattern, whether a spec claim still holds. The adversarial review is its only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
+
+Dispatch each grounding read with this brief, filled in:
+
+<brief>
+Investigate `<files, symbols, or gate commands>` in this codebase. We're planning `<one-sentence change summary>`. Read-only: change nothing in the codebase or on the machine, beyond running the gate commands named below.
+
+Report:
+
+- the exact signature and import path of each named symbol, as `file:line`;
+- the exemplar test at each seam the change will drive (`file:line`), and one sentence on the convention it follows;
+- any drift from what the spec claims about these files — what the spec says, what the code says;
+- the exact output of each gate command you were asked to run, verbatim, and whether it exited 0.
+
+Don't propose a design or write tasks. If something named doesn't exist, say so plainly rather than naming the nearest match as if it were the thing.
+</brief>
 
 ### Vocabulary
 
-[VOCABULARY.md](VOCABULARY.md) — read it before step 3. This phase leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test**.
+[VOCABULARY.md](VOCABULARY.md) — read both **Design language** and **Verification language** before step 3. This phase leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test**.
 
 ## Deliverables
 
@@ -58,7 +73,7 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 
 ### 1. Ground first
 
-Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. If no gate runs, the first task establishes one (a typecheck script, or a characterization test at the seam the work touches) before any task that changes behavior. Grounding is also where anything the plan will embed gets **surveyed** (Guidelines → Prose, pseudo-code, or embedded code), with the evidence kept for the step. Toolchain behavior the plan leans on — a build tool, bundler, CLI flag, or pinned dependency — gets surveyed the same way: run it once during grounding, never asserted from memory; a behavior you can't probe becomes a `Stop if:` line on the task that leans on it, naming the check that would settle it. And when the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), run the proposed invariant over the full real dataset — round-trip every existing name, sweep every row — and record the count checked; canned fixtures can't stand in for the data the work will actually meet. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
+Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. If no gate runs, the first task establishes one (a typecheck script, or a characterization test at the seam the work touches) before any task that changes behavior. Grounding is also where anything the plan will embed gets **surveyed** (Guidelines → Prose, pseudo-code, or embedded code), with the evidence kept for the step. Toolchain behavior the plan leans on — a build tool, bundler, CLI flag, or pinned dependency — gets surveyed the same way: run it once during grounding, never asserted from memory; a behavior you can't probe becomes a `Stop if:` line on the task that leans on it, naming the check that would settle it. And when the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), run the proposed invariant over the full real dataset — round-trip every existing name, sweep every row — and record the count checked; canned fixtures can't stand in for the data the work will actually meet. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread — the file and symbol reads, the drift check, and the gate commands go out on the brief at References → Subagents; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output.
 
 Completion criterion, all of:
 
@@ -101,13 +116,20 @@ Decomposition settled the shape; before writing the tasks in full, read it back 
 
 ### 5. Write the tasks
 
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape, carrying the material the readback approved in as vetted (READBACK.md → Carry what was approved). Give each task the blocks listed at Deliverables → **Tasks**, with the `Check:` call from Decompose and the exemplar to model after: the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern. Behavior checkboxes run in **tracer-bullet** order, ending on the task's `Verify:` step. A behavior line states what the code must do, its oracle, and — where a test drives it — the seam; how far to climb from prose toward embedded code is a per-behavior call (see Guidelines → Prose, pseudo-code, or embedded code). Execute owns the keystroke rhythm; the plan states what each behavior must do and how to prove it.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape, carrying the material the readback approved in as vetted (READBACK.md → Carry what was approved). Give each task the blocks listed at Deliverables → **Tasks**. Two calls are step 5's: which exemplar the `Check:` line names — the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern — and how far each behavior climbs from prose toward embedded code (see Guidelines → Prose, pseudo-code, or embedded code).
 
 Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** (its oracle and exact expected output pinned here, ending in its deletion) — "tests pass" is not enough. A test must drive the production seam the spec named, never a **dead seam**. Name the seam in the behavior line so the specified test and the production wiring point at the same place; a test case specified in prose can still be an **implementation-detail test** — an oracle read through a back channel instead of the seam is one. And it must pin a behavior no earlier line's test already pins: where the Coverage table shows the workflow already walked, the behavior line extends that journey test with its assertion — a **redundant test** is a plan defect, not extra safety.
 
 Route reuse by name: if grounding (or the spec) surfaced an existing utility, the task names it and the contract goes through it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do, and a new dependency the spec's **Tech stack** didn't pin is an **Updates since spec** item to resolve, not a quiet import. And a contract that only types with a cast, `any`, or a new optional parameter is unclear: an **Updates since spec** item to resolve, not something to paper over inline.
 
-**Completion criterion.** Every behavior the spec lists must land in a task's behavior line or verify — and the proof is the **Coverage table**: walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
+**Completion criterion**, all of:
+
+- every behavior the spec lists lands in a task's behavior line or verify, proved by walking the spec to build the **Coverage table** — that walk *is* how you check yourself;
+- every `Verify:` names an exact command and its exact success reading;
+- every test-driven behavior names the production seam it drives;
+- every reuse the grounding surfaced is named in the task that needs it.
+
+A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
 ### 6. Adversarially review
 

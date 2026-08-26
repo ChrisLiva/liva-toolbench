@@ -15,21 +15,21 @@ Route the user's ask to the right phase — **brainstorm → spec → plan** —
 | `spec` | [SPEC.md](SPEC.md) | The idea is formed (or a brainstorm brief exists) and needs acceptance criteria and key technical decisions. |
 | `plan` | [PLAN.md](PLAN.md) | Behavior and design are settled — a finished spec, or a well-understood change like a scoped bug fix — and only "how to build it" remains. |
 
-Execution is not a route: when a plan is done, recommend the user run `/lite-execute` and stop.
+Execution is not a route: when a plan is done, recommend the user run `/lite-execute` and stop. Neither is upstream scanning: an ask about shallow modules, leaking seams, or where to refactor goes to `/lite-deepen`, which emits a brainstorm brief to route back here.
 
 ## Triage
 
 First rule that applies wins:
 
 1. **Explicit route argument** (`brainstorm`, `spec`, `plan`) — take it, no second-guessing.
-2. **Pipeline artifact given** — route to the *next* phase, classifying by content, not filename: approach and shape sketched (a brainstorm brief) → `spec`; acceptance criteria (a spec) → `plan`; ordered, committable tasks (a plan) → recommend `/lite-execute`.
+2. **Pipeline artifact given** — resolve the handed-in path per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), then route to the *next* phase, classifying by content, not filename: approach and shape sketched (a brainstorm brief) → `spec`; acceptance criteria (a spec) → `plan`; ordered, committable tasks (a plan) → recommend `/lite-execute`.
 3. **Infer from the ask** — judge how settled the work is (the "Right when" column), then announce the route with a one-line rationale and immediately run it. No confirmation stop; a misroute surfaces in the phase's first question.
 4. **Torn between two routes** — only when genuinely arguable, ask the user one question naming both candidates, your recommendation first.
 5. **Nothing to route** — ask what the user wants to work on, then triage that answer from rule 1.
 
 ## Writing the artifact
 
-Every phase ends the same way: when every readback section stands approved, write the phase's artifact to its `.crank/<slug>/` path per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read that file before writing, and stop. Keep the artifact light: the phase file lists the sections, and each one earns its place or is left out.
+Every phase ends the same way: when every readback section stands approved, write the phase's artifact and stop. Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md) before writing when this is the effort's first artifact (it fixes the slug), when `.crank/<slug>/` already holds a different effort, when you are outside a git repo, or when you were handed a legacy flat `.crank/<phase>-<slug>.md`; a later artifact of the same effort writes straight into its existing `.crank/<slug>/` directory. Either way, create `.crank/` if it is missing, with a `.gitignore` containing `*`, and tell the user the path once. Keep the artifact light: the phase file lists the sections, and each one earns its place or is left out.
 
 ## Phase gates
 

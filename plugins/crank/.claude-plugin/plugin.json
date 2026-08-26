@@ -1,7 +1,7 @@
 {
   "name": "crank",
   "description": "Design-first development pipeline behind one routing front door: brainstorm → spec → plan → execute, taking an idea from sketch to shipped code",
-  "version": "9.21.3",
+  "version": "9.21.4",
   "author": {
     "name": "Chris Liva",
     "email": "chrislliva@gmail.com"

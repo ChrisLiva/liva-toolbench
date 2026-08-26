@@ -1,6 +1,6 @@
 # Plan markdown skeleton
 
-Use this as the starting shape for the plan at its `.crank/` path (see ARTIFACT-HOME.md). Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `PLAN.md`. A behavior carries pseudo-code or embedded code beneath its line only where the ladder in Guidelines → Prose, pseudo-code, or embedded code says so — embedded code with its evidence line.
+Use this as the starting shape for the plan at its `.crank/` path (see ARTIFACT-HOME.md). Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `PLAN.md`.
 
 ```markdown
 # <Plan title>
@@ -44,8 +44,13 @@ Check: <test-first | lightest-check | probe>, model after `<path to the existing
 Stop if: <the assumption this task rests on that grounding could not prove, or omit>
 
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
+      <pseudo-code or embedded code, only where PLAN.md's ladder calls for it; embedded code names its evidence>
 - [ ] Behavior 2: <next behavior in tracer-bullet order — or a directive line for a mechanical change>
 - [ ] Verify: `<exact command>` → <exact success reading>
+
+### Task 2 — <independently committable outcome>
+
+<repeat every block above in full — the implementer sees only this task, so no line may point at Task 1>
 
 ## Coverage
 

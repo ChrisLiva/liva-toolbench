@@ -7,11 +7,11 @@ Use this as the starting shape for the spec at its `.crank/` path (see ARTIFACT-
 
 ## Problem
 
-<What the user is trying to solve, in their words.>
+<one paragraph>
 
 ## Solution
 
-<The proposed change in user-facing terms.>
+<one paragraph>
 
 ## User stories
 
@@ -19,17 +19,17 @@ Use this as the starting shape for the spec at its `.crank/` path (see ARTIFACT-
 
 ## Acceptance criteria
 
-1. <Falsifiable behavior, state transition, interaction, validation, or edge case.>
+1. <criterion>
 
 ## Technical decisions
 
 - **<Decision>** — <chosen option>. Why: <one sentence>. Gives up: <trade-off, when relevant>. Prior art: `<path>:<line>`.
+- **Surfaces** — <layer>: `<path>:<line>` — one line per layer touched, or "no analogous surface" where grounding found none.
 
 ## Testing approach
 
-- <Behavior seam to test, using the same path real users or callers hit. Prior art: `<path>:<line>`.>
-- <Oracle for checkable logic (known-good examples, naive reference, round-trip inverse, invariant), when one applies.>
-- <Criteria that ride one journey test together, when a workflow covers several.>
+- <test, seam, prior art>
+- <oracle, when checkable logic is in play>
 
 ## Refactor scope
 

@@ -1,17 +1,17 @@
 # Adversarial plan review brief
 
 <brief>
-Read the plan at `<plan-path>` and the spec at `<spec-path>`. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
+Read the plan at `<plan-path>`. Read the spec at `<spec-path>`. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
 
-Flag every instance of:
+First, walk the spec yourself and list every acceptance criterion and every behavior its body describes (interaction, keybinding, alias, edge case, state transition, validation). Then flag every instance of:
 
-- **underspecified steps** — a behavior missing its oracle (exact input → expected output), a verify missing its exact command or success reading, an interface missing a concrete signature: not concrete enough to build from without a design conversation.
+- **underspecified steps** — a behavior missing its oracle (exact input → expected output), an interface missing a concrete signature: not concrete enough to build from without a design conversation.
 - **unsurveyed embedded code** — an embedded block with no evidence line naming what verified it (a probe run, a read of the live file, a doc check); verify it against the codebase yourself and fix it, or rewrite the behavior as prose-with-contract or pseudo-code.
-- **coverage holes** — walk the spec yourself (every acceptance criterion and every behavior the body describes: interaction, keybinding, alias, edge case, state transition, validation) and check the plan's Coverage table against your walk; flag criteria missing from the table, rows whose verify step doesn't actually exercise the behavior, and empty verify cells with no stated reason.
+- **coverage holes** — criteria from your walk missing from the plan's Coverage table, rows whose verify step doesn't exercise the behavior, empty verify cells with no stated reason.
 - **name / type / path inconsistencies** — across tasks or against the codebase.
 - **placeholder language** — `TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols.
 - **dead-seam verify steps** — a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent.
-- **eyeball verification** — a verify step whose success can't be read from an exit code or exact output ("looks right", "renders correctly") outside the plan's human-only smoke rows, or a throwaway-check (probe) step missing its oracle, its exact expected output, or its deletion before commit; rewrite it as a deterministic check.
+- **unverifiable verify steps** — a verify step missing its exact command, or whose success can't be read from an exit code or exact output ("looks right", "renders correctly") outside the plan's human-only smoke rows; also a probe step missing its oracle, its exact expected output, or its deletion before commit. Rewrite it as a deterministic check.
 - **horizontal slicing** — a multi-behavior task whose steps batch every test before any implementation instead of landing one behavior at a time; reorder into vertical slices.
 - **implementation-detail tests** — an embedded test or specified test case that mocks an internal collaborator, asserts on call counts or order, reaches a private method, or reads its oracle through a back channel instead of the interface; rewrite it to drive the seam.
 - **redundant tests** — two steps spec tests that pin the same behavior at the same seam, or a single workflow is fragmented into one-assertion tests that each rebuild the same setup; merge them into one journey test, rewriting the steps to name the surviving destination. A journey test proving several criteria with many assertions is the intended shape, not a flag.
@@ -28,5 +28,7 @@ Flag every instance of:
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
-Don't re-open spec-level decisions. Then edit **the plan file at `<plan-path>`** in place to fix every item you flagged — that plan file is the only artifact you may modify, and you read the spec and grep the codebase **only to inform those edits**: never the spec, and never any production, test, or source file. A flagged duplication, inconsistency, or dead seam gets *rewritten in the plan step that describes it* — never fixed in the code itself. End your reply with a one-line summary of what changed.
+Take the spec's decisions as settled. Then edit **the plan file at `<plan-path>`** in place to fix every item you flagged — it is the only file you write to. Read the spec and grep the codebase to inform those edits. A flagged duplication, inconsistency, or dead seam gets rewritten *in the plan step that describes it*.
+
+Done when every task block in the plan has been read against all of the flags above, every acceptance criterion has a checked Coverage row, and every item you flagged is edited into the plan file. End your reply with a one-line summary of what changed.
 </brief>

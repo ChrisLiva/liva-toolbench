@@ -11,14 +11,14 @@ Implement the work described in the plan (or PRD/spec) the user provides. Every 
 2. **Bare slug** — resolves to `.crank/<slug>/plan.md`.
 3. **No argument, plan in the conversation** — use it; derive a slug from the plan's title.
 4. **No argument, exactly one plan on disk** — use it without asking.
-5. **No argument, several plans** — ask via a structured question listing each plan with its derived status: *not started* (no `## Progress` block), *in progress* (unchecked boxes remain), *done* (all `[x]`). An effort directory without a `plan.md` (e.g. spec-only) shows as "no plan yet" and is not executable.
+5. **No argument, several plans** — ask via a structured question listing each plan with its derived status per the `## Progress` block under Implement. An effort directory without a `plan.md` (e.g. spec-only) shows as "no plan yet" and is not executable.
 6. **No argument, no plans anywhere** — say so and recommend the plan phase (`/crank-lite plan …`).
 
-**Adopt legacy artifacts on encounter.** Resolving an artifact checks the per-plan path first, then the legacy flat path (`.crank/<phase>-<slug>.md`); on a hit there, migrate it per [ARTIFACT-HOME.md](ARTIFACT-HOME.md). Never clobber: if both the legacy and per-plan copies exist, stop and ask instead of overwriting either.
+**Adopt legacy artifacts on encounter.** Resolving an artifact checks the per-plan path first, then the legacy flat path; on a hit there, migrate it per [ARTIFACT-HOME.md](ARTIFACT-HOME.md).
 
 ## Execution shape
 
-Pick the execution shape and **call out the pre-flight**: write the block below into your reply, every line filled, then continue in the same turn. The callout is reply text the user reads, and it comes before any file is touched — the Progress block, the first edit, and the first dispatch all follow it; a tool call or private reasoning is not a callout. Every invocation calls it out, resumed runs included. Completion criterion: the filled block is visible in your reply and no task work has started.
+Pick the execution shape and **call out the pre-flight**: write the block below into your reply with every line filled, then continue in the same turn — every invocation, resumed runs included. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
 
 ```
 **Pre-flight**
@@ -29,12 +29,19 @@ Pick the execution shape and **call out the pre-flight**: write the block below 
 - Tasks: <N> (<M> remaining)
 ```
 
-The Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/` — drop it when there are none. Models are the resolved names (see Subagent tiers), never bare tier labels. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`. `<M>` is the Progress block's unchecked boxes; a fresh run has `M = N`.
+The Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/` — drop it when there are none. Models are the resolved names (see Subagent tiers), never bare tier labels. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`. `<M>` is the Progress block's unchecked boxes (see Implement); a fresh run has `M = N`.
 
 Decide from the plan's coupling, not its task count:
 
 - **Solo** — the work is confined to one module or one area of code, or the tasks share deep in-flight state. Implement inline on this thread.
-- **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task, each with a brief, targeted instruction: the task text, the relevant file paths, the verification command it must run and report output from, the detour rule from Implement below — with any detour taken reported back in its return — and the return rule: return only when every command it started has finished; long verifications run synchronously, their output read in the same turn that reports them. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff. When a dispatched agent is out past the point you expected it back, reconcile against durable state — `git log`, the Progress block, its report — then resume it or surface the stall; a "standing by" turn is never the move.
+- **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task, each with a brief, targeted instruction carrying five things:
+  1. the task text;
+  2. the file paths it touches, plus the absolute path to this skill's `VOCABULARY.md`;
+  3. the verification command it must run and report output from;
+  4. the detour rule from Implement below, with any detour taken reported back in its return;
+  5. the return rule — return only when every command it started has finished; long verifications run synchronously, their output read in the same turn that reports them.
+
+  Done when the brief carries all five. Verify each returned task yourself with a cheap check (typecheck, targeted test) instead of re-reading the whole diff. When a dispatched agent is out past the point you expected it back, reconcile against durable state — `git log`, the Progress block, its report — then resume it or surface the stall; a "standing by" turn is never the move.
 
 A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why.
 
@@ -44,26 +51,26 @@ Every dispatch — implementer or reviewer — is a blocking call: from spawn to
 
 Track the run with tasks — one entry per plan task, created before work starts and flipped complete the moment the task lands. Every run gets this, solo included.
 
-Durable progress lives in the plan file, not the task list (which dies with the session). Before the first task, add a `## Progress` block at the top of the plan — `Base: <HEAD SHA before the first task>`, then one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` once that task's check has passed and its commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it.
+Durable progress lives in the plan file, not the task list (which dies with the session). Before the first task, add a `## Progress` block at the top of the plan — `Base: <HEAD SHA before the first task>`, then one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` once that task's check has passed and its commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it. A plan's status reads off this block: *not started* (no block), *in progress* (unchecked boxes remain), *done* (all `[x]`).
 
-Shared design language, defined once in [VOCABULARY.md](VOCABULARY.md), read before you implement: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
+Before you implement, read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
-Before flipping a task's box, run the check the plan names for that task — or the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** whose expected values come from a named **oracle**, and delete it before commit.
+Before flipping a task's box, run the check the plan names for that task — or the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** and treat its passing output as that task's verification evidence.
 
 Standing defect rules while implementing:
 
 - Any encode/decode or save/restore pair gets a round-trip assertion on a hostile real value (sub-millisecond timestamps, unicode, boundary sizes), not a friendly fixture.
 - Handling one member of an error family means checking its siblings (EPERM beside EACCES) or noting the single-case choice.
 - Every parser or loop over external input gets its empty case exercised once.
-- Nothing, probe or test, is trusted until it has been RED once: a test not born RED gets one deliberate mutation to watch it fail.
+- A test that passed on its first run gets one deliberate mutation to watch it fail.
 - Edits to user-owned files (configs, gitignores) assert untouched lines survive byte-identical.
-- A new test earns its place only by pinning a behavior no existing test pins (**redundant test**) and surviving the **rewrite test**; extend the **journey test** already walking that behavior's seam with a failing assertion rather than adding a sibling that rebuilds its setup.
+- A new test earns its place only if it is not a **redundant test** and it survives the **rewrite test**; otherwise extend the **journey test** at that seam with a failing assertion.
 
 The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a detour — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations. A fix that would change what ships is a reroute: stop and surface it with your recommendation. Pre-existing bugs off the plan's path stay retro notes, never side quests.
 
 ## Review and commit
 
-Once done implementing the entire plan, dispatch a heavy-tier reviewer (see Subagent tiers) to adversarially review the work against the plan, handing it pointers only — the plan path, the Progress block's `Base` SHA, and the diff command `git diff <Base>..HEAD` — never your characterization of the diff. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence, defaulting to `REFUTED` when the evidence is thin. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
+Once done implementing the entire plan, dispatch a heavy-tier reviewer (see Subagent tiers) to adversarially review the work against the plan, handing it pointers only — the plan path, the Progress block's `Base` SHA, the diff command `git diff <Base>..HEAD`, and the absolute path to this skill's `VOCABULARY.md`, whose **dead seam**, **implementation-detail test**, and **redundant test** the review turns on — never your characterization of the diff. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence, defaulting to `REFUTED` when the evidence is thin. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
 
 Before committing, inspect the worktree and stage only the files this plan's work changed. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
