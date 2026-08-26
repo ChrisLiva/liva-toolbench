@@ -53,11 +53,11 @@ Each candidate is one `<article>`:
 - **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. A monospaced `<pre>` panel, eight lines at most, written in exposes/hides form: what the module exposes, what it hides, where the seam lands. **No committed signatures** (Hard Rules → No interfaces before the grill).
 - **ADR callout** (if applicable) — one line in an amber-tinted box.
 
-No paragraphs of explanation. If the diagram needs a paragraph to be understood, redraw the diagram.
+If a diagram needs a paragraph to be understood, redraw it.
 
 ## Diagram patterns
 
-Pick the pattern that fits the candidate. Mix them. Don't make every diagram look the same — variety is part of the point.
+Pick the pattern that fits each candidate, and vary them across cards.
 
 ### Mermaid graph (the workhorse for dependencies / call flow)
 
@@ -107,7 +107,7 @@ One larger card. Candidate name, one sentence on why, anchor link to its card. T
 
 ## Tone
 
-Plain English, concise — but every architectural noun and verb obeys References → Vocabulary in `SKILL.md` (the glossary terms and the never-substitute table). Concision is not an excuse to drift.
+Plain English, concise, with every architectural noun and verb obeying References → Vocabulary in `SKILL.md`: the glossary terms and the never-substitute table. When a term isn't in the glossary, reach for one that is rather than inventing a new one.
 
 **Phrasings that fit the style:**
 
@@ -117,5 +117,3 @@ Plain English, concise — but every architectural noun and verb obeys Reference
 - "Two adapters justify the seam: HTTP in prod, in-memory in tests."
 
 **Wins bullets** name the gain in glossary terms: *"locality: bugs concentrate in one module"*, *"leverage: one interface, N call sites"*, *"interface shrinks; implementation absorbs the wrappers"*. Don't write *"easier to maintain"* or *"cleaner code"* — those terms aren't in the glossary and don't earn their place.
-
-No hedging, no throat-clearing, no "it's worth noting that…". If a sentence could be a bullet, make it a bullet. If a bullet could be cut, cut it. If a term isn't in the glossary, reach for one that is before inventing a new one.

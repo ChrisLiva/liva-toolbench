@@ -9,23 +9,23 @@ disable-model-invocation: true
 
 ## Goal
 
-A leaner suite where every surviving test pins a distinct, observable behavior through a **seam**. The keep bar is the **rewrite test**: would this test still earn its place if the implementation were rewritten in another language? Tests exist to catch behavior regressions, not to pin the shape of the code — prune aggressively; a suite of fewer, sharper tests beats a thicker one that resists refactoring. Fewer, longer tests too: behaviors along one workflow belong as assertions on its **journey test** — splitting that flow into one-assertion fragments multiplies setup without adding coverage.
+A leaner suite judged against the **rewrite test**: tests exist to catch behavior regressions, not to pin the shape of the code. Prune aggressively; fewer, sharper tests beat a thicker suite that resists refactoring.
 
 ## Hard Rules
 
 - **Every test in scope gets exactly one verdict** — KEEP, DELETE, REFACTOR, or MERGE. No sampling; the verdict table accounts for every test.
-- **Expected values come from an independent source of truth** — a hand-verified literal from a real fixture or committed snapshot — never recomputed with the same formula the code under test uses (a tautological assertion passes by construction and can never disagree with the code).
+- **Expected values come from an oracle** — a hand-verified literal from a real fixture or committed snapshot — never recomputed with the same formula the code under test uses.
 - **Redundancy is judged suite-wide, not per file** — two tests pinning the same behavior at the same seam are one KEEP and one DELETE, even when they live in different files. Which one keeps: the test at the truer seam; at equal seam fidelity, the cheaper, faster one — a slow end-to-end test duplicating behavior already pinned lower survives only as one of a handful of happy-path journeys.
 - **Tests only.** This skill edits and deletes test code; production code is never touched. A pruning pass that surfaces a production bug reports it, it doesn't fix it.
-- **Baselines come from a throwaway worktree, never `git stash`.** When any step needs a clean-tree comparison (formatter, lint, suite at HEAD), run it in a disposable `git worktree add` checkout of HEAD and remove it after. `git stash` is banned for the whole run — coordinator and subagents alike — because it sweeps uncommitted user work into state a later drop destroys.
+- **Baselines come from a throwaway worktree, never `git stash`.** Any clean-tree comparison (formatter, lint, the suite at HEAD) runs in a disposable `git worktree add` checkout of HEAD, removed after. `git stash` stays banned for the whole run, coordinator and subagents alike: a later drop destroys the uncommitted user work it swept up.
 - **Green gate.** The full suite runs after applying; the pass isn't done until it's green.
 
 ## Verdicts
 
 - **KEEP** — passes the **rewrite test**: pins a distinct observable behavior at a seam.
-- **DELETE** — an **implementation-detail test**, a tautological assertion, contract-shaped (asserts structure, types, or wiring rather than behavior — including re-checking what the type system or schema validation already guarantees), **copy-pinning** (asserts that incidental prose appears — a description, label, warning, or log message; when the behavior behind the copy matters, a kept test pins the behavior or a stable structured contract, not the wording), or a **redundant test** beside a kept one.
+- **DELETE** — an **implementation-detail test**, a tautological assertion (expected value recomputed with the code's own formula, so it passes by construction), contract-shaped (asserts structure, types, or wiring rather than behavior — including re-checking what the type system or schema validation already guarantees), **copy-pinning** (asserts that incidental prose appears — a description, label, warning, or log message; a kept test pins the behavior or a stable structured contract, not the wording), or a **redundant test** beside a kept one.
 - **REFACTOR** — behavior worth pinning, assertion too weak to pin it. The common weak shape: scanning all values for a property instead of asserting one known concrete case — replace "no value in the map is undefined" with "this specific known key resolves to this hand-verified literal."
-- **MERGE** — behavior worth pinning, test not worth its own setup. The common shapes: a run of tests each rebuilding the same state to check one step of a single workflow, or an isolated test pinning an incidental transition state a broader workflow passes through anyway. Fold the assertions into the **journey test** that walks the workflow end-to-end and delete the shell; the verdict row names the destination test.
+- **MERGE** — behavior worth pinning, test not worth its own setup. The common shapes: one-assertion fragments of a single workflow, or an isolated test pinning an incidental transition state a broader workflow passes through anyway. Fold the assertions into the **journey test** that walks the workflow end-to-end and delete the shell; the verdict row names the destination test.
 
 ## Flow
 
@@ -57,4 +57,4 @@ This skill spawns verdict subagents at the **standard** tier — resolve it to y
 
 ### Vocabulary
 
-Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **seam**, the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test** — read their meanings there.
+Read [VOCABULARY.md](VOCABULARY.md) before the verdicts in step 2: this skill leans on the **seam**, the **oracle**, the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test**.

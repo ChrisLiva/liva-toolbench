@@ -15,10 +15,10 @@ Turn the spec into tasks the **executor** can build with no further design conve
 ### Test-first or lightest-check
 
 <tradeoff>
-**Test-first** pins the intended behavior before code exists and leaves a regression net behind — at the cost of upfront time, and of awkward contortions where no real seam exists. **Lightest-check** (typecheck, build, curl, render) is fast and honest for work with no behavioral seam (config, docs, CSS, refactor-only) — at the cost of leaving no net. Between them sits the **probe** (VOCABULARY.md): behavior that deserves a deterministic check but has no seam worth a committed test — a migration's row counts, a one-shot transform, a regex over a corpus — gets a probe step: name its oracle and exact expected output, and end the step with its deletion; its code is embedded only when grounding already ran it (see Prose, pseudo-code, or embedded code). Choose per task by whether a real seam exists; where none does but the logic still has an oracle, plan a probe rather than manufacture a fake test — a test against a manufactured seam costs maintenance and protects nothing (see Dead seam).
+**Test-first** pins the intended behavior before code exists and leaves a regression net behind — at the cost of upfront time, and of awkward contortions where no real seam exists. **Lightest-check** (typecheck, build, curl, render) is fast and honest for work with no behavioral seam (config, docs, CSS, refactor-only) — at the cost of leaving no net. Between them sits the **probe**: behavior that deserves a deterministic check but has no seam worth a committed test — a migration's row counts, a one-shot transform, a regex over a corpus — gets a probe step: name its oracle and exact expected output, and end the step with its deletion; its code is embedded only when grounding already ran it (see Prose, pseudo-code, or embedded code). Choose per task by whether a real seam exists; where none does but the logic still has an oracle, plan a probe rather than manufacture a fake test — a test against a manufactured seam costs maintenance and protects nothing: it is a **dead seam**.
 </tradeoff>
 
-Test-first sets the rhythm, not the count: behaviors along one workflow accrete assertions onto one **journey test** — a new test earns its own file only at a new seam — and a planned test that wouldn't survive the **rewrite test** isn't worth writing.
+Test-first sets the rhythm, not the count: behaviors along one workflow ride one **journey test**, a new test earns its own file only at a new seam, and a planned test that wouldn't survive the **rewrite test** isn't worth writing.
 
 ### Prose, pseudo-code, or embedded code
 
@@ -34,11 +34,11 @@ Tests follow the same ladder: state the test *cases* — the oracle's exact inpu
 
 ### Subagents
 
-If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. Two tiers: **standard** = codebase grounding and exploration; **heavy** = the adversarial plan review. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+If exploring the codebase could answer a question — an exact signature, prior art for a pattern, whether a spec claim still holds — dispatch a standard subagent to find out rather than digging in your own context. The adversarial review is this phase's only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
 
 ### Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test** — read their meanings there.
+[VOCABULARY.md](VOCABULARY.md) — read it before step 3. This phase leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test**.
 
 ## Deliverables
 
@@ -49,20 +49,25 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 - **Updates since spec** — drift you found while grounding. Omit if none.
 - **Refactor scope** — copy from the spec if present; the explicit allowlist of existing modules open to reshaping. Omit if the spec had none.
 - **File structure** — the table from Map the files.
-- **Tasks** — each with a `Files:` block; an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty); a `Check:` line naming the per-task call (test-first / lightest-check / probe) and the exemplar to model after (see Write the tasks); a `Stop if:` line naming the assumption this task rests on that grounding could not prove, so the executor returns `BLOCKED` instead of improvising (omit when grounding proved every assumption); then one checkbox per behavior — each carrying its oracle and, where a test drives it, its seam (naming the existing journey test to extend when that seam is already walked) — ending on the task's `Verify:` step.
+- **Tasks** — each with a `Files:` block; an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty); a `Check:` line naming the per-task call (test-first / lightest-check / probe) and the exemplar to model after; a `Stop if:` line naming the assumption this task rests on that grounding could not prove, so the executor returns `BLOCKED` instead of improvising (omit when grounding proved every assumption); then one checkbox per behavior — each carrying its oracle and, where a test drives it, its seam (naming the existing journey test to extend when that seam is already walked) — ending on the task's `Verify:` step.
 - **Coverage** — a table with one row per acceptance criterion in the spec (if the spec lacks a numbered list, enumerate the behaviors it describes yourself): `criterion | task # | verify step that proves it`. Every criterion gets a row; several rows proved along one workflow share that journey test's verify step — a shared cell is the minimal-suite shape, not a gap; a row whose verify cell is empty must say why (e.g. human-only smoke check) — silence is a gap, not a pass. Execute walks this table before claiming completion.
 - **Smoke tests for the user** — anything the spec flagged as needing real-human verification. Omit if none.
 - **Out of scope** — copy from the spec.
 
 ## Flow
 
-Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
-
 ### 1. Ground first
 
-Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. If no gate runs, the first task establishes one (a typecheck script, or a characterization test at the seam the work touches) before any task that changes behavior. Grounding is also where anything the plan will embed gets **surveyed**: run it (a probe), or read it from the live tree, and keep the evidence for the step. Toolchain behavior the plan leans on — a build tool, bundler, CLI flag, or pinned dependency — gets surveyed the same way: run it once during grounding, never asserted from memory; a behavior you can't probe becomes a `Stop if:` line on the task that leans on it, naming the check that would settle it. And when the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), run the proposed invariant over the full real dataset — round-trip every existing name, sweep every row — and record the count checked; canned fixtures can't stand in for the data the work will actually meet. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
+Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. If no gate runs, the first task establishes one (a typecheck script, or a characterization test at the seam the work touches) before any task that changes behavior. Grounding is also where anything the plan will embed gets **surveyed** (Guidelines → Prose, pseudo-code, or embedded code), with the evidence kept for the step. Toolchain behavior the plan leans on — a build tool, bundler, CLI flag, or pinned dependency — gets surveyed the same way: run it once during grounding, never asserted from memory; a behavior you can't probe becomes a `Stop if:` line on the task that leans on it, naming the check that would settle it. And when the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), run the proposed invariant over the full real dataset — round-trip every existing name, sweep every row — and record the count checked; canned fixtures can't stand in for the data the work will actually meet. **Bias toward delegating** wide reads (see References → Subagents) so the subagent's context — not yours — holds the source.
 
-Completion criterion: every file and symbol the spec names has been read (or its read delegated and returned) with exact signatures and import paths in hand, any drift since the spec noted for **Updates since spec**, every `Gates:` command captured and proven to run, every artifact the plan will embed surveyed with its evidence in hand, every toolchain behavior the plan depends on probed or named as a plan risk, and any full-dataset invariant swept with its count recorded.
+Completion criterion, all of:
+
+- every spec-named file and symbol read (or its read delegated and returned), with exact signatures and import paths in hand;
+- drift since the spec noted for **Updates since spec**;
+- every `Gates:` command captured and proven to run;
+- every artifact the plan will embed surveyed, its evidence in hand;
+- every toolchain behavior the plan depends on probed or named as a plan risk;
+- any full-dataset invariant swept, its count recorded.
 
 ### 2. Map the files
 
@@ -70,7 +75,7 @@ For every file the plan touches, record **path / action (`create` / `modify` / `
 
 If you can't state a `create`'d file's responsibility without "passes X to Y" or "wraps Z", it fails the deletion test — fold it into its caller rather than adding a pass-through module. (This applies to new files and to files named in the spec's **Refactor scope**, which are deliberately open to reshaping; files outside that scope keep their established boundaries.)
 
-Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is **spaghetti growth** (VOCABULARY.md) — record the spec gap in **Updates since spec** rather than tangling the shared path.
+Every `modify` should trace to a surface the spec named. A change that threads a new boolean, mode, or special-case branch through a file the spec never mentions is **spaghetti growth** — record the spec gap in **Updates since spec** rather than tangling the shared path.
 
 When one concept forces `modify` rows across several files in lockstep, that is a missing seam, not a wide change: record it in **Updates since spec** as a Refactor scope candidate naming the module that should own the concept, rather than planning N synchronized edits.
 
@@ -92,35 +97,26 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing the tasks in full, read it back per [READBACK.md](READBACK.md) (read it here). Open with what the plan commits to build, what's explicitly out of scope, and anything still unsettled — those are what the user vetoes. The material to walk: the file map first (the actual path / action / responsibility rows), then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
-
-Completion criterion: the file map and everything READBACK.md selects have been read back and user-approved; objections resolved now, none carried into the written steps.
+Decomposition settled the shape; before writing the tasks in full, read it back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the file map first (the actual path / action / responsibility rows), then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
 
 ### 5. Write the tasks
 
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape, carrying the material the readback approved in as vetted (READBACK.md → Carry what was approved). Each task: the `Files:` block, the Interfaces block, the `Check:` call from Decompose (test-first, lightest-check, or probe) with the exemplar to model after (the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern), the task's `Stop if:` line where one applies, then one checkbox per behavior in **tracer-bullet** order, ending on the task's `Verify:` step. A behavior line states what the code must do, its oracle, and — where a test drives it — the seam; how far to climb from prose toward embedded code is a per-behavior call (see Guidelines → Prose, pseudo-code, or embedded code). Execute owns the keystroke rhythm; the plan states what each behavior must do and how to prove it.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape, carrying the material the readback approved in as vetted (READBACK.md → Carry what was approved). Give each task the blocks listed at Deliverables → **Tasks**, with the `Check:` call from Decompose and the exemplar to model after: the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern. Behavior checkboxes run in **tracer-bullet** order, ending on the task's `Verify:` step. A behavior line states what the code must do, its oracle, and — where a test drives it — the seam; how far to climb from prose toward embedded code is a per-behavior call (see Guidelines → Prose, pseudo-code, or embedded code). Execute owns the keystroke rhythm; the plan states what each behavior must do and how to prove it.
 
-Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** (its oracle and exact expected output pinned here, ending in its deletion) — "tests pass" is not enough. A test must drive the production seam the spec named — the real DOM node, endpoint, or entry point a user reaches — never a dead seam. Name the seam in the behavior line so the specified test and the production wiring point at the same place; a test case specified in prose can still be an **implementation-detail test** — an oracle read through a back channel instead of the seam is one. And it must pin a behavior no earlier line's test already pins: where the Coverage table shows the workflow already walked, the behavior line extends that journey test with its assertion — a **redundant test** is a plan defect, not extra safety.
+Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** (its oracle and exact expected output pinned here, ending in its deletion) — "tests pass" is not enough. A test must drive the production seam the spec named, never a **dead seam**. Name the seam in the behavior line so the specified test and the production wiring point at the same place; a test case specified in prose can still be an **implementation-detail test** — an oracle read through a back channel instead of the seam is one. And it must pin a behavior no earlier line's test already pins: where the Coverage table shows the workflow already walked, the behavior line extends that journey test with its assertion — a **redundant test** is a plan defect, not extra safety.
 
 Route reuse by name: if grounding (or the spec) surfaced an existing utility, the task names it and the contract goes through it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do, and a new dependency the spec's **Tech stack** didn't pin is an **Updates since spec** item to resolve, not a quiet import. And a contract that only types with a cast, `any`, or a new optional parameter is unclear: an **Updates since spec** item to resolve, not something to paper over inline.
 
-**Completion criterion.** Every behavior the spec lists must land in a task's behavior line or verify — and the proof is the **Coverage table** (see Deliverables): walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
+**Completion criterion.** Every behavior the spec lists must land in a task's behavior line or verify — and the proof is the **Coverage table**: walking the spec to build it *is* how you check yourself. A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
 ### 6. Adversarially review
 
-Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md). Spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and pass it the plan's absolute path plus the spec's path. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead. Pass the resulting brief verbatim.
-
-Quote the reviewer's summary line back to the user.
-
-Completion criterion: the reviewer's edits are in the plan file and its one-line summary is quoted back to the user.
+Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, substituting the plan's absolute path and the spec's path into it. If the spec exists only in the conversation (no file), drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into the brief instead.
 
 ### 7. Hand back
 
-The plan is the bottom of this skill's pipeline. Don't ask how to file the artifact — state the default and hand over the resume command:
+The plan is the bottom of this skill's pipeline. Hand off per [SKILL.md](SKILL.md) → Phase gates, and stop there: executing is a deliberate act the user starts explicitly.
 
-- The plan stays at its `.crank/` path (one line, with the path).
 - **Next:** `/crank-execute .crank/<slug>/plan.md` — in this session or a fresh one; the plan is self-contained.
-
-Close with a single trailing sentence noting the plan can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question. Then stop — executing is a deliberate act the user starts explicitly.
 
 Completion criterion: the path and the `/crank-execute` command are stated and you've stopped — nothing invoked the user didn't opt into.

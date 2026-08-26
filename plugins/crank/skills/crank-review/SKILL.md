@@ -20,10 +20,10 @@ Precision over coverage. A review of three real problems beats one of thirty nit
 ## Hard Rules
 
 - **High-confidence only — every finding survives refutation.** A finding ships only after an independent validator tried to refute it and couldn't. "Might be an issue" is not a finding; cut it.
-- **Not a linter.** Never raise what a compiler, type-checker, formatter, or linter already catches, nor a matter of taste (naming preference, ordering, "consider maybe"). Those are nits, and nits do not ship.
-- **Bias toward deletion and consolidation — but never cut required behavior.** Prefer the finding that removes or unifies code over the one that merely rearranges it — collapsing parallel structures into one counts as deletion. Such a finding ships only when the validator confirms the code is redundant, unreachable, or that the simpler shape preserves the same observable behavior. Required behavior is never "unnecessary surface" — the brief's [_Never cut required behavior_](REVIEW-BRIEF.md) list names what that covers.
+- **Not a linter.** A nit, anything a compiler, type-checker, formatter, or linter catches, or a matter of taste (naming preference, ordering, "consider maybe"), never ships.
+- **Bias toward deletion and consolidation — but never cut required behavior.** Prefer the finding that removes or unifies code over the one that merely rearranges it — collapsing parallel structures into one counts as deletion. Required behavior is never "unnecessary surface" — the brief's [_Never cut required behavior_](REVIEW-BRIEF.md) list names what that covers.
 - **Read-only.** This skill reviews; it never edits, stages, commits, or mutates the tree. Fixes are a separate, approved step (see Flow → Report).
-- **Subagents pull their own facts.** Hand each finder and validator pointers — the BASE SHA, the rubric path, the cited `file:line` — never your characterization of the diff or a defense of a finding. They form their own read; you pre-judge nothing.
+- **Subagents pull their own facts.** Hand each finder and validator pointers, never your characterization of the diff or a defense of a finding. They form their own read; you pre-judge nothing.
 
 ## Flow
 
@@ -52,21 +52,19 @@ Honor any focus in the argument (e.g. "especially simplicity") by weighting the 
 
 ### 3. Validate — fan out the refuters
 
-For each candidate, spawn a standard validator pointed at the same [REVIEW-BRIEF.md](REVIEW-BRIEF.md), the cited `file:line`, and the BASE SHA. Its job is to **refute**: read the actual code, decide whether the claim holds, and **default to REFUTED** when the evidence is thin, the complexity it wants cut turns out to be load-bearing, or the call is a matter of taste. A candidate survives only on a clear, code-grounded CONFIRMED.
-
-This is the gate that turns a long candidate list into a short trustworthy one. Don't soften it — a finding you can't get an independent agent to confirm is a finding you shouldn't report.
+For each candidate, spawn a standard validator pointed at the same [REVIEW-BRIEF.md](REVIEW-BRIEF.md), the cited `file:line`, and the BASE SHA. Its job is to **refute**, on the defaults the brief's [_If you are a validator_](REVIEW-BRIEF.md) section sets. A candidate survives only on a clear, code-grounded CONFIRMED.
 
 **Done when:** every candidate carries a CONFIRMED or REFUTED verdict with its evidence.
 
 ### 4. Reconcile against prior review
 
-The diff has already been reviewed once — by the commits that built it, and, for a PR, by its conversation. That settled ground is not yours to reopen or re-state. Two sources:
+The diff has already been reviewed once — by the commits that built it, and, for a PR, by its conversation. Two sources:
 
 - **Commits — oscillation.** Walk the commit list from step 1. Flag any change in this diff that **reverses a recent prior commit** — a value flipped back, a guard an earlier commit added now removed, a fix undone. Confirm each pair by reading both commits (`git show <sha>`), not by message alone. Oscillation means a settled decision is being reopened: surface it as its own warning, and offer to record the decision in an ADR so the next review doesn't reopen it again.
 
-- **PR threads (PR target only).** Read the prior review fetched in step 1. **A resolved thread is settled ground — note it as resolved and leave it closed; never re-investigate a resolved conversation or resurrect a finding it covers** (a maintainer already closed it, so reopening it is noise). For each **unresolved** thread, drop any surviving finding that **echoes** a point it raised or **reverses** a decision it settled — that ground is covered, and re-stating it is noise, like a nit; the one carve-out you keep or add is a **critical or blocking comment the current diff still hasn't addressed** (unintentionally ignored — verify against the diff, then surface it under question 1). Independent of resolution: a **bug the diff newly introduced** — including one introduced while responding to a comment — is never "settled"; surface it whether or not a thread on that code is resolved (it's a finder's catch, not a re-investigation of the thread).
+- **PR threads (PR target only).** Read the prior review fetched in step 1. **A resolved thread is settled ground: note it as resolved, leave it closed, and drop any surviving finding it covers.** For each **unresolved** thread, drop any surviving finding that **echoes** a point it raised or **reverses** a decision it settled; the one carve-out you keep or add is a **critical or blocking comment the current diff still hasn't addressed** (unintentionally ignored — verify against the diff, then surface it under question 1). Independent of resolution: a **bug the diff newly introduced** — including one introduced while responding to a comment — is never "settled"; surface it whether or not a thread on that code is resolved (it's a finder's catch, not a re-investigation of the thread).
 
-**Done when:** commit reversals are confirmed against both commits; and, for a PR, the threads are read, resolved threads are noted and left closed (never re-investigated), echoed or settled points from unresolved threads are pruned from the findings, and any ignored-critical comment or newly introduced regression is surfaced.
+**Done when:** every reversal is confirmed against both commits, and, for a PR, every thread is dispositioned (closed, pruned, or surfaced) and every newly introduced bug is surfaced regardless of thread state.
 
 ### 5. Report
 
@@ -100,7 +98,7 @@ This skill spawns finders and validators at the **standard** tier — resolve it
 
 ### Vocabulary
 
-Shared crank design language, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, **spaghetti growth**, the **seam**, the **implementation-detail test**, the **redundant test**, and the **journey test** — read their meanings there. **Bespoke duplication** and **boundary smells** are review-specific smells defined in [REVIEW-BRIEF.md](REVIEW-BRIEF.md)'s Code judo section, not in the shared vocabulary.
+Defined in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, **spaghetti growth**, the **seam**, the **implementation-detail test**, the **redundant test**, and the **journey test** — read their meanings there. **Bespoke duplication** and **boundary smells** are review-specific smells defined in [REVIEW-BRIEF.md](REVIEW-BRIEF.md)'s Code judo section, not in the shared vocabulary.
 
 ### Review rubric
 

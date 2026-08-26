@@ -11,7 +11,7 @@
       "name": "crank",
       "source": "./plugins/crank",
       "description": "Design-first development pipeline behind one routing front door: brainstorm → spec → plan → execute, taking an idea from sketch to shipped code",
-      "version": "9.20.0",
+      "version": "9.21.0",
       "category": "tools",
       "tags": ["crank", "code", "agent"]
     },
@@ -19,7 +19,7 @@
       "name": "crank-lite",
       "source": "./plugins/crank-lite",
       "description": "Lightweight brainstorming, spec, planning, and execution skills for shaping work before shipping it.",
-      "version": "1.15.0",
+      "version": "1.16.0",
       "category": "tools",
       "tags": ["crank", "lite", "brainstorm", "spec", "plan", "execute"]
     },

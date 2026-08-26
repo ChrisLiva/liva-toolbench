@@ -16,7 +16,7 @@ The whole run happens in chat: scope → explore → cards → grill → brief. 
 
 ## Tone
 
-The shared design language lives in [VOCABULARY.md](VOCABULARY.md) — read it before you write a card. Use these words, with these meanings, exactly: **module**, **interface**, **implementation**, **depth**, **deep**, **shallow**, **seam**, **adapter**, **leverage**, **locality**.
+Read [VOCABULARY.md](VOCABULARY.md) before you write a card. Use these words, with these meanings, exactly: **module**, **interface**, **implementation**, **depth**, **deep**, **shallow**, **seam**, **adapter**, **leverage**, **locality**.
 
 Near-synonyms blur the distinction each word carries. Never substitute:
 
@@ -30,10 +30,10 @@ That is the *architecture* vocabulary. The *domain* vocabulary comes from the ta
 
 ## Scope
 
-Scope before you scan. Deepening pays off by making future changes to a module easier, so weight the parts of the codebase that keep changing.
+Scope before you scan. Deepening pays off on code that keeps changing, so weight churn.
 
 - **The user's direction wins.** If they named a module, a subsystem, or a pain point, take it and skip the inference below.
-- **Otherwise infer from churn.** Walk back a good stretch of history with `git log --oneline` and find the hot spots — the files and areas that keep coming up — and let those paths pull your attention first. If the changes are scattered with no clear hot spot, widen the net.
+- **Otherwise infer from churn.** Rank paths by how often they appear in a good stretch of `git log --name-only` history, and scan the top of that list first. If churn is scattered with no clear hot spot, widen the net.
 
 Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you're about to scan — commonly `docs/adr/`. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate.
 
@@ -46,7 +46,7 @@ Explore `<scope>` in this codebase and report **deepening opportunities** — pl
 
 Hunt four friction patterns:
 
-- **Shallow module** — the interface exposes nearly as much as the implementation hides. Apply the **deletion test**: imagine the module gone. Does its complexity *concentrate* — collapsing into a deeper neighbor — or does it merely spread across every caller? "Concentrates" is the signal worth reporting; "spreads" means the boundary earned its place, so drop it. Needing to bounce between many small modules to understand one concept is the same smell at scale.
+- **Shallow module** — the interface exposes nearly as much as the implementation hides. Apply the **deletion test**: imagine the module gone. Does its complexity *concentrate* into a deeper neighbor (report it), or merely spread across every caller (drop it, the boundary earned its place)? Needing to bounce between many small modules to understand one concept is the same smell at scale.
 - **Seam leakage** — tightly-coupled modules leak across their seam: callers reach past the interface into internals, depend on call ordering the interface never states, or hold knowledge the module should own.
 - **Extracted for testability without locality** — pure functions pulled out so they could be tested in isolation, while the real bugs live in how they are called. The extraction bought coverage but no **locality**.
 - **Untestable through the interface** — code that is untested, or that cannot be driven through its current interface without a synthetic stand-in.
@@ -67,7 +67,7 @@ Report fewer than four rather than padding the list, and say so plainly if the s
 
 ## Cards
 
-Dedupe and rank what comes back yourself, and keep the **2–4** candidates the evidence actually supports. Drop overlaps into the strongest version of the same idea; drop anything you can't back with a `file:line`.
+Dedupe and rank what comes back: fold overlaps into the strongest version of the same idea, drop anything you can't back with a `file:line`, and keep the **2–4** the evidence supports.
 
 Present each survivor as one card in chat:
 
@@ -91,7 +91,7 @@ Present each survivor as one card in chat:
   call order known only to callers        1 interface; ordering held inside
   ```
 
-- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. **Structural only**: what the module exposes and what it hides, eight lines at most, and no committed signatures — no parameter lists, no return types, no names anyone will be held to. Interfaces are never proposed before the grill.
+- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. **Structural only**: what the module exposes and what it hides, eight lines at most, and no committed signatures — no parameter lists, no return types, no names anyone will be held to.
 
   ```
   module: Order intake
@@ -102,11 +102,11 @@ Present each survivor as one card in chat:
 
 - **ADR callout** (optional) — only when the friction is real enough to warrant reopening a recorded decision. Mark it in the card: *"contradicts ADR-0007 — worth reopening because…"*. Don't list every refactor an ADR theoretically forbids.
 
-Then ask, plainly, which candidate the user wants to pursue. **One candidate per grill loop.** The cards stay in the chat, so re-entry is cheap: when a loop ends, the user can come back and pick another card without a rescan.
+Then ask, plainly, which candidate the user wants to pursue. **One candidate per grill loop.** The cards stay in chat, so picking another when this loop ends costs no rescan.
 
 ## Grill
 
-Run the grilling per [INTERVIEW.md](INTERVIEW.md) — read it before your first question. The agenda, which is also the decision tree to walk in rounds:
+Run the grilling per [INTERVIEW.md](INTERVIEW.md) — read it before your first question. The agenda, which is also the decision tree:
 
 - **Constraints** — what can't move: callers you don't own, wire formats, performance floors, timelines.
 - **Dependencies** — what the module leans on and who leans on it; which of those crossings deserves a port (two adapters justify a port; one is indirection).
@@ -129,18 +129,18 @@ Sections, omitting any that didn't earn its place:
 
 - **Idea / Problem** — the friction in the user's words, with the evidence `file:line`.
 - **Approach** — the chosen deepening and why it won, in **leverage** and **locality** terms.
-- **Shape** — the before/after ASCII diagram as amended during the grill, alongside the settled interface pseudo-code; signatures belong here, because the grill settled them.
+- **Shape** — the before/after ASCII diagram as amended during the grill, alongside the settled interface pseudo-code.
 - **Key decisions** — the consequential calls, one line of why each, including where the seam lands and which tests survive.
 - **Open questions** — questions for the spec to answer, admitted only when you can state each one precisely now. Anything you can't phrase that sharply is a design hole — resolve it in the grill instead.
 - **Out of scope** — the candidates that lost and one line each on why, plus pointers to any ADR this run wrote or left standing.
 
 **No acceptance criteria** — those belong to the spec phase.
 
-End by recommending the next step: `/crank-lite spec .crank/<slug>/deepen-brief.md`. A brainstorm brief is exactly what that route consumes, and the brief is self-contained, so a fresh session works as well as this one.
+Write the brief so a fresh session can run it without this chat, then end by recommending the next step: `/crank-lite spec .crank/<slug>/deepen-brief.md`.
 
 ## Subagent tiers
 
-Check the user's own configuration first: a subagent model preference stated in their global or project instructions (user-level `AGENTS.md`/`CLAUDE.md`, harness settings) is binding — map the tier onto it, and it wins even when it names a weaker model than the fallback below; never escalate past it. The fallback applies only when no such preference exists:
+A subagent model preference in the user's own configuration (e.g. a user-level `AGENTS.md`/`CLAUDE.md`, harness settings, machine-level agent defaults) is binding: map the tier onto it, even when it names a weaker model than the fallback below. The fallback applies only when no such preference exists:
 
 <subagent-tiers>
 - **standard** (codebase exploration): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`

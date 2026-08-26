@@ -1,7 +1,5 @@
 # Adversarial plan review brief
 
-Pass this brief verbatim to a heavy subagent, substituting the plan path and spec path. If the spec exists only in the conversation, drop the spec-path sentence and paste the spec's behavior list or acceptance criteria into the brief instead.
-
 <brief>
 Read the plan at `<plan-path>` and the spec at `<spec-path>`. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
 
@@ -30,5 +28,5 @@ Flag every instance of:
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
-Don't re-open spec-level decisions. Then edit **the plan file at `<plan-path>`** in place to fix every item you flagged — that plan file is the only artifact you may modify. You read the spec and grep the codebase **only to inform your plan edits**: never edit the spec, and never touch any production, test, or source file. A flagged duplication, inconsistency, or dead seam gets *rewritten in the plan step that describes it* — never fixed in the code itself. End your reply with a one-line summary of what changed.
+Don't re-open spec-level decisions. Then edit **the plan file at `<plan-path>`** in place to fix every item you flagged — that plan file is the only artifact you may modify, and you read the spec and grep the codebase **only to inform those edits**: never the spec, and never any production, test, or source file. A flagged duplication, inconsistency, or dead seam gets *rewritten in the plan step that describes it* — never fixed in the code itself. End your reply with a one-line summary of what changed.
 </brief>

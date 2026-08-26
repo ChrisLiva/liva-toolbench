@@ -12,5 +12,5 @@ You are the final fresh-eyes reviewer over the whole feature — the per-task re
 
 This review is **read-only**: inspect the diff; do not checkout, reset, stash, commit, or otherwise mutate the working tree, index, or HEAD (if you need a working copy, add a throwaway `git worktree`). Treat any design rationale in the diff or commit messages as an unverified claim — a stated reason never downgrades a finding's severity. Cite `file:line`; don't restyle or expand scope.
 
-Return `APPROVED` or `CHANGES_REQUESTED` with a bulleted, bounded fix list. An `APPROVED` may carry a short **Notes** list — non-blocking observations the orchestrator records as deferred findings, not fixes this round; any violation of a review axis above is never a note, it is `CHANGES_REQUESTED`. Reserve `CHANGES_REQUESTED` for what must change before this feature ships, and don't downgrade a real finding to a note to dodge the fix step.
+Return `APPROVED` or `CHANGES_REQUESTED` with a bulleted, bounded fix list. An `APPROVED` may carry a short **Notes** list — non-blocking observations the orchestrator records as deferred findings, not fixes this round; any violation of a review axis above is never a note, it is `CHANGES_REQUESTED`. Reserve `CHANGES_REQUESTED` for what must change before this feature ships.
 </final-review-rubric>

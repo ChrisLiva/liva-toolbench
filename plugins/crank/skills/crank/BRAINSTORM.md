@@ -53,7 +53,7 @@ Cite sources, and flag what you're unsure of rather than asserting it.
 
 ### Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). This skill leans on **module**, **interface**, **depth** (and its payoffs, **leverage** / **locality**), and the **deletion test** when weighing one shape against another — read their meanings there.
+[VOCABULARY.md](VOCABULARY.md) — read it before step 5. This phase leans on **module**, **interface**, **depth** (and its payoffs, **leverage** / **locality**), and the **deletion test** when weighing one shape against another.
 
 ## Deliverables
 
@@ -67,8 +67,6 @@ The high-level design brief, written to the `.crank/` file (see Hard Rules). Inc
 - **Out of scope** — what was discussed and explicitly cut.
 
 ## Flow
-
-Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
 
 ### 1. Explore project context
 
@@ -116,11 +114,8 @@ Completion criterion: every Deliverables section that applies is user-approved a
 
 ### 7. Hand off
 
-The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute); the natural next step is the spec phase, which turns it into a full PRD-plus-technical-spec. Don't ask how to file the artifact — state the default and hand over the resume command:
+The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute); the natural next step is the spec phase, which turns it into a full PRD-plus-technical-spec. Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
-- The brief stays at its `.crank/` path (one line, with the path).
 - **Next:** continue to the spec now — say "continue" and you'll read [SPEC.md](SPEC.md) and run its flow on the approved brief — or in a fresh session: `/crank spec .crank/<slug>/brainstorm.md`.
-
-Close with a single trailing sentence noting the brief can instead be copied elsewhere, printed inline, or deleted on request — prose, not a numbered question — then stop.
 
 Completion criterion: the path and resume command are stated and you've stopped — the spec phase loaded only on an explicit "continue".

@@ -34,7 +34,6 @@ Run base: <base SHA from the progress ledger>
 ## Run boundaries
 
 - Implementers read this file and their task brief, not the whole plan unless the brief says otherwise.
-- Reviewers use this file as the repo map and scope exploration to the diff plus targeted symbol reads.
 ```
 
 ## `task-<N>-brief.md`
@@ -83,11 +82,14 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 - When you handle one member of an error family, check its siblings (EPERM beside EACCES, ENOTDIR beside ENOENT): handle the family, or record the single-case choice in the report's Concerns.
 - Every parser or loop over external input gets the empty / zero-length / missing case exercised once.
 - Address entries in parsed structures by name — a named capture group, or search for the entry; a positional index into parsed output breaks on the first reordering.
-- A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow.
 - When modifying user-owned files (configs, gitignores), assert the lines your change doesn't touch survive byte-identical.
-- Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command.
-- For multi-behavior tasks, work as tracer bullets: test A -> impl A -> test B -> impl B.
-- The brief's behavior lines are the test list — write those tests, no more. A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
+
+### TDD
+
+- Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command; for a multi-behavior task, one cycle per behavior as tracer bullets: test A -> impl A -> test B -> impl B.
+- A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test.
+- A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow.
+- The brief's behavior lines are the test list — write those tests, no more. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
 
 ## Return
 

@@ -27,8 +27,12 @@ First rule that applies wins:
 4. **Torn between two routes** — only when genuinely arguable, ask the user one question naming both candidates, your recommendation first.
 5. **Nothing to route** — ask what the user wants to work on, then triage that answer from rule 1.
 
+## Writing the artifact
+
+Every phase ends the same way: when every readback section stands approved, write the phase's artifact to its `.crank/<slug>/` path per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read that file before writing, and stop. Keep the artifact light: the phase file lists the sections, and each one earns its place or is left out.
+
 ## Phase gates
 
-Load one phase file at a time. Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue" — never auto-advance. A user returning later with a phase's artifact is triage rule 2.
+Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue" — never auto-advance. The hand-off is the phase file's next-step line, then a single trailing sentence noting the artifact can be copied elsewhere, printed inline, or deleted on request: prose, not a numbered question.
 
-Continuing keeps this conversation as the next phase's primary source, so recommend it while enough context window remains for the next phase to fit; deep in a long session, recommend a fresh session invoked with the artifact instead — each artifact is self-contained by design, so the file carries everything the next phase needs.
+Continuing keeps this conversation as the next phase's primary source, so recommend it while enough context window remains for the next phase to fit; deep in a long session, recommend a fresh session invoked with the artifact instead.

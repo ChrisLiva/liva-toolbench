@@ -1,6 +1,6 @@
 # Adversarial spec review brief
 
-Pass this brief verbatim to a heavy subagent, substituting the spec path.
+Substitute the spec path into `<path>` below.
 
 <brief>
 Read the spec at `<path>`.

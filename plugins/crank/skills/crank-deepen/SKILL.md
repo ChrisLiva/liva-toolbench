@@ -33,16 +33,16 @@ Create a task for each step below and mark each complete as you finish it, live,
 Scope before you scan. Deepening pays off by making future changes to a module easier, so weight the parts of the codebase that keep changing.
 
 - **The user's direction wins.** If they named a module, a subsystem, or a pain point, take it and skip the inference below.
-- **Otherwise infer from churn.** Walk back a good stretch of history with `git log --oneline` and find the hot spots — the files and areas that keep coming up — and let those paths pull your attention first. If the changes are scattered with no clear hot spot, widen the net.
+- **Otherwise infer from churn.** Walk back a good stretch of history with `git log --name-only` and find the hot spots — the files and areas that keep coming up — and let those paths pull your attention first. If the changes are scattered with no clear hot spot, widen the net.
 
 Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you're about to scan — commonly `docs/adr/`. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate.
 
 Then do the explorer arithmetic — how many explorers, and what each one owns:
 
 - **One territory per hot spot: 2–4 explorers, hard cap 4.** Carve the scope into territories along the hot spots, one explorer each, and name them so no two overlap. Four is the ceiling however many hot spots you found — fold the weakest into the neighbouring territory rather than adding a fifth.
-- **No clear hot spots?** Split by code structure instead — top-level directories, subsystems, layers — same 2–4 count. Churn is the better carve when it exists; structure is the fallback when history is too scattered to point anywhere.
+- **No clear hot spots?** Split by code structure instead — top-level directories, subsystems, layers — same 2–4 count.
 - **A small repo gets 1.** A scope one explorer can read end to end isn't worth splitting; splitting it just buys duplicate reading.
-- **Explicit user direction gets 1.** The user already carved the territory. Send one explorer at what they named.
+- **Explicit user direction gets 1.** Send one explorer at what they named.
 
 Completion criterion: the scope is fixed, and the explorer count and each explorer's territory are named — from the history and the tree, not from a guess.
 
@@ -82,7 +82,7 @@ Synthesis happens **here, on this thread** — each explorer saw one territory; 
 
 Dedupe and rank the returns yourself: merge overlapping candidates into the strongest version of the same idea, drop anything you can't back with a `file:line`, and keep the **3–6** the evidence actually supports, strongest first. Then pick the one you'd tackle first and say why in a sentence — that's the report's top recommendation.
 
-Read [VOCABULARY.md](VOCABULARY.md) before you write a card, and hold the References → Vocabulary rules: architecture nouns from the glossary, domain nouns from the target repo's `CONTEXT.md`.
+Read [VOCABULARY.md](VOCABULARY.md) before you write a card: architecture nouns from the glossary, domain nouns from the target repo's `CONTEXT.md` (the never-substitute table is at References → Vocabulary).
 
 Render the report per [HTML-REPORT.md](HTML-REPORT.md) — read that file here — as a single self-contained HTML file in the OS temp dir: `${TMPDIR:-/tmp}/deepen-report-<timestamp>.html`, a fresh file per run so an earlier report is never overwritten. Nothing lands in the repo.
 
@@ -109,7 +109,7 @@ Two side effects land on the target repo during the grill. Offer each inline as 
 - **New or sharpened terms go to `CONTEXT.md`.** When the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term, offer to write it into the target's `CONTEXT.md` right then. Create the file lazily if it doesn't exist.
 - **A rejected recommendation earns an ADR** — only when the user rejects a load-bearing recommendation for a reason a future scan would need in order not to re-suggest it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 
-**Design it twice — offer, never auto-run.** When the deepened module's **interface** turns out to be the contested node of the grill — the shape keeps moving, or two framings each look defensible — offer to settle it by building both: dispatch **2–3 heavy**-tier subagents in parallel (References → Subagents), each briefed to propose a *radically different* interface for that one module, not three shades of the same idea. Compare the returns in glossary terms — which is **deeper** (more behavior behind a smaller interface), which buys more **leverage** at the call sites, which concentrates **locality** — and put the comparison to the user, who picks one, asks for a hybrid, or declines. Never launch it unasked: it's a detour the user chooses, and the grill continues without it just fine.
+**Design it twice — offer, never auto-run.** When the deepened module's **interface** turns out to be the contested node of the grill — the shape keeps moving, or two framings each look defensible — offer to settle it by building both: dispatch **2–3 heavy**-tier subagents in parallel (References → Subagents), each briefed to propose a *radically different* interface for that one module, not three shades of the same idea. Compare the returns in glossary terms — which is **deeper**, which buys more **leverage** at the call sites, which concentrates **locality** — and put the comparison to the user, who picks one, asks for a hybrid, or declines.
 
 Completion criterion: the frontier is empty — every agenda branch visited, both side effects either done or explicitly declined, and nothing about the chosen deepening left silently assumed.
 
@@ -121,12 +121,12 @@ Sections, omitting any that didn't earn its place:
 
 - **Idea / Problem** — the friction in the user's words, with the evidence `file:line`.
 - **Approach** — the chosen deepening and why it won, in **leverage** and **locality** terms.
-- **Shape** — the before/after as an ASCII diagram (see below), amended for whatever the grill changed, alongside the settled interface pseudo-code; signatures belong here, because the grill settled them.
+- **Shape** — the before/after as an ASCII diagram (see below), amended for whatever the grill changed, alongside the settled interface pseudo-code.
 - **Key decisions** — the consequential calls, one line of why each, including where the seam lands and which tests survive.
 - **Open questions** — questions for the spec to answer, admitted only when you can state each one precisely now. Anything you can't phrase that sharply is a design hole — resolve it in the grill instead.
 - **Out of scope** — the candidates that lost and one line each on why, plus pointers to any ADR this run wrote or left standing.
 
-**Translate the chosen card's diagram into ASCII.** The card's before/after lives in the HTML report, and the report is presentation only (Hard Rules) — the brief has to carry the picture on its own, in plain characters a fresh session can read. Don't transcribe the markup; redraw what the diagram *argued*. Whatever it made obvious at a glance has to survive the translation: the thin shallow pieces against the one thick deep module, where the seam falls, what leaks across it. Boxes, arrows, and a label or two are enough — if it needs a paragraph to be understood, redraw it.
+**Translate the chosen card's diagram into ASCII.** Don't transcribe the markup; redraw what the diagram *argued*, in plain characters a fresh session can read: the thin shallow pieces against the one thick deep module, where the seam falls, what leaks across it. Boxes, arrows, and a label or two are enough — if it needs a paragraph to be understood, redraw it.
 
 A worked translation:
 
@@ -143,7 +143,7 @@ before                                after
 
 **No acceptance criteria** — those belong to the spec phase.
 
-End by recommending the next step: `/crank spec .crank/<slug>/deepen-brief.md`. A brainstorm brief is exactly what that route consumes, and the brief is self-contained, so a fresh session works as well as this one.
+End by recommending the next step: `/crank spec .crank/<slug>/deepen-brief.md`.
 
 Completion criterion: the brief file exists with every section that earned its place, its path is stated once, and the spec route is recommended — the next phase is the user's to start, never yours.
 
@@ -155,7 +155,7 @@ This skill spawns subagents at two tiers — resolve each to your harness per [S
 
 ### Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md) — read it before you write a card. This skill leans on **module**, **interface**, **implementation**, **depth** (**deep** / **shallow**), the **deletion test**, **seam**, **port / adapter**, and depth's two payoffs, **leverage** and **locality**. Use these words, with these meanings, exactly.
+[VOCABULARY.md](VOCABULARY.md) — read it before you write a card. This skill leans on **module**, **interface**, **implementation**, **depth** (**deep** / **shallow**), the **deletion test**, **seam**, **port / adapter**, and depth's two payoffs, **leverage** and **locality**. Use these words, with these meanings, exactly.
 
 Near-synonyms blur the distinction each word carries. Never substitute:
 

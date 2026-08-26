@@ -198,13 +198,13 @@ over the others, and verify before committing (no output = in sync):
 
 ```bash
 for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK,ARTIFACT-HOME}.md \
-         plugins/crank-lite/skills/*/ARTIFACT-HOME.md; do
+         plugins/crank-lite/skills/*/{VOCABULARY,READBACK,ARTIFACT-HOME}.md; do
   diff -q "plugins/crank/skills/crank/$(basename "$f")" "$f"
 done
-diff -q plugins/crank/skills/crank/VOCABULARY.md plugins/crank-lite/skills/lite-deepen/VOCABULARY.md
-diff -q plugins/crank/skills/crank/VOCABULARY.md plugins/crank-lite/skills/lite-review/VOCABULARY.md
 diff -q plugins/crank-lite/skills/crank-lite/INTERVIEW.md plugins/crank-lite/skills/lite-deepen/INTERVIEW.md
 ```
+
+The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, `crank-review`) paraphrase `VOCABULARY.md`'s terms per phase (over a spec, a plan, a diff); they are not copies of one rubric. When editing a brief, align its meaning with the definition in `VOCABULARY.md`, not its wording, and don't flatten a per-phase qualifier into a generic copy.
 
 ---
 
