@@ -3,7 +3,7 @@
 Pass this brief verbatim to a heavy subagent, substituting the plan path and spec path. If the spec exists only in the conversation, drop the spec-path sentence and paste the spec's behavior list or acceptance criteria into the brief instead.
 
 <brief>
-Read the plan at `<plan-path>` and the spec at `<spec-path>`. You will execute this plan tomorrow with no further design conversation.
+Read the plan at `<plan-path>` and the spec at `<spec-path>`. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
 
 Flag every instance of:
 
@@ -25,6 +25,8 @@ Flag every instance of:
 - **interface drift** — a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses.
 - **Global Constraints violations** — a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec.
 - **order problems** — a task imports what no earlier task built.
+- **layering** — a task adds an import that crosses layers the wrong way or closes a cycle; route it through the layer that owns the dependency.
+- **unpinned refactor** — a Refactor scope task reshapes a module with no characterization step before it, or a task's `Check:` names no exemplar to model after.
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 

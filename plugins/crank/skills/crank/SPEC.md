@@ -22,7 +22,7 @@ Treat each of these as a design problem to resolve in the spec, never a detail t
 - **A one-off boolean, nullable mode, or special-case branch threaded through an existing flow.** Re-frame the state model so the branch disappears, or route the behavior behind the module that owns the concept.
 - **Feature-specific logic landing in a shared path.** Move the ownership boundary so the feature becomes part of the module that owns the concept, instead of a check scattered through code that shouldn't know about it.
 - **A near-duplicate of something the codebase already has.** Reuse the canonical helper the grounding subagents reported; a bespoke twin is architectural drift.
-- **An interface that leans on optionality, casts, or silent fallbacks.** Make the invariant explicit instead — if a field is sometimes absent, the spec says when and why.
+- **Make impossible states unrepresentable.** An interface that leans on optionality, casts, or silent fallbacks hides an invariant; make it explicit instead — if a field is sometimes absent, the spec says when and why.
 
 Working code that makes the surrounding code harder to reason about is a spec bug, not an implementation detail.
 
@@ -31,7 +31,7 @@ Working code that makes the surrounding code harder to reason about is a spec bu
 Apply to any module that is **new** (the grounding subagents reported no analogous surface) **or named in the Refactor scope** (an existing module the spec intends to reshape). For a module that merely extends existing prior art and isn't in the Refactor scope, follow the established pattern and skip this lens. For an in-scope module, before you name the chosen design:
 
 - **Deletion test** (VOCABULARY.md). Run it on the module: one that fails folds into its caller — don't spec it as a module.
-- **Design it twice.** Sketch the module two ways under *different binding constraints* so they genuinely diverge — e.g. one *minimize the interface*: 1–3 entry points, max capability each; the other *maximize flexibility*: let the caller compose the behavior. Pick the **deeper** one. Record the chosen shape, one sentence on why it beat the alternative, and one sentence on what it gives up (the alternative's strongest property). A second sketch that's a near-twin of the first means the constraint wasn't binding — re-sketch it.
+- **Design it twice.** Sketch the module two ways under *different binding constraints* so they genuinely diverge — e.g. one *minimize the interface*: 1–3 entry points, max capability each; the other *maximize flexibility*: let the caller compose the behavior. Pick the **deeper** one. Record the chosen shape, one sentence on why it beat the alternative, and one sentence on what it gives up (the alternative's strongest property). A second sketch that's a near-twin of the first means the constraint wasn't binding — re-sketch it. When the two sketches are close on depth, pick the one with the cleaner verification story: its behavior provable by a test at the seam with fewer stand-ins. The executor succeeds at those.
 - **Seam & dependencies.** Classify each dependency the module crosses: **in-process** (no seam — test through the interface directly), **local-substitutable** (test stand-in like PGLite/in-memory FS — internal seam), **remote-but-owned** or **true-external** (define a port at the seam; production adapter + test adapter).
 
 <tradeoff>
@@ -69,6 +69,8 @@ Create a task for each step below and mark each complete as you finish it, live,
 
 ### 1. Ground in the codebase
 
+Read the repo's intent docs where they exist: `CONTEXT.md` (domain vocabulary the spec uses by name), ADRs (commonly `docs/adr/`, `docs/decisions/`), `DESIGN.md`, and the conventions section of `CLAUDE.md`/`AGENTS.md`. A tradeoff an ADR records is settled: Simplify first and the reviewer leave it alone. Code that has drifted from what an ADR says is an **Updates since spec** entry for the plan, since either the doc or the code is wrong.
+
 Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
 
 <brief>
@@ -81,12 +83,12 @@ Find one or two existing features that do something analogous and report:
 - one sentence on the convention you observed;
 - any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
 
-Don't propose a design — just surface what already exists. If no analogous surface exists, say so.
+Don't propose a design — just surface what already exists. If no analogous surface exists, say so. When the analogous features disagree on convention, report both and name the winner: the one the repo converged on most recently, per `git log` on those files.
 </brief>
 
 Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
 
-Completion criterion: every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — no layer unreported.
+Completion criterion: the intent docs are read or confirmed absent, and every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — no layer unreported.
 
 ### 2. Grill the technical decisions
 
@@ -96,13 +98,17 @@ Interview the user on each per [GRILLING.md](GRILLING.md) (read it here). This i
 
 Don't grill on detail the chosen idiom dictates — if grounding found the surface, follow it. Grill where the call is genuinely the user's: a trade-off between viable options, a constraint only they know, a priority that tips the design.
 
+When the user rejects a load-bearing recommendation for a reason a future spec would need in order not to re-propose it, offer to record it as an ADR in the repo; skip ephemeral reasons ("not now"). The `.crank/` artifacts are gitignored, so the ADR is the only place the rejection survives the effort.
+
 Before declaring the frontier empty, walk the **failure catalogue** — check each item has a settled answer or a question in the round:
 
 - **absence** — the stored resource is missing, deleted, or empty
 - **permission family** — which sibling failures get the same treatment (EPERM beside EACCES)
 - **staleness** — what events invalidate this state, and who refreshes it
 - **destruction** — what user-owned content the operation touches, and what it must preserve
-- **limits** — each threshold's value and check order
+- **limits** — each threshold's value and check order, including the unbounded collection that needs a page size
+- **interruption** — two callers at once, a retry after partial failure, a crash midway: what is idempotent, what is cleaned up, what is left half-written
+- **trust boundary** — who may call this entry point, what it validates before acting, and which object access checks ownership
 
 Each item lands as a grounded fact, a policy question in the round, or an acceptance criterion — *which* failures exist is a fact to enumerate (dispatch a subagent); only the policy call goes to the user, and the answer lands as an acceptance criterion so the plan's Coverage table forces a verify step for it.
 

@@ -40,7 +40,8 @@ Interfaces:
 - Consumes: `<signature or contract>`
 - Produces: `<signature or contract>`
 
-Check: <test-first | lightest-check | probe>
+Check: <test-first | lightest-check | probe>, model after `<path to the existing test or file grounding found>`
+Stop if: <the assumption this task rests on that grounding could not prove, or omit>
 
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
 - [ ] Behavior 2: <next behavior in tracer-bullet order — or a directive line for a mechanical change>

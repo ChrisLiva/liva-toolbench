@@ -4,11 +4,13 @@ Interview the user relentlessly at a PRD/Spec level about every aspect of their 
 
 ## Interview
 
-Resolve the key technical decisions: data structures, interfaces/seams, test methodology, validation strategies, and the general shape an implementation might take. When speccing existing codebases, proactively suggest refactors, simplifications, or new codebase designs that would improve the codebase as a whole and also accomplish the user's idea.
+Resolve the key technical decisions: data structures, interfaces/seams, test methodology, validation strategies, and the general shape an implementation might take.
+
+Before the first question, read `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md` where they exist; a tradeoff an ADR records is settled. For each new or reshaped module: imagine it deleted, and if its complexity just vanishes, fold it into its caller. Sketch it two ways under different constraints (smallest interface vs. most flexible), pick the one that hides more behind less, and when they tie, the one a test at its seam proves with fewer stand-ins. Where the analogous features disagree on convention, follow the one the repo converged on most recently. A one-off flag or special case threaded through a shared flow is a spec bug to reframe, not a detail for the plan. When the user rejects a load-bearing recommendation for a reason a future spec would need, offer to record it as an ADR in the repo.
 
 Settle the test methodology as a minimalist: every test the spec calls for pins a distinct observable behavior through a seam and would survive a rewrite of the implementation in another language; acceptance criteria that fall along one workflow share one end-to-end journey test that accretes their assertions, rather than a test per criterion.
 
-Before closing the interview, walk the failure catalogue — absence, permission siblings, staleness, destruction, limits — each item settled by a fact lookup, asked as a policy question, or landed as an acceptance criterion.
+Before closing the interview, walk the failure catalogue — absence, permission siblings, staleness, destruction, limits, interruption (concurrent callers, retry after partial failure, crash midway), trust boundary (who may call, what is validated, which access checks ownership) — each item settled by a fact lookup, asked as a policy question, or landed as an acceptance criterion.
 
 ## Spec
 
