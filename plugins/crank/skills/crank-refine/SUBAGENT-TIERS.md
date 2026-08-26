@@ -2,7 +2,7 @@
 
 The crank skills delegate to subagents at two capability tiers — **standard** (bulk work: codebase grounding, exploration, per-task review) and **heavy** (work that rewards the strongest reasoning: drafting, adversarial review, final cross-task review). The tiers describe *intent*, not fixed models.
 
-**Resolving a tier to a model:** check the user's own configuration first (e.g. `~/.claude/CLAUDE.md`, a user-level `AGENTS.md`, harness settings, machine-level agent defaults). A subagent model preference stated there is binding: map the tiers onto it, heavy = their strongest-reasoning choice, standard = their bulk-work choice, even when it names a weaker model than a fallback below (Terra only means heavy review runs on Terra). Read the fallbacks only when no such preference exists:
+**Resolving a tier to a model:** resolve once per run and reuse the mapping at every dispatch. Read the user instructions already loaded this session — user- and project-level `CLAUDE.md` / `AGENTS.md`. A subagent model preference stated there is binding: heavy = their strongest-reasoning choice, standard = their bulk-work choice, even when it names a weaker model than a fallback below (Terra only means heavy review runs on Terra). With no such preference stated, use your harness's fallback:
 
 - **Claude Code** — spawn via the `Agent` tool; fallback: standard → `model: sonnet`, heavy → `model: opus`. Omitting `model` is fine when inheriting the session model matches the user's preference. (A *typed* agent dispatched for its own role — e.g. `Explore` for read-only grounding — carries its own tier either way.)
 - **Codex** — spawn a subagent; fallback: standard → `gpt-5.6-terra` at `medium` effort (Terra-Medium), heavy → `gpt-5.6-sol` at `high` effort (Sol-High).

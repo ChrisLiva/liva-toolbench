@@ -11,8 +11,8 @@ Trust the fixer's verify evidence as the first review did: confirm the appended 
 
 Return, in order:
 
-1. **Finding verdicts** — for each finding in the findings file, in order: **<finding one-liner>** — `ADDRESSED` | `NOT ADDRESSED`, with file:line evidence. "Attempted" is not addressed: the specific defect must no longer exist in the diff. A defect removed by a different road than the finding suggested is still `ADDRESSED` — verdict the defect, not the suggestion.
-2. **New breakage** — a defect the fix itself introduced, bounded to the fix diff (plus the comparative exception above), with file:line. Hold it to the same bar as any reviewed diff — the quality checklist is `review-rubric.md` in this same directory if you need it. "None" if clean.
+1. **Finding verdicts** — for each finding under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings), in order: **<finding one-liner>** — `ADDRESSED` | `NOT ADDRESSED`, with file:line evidence. "Attempted" is not addressed: the specific defect must no longer exist in the diff. A defect removed by a different road than the finding suggested is still `ADDRESSED` — verdict the defect, not the suggestion.
+2. **New breakage** — a defect the fix itself introduced, bounded to the fix diff (plus the comparative exception above), with file:line. Hold it to the same bar as any reviewed diff: apply the code-quality checks in `review-rubric.md` (same directory), which also define the redundant-test, horizontal-slice, and depth checks named above. "None" if clean.
 3. **Out-of-scope observations** — issues noticed entirely outside the fix diff. Non-blocking, recorded exactly as an `APPROVED`'s Notes are recorded; they never extend this loop. "None" if none.
 4. **Round verdict** — `APPROVED` (every finding `ADDRESSED`, no new breakage) or `CHANGES_REQUESTED` listing only the still-open findings and new breakage.
 </re-review-rubric>

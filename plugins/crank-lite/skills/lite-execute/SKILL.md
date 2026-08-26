@@ -44,11 +44,11 @@ Every dispatch — implementer or reviewer — is a blocking call: from spawn to
 
 Track the run with tasks — one entry per plan task, created before work starts and flipped complete the moment the task lands. Every run gets this, solo included.
 
-Durable progress lives in the plan file, not the task list (which dies with the session). Before the first task, add a `## Progress` block at the top of the plan — one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` the moment that task's commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it.
+Durable progress lives in the plan file, not the task list (which dies with the session). Before the first task, add a `## Progress` block at the top of the plan — `Base: <HEAD SHA before the first task>`, then one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` once that task's check has passed and its commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it.
 
-Shared design language, defined once in [VOCABULARY.md](VOCABULARY.md), read before you implement: this skill leans on the **probe**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
+Shared design language, defined once in [VOCABULARY.md](VOCABULARY.md), read before you implement: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
-Run typechecking regularly, single test files regularly, and the full test suite once at the end. When a change has no test seam, validate it with a **probe** — a small throwaway script in the OS temp dir that asserts exact outputs and exits non-zero on failure; watch it go RED once, then treat its passing output as the verification evidence, and delete it before commit.
+Before flipping a task's box, run the check the plan names for that task — or the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** whose expected values come from a named **oracle**, and delete it before commit.
 
 Standing defect rules while implementing:
 
@@ -63,7 +63,7 @@ The plan's destination is frozen; the road is not. When a bug, stale detail (ren
 
 ## Review and commit
 
-Once done implementing the entire plan, spawn a heavy-tier subagent (see Subagent tiers) to adversarially review your work against the original plan. Address confirmed findings before committing.
+Once done implementing the entire plan, dispatch a heavy-tier reviewer (see Subagent tiers) to adversarially review the work against the plan, handing it pointers only — the plan path, the Progress block's `Base` SHA, and the diff command `git diff <Base>..HEAD` — never your characterization of the diff. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence, defaulting to `REFUTED` when the evidence is thin. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
 
 Before committing, inspect the worktree and stage only the files this plan's work changed. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
@@ -77,7 +77,7 @@ Record a concise retro to `.crank/<slug>/retro.md` per [ARTIFACT-HOME.md](ARTIFA
 
 ## Subagent tiers
 
-A subagent model preference in the user's own configuration (e.g. a user-level `AGENTS.md`/`CLAUDE.md`, harness settings, machine-level agent defaults) is binding: map the tiers onto it, even when it names a weaker model than a fallback below. The fallbacks apply only when no such preference exists:
+Resolve the tiers once per run and reuse the mapping. A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tiers onto it, even when it names a weaker model than a fallback below. With no such preference stated, use your harness's fallback:
 
 <subagent-tiers>
 - **standard** (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`

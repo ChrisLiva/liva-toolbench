@@ -1,6 +1,6 @@
 # Phase: Spec
 
-Interview the user relentlessly at a PRD/Spec level about every aspect of their idea until you reach a shared understanding of the user-facing behavior, acceptance criteria, key technical decisions, and validation strategy. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
+Interview the user relentlessly at a PRD/Spec level about every aspect of their idea — the user-facing behavior, acceptance criteria, key technical decisions, and validation strategy — until the frontier is empty. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
 
 ## Interview
 

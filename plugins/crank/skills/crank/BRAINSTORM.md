@@ -72,7 +72,7 @@ The high-level design brief, written to the `.crank/` file (see Hard Rules). Inc
 
 Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. **Bias toward delegating** wide reads to a standard subagent (see References → Subagents) so its window — not yours — holds the source. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches.
 
-Completion criterion: you can name the surfaces the idea touches and the established patterns it should follow — from exploration, not assumption.
+Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption.
 
 ### 2. Name the destination
 
@@ -106,7 +106,7 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, section by section per **Deliverables**, reading the material back before it lands per [READBACK.md](READBACK.md) (read it here). When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
+Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
 Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
 

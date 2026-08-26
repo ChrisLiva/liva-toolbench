@@ -1,6 +1,6 @@
 # Phase: Brainstorm
 
-Interview the user at a high level about every aspect of their idea until you reach a shared understanding of the problem, desired experience, important constraints, and the concept's overall shape. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
+Interview the user at a high level about every aspect of their idea — the problem, desired experience, important constraints, and the concept's overall shape — until the agenda and the frontier are both empty. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
 
 ## Interview
 

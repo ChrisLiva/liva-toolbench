@@ -6,7 +6,7 @@ Turn the spec into tasks the **executor** can build with no further design conve
 
 ## Hard Rules
 
-- If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation.
+- If triage handed you a spec path (from the skill's arguments or an earlier phase), read the spec from there; otherwise use the spec already in the conversation. With no spec at all — a settled change routed straight to plan — write the acceptance criteria yourself from the user's ask before grounding, read them back at step 4, and treat that list as the spec everywhere below (Coverage, the review brief, Updates since spec).
 - **Write the plan to `.crank/<slug>/plan.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 - **Oracles, not placeholders.** A step may omit code; it never omits proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 

@@ -1,6 +1,6 @@
 # Phase: Plan
 
-Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD until you reach a shared understanding of the build strategy, code boundaries, risks, and verification approach. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
+Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD — the build strategy, code boundaries, risks, and verification approach — until the frontier is empty. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
 
 ## Interview
 

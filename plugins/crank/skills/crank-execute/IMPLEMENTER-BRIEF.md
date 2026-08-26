@@ -38,7 +38,7 @@ Run base: <base SHA from the progress ledger>
 
 ## `task-<N>-brief.md`
 
-Write one file per dispatched task. The implementer reads this and `orientation.md`; do not paste the full task into chat.
+Write one file per dispatched task. The implementer reads this and `orientation.md`; do not paste the full task into chat. Fill every `<…>` slot; the Files block sentence and the Constraints, TDD, and Return sections are fixed text — copy them byte-for-byte, never summarized or trimmed for the task at hand. Completion criterion: the written brief has no unfilled `<…>` and its fixed sections diff clean against this template.
 
 ```md
 # Task <N>: <title>
@@ -89,7 +89,7 @@ Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 - Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command; for a multi-behavior task, one cycle per behavior as tracer bullets: test A -> impl A -> test B -> impl B.
 - A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test.
 - A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow.
-- The brief's behavior lines are the test list — write those tests, no more. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
+- The `- [ ] Behavior N:` lines quoted in Task text are the test list — one RED→GREEN cycle per numbered behavior, and no test outside the list. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
 
 ## Return
 
@@ -118,11 +118,7 @@ Commits:
 
 ## TDD evidence
 
-Behavior 1: <name>
-- RED: `<command>` -> <output proving the expected failure>
-- GREEN: `<command>` -> <passing output>
-
-Behavior 2: <name, omit if none>
+Behavior <N>: <name> — one block per behavior line in the brief's Task text
 - RED: `<command>` -> <output proving the expected failure>
 - GREEN: `<command>` -> <passing output>
 

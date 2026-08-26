@@ -22,7 +22,7 @@ Execution is not a route: when a plan is done, recommend the user run `/lite-exe
 First rule that applies wins:
 
 1. **Explicit route argument** (`brainstorm`, `spec`, `plan`) — take it, no second-guessing.
-2. **Pipeline artifact given** — route to the *next* phase: a brainstorm brief → `spec`; a spec → `plan`. Classify by content and structure, not filename. A finished plan → recommend `/lite-execute`.
+2. **Pipeline artifact given** — route to the *next* phase, classifying by content, not filename: approach and shape sketched (a brainstorm brief) → `spec`; acceptance criteria (a spec) → `plan`; ordered, committable tasks (a plan) → recommend `/lite-execute`.
 3. **Infer from the ask** — judge how settled the work is (the "Right when" column), then announce the route with a one-line rationale and immediately run it. No confirmation stop; a misroute surfaces in the phase's first question.
 4. **Torn between two routes** — only when genuinely arguable, ask the user one question naming both candidates, your recommendation first.
 5. **Nothing to route** — ask what the user wants to work on, then triage that answer from rule 1.

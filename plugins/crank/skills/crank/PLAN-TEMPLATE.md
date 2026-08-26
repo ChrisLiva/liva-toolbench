@@ -1,6 +1,6 @@
 # Plan markdown skeleton
 
-Use this as the starting shape for the temp-file plan. Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `PLAN.md`. A behavior carries pseudo-code or embedded code beneath its line only where the ladder in Guidelines → Prose, pseudo-code, or embedded code says so — embedded code with its evidence line.
+Use this as the starting shape for the plan at its `.crank/` path (see ARTIFACT-HOME.md). Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `PLAN.md`. A behavior carries pseudo-code or embedded code beneath its line only where the ladder in Guidelines → Prose, pseudo-code, or embedded code says so — embedded code with its evidence line.
 
 ```markdown
 # <Plan title>

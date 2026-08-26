@@ -1,6 +1,6 @@
 # Spec markdown skeleton
 
-Use this as the starting shape for the temp-file spec. Keep only sections that earn their place for the topic, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `SPEC.md`.
+Use this as the starting shape for the spec at its `.crank/` path (see ARTIFACT-HOME.md). Keep only sections that earn their place for the topic, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `SPEC.md`.
 
 ```markdown
 # <Spec title>
