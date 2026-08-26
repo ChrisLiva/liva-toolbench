@@ -18,6 +18,6 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Spec
 
-The spec goes to `.crank/<slug>/spec.md`. Its sections: the problem, proposed solution, acceptance criteria, key technical decisions, testing/validation, out of scope, and open questions.
+The spec goes to `.crank/<slug>/spec.md`. Its sections: the problem, proposed solution, acceptance criteria, key technical decisions, testing/validation, and out of scope. Every decision in it carries its answer: one the interview left unanswered is settled now by a targeted question or a lookup, or moves to out of scope with a sentence on why.
 
 Next step: continue to the plan phase ([PLAN.md](PLAN.md)) in this session, or in a fresh one: `/crank-lite plan .crank/<slug>/spec.md`.
