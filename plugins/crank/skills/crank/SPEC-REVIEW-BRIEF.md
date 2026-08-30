@@ -20,7 +20,12 @@ Flag every instance of the following, taking as settled any decision the spec re
 - **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved; resolve it or move it to **Out of scope**.
 - **missing technical detail** — a decision named with no chosen option, an interface named with no signature, a data shape referenced with no fields, or a layer touched with no `file:line` prior art.
 
-Then edit **the spec file at `<path>`** in place to fix every item you flagged — that spec file is the only artifact you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file.
+Then fix every item you flagged in **the spec file at `<path>`** — that spec file and the finding list below are the only artifacts you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file.
 
-End your reply with a one-line summary of what changed.
+Fix in **two passes**:
+
+1. **Collect.** Finish flagging the whole spec before you edit anything, and write the findings to `spec-review-findings.md` beside the spec — one line each: the section it lands in, the flag it trips, the edit it takes.
+2. **Apply.** Walk that list section by section, landing **one edit per section** with every finding for that section carried in it. Never rewrite the spec file wholesale: a whole-file write drops content you never read back.
+
+Done when every item on your finding list is edited into the spec file at no more than one edit per section. End your reply with a one-line summary of what changed.
 </brief>

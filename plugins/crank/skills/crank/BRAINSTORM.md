@@ -99,6 +99,8 @@ Report:
 - one or two existing features that do something analogous, and the convention each follows (`file:line`);
 - any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (`file:line`).
 
+Keep each item you report — one surface, one analogous feature, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long.
+
 Don't propose a design — just surface what already exists and what's true. If the claim I'm checking is wrong, say so plainly.
 </brief>
 

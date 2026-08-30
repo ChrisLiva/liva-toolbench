@@ -32,6 +32,8 @@ Tests follow the same ladder: state the test *cases* — the oracle's exact inpu
 
 ## References
 
+Read both files this section names — [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and [VOCABULARY.md](VOCABULARY.md) — together in one turn, before step 1.
+
 ### Subagents
 
 This phase dispatches **standard** subagents for what the codebase can answer — an exact signature, prior art for a pattern, whether a spec claim still holds. The adversarial review is its only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
@@ -48,12 +50,14 @@ Report:
 - any drift from what the spec claims about these files — what the spec says, what the code says;
 - the exact output of each gate command you were asked to run, verbatim, and whether it exited 0.
 
+Keep each item you report — one symbol, one exemplar, one drift note — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. Exact signatures and gate output are the answer: reproduce those in full, however long.
+
 Don't propose a design or write tasks. If something named doesn't exist, say so plainly rather than naming the nearest match as if it were the thing.
 </brief>
 
 ### Vocabulary
 
-[VOCABULARY.md](VOCABULARY.md) — read both **Design language** and **Verification language** before step 3. This phase leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test**.
+[VOCABULARY.md](VOCABULARY.md) — both **Design language** and **Verification language**. This phase leans on the **oracle**, the **deletion test**, **seam**, **dead seam**, the **probe**, **spaghetti growth**, the **tracer bullet** (**vertical slice**), the **implementation-detail test**, the **rewrite test**, the **journey test**, and the **redundant test**.
 
 ## Deliverables
 
@@ -132,7 +136,8 @@ Route reuse by name: if grounding (or the spec) surfaced an existing utility, th
 - every behavior the spec lists lands in a task's behavior line or verify, proved by walking the spec to build the **Coverage table** — that walk *is* how you check yourself;
 - every `Verify:` names an exact command and its exact success reading;
 - every test-driven behavior names the production seam it drives;
-- every reuse the grounding surfaced is named in the task that needs it.
+- every reuse the grounding surfaced is named in the task that needs it;
+- the finished file's counts read back clean — `tasks: <N> / coverage rows: <N> / placeholders: <N> / criteria <first>..<last>` — one Coverage row per acceptance criterion and zero placeholders. Count them with a command over the file and state the line; counting by eye is what lets a criterion go missing.
 
 A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 

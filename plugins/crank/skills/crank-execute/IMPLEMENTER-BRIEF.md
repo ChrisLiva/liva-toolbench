@@ -33,7 +33,7 @@ Run base: <base SHA from the progress ledger>
 
 ## Run boundaries
 
-- Read this file and your task brief. Open the plan only for a section your brief names by heading.
+- Read this file and your task brief. Open the plan only at the section your brief names by heading, and read no other part of it.
 ```
 
 ## `implementer-rules.md`
@@ -45,7 +45,7 @@ Copy this block into the brief directory once per run, verbatim — every task b
 
 - Do not push, amend earlier commits, or rewrite history.
 - Return only when every command you started has finished. Run long verifications synchronously and read their output in the same turn you report it — work parked behind a background watcher at return time is work not done.
-- The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Deviations. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute; a detour needing files outside the block returns `NEEDS_CONTEXT` first. A `Stop if:` condition in the task text, once observed, is a `BLOCKED` return naming what you observed, never something to work around.
+- The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Deviations. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute; a detour needing files outside the block returns `NEEDS_CONTEXT` first. A `Stop if:` condition in your task's plan section, once observed, is a `BLOCKED` return naming what you observed, never something to work around.
 - Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, note that in the report's Concerns so the reviewer knows the codebase was searched.
 - Before reaching for a new third-party dependency, exhaust the lighter options in order: an existing in-repo helper, the stdlib, a native platform feature, then a dependency already in the manifest. Don't add a dependency for what a few lines do; if the task genuinely needs one the plan didn't name, return `NEEDS_CONTEXT` instead of importing it silently.
 - A probe step (a throwaway deterministic check the plan embeds) runs from the OS temp dir, never the working tree: watch it fail once, run it green, paste its output into the report's Verification, and delete it — `git status` shows no probe artifact at commit time.
@@ -60,12 +60,12 @@ Copy this block into the brief directory once per run, verbatim — every task b
 - Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command; for a multi-behavior task, one cycle per behavior as tracer bullets: test A -> impl A -> test B -> impl B.
 - A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test.
 - A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow.
-- The `- [ ] Behavior N:` lines quoted in Task text are the test list — one RED→GREEN cycle per numbered behavior, and no test outside the list. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
+- The `- [ ] Behavior N:` lines in your brief's **Behaviors** list are the test list — one RED→GREEN cycle per numbered behavior, and no test outside the list. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
 ```
 
 ## `task-<N>-brief.md`
 
-Write one file per dispatched task; the implementer reads this file and `orientation.md`. Fill every `<…>` slot; the Files block sentence and the Return section are fixed text — copy them byte-for-byte, never summarized or trimmed for the task at hand. Completion criterion: the written brief has no unfilled `<…>` and its fixed sections diff clean against this template.
+Write one file per dispatched task; the implementer reads this file, `orientation.md`, and the one plan section the Task block names. That block is a pointer plus the task's behavior lines — never the task's steps pasted in. Fill every `<…>` slot; the Files block sentence and the Return section are fixed text — copy them byte-for-byte, never summarized or trimmed for the task at hand. Completion criterion: the written brief has no unfilled `<…>` and its fixed sections diff clean against this template.
 
 ```md
 # Task <N>: <title>
@@ -75,9 +75,14 @@ BASE: <HEAD SHA before this task starts>
 Orientation: <path to orientation.md>
 Report path: <path to task-<N>-report.md>
 
-## Task text
+## Task
 
-<quote the plan task verbatim>
+Plan: <plan path>, section `### Task <N> — <title>`. Read that one section for your steps, its `Check:` line, and its `Stop if:` line — and nothing else from the plan.
+
+Behaviors — your test list, each line copied verbatim from that section:
+
+- [ ] Behavior 1: <the plan's behavior line>
+- [ ] Behavior 2: <…>
 
 ## Interfaces
 
@@ -167,7 +172,7 @@ Commits:
 
 ## TDD evidence
 
-Behavior <N>: <name> — one block per behavior line in the brief's Task text
+Behavior <N>: <name> — one block per behavior line in the brief's Behaviors list
 - RED: `<command>` -> <output proving the expected failure>
 - GREEN: `<command>` -> <passing output>
 

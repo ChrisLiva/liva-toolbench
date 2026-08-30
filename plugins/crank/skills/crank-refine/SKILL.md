@@ -43,7 +43,7 @@ The same artifact, sharpened: every in-bounds ambiguity resolved, every conseque
 
 ## Flow
 
-Create a task for each step below and mark each complete as you finish it, live, so the user can watch progress.
+Track progress with live tasks the user can watch, capped at milestones: one task per step below that settles or produces something the user sees, not one per sub-step, and flip each the moment it lands rather than in a batch at the end. Send each flip in the same turn as the work beside it, and on its own only before a question or the hand-off.
 
 ### 1. Identify the artifact and its phase
 

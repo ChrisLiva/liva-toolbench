@@ -28,13 +28,15 @@ Working code that makes the surrounding code harder to reason about is a spec bu
 
 ## References
 
+Read both files this section names — [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and [VOCABULARY.md](VOCABULARY.md) — together in one turn, before step 1.
+
 ### Subagents
 
 This phase dispatches **standard** subagents for what the codebase can answer — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true. The adversarial review is its only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
 
 ### Vocabulary
 
-[VOCABULARY.md](VOCABULARY.md) — read it before you draft. This phase leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **dead seam**, **port** / **adapter**, **spaghetti growth**, the **probe**, the **implementation-detail test**, the **rewrite test**, and the **journey test**.
+[VOCABULARY.md](VOCABULARY.md). This phase leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **dead seam**, **port** / **adapter**, **spaghetti growth**, the **probe**, the **implementation-detail test**, the **rewrite test**, and the **journey test**.
 
 ## Deliverables
 
@@ -68,6 +70,8 @@ Find one or two existing features that do something analogous and report:
 - the `file:line` of that surface;
 - one sentence on the convention you observed;
 - any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
+
+Keep each item you report — one surface, one convention note, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long.
 
 Don't propose a design — just surface what already exists. If no analogous surface exists, say so. When the analogous features disagree on convention, report both and name the winner: the one the repo converged on most recently, per `git log` on those files.
 </brief>

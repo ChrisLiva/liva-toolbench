@@ -7,9 +7,9 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 
 - **underspecified steps** — a behavior missing its oracle (exact input → expected output), an interface missing a concrete signature: not concrete enough to build from without a design conversation.
 - **unsurveyed embedded code** — an embedded block with no evidence line naming what verified it (a probe run, a read of the live file, a doc check); verify it against the codebase yourself and fix it, or rewrite the behavior as prose-with-contract or pseudo-code.
-- **coverage holes** — criteria from your walk missing from the plan's Coverage table, rows whose verify step doesn't exercise the behavior, empty verify cells with no stated reason.
+- **coverage holes** — a behavior from your walk that no Coverage row proves, a row whose verify step doesn't exercise the behavior, an empty verify cell whose stated reason doesn't hold.
 - **name / type / path inconsistencies** — across tasks or against the codebase.
-- **placeholder language** — `TODO` / `TBD` / `similar to Task N` / "add appropriate handling" / vague instructional prose / undefined symbols.
+- **placeholder language** — `similar to Task N` / "add appropriate handling" / vague instructional prose / a symbol no task defines.
 - **dead-seam verify steps** — a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent.
 - **unverifiable verify steps** — a verify step missing its exact command, or whose success can't be read from an exit code or exact output ("looks right", "renders correctly") outside the plan's human-only smoke rows; also a probe step missing its oracle, its exact expected output, or its deletion before commit. Rewrite it as a deterministic check.
 - **horizontal slicing** — a multi-behavior task whose steps batch every test before any implementation instead of landing one behavior at a time; reorder into vertical slices.
@@ -28,7 +28,12 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
-Take the spec's decisions as settled. Then edit **the plan file at `<plan-path>`** in place to fix every item you flagged — it is the only file you write to. Read the spec and grep the codebase to inform those edits. A flagged duplication, inconsistency, or dead seam gets rewritten *in the plan step that describes it*.
+Take the spec's decisions as settled. Then fix every item you flagged in **the plan file at `<plan-path>`** — that plan file and the finding list below are the only files you write to. Read the spec and grep the codebase to inform those edits. A flagged duplication, inconsistency, or dead seam gets rewritten *in the plan step that describes it*.
 
-Done when every task block in the plan has been read against all of the flags above, every acceptance criterion has a checked Coverage row, and every item you flagged is edited into the plan file. End your reply with a one-line summary of what changed.
+Fix in **two passes**:
+
+1. **Collect.** Finish flagging the entire plan before you edit anything, and write the findings to `plan-review-findings.md` beside the plan — one line each: the task block it lands in, the flag it trips, the edit it takes.
+2. **Apply.** Walk that list task block by task block, landing **one edit per task block** with every finding for that block carried in it. Never rewrite the plan file wholesale: a whole-file write over a 70KB plan drops content you never read back.
+
+Done when every task block in the plan has been read against all of the flags above, every Coverage row has been judged against the behavior it claims to prove, and every item on your finding list is edited into the plan file at no more than one edit per task block. End your reply with a one-line summary of what changed.
 </brief>
