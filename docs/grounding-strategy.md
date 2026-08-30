@@ -1,7 +1,9 @@
 # Grounding carry strategy for crank and crank-lite
 
-Status: v1 implemented 2026-08-30 (crank 9.22.0, crank-lite 1.17.0); v2 gated on the
-rollout measurements below. This doc records the recommended design for carrying
+Status: v1 implemented 2026-08-30 (crank 9.22.0, crank-lite 1.17.0); v2 implemented
+2026-08-30 on user go-ahead, ahead of the rollout measurements below (crank 9.23.0;
+crank-lite untouched — every v2 item lives in crank). This doc records the recommended
+design for carrying
 grounded facts across pipeline phases so later phases stop re-deriving what earlier phases
 already established. It was produced from a full map of both skill trees plus adversarial
 critique of five candidate designs; the settled choices below each note what they ruled out.
@@ -244,12 +246,14 @@ regardless; revisit only via the evidence-line idiom with eval proof.
 - [x] INTERVIEW.md capture sentence (crank-lite/ canonical, lite-deepen/ copy).
 - [x] Phase-file clauses (v1): crank BRAINSTORM/SPEC/PLAN; crank-execute SKILL, pre-flight
       row and orientation seeding; lite BRAINSTORM/SPEC/PLAN/lite-deepen/lite-execute.
-- [ ] Phase-file clauses (v2): crank-execute detour writeback; GRILLING; crank-deepen
+- [x] Phase-file clauses (v2): crank-execute detour writeback; GRILLING; crank-deepen
       SKILL (Flow 5 banking); crank-refine SKILL + DISPATCH-BRIEFS.
 - [x] Contract amendments 1-3 above, same commit.
 - [x] Completion-criterion clauses (banking) per phase touched.
 - [x] Version bumps: six strings across the two plugins, one commit (crank 9.22.0,
       crank-lite 1.17.0); re-run `codex plugin add` for both after merging.
+- [x] v2 version bump: three strings in crank, one commit (crank 9.23.0); re-run
+      `codex plugin add crank@liva-toolbench` after merging.
 
 ## Example entries
 

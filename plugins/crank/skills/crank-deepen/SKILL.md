@@ -143,9 +143,11 @@ before                                after
 
 **No acceptance criteria** — those belong to the spec phase.
 
+With the brief written, bank the chosen candidate's facts to `.crank/<slug>/grounding.md` beside it ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding): the explorer's `file:line` evidence, the dependency crossings the grill mapped, and the surviving-tests inventory — each a citation the spec phase confirms instead of re-exploring covered ground.
+
 End by recommending the next step: `/crank spec .crank/<slug>/deepen-brief.md`.
 
-Completion criterion: the brief file exists with every section that earned its place, its path is stated once, and the spec route is recommended — the next phase is the user's to start, never yours.
+Completion criterion: the brief file exists with every section that earned its place, its path is stated once, the chosen candidate's facts are banked to the effort's grounding file, and the spec route is recommended — the next phase is the user's to start, never yours.
 
 ## References
 

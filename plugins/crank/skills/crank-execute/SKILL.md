@@ -74,7 +74,7 @@ Base: <the HEAD SHA when the run started>
 - [ ] Task 2: <subject>
 ```
 
-Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and review verdict — `- [x] Task 1: <subject> — <sha> — APPROVED`. A task that took a detour appends it too — `— detour: <one line>` — so the retro's Deviations survive compaction. On resume, an `[x]` line means done: confirm it against `git log` and skip it. The ledger applies in every execution shape, solo included — compaction can strike a solo run too.
+Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and review verdict — `- [x] Task 1: <subject> — <sha> — APPROVED`. A task that took a detour appends it too — `— detour: <one line>` — so the retro's Deviations survive compaction; the corrected fact behind it (the renamed symbol's current name, the moved file's current path) lands as a grounding entry in `.crank/<slug>/grounding.md` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), so a resumed run or a later dispatch reads the current fact instead of re-hitting the stale one. On resume, an `[x]` line means done: confirm it against `git log` and skip it. The ledger applies in every execution shape, solo included — compaction can strike a solo run too.
 
 ### Retro
 

@@ -2,6 +2,12 @@
 
 Fill-in templates for the three research jobs in `crank-refine` (see SKILL.md → Subagents & research). Read this file when you're about to brief a research subagent at Flow step 3; pick the brief that matches the job and fill the `<…>` slots.
 
+When the effort's grounding file covers the item ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), append a **previously established** line to the filled brief:
+
+> Previously established: `<fact>` at `<evidence>` — verify it still holds; report drift plainly.
+
+A point entry makes the dispatch a delta check at the citation; a survey entry (canonical helper, convention winner, any absence) still gets its search, narrowed to the recorded scope.
+
 ## Explore the codebase
 
 > Explore `<area or claim>` in this codebase. We're refining a `<brainstorm/spec/plan>` for `<one-sentence summary>`.

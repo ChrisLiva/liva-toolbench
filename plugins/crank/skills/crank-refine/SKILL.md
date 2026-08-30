@@ -59,9 +59,9 @@ Completion criterion: every consequential decision the phase owns is either alre
 
 ### 3. Research the agenda
 
-Before grilling, ground the agenda. For each item a fact could inform — a library choice, a version assumption, an API the artifact leans on, a pattern the codebase may already have — dispatch the matching subagent, filling its brief from [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md) (read that file here, before you dispatch). Send independent investigations together rather than one after another.
+Before grilling, ground the agenda. Read the effort's `.crank/<slug>/grounding.md` first, where it exists ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) — a non-pipeline input (a pasted artifact, a temp file) has none and skips this read. For each item a fact could inform — a library choice, a version assumption, an API the artifact leans on, a pattern the codebase may already have — dispatch the matching subagent, filling its brief from [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md) (read that file here, before you dispatch); an entry covering an item fills the brief's **previously established** line, so the dispatch delta-checks at the cited evidence instead of deriving from zero. Send independent investigations together rather than one after another, and bank returns that carry a `file:line` or a command's output to the grounding file, where one exists.
 
-Completion criterion: every agenda item a fact could settle has its fact in hand.
+Completion criterion: every agenda item a fact could settle has its fact in hand, and returns carrying evidence are banked where the effort has a grounding file.
 
 ### 4. Grill
 
