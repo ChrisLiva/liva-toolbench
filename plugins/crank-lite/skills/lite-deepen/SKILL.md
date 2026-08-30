@@ -35,7 +35,7 @@ Scope before you scan. Deepening pays off on code that keeps changing, so weight
 - **The user's direction wins.** If they named a module, a subsystem, or a pain point, take it and skip the inference below.
 - **Otherwise infer from churn.** Rank paths by how often they appear in a good stretch of `git log --name-only` history, and scan the top of that list first. If churn is scattered with no clear hot spot, widen the net.
 
-Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you're about to scan — commonly `docs/adr/`. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate.
+Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you're about to scan — commonly `docs/adr/`. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate. So is the Grounding section of any crank-lite artifact the run was handed: a covered lookup becomes a confirm at its cited evidence, and an absence entry re-runs its recorded search.
 
 ## Explore
 
@@ -132,6 +132,7 @@ Sections, omitting any that didn't earn its place:
 - **Shape** — the before/after ASCII diagram as amended during the grill, alongside the settled interface pseudo-code.
 - **Key decisions** — the consequential calls, one line of why each, including where the seam lands and which tests survive.
 - **Open questions** — questions for the spec to answer, admitted only when you can state each one precisely now. Anything you can't phrase that sharply is a design hole — resolve it in the grill instead.
+- **Grounding** — the grill's banked entries, one line each ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
 - **Out of scope** — the candidates that lost and one line each on why, plus pointers to any ADR this run wrote or left standing.
 
 **No acceptance criteria** — those belong to the spec phase.

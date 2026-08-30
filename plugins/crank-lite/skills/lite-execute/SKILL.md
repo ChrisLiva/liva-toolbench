@@ -55,7 +55,7 @@ Durable progress lives in the plan file, not the task list (which dies with the 
 
 Before you implement, read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
-Before flipping a task's box, run the check the plan names for that task — or the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** and treat its passing output as that task's verification evidence.
+Before flipping a task's box, run the check the plan names for that task — or, when it names none, the gate its Grounding section records, else the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** and treat its passing output as that task's verification evidence.
 
 Standing defect rules while implementing:
 
@@ -66,7 +66,7 @@ Standing defect rules while implementing:
 - Edits to user-owned files (configs, gitignores) assert untouched lines survive byte-identical.
 - A new test earns its place only if it is not a **redundant test** and it survives the **rewrite test**; otherwise extend the **journey test** at that seam with a failing assertion.
 
-The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a detour — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations. A fix that would change what ships is a reroute: stop and surface it with your recommendation. Pre-existing bugs off the plan's path stay retro notes, never side quests.
+The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a detour — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations; beside the task's Progress flip, append the corrected fact as one line in the plan's Grounding section ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), so a resumed run stops re-hitting the same stale detail. A fix that would change what ships is a reroute: stop and surface it with your recommendation. Pre-existing bugs off the plan's path stay retro notes, never side quests.
 
 ## Review and commit
 

@@ -30,9 +30,9 @@ The high-level design brief, written to the `.crank/` file (see Hard Rules). Inc
 
 ### 1. Explore project context
 
-Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches.
+Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches. Hold each returned codebase fact — surface, exemplar, canonical helper — as a grounding entry per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding, banked in-thread for now; step 6 flushes them to the effort's grounding file, so an abandoned brainstorm leaves no directory behind.
 
-Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption.
+Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked as a grounding entry for the step-6 flush.
 
 ### 2. Name the destination
 
@@ -68,9 +68,9 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
-Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines).
+Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines). With the brief file started, flush the grounding entries banked at step 1 to `.crank/<slug>/grounding.md` beside it.
 
-Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file.
+Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file, and the banked grounding entries are flushed to the effort's grounding file.
 
 ### 7. Hand off
 

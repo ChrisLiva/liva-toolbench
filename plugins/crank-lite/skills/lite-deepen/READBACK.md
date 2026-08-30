@@ -13,7 +13,7 @@ Read back only what the user could veto:
 - **New or changed** — content settled since the previous phase's approved artifact (or, with no prior artifact, since the interview's settled answers).
 - **Judgment calls** — decisions where a defensible alternative was rejected; name the rejected option, so the veto is a real choice between stated options.
 
-Everything else is carried-forward: state it in one line ("Sections X and Y carry forward from the approved spec unchanged") and move on.
+Everything else is carried-forward: state it in one line ("Sections X and Y carry forward from the approved spec unchanged") and move on. A Grounding section is always carried-forward material — state it in one line, never walk it for veto.
 
 ## Pace
 

@@ -73,7 +73,11 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 
 ### 1. Ground first
 
+Read `.crank/<slug>/grounding.md` first, where it exists ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), and verify-then-trust its entries: a covered point fact (a signature, a proven command) downgrades its re-derivation to one confirm at the citation or one re-run; a survey entry narrows the re-search to its recorded scope; an entry that has drifted is rewritten in place and joins **Updates since spec** with the rest of the drift below.
+
 Before writing tasks, learn what you'll touch: read the files the spec names; grep for the symbols, types, and patterns you'll have to match; capture exact signatures, import paths, and any drift since the spec was written. Capture the repo's gate commands — test, lint, typecheck, build — exactly as this project runs them, and run each once so the plan's `Gates:` header line never names a gate that doesn't work. If no gate runs, the first task establishes one (a typecheck script, or a characterization test at the seam the work touches) before any task that changes behavior. Grounding is also where anything the plan will embed gets **surveyed** (Guidelines → Prose, pseudo-code, or embedded code), with the evidence kept for the step. Toolchain behavior the plan leans on — a build tool, bundler, CLI flag, or pinned dependency — gets surveyed the same way: run it once during grounding, never asserted from memory; a behavior you can't probe becomes a `Stop if:` line on the task that leans on it, naming the check that would settle it. And when the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), run the proposed invariant over the full real dataset — round-trip every existing name, sweep every row — and record the count checked; canned fixtures can't stand in for the data the work will actually meet. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread — the file and symbol reads, the drift check, and the gate commands go out on the brief at References → Subagents; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output.
+
+Close grounding by banking what this step proved to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
 
 Completion criterion, all of:
 
@@ -82,7 +86,8 @@ Completion criterion, all of:
 - every `Gates:` command captured and proven to run;
 - every artifact the plan will embed surveyed, its evidence in hand;
 - every toolchain behavior the plan depends on probed or named as a plan risk;
-- any full-dataset invariant swept, its count recorded.
+- any full-dataset invariant swept, its count recorded;
+- the step's proven facts banked to the grounding file.
 
 ### 2. Map the files
 

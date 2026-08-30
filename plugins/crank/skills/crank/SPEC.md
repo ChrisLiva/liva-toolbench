@@ -53,7 +53,9 @@ A single self-contained spec written to the `.crank/` file (see Hard Rules). Inc
 
 ### 1. Ground in the codebase
 
-Read the repo's intent docs where they exist: `CONTEXT.md` (domain vocabulary the spec uses by name), ADRs (commonly `docs/adr/`, `docs/decisions/`), `DESIGN.md`, and the conventions section of `CLAUDE.md`/`AGENTS.md`. A tradeoff an ADR records is settled: Simplify first and the reviewer leave it alone. Code that has drifted from what an ADR says is an **Updates since spec** entry for the plan, since either the doc or the code is wrong.
+Read the repo's intent docs where they exist: `CONTEXT.md` (domain vocabulary the spec uses by name), ADRs (commonly `docs/adr/`, `docs/decisions/`), `DESIGN.md`, and the conventions section of `CLAUDE.md`/`AGENTS.md`. A tradeoff an ADR records is settled: Simplify first and the reviewer leave it alone. Code that has drifted from what an ADR says is an **Updates since spec** entry for the plan, since either the doc or the code is wrong — bank it as a grounding entry now; the spec has no section to hold it.
+
+Read `.crank/<slug>/grounding.md` too, where it exists ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), and verify-then-trust its entries: for a layer the file covers, prepend the covered entries to that layer's brief as previously-established facts to confirm at their citations, so its dispatch gap-fills and drift-checks instead of re-deriving — every layer still gets a dispatch, and a survey entry (canonical helper, convention winner, any absence) only narrows the re-search to its recorded scope.
 
 Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
 
@@ -70,9 +72,9 @@ Find one or two existing features that do something analogous and report:
 Don't propose a design — just surface what already exists. If no analogous surface exists, say so. When the analogous features disagree on convention, report both and name the winner: the one the repo converged on most recently, per `git log` on those files.
 </brief>
 
-Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch.
+Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch. Close the step by banking the per-layer findings — surfaces, conventions, canonical helpers, drift — to the grounding file.
 
-Completion criterion: the intent docs are read or confirmed absent, and every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — no layer unreported.
+Completion criterion: the intent docs are read or confirmed absent, and every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — fresh, or confirmed against the grounding file by that subagent — no layer unreported, and the step's findings banked to the grounding file.
 
 ### 2. Grill the technical decisions
 

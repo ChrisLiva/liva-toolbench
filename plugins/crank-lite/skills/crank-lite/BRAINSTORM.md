@@ -12,6 +12,6 @@ When a question is experiential — how something should look, behave, or read �
 
 ## Brief
 
-The brief's file is `brainstorm.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the idea, goals/constraints, chosen shape, key decisions, open questions, and suggested next step. An open question earns its place only when it's stated sharply enough for the spec to answer it — anything you can't phrase that precisely yet is a design hole to resolve here first. In the readback each open question comes back as the sharp question it hands the spec, not as a decision to re-open.
+The brief's file is `brainstorm.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the idea, goals/constraints, chosen shape, key decisions, open questions, a Grounding section holding the interview's banked entries (ARTIFACT-HOME.md → Grounding), and suggested next step. An open question earns its place only when it's stated sharply enough for the spec to answer it — anything you can't phrase that precisely yet is a design hole to resolve here first. In the readback each open question comes back as the sharp question it hands the spec, not as a decision to re-open.
 
 Next step: continue to the spec phase ([SPEC.md](SPEC.md)) in this session, or in a fresh one: `/crank-lite spec .crank/<slug>/brainstorm.md` (route to the plan phase instead if the idea is already implementation-ready).
