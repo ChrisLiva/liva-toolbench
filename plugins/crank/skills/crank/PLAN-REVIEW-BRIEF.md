@@ -1,7 +1,7 @@
 # Adversarial plan review brief
 
 <brief>
-Read the plan at `<plan-path>`. Read the spec at `<spec-path>`. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
+Read the spec at `<spec-path>` in full: it is the contract. Read the plan's frame at `<plan-path>` — its header (`Spec:`, `Goal:`, `Gates:`), **Global Constraints**, **Updates since spec**, **Refactor scope**, **File structure**, **Coverage**, and **Out of scope**, plus every task's title. Each task body comes as you reach it in the walk, read by heading from that same file. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
 
 Work your lookups in **rounds**. A round's **frontier** is every lookup whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
 
