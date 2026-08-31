@@ -1,6 +1,6 @@
 {
   "name": "crank-lite",
-  "version": "1.18.0",
+  "version": "1.18.1",
   "description": "Lightweight brainstorming, spec, planning, and execution skills for shaping work before shipping it.",
   "keywords": ["crank", "lite", "brainstorm", "spec", "plan", "execute"],
   "skills": "./skills/",
