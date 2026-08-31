@@ -14,7 +14,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 ## Hard Rules
 
 - **Evidence before claims.** Never report a task done without running its verification this turn and reading the output.
-- **Every run opens with the pre-flight callout.** Fresh or resumed, the filled block lands as reply text before any other work (Flow step 2).
+- **Every run opens with the pre-flight callout.** Fresh or resumed, the filled block lands as reply text before any task work (Flow step 2).
 - **Destination frozen, road flexible.** What the plan ships — each task's goal, its contract, the architecture — is frozen. The road there is not: when a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a **detour** — the smallest change that still ships exactly what the task promises — and log it on the ledger line. A fix that would change what ships is a **reroute**: stop and surface it with your recommendation. Off-path surprises (a pre-existing bug the task doesn't hit) stay retro entries, never side quests.
 - **Progress is durable.** Track task completion in the progress ledger (see Deliverables → Progress ledger), not only in your todos.
 - **Reviewers judge independently.** A reviewer pulls its own facts: it runs the diff, reads its task from the plan, reads the implementer's evidence from the report file, and applies the fixed rubric file. Your dispatch hands it only pointers and the BASE SHA — anything more (a description or defense of the diff, a reproduced or annotated rubric) pre-judges the review you asked for.
@@ -74,7 +74,7 @@ Base: <the HEAD SHA when the run started>
 - [ ] Task 2: <subject>
 ```
 
-Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and review verdict — `- [x] Task 1: <subject> — <sha> — APPROVED`. A task that took a detour appends it too — `— detour: <one line>` — so the retro's Deviations survive compaction; the corrected fact behind it (the renamed symbol's current name, the moved file's current path) lands as a grounding entry in `.crank/<slug>/grounding.md` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), so a resumed run or a later dispatch reads the current fact instead of re-hitting the stale one. On resume, an `[x]` line means done: confirm it against `git log` and skip it. The ledger applies in every execution shape, solo included — compaction can strike a solo run too.
+Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and review verdict — `- [x] Task 1: <subject> — <sha> — APPROVED`. A task that took a detour appends it too — `— detour: <one line>` — so the retro's Deviations survive compaction; the corrected fact behind it (the renamed symbol's current name, the moved file's current path) lands as a grounding entry in `.crank/<slug>/grounding.md` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), so a resumed run or a later dispatch reads the current fact instead of re-hitting the stale one. A question the step-1 walk carried into the run rides its task's line as `— open: <one line>` until that task's own body settles it at step 3. On resume, an `[x]` line means done: confirm it against `git log` and skip it. The ledger applies in every execution shape, solo included — compaction can strike a solo run too.
 
 ### Retro
 
@@ -107,16 +107,17 @@ Create `.crank/` on first use with a `.crank/.gitignore` containing `*`; outside
 
 Read the plan's frame yourself — its header (`Spec:`, `Goal:`, `Gates:`), **Global Constraints**, **Refactor scope**, **File structure**, **Coverage**, **Out of scope**, and every task's title. The task bodies come one at a time, each read as you reach it at step 3. If the plan's header names a spec (`Spec:` line), read that too — it is the contract the final review runs against; the plan is only its decomposition. If the plan has a **Global Constraints** section, treat its values as binding on every task — they are the attention lens the per-task and final reviews run against.
 
-Before starting, the plan gets walked task by task for two kinds of problem, each task's blockers and plan-mandated defects named or recorded as "none". Dispatch that walk at the **standard** tier per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread — hand it the plan path and both categories below verbatim, and require a line per task naming what it found or `none`; it reads and reports, it never edits the plan. Raise everything it found in a **single batched question**, not one interrupt per discovery:
-
-- **Blockers** — missing context, ambiguous step, undefined symbol, contradiction with the codebase.
-- **Plan-mandated defects** — places the plan instructs you to write something the review rubric would reject: a test that asserts nothing, verbatim duplication of a helper the codebase already provides, a cast or `any` papering over a contract. Overriding what the plan explicitly instructs is a reroute, never a detour — surface them and let the user say which governs.
-
-If either kind comes back, stop until answered. Then check `git status --short` and the current branch; if you're on `main`/`master` with a non-trivial change, ask once before committing.
-
 Open the progress ledger (see Deliverables → Progress ledger); if one already exists for this plan in this worktree from an interrupted run, resume from it per that section, otherwise start fresh. A fixed-name `progress.md` in either home is legacy — adopt it per [LEGACY-ARTIFACTS.md](LEGACY-ARTIFACTS.md) first.
 
-Completion criterion: every task has been judged — by you or by the walk you dispatched — every finding raised in one batched question and answered, `git status --short` and the branch checked, and the ledger open with one line per plan task.
+Then the plan gets walked task by task, each task's findings named or recorded as `none`. Dispatch that walk at the **standard** tier per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread — hand it the plan path and the three buckets below verbatim, and require a line per task naming what it found with each finding's bucket, or `none`; it reads and reports, it never edits the plan. Two buckets **stop** the run; the third is **carried** into it. A finding stops the run on a check the walk actually ran, quoted with its evidence — `path:line`, or the search that came back empty:
+
+- **Blockers** — the plan names a symbol the walk grepped for and did not find, cites a path that is gone, or states a precondition another task contradicts.
+- **Plan-mandated defects** — the plan's own words instruct something the review rubric rejects: a test that asserts nothing, verbatim duplication of a helper the codebase already provides, a cast or `any` papering over a contract. Quote the instruction. Overriding what the plan explicitly instructs is a reroute, never a detour — surface it and let the user say which governs.
+- **Carried** — what the walk read as open rather than broken: a step open to two readings, a name used loosely, a symbol it could not place. Each rides its task's ledger line as `— open: <one line>`, settled at step 3 by whoever reads that task's body, where the steps, `Check:`, and Files block usually decide it. A fact the walk verified along the way — the renamed symbol's current name, the moved file's path — banks as a grounding entry in `.crank/<slug>/grounding.md` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), which step 2 seeds into `orientation.md` for every implementer.
+
+Raise the two stopping buckets in a **single batched question**, not one interrupt per discovery, and stop until answered. Both empty is the ordinary outcome for a plan this pipeline produced — the run continues straight into pre-flight. Then check `git status --short` and the current branch; if you're on `main`/`master` with a non-trivial change, ask once before committing.
+
+Completion criterion: every task has been judged — by you or by the walk you dispatched — every blocker and plan-mandated defect raised in one batched question and answered, every carried item on its task's ledger line or banked as grounding, `git status --short` and the branch checked, and the ledger open with one line per plan task.
 
 ### 2. Pre-flight
 
