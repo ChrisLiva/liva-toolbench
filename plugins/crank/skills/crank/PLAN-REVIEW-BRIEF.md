@@ -3,6 +3,8 @@
 <brief>
 Read the plan at `<plan-path>`. Read the spec at `<spec-path>`. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
 
+Work your lookups in **rounds**. A round's **frontier** is every lookup whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
+
 First, walk the spec yourself and list every acceptance criterion and every behavior its body describes (interaction, keybinding, alias, edge case, state transition, validation). Then flag every instance of:
 
 - **underspecified steps** — a behavior missing its oracle (exact input → expected output), an interface missing a concrete signature: not concrete enough to build from without a design conversation.
@@ -35,5 +37,5 @@ Fix in **two passes**:
 1. **Collect.** Finish flagging the entire plan before you edit anything, and write the findings to `plan-review-findings.md` beside the plan — one line each: the task block it lands in, the flag it trips, the edit it takes.
 2. **Apply.** Walk that list task block by task block, landing **one edit per task block** with every finding for that block carried in it. Never rewrite the plan file wholesale: a whole-file write over a 70KB plan drops content you never read back.
 
-Done when every task block in the plan has been read against all of the flags above, every Coverage row has been judged against the behavior it claims to prove, and every item on your finding list is edited into the plan file at no more than one edit per task block. End your reply with a one-line summary of what changed.
+Done when your lookup frontier is empty, every task block in the plan has been read against all of the flags above, every Coverage row has been judged against the behavior it claims to prove, and every item on your finding list is edited into the plan file at no more than one edit per task block. End your reply with a one-line summary of what changed.
 </brief>

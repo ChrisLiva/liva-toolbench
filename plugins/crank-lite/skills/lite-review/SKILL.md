@@ -48,7 +48,7 @@ Read [VOCABULARY.md](VOCABULARY.md) for the working language: the **deletion tes
 
 ## Validate
 
-Dispatch **one** heavy-tier subagent (see Subagent tiers) to adversarially validate the whole candidate list in a single pass. Hand it pointers — the BASE SHA, the diff command, each candidate's `file:line` and claim — never your characterization of the code or a defense of a finding; it runs the diff and reads the cited code itself, forming its own view.
+Dispatch **one** heavy-tier subagent (see Subagent tiers) to adversarially validate the whole candidate list in a single pass. Hand it pointers — the BASE SHA, the diff command, each candidate's `file:line` and claim — never your characterization of the code or a defense of a finding; it runs the diff and reads the cited code itself, forming its own view. Tell it to work its lookups in **rounds**: a round's **frontier** is every lookup whose answer it does not need before issuing the next one, and the whole frontier goes out as one batch in a single turn, every return read before it composes the next round.
 
 Its job is to **refute**: for each candidate, decide whether the claim holds and **default to REFUTED** when the evidence is thin, the complexity a cut targets turns out to be load-bearing, or the call is a matter of taste. A candidate survives only on clear, code-grounded evidence, never on plausibility; only CONFIRMED findings ship. Every candidate leaves this step carrying a CONFIRMED or REFUTED verdict with its evidence.
 

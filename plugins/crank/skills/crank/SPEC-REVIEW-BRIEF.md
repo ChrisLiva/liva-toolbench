@@ -5,6 +5,8 @@ Substitute the spec path into `<path>` below.
 <brief>
 Read the spec at `<path>`. The plan phase decomposes this spec into tasks handed one at a time to an implementer that sees only its own task block, never this conversation.
 
+Work your lookups in **rounds**. A round's **frontier** is every lookup whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
+
 Flag every instance of the following, taking as settled any decision the spec records with its tradeoff and any decision an ADR in the repo records:
 
 - **ambiguity** — two engineers could implement it meaningfully differently.
@@ -27,5 +29,5 @@ Fix in **two passes**:
 1. **Collect.** Finish flagging the whole spec before you edit anything, and write the findings to `spec-review-findings.md` beside the spec — one line each: the section it lands in, the flag it trips, the edit it takes.
 2. **Apply.** Walk that list section by section, landing **one edit per section** with every finding for that section carried in it. Never rewrite the spec file wholesale: a whole-file write drops content you never read back.
 
-Done when every item on your finding list is edited into the spec file at no more than one edit per section. End your reply with a one-line summary of what changed.
+Done when your lookup frontier is empty and every item on your finding list is edited into the spec file at no more than one edit per section. End your reply with a one-line summary of what changed.
 </brief>
