@@ -14,6 +14,10 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 │   └── marketplace.json          # Claude Code marketplace catalog
 ├── .agents/
 │   └── plugins/marketplace.json  # Codex local marketplace index
+├── scripts/
+│   ├── check-reviewer-briefs.py  # the repo's gate (see The repo's gate)
+│   ├── measure-review-cost.py    # how a review thread spent its turns
+│   └── fixtures/                 # the measurement's oracle transcripts
 └── plugins/
     └── <plugin-name>/
         ├── .claude-plugin/
@@ -194,17 +198,37 @@ coordinator skill's directory, alongside the phase files); the other crank skill
 carry identical copies.
 
 Copies are synced by hand, like version strings: edit the canonical file, re-copy it
-over the others, and verify before committing (no output = in sync):
-
-```bash
-for f in plugins/crank/skills/*/{SUBAGENT-TIERS,VOCABULARY,GRILLING,READBACK,ARTIFACT-HOME}.md \
-         plugins/crank-lite/skills/*/{VOCABULARY,READBACK,ARTIFACT-HOME}.md; do
-  diff -q "plugins/crank/skills/crank/$(basename "$f")" "$f"
-done
-diff -q plugins/crank-lite/skills/crank-lite/INTERVIEW.md plugins/crank-lite/skills/lite-deepen/INTERVIEW.md
-```
+over the others, and run the repo's gate before committing (see *The repo's gate*
+below). The gate holds a copy to the canonical byte for byte, and fails just as
+loudly when a skill links a reference whose copy is gone.
 
 The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, `crank-review`) paraphrase `VOCABULARY.md`'s terms per phase (over a spec, a plan, a diff); they are not copies of one rubric. When editing a brief, align its meaning with the definition in `VOCABULARY.md`, not its wording, and don't flatten a per-phase qualifier into a generic copy.
+
+---
+
+## The repo's gate
+
+`python3 scripts/check-reviewer-briefs.py` is the repo's only gate command. Run it
+after editing any skill, brief, or reference file, and before every commit; it
+prints one line per failed check and exits non-zero when any fails.
+
+It holds the eight adversarial-reviewer dispatch sites to the rules their prose
+carries — each sends its whole lookup frontier as one batch, names what it reads,
+and (for the plan and spec briefs) lands findings through one uniqueness-asserting
+edit script — and holds every site to prose free of cost justification and of the
+Claude-only preprocessing listed under *Cross-harness plugins*. It also replaces the
+hand-run `diff -q` loop over the reference copies: for every reference a skill's own
+markdown links, the copy must exist and match its canonical.
+
+`python3 scripts/measure-review-cost.py <transcript.jsonl | directory>` is the
+companion measurement, not a gate. It reports how a review thread spent its turns —
+requests, billed input, the apply/probe/report/other split, and the
+tool-calls-per-request histogram — so a reviewer that looks things up one at a time
+is visible in a number. Handed a directory it recurses, which reaches
+`<session>/subagents/**/*.jsonl`, where a subagent's own turns live.
+`scripts/fixtures/` is its oracle: `review-thread.jsonl` pins the counting rules and
+`apply-shapes.jsonl` pins every apply tool, every shell-write form, and the
+non-lookup bucket.
 
 ---
 

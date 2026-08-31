@@ -51,18 +51,18 @@ HARNESS_PATTERNS = [
     re.compile(r"^!`", re.M),
 ]
 
-CANONICAL_DIR = "plugins/crank/skills/crank"
-
 # Reference files copied by hand into every skill that needs them, per
-# CLAUDE.md -> Cross-harness plugins.
-SYNC_GLOBS = [
-    ("plugins/crank/skills", ["SUBAGENT-TIERS", "VOCABULARY", "GRILLING", "READBACK", "ARTIFACT-HOME"]),
-    ("plugins/crank-lite/skills", ["VOCABULARY", "READBACK", "ARTIFACT-HOME"]),
-]
+# CLAUDE.md -> Cross-harness plugins: name -> the directory holding the canonical.
+CANONICAL = {
+    "SUBAGENT-TIERS": "plugins/crank/skills/crank",
+    "VOCABULARY": "plugins/crank/skills/crank",
+    "GRILLING": "plugins/crank/skills/crank",
+    "READBACK": "plugins/crank/skills/crank",
+    "ARTIFACT-HOME": "plugins/crank/skills/crank",
+    "INTERVIEW": "plugins/crank-lite/skills/crank-lite",
+}
 
-SYNC_PAIRS = [
-    ("plugins/crank-lite/skills/crank-lite/INTERVIEW.md", "plugins/crank-lite/skills/lite-deepen/INTERVIEW.md"),
-]
+SKILL_DIRS = ["plugins/crank/skills", "plugins/crank-lite/skills"]
 
 
 def read(rel):
@@ -91,24 +91,37 @@ def check_sites(failures):
 
 
 def check_sync(failures):
-    for skills_dir, names in SYNC_GLOBS:
-        for name in names:
-            canonical = read(f"{CANONICAL_DIR}/{name}.md")
-            if canonical is None:
-                failures.append(f"FAIL sync: canonical {CANONICAL_DIR}/{name}.md is missing")
+    """Every reference a skill links must be present and byte-identical to its canonical.
+
+    A skill owes a copy of every reference any of its own markdown files links.
+    Expectation comes from the link, not from the file being there, so deleting a
+    copy fails the gate instead of silently dropping its check.
+    """
+    for skills_dir in SKILL_DIRS:
+        for skill in sorted((ROOT / skills_dir).iterdir()):
+            if not skill.is_dir():
                 continue
-            for skill in sorted((ROOT / skills_dir).iterdir()):
-                copy = skill / f"{name}.md"
-                if not copy.is_file():
+            body = "".join(
+                f.read_text(encoding="utf-8", errors="replace")
+                for f in sorted(skill.glob("*.md"))
+            )
+            for name, canonical_dir in CANONICAL.items():
+                copy_rel = f"{skills_dir}/{skill.name}/{name}.md"
+                if copy_rel == f"{canonical_dir}/{name}.md":
                     continue
-                if copy.read_text(encoding="utf-8") != canonical:
-                    failures.append(f"FAIL sync {copy.relative_to(ROOT)}: differs from {CANONICAL_DIR}/{name}.md")
-    for canonical_rel, copy_rel in SYNC_PAIRS:
-        canonical, copy = read(canonical_rel), read(copy_rel)
-        if canonical is None or copy is None:
-            failures.append(f"FAIL sync {copy_rel}: missing beside {canonical_rel}")
-        elif canonical != copy:
-            failures.append(f"FAIL sync {copy_rel}: differs from {canonical_rel}")
+                copy = read(copy_rel)
+                linked = f"]({name}.md)" in body
+                if copy is None:
+                    if linked:
+                        failures.append(f"FAIL sync {copy_rel}: a skill file links it, but the copy is missing")
+                    continue
+                if not linked:
+                    failures.append(f"FAIL sync {copy_rel}: a copy no link in this skill reaches")
+                canonical = read(f"{canonical_dir}/{name}.md")
+                if canonical is None:
+                    failures.append(f"FAIL sync: canonical {canonical_dir}/{name}.md is missing")
+                elif copy != canonical:
+                    failures.append(f"FAIL sync {copy_rel}: differs from {canonical_dir}/{name}.md")
 
 
 def main():
