@@ -30,12 +30,12 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
-Take the spec's decisions as settled. Then fix every item you flagged in **the plan file at `<plan-path>`** — that plan file and the finding list below are the only files you write to. Read the spec and grep the codebase to inform those edits. A flagged duplication, inconsistency, or dead seam gets rewritten *in the plan step that describes it*.
+Take the spec's decisions as settled. Then fix every item you flagged in **the plan file at `<plan-path>`** — that plan file, the finding list below, and the edit script that lands them are the only files you write to. Read the spec and grep the codebase to inform those edits. A flagged duplication, inconsistency, or dead seam gets rewritten *in the plan step that describes it*.
 
 Fix in **two passes**:
 
 1. **Collect.** Finish flagging the entire plan before you edit anything, and write the findings to `plan-review-findings.md` beside the plan — one line each: the task block it lands in, the flag it trips, the edit it takes.
-2. **Apply.** Walk that list task block by task block, landing **one edit per task block** with every finding for that block carried in it. Never rewrite the plan file wholesale: a whole-file write over a 70KB plan drops content you never read back.
+2. **Apply.** Write `plan-review-edits.py` beside the plan, holding every finding's edit as an exact `(block, old, new)` triple where `old` is text copied verbatim from the plan. Run it once. For each triple it counts `old` in the file: on exactly one match it replaces and prints `OK <block>`; on any other count it prints `MISS <block>: matched <n> times`, leaves the file unchanged for that triple, and the script exits non-zero. Widen each MISS's `old` to a span that appears once and run the script again, until it exits zero.
 
-Done when your lookup frontier is empty, every task block in the plan has been read against all of the flags above, every Coverage row has been judged against the behavior it claims to prove, and every item on your finding list is edited into the plan file at no more than one edit per task block. End your reply with a one-line summary of what changed.
+Done when your lookup frontier is empty, every task block in the plan has been read against all of the flags above, every Coverage row has been judged against the behavior it claims to prove, and every item on your finding list has landed in the plan file through a `plan-review-edits.py` run that exited zero. End your reply with a one-line summary of what changed.
 </brief>

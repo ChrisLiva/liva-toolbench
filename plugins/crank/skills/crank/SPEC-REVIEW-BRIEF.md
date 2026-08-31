@@ -22,12 +22,12 @@ Flag every instance of the following, taking as settled any decision the spec re
 - **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved; resolve it or move it to **Out of scope**.
 - **missing technical detail** — a decision named with no chosen option, an interface named with no signature, a data shape referenced with no fields, or a layer touched with no `file:line` prior art.
 
-Then fix every item you flagged in **the spec file at `<path>`** — that spec file and the finding list below are the only artifacts you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file.
+Then fix every item you flagged in **the spec file at `<path>`** — that spec file, the finding list below, and the edit script that lands them are the only artifacts you may modify; you verify against the codebase **only to inform your spec edits**, never editing any production, test, or source file.
 
 Fix in **two passes**:
 
 1. **Collect.** Finish flagging the whole spec before you edit anything, and write the findings to `spec-review-findings.md` beside the spec — one line each: the section it lands in, the flag it trips, the edit it takes.
-2. **Apply.** Walk that list section by section, landing **one edit per section** with every finding for that section carried in it. Never rewrite the spec file wholesale: a whole-file write drops content you never read back.
+2. **Apply.** Write `spec-review-edits.py` beside the spec, holding every finding's edit as an exact `(section, old, new)` triple where `old` is text copied verbatim from the spec. Run it once. For each triple it counts `old` in the file: on exactly one match it replaces and prints `OK <section>`; on any other count it prints `MISS <section>: matched <n> times`, leaves the file unchanged for that triple, and the script exits non-zero. Widen each MISS's `old` to a span that appears once and run the script again, until it exits zero.
 
-Done when your lookup frontier is empty and every item on your finding list is edited into the spec file at no more than one edit per section. End your reply with a one-line summary of what changed.
+Done when your lookup frontier is empty and every item on your finding list has landed in the spec file through a `spec-review-edits.py` run that exited zero. End your reply with a one-line summary of what changed.
 </brief>
