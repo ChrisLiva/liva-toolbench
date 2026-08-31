@@ -15,13 +15,13 @@ Route the user's ask to the right phase — **brainstorm → spec → plan** —
 | `spec` | [SPEC.md](SPEC.md) | The idea is formed (or a brainstorm brief exists) and needs acceptance criteria and key technical decisions. |
 | `plan` | [PLAN.md](PLAN.md) | Behavior and design are settled — a finished spec, or a well-understood change like a scoped bug fix — and only "how to build it" remains. |
 
-Execution is not a route: when a plan is done, recommend the user run `/lite-execute` and stop. Neither is upstream scanning: an ask about shallow modules, leaking seams, or where to refactor goes to `/lite-deepen`, which emits a brainstorm brief to route back here.
+Execution is not a route: when a plan is done, recommend the user run `/lite-execute` and stop.
 
 ## Triage
 
 First rule that applies wins:
 
-1. **Explicit route argument** (`brainstorm`, `spec`, `plan`) — take it, no second-guessing.
+1. **Explicit route argument** (`brainstorm`, `spec`, `plan`) — take it.
 2. **Pipeline artifact given** — resolve the handed-in path per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), then route to the *next* phase, classifying by content, not filename: approach and shape sketched (a brainstorm brief) → `spec`; acceptance criteria (a spec) → `plan`; ordered, committable tasks (a plan) → recommend `/lite-execute`.
 3. **Infer from the ask** — judge how settled the work is (the "Right when" column), then announce the route with a one-line rationale and immediately run it. No confirmation stop; a misroute surfaces in the phase's first question.
 4. **Torn between two routes** — only when genuinely arguable, ask the user one question naming both candidates, your recommendation first.
@@ -35,4 +35,4 @@ Every phase ends the same way: when every readback section stands approved, writ
 
 Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue" — never auto-advance. The hand-off is the phase file's next-step line, then a single trailing sentence noting the artifact can be copied elsewhere, printed inline, or deleted on request: prose, not a numbered question.
 
-Continuing keeps this conversation as the next phase's primary source, so recommend it while enough context window remains for the next phase to fit; deep in a long session, recommend a fresh session invoked with the artifact instead.
+Continuing keeps this conversation as the next phase's primary source, so recommend it while enough context window remains less than 100k for the next phase to fit; deep in a long session, recommend a fresh session invoked with the artifact instead.
