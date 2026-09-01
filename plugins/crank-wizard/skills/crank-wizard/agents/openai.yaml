@@ -4,4 +4,4 @@ interface:
   default_prompt: "Use $crank-wizard to build a wizard that walks a human through this procedure."
 
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

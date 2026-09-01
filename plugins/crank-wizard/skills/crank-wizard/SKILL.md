@@ -2,7 +2,6 @@
 name: crank-wizard
 description: Generate a cross-platform TUI wizard — a committed Go program (Bubble Tea) that walks a human through the steps only they can perform, with automated checks gating the flow.
 argument-hint: "[the procedure the wizard walks through]"
-disable-model-invocation: true
 ---
 
 # Crank Wizard
