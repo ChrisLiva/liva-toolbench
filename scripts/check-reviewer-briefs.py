@@ -58,7 +58,12 @@ FLAG_LITERALS = {
 # Presence only: these are orchestrator skills, not reviewer dispatch sites, so
 # the site vocabulary and preprocessing rules below do not reach them.
 PRESENCE_LITERALS = {
-    "plugins/crank/skills/crank-execute/SKILL.md": ["**Promote it.**", "- **Promoted** —"],
+    "plugins/crank/skills/crank-execute/SKILL.md": [
+        "**Promote it.**",
+        "- **Promoted** —",
+        "Standing defect rules",
+    ],
+    "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
