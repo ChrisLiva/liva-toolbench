@@ -6,6 +6,7 @@ Use this as the starting shape for the plan at its `.crank/` path (see ARTIFACT-
 # <Plan title>
 
 Spec: <absolute path, when one exists>
+Grounding: <absolute path to .crank/<slug>/grounding.md, when that file holds entries>
 Goal: <one sentence>
 Architecture: <2-3 sentences>
 Tech stack: <pinned versions>

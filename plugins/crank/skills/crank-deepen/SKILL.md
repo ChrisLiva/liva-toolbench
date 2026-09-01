@@ -119,6 +119,7 @@ Once the grill's frontier is empty and the user has approved the shape, write th
 
 Sections, omitting any that didn't earn its place:
 
+- **Header** — title, then `Grounding:` (absolute path to `.crank/<slug>/grounding.md`, written once the facts below are banked there — ARTIFACT-HOME.md → Grounding; the spec phase and any reader handed only the brief reach the banked facts from here).
 - **Idea / Problem** — the friction in the user's words, with the evidence `file:line`.
 - **Approach** — the chosen deepening and why it won, in **leverage** and **locality** terms.
 - **Shape** — the before/after as an ASCII diagram (see below), amended for whatever the grill changed, alongside the settled interface pseudo-code.
@@ -147,7 +148,7 @@ With the brief written, bank the chosen candidate's facts to `.crank/<slug>/grou
 
 End by recommending the next step: `/crank spec .crank/<slug>/deepen-brief.md`.
 
-Completion criterion: the brief file exists with every section that earned its place, its path is stated once, the chosen candidate's facts are banked to the effort's grounding file, and the spec route is recommended — the next phase is the user's to start, never yours.
+Completion criterion: the brief file exists with every section that earned its place, its path is stated once, the chosen candidate's facts are banked to the effort's grounding file and the brief's header names it, and the spec route is recommended — the next phase is the user's to start, never yours.
 
 ## References
 

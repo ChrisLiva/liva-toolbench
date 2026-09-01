@@ -5,6 +5,8 @@ Use this as the starting shape for the spec at its `.crank/` path (see ARTIFACT-
 ```markdown
 # <Spec title>
 
+Grounding: <absolute path to .crank/<slug>/grounding.md, when that file holds entries>
+
 ## Problem
 
 <one paragraph>

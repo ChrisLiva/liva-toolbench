@@ -42,6 +42,7 @@ This phase dispatches **standard** subagents for what the codebase can answer �
 
 A single self-contained spec written to the `.crank/` file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
 
+- **Header** — title, then `Grounding:` (absolute path to the effort's grounding file, when it holds entries — [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding; the plan phase and any reader handed only the spec reach the banked facts from here).
 - **Problem** — what the user is trying to solve, in their words.
 - **Solution** — the proposed change, in user-facing terms.
 - **User stories** — `As an <actor>, I want <feature>, so that <benefit>`, when distinct actors or user goals clarify the scope. Omit for small bugs, internal refactors, or technical changes where the real contract is the acceptance criteria plus Technical decisions.

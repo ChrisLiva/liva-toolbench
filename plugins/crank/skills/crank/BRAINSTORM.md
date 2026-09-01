@@ -19,6 +19,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 The high-level design brief, written to the `.crank/` file (see Hard Rules). Include whichever sections apply (omit ones that don't earn their place — this is a brief, not a spec):
 
+- **Header** — title, then `Grounding:` (absolute path to the effort's grounding file, once step 6 flushes entries to it — [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding; the spec phase and any reader handed only the brief reach the banked facts from here).
 - **Idea / Problem** — what the user wants and why, in their words.
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
 - **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them. A rough sketch or short list, not a file map.
@@ -68,9 +69,9 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
-Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines). With the brief file started, flush the grounding entries banked at step 1 to `.crank/<slug>/grounding.md` beside it.
+Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines). With the brief file started, flush the grounding entries banked at step 1 to `.crank/<slug>/grounding.md` beside it, and write the brief's `Grounding:` header line naming that file.
 
-Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file, and the banked grounding entries are flushed to the effort's grounding file.
+Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file, the banked grounding entries are flushed to the effort's grounding file, and the brief's header names it.
 
 ### 7. Hand off
 

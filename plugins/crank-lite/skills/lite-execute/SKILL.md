@@ -36,7 +36,7 @@ Decide from the plan's coupling, not its task count:
 - **Solo** — the work is confined to one module or one area of code, or the tasks share deep in-flight state. Implement inline on this thread.
 - **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement (see Subagent tiers). Dispatch one subagent per task, each with a brief, targeted instruction carrying five things:
   1. the task text;
-  2. the file paths it touches, plus the absolute path to this skill's `VOCABULARY.md`;
+  2. the file paths it touches, plus the absolute path to this skill's `VOCABULARY.md`, plus the path the plan's `Grounding:` header names when it carries one;
   3. the verification command it must run and report output from;
   4. the detour rule from Implement below, with any detour taken reported back in its return;
   5. the return rule — return only when every command it started has finished; long verifications run synchronously, their output read in the same turn that reports them.
@@ -55,7 +55,7 @@ Durable progress lives in the plan file, not the task list (which dies with the 
 
 Before you implement, read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
-Before flipping a task's box, run the check the plan names for that task — or, when it names none, the gate its Grounding section records, else the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** and treat its passing output as that task's verification evidence.
+Before flipping a task's box, run the check the plan names for that task — or, when it names none, the gate its Grounding section records (or, for a plan the full crank pipeline wrote, the `grounding.md` its `Grounding:` header names), else the repo's typecheck plus the test file covering the touched behavior — and read its output in the same turn. Run the full suite once, before the review dispatch. When a change has no test seam, validate it with a **probe** and treat its passing output as that task's verification evidence.
 
 Standing defect rules while implementing:
 

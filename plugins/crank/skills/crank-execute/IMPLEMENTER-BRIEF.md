@@ -4,13 +4,14 @@ Use these templates only in subagent execution modes.
 
 ## `orientation.md`
 
-Write this once per run, after the brief/report directory is chosen. Bounds: one Touched areas bullet per directory named across the plan's Files blocks; every Commands row filled with a command or the literal `none`; each Local conventions line quoting a real file the implementer can open. Done when no `<…>` remains and no plan Files-block directory is missing from Touched areas. The Commands block copies the plan's `Gates:` header line when the plan carries one — don't re-discover the toolchain.
+Write this once per run, after the brief/report directory is chosen. Bounds: one Touched areas bullet per directory named across the plan's Files blocks; every Commands row filled with a command or the literal `none`; each Local conventions line quoting a real file the implementer can open. Done when no `<…>` remains and no plan Files-block directory is missing from Touched areas. The Commands block copies the plan's `Gates:` header line when the plan carries one — don't re-discover the toolchain. The `Grounding:` line copies the plan's `Grounding:` header path, or the effort's `grounding.md` when it holds entries the plan predates; `none` otherwise.
 
 ```md
 # Crank execute orientation
 
 Branch: <branch>
 Plan: <plan path>
+Grounding: <absolute path to .crank/<slug>/grounding.md, or "none"> — facts earlier phases proved, one `claim | evidence | phase, date` per line; confirm an entry at its citation before building on it
 Run base: <base SHA from the progress ledger>
 
 ## Commands
