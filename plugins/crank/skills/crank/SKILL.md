@@ -19,7 +19,7 @@ Route the user's ask to the right phase of the design pipeline — **brainstorm 
 
 Execution is deliberately **not** a route: when a plan is done, recommend the user run `/crank-execute` and stop. Sharpening an existing artifact without advancing it is `/crank-refine`'s job, not this one's.
 
-Three asks enter the pipeline elsewhere: a codebase-wide hunt for shallow modules or leaking seams is `/crank-deepen` (it hands back a brainstorm brief); judging changes that already exist is `/crank-review`, and a test suite is `/crank-test-prune`.
+Four asks enter the pipeline elsewhere: a codebase-wide hunt for shallow modules or leaking seams is `/crank-deepen` (it hands back a brainstorm brief); judging changes that already exist is `/crank-review`, a test suite is `/crank-test-prune`, and stripping AI slop or hunting code-judo restructurings over a declared scope is `/crank-deslop`.
 
 ## Triage
 

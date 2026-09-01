@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The eight adversarial-reviewer dispatch sites: six brief files, plus the two
+# The nine adversarial-reviewer dispatch sites: seven brief files, plus the two
 # crank-lite skills that carry their reviewer instruction as dispatch prose.
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
@@ -23,6 +23,7 @@ SITES = [
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-execute/RE-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-review/REVIEW-BRIEF.md",
+    "plugins/crank/skills/crank-deslop/DESLOP-BRIEF.md",
     "plugins/crank-lite/skills/lite-execute/SKILL.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
 ]

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Deslop"
+  short_description: "Deslop a scope of code into a concise fix plan"
+  default_prompt: "Use $crank:crank-deslop to deslop this branch and propose fixes."
+
+policy:
+  allow_implicit_invocation: false
