@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Gate the adversarial-review sites and the hand-synced reference copies.
+"""Gate the adversarial-review sites, the orchestrator skills' promised
+literals, and the hand-synced reference copies.
 
 Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
@@ -50,6 +51,14 @@ FLAG_LITERALS = {
     ],
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["prose the diff falsified"],
     "plugins/crank/skills/crank-review/REVIEW-BRIEF.md": ["made untrue"],
+    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
+}
+
+# Files outside SITES that must carry a literal their own prose promises.
+# Presence only: these are orchestrator skills, not reviewer dispatch sites, so
+# the site vocabulary and preprocessing rules below do not reach them.
+PRESENCE_LITERALS = {
+    "plugins/crank/skills/crank-execute/SKILL.md": ["**Promote it.**", "- **Promoted** —"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
@@ -106,6 +115,17 @@ def check_sites(failures):
                 failures.append(f"FAIL {rel}: Claude-only preprocessing {pattern.pattern!r} appears {len(hits)} time(s)")
 
 
+def check_presence(failures):
+    for rel, literals in PRESENCE_LITERALS.items():
+        text = read(rel)
+        if text is None:
+            failures.append(f"FAIL {rel}: file is missing")
+            continue
+        for literal in literals:
+            if literal not in text:
+                failures.append(f"FAIL {rel}: missing literal {literal!r}")
+
+
 def check_sync(failures):
     """Every reference a skill links must be present and byte-identical to its canonical.
 
@@ -143,6 +163,7 @@ def check_sync(failures):
 def main():
     failures = []
     check_sites(failures)
+    check_presence(failures)
     check_sync(failures)
     for line in failures:
         print(line)

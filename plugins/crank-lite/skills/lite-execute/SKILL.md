@@ -76,11 +76,11 @@ Before committing, inspect the worktree and stage only the files this plan's wor
 
 ## Close the loop
 
-Before the retro, settle every loose end (reviewer findings, plan risks, your own "worth noting" observations) with a command, read, or test this session; a loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation.
+Before the retro, settle every loose end (reviewer findings, plan risks, your own "worth noting" observations) with a command, read, or test this session; a loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation. A fact that cost this run a detour and would cost the next run the same — a fixture landmine, a known flake, a toolchain trap — outlives the effort: append one line carrying its evidence to the repo's `CLAUDE.md`, `CONTEXT.md`, or an ADR, whichever the repo already has, and name where it landed in the retro; with no such file it survives as a decision naming the line and its target.
 
 ## Retro
 
-Record a concise retro to `.crank/<slug>/retro.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing the file, and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
+Record a concise retro to `.crank/<slug>/retro.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing the file, and stop. Keep the artifact light: include what changed, verification run, review outcome, deviations from the plan, where any promoted fact landed, and any surviving decisions when those sections earn their place. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
 
 ## Subagent tiers
 

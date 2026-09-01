@@ -84,6 +84,7 @@ Written to the effort's `.crank/<slug>/` directory (see Flow → Retro). Section
 - **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
 - **Final review** — verdict, findings fixed (with commit SHAs), findings dismissed as false positives, findings deferred: each per References → Review verdicts.
 - **Open items** — only what survived Flow → Close the loop, each written to that step's completion criterion. Deferred findings and dismissals stay in the Final review section above — this section holds nothing you could have settled yourself.
+- **Promoted** — each fact this run sent outliving the effort: the fact, its evidence line, and the `file:line` it landed at. Empty when the run promoted nothing.
 - **Validation evidence** — commands run, outcomes.
 
 ## Flow
@@ -181,9 +182,10 @@ You ship finished work. Before writing the retro, gather every loose end the run
 
 1. **Settle it.** If a command, read, or test can settle it this session, run it now and read the output — a verified fact is settled and appears nowhere in the hand-back. Settling is verification, not rework: a check that reveals a real defect routes to the next bucket, and a confirmed nit stays a deferred finding in the retro, never a fresh fix-loop.
 2. **Fix it.** A defect in shipped code fails the final gate — route it back through Verify the whole.
-3. **Escalate it as a decision.** What genuinely needs the user survives: a tradeoff only they can weigh, or an action only a human can perform (a visual smoke check, a credential you don't hold).
+3. **Promote it.** A fact that cost this run a detour and would cost the next run the same — a fixture landmine, a known flake, a toolchain trap — outlives the effort ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding). Append one line carrying its evidence to the repo's `CLAUDE.md`, `CONTEXT.md`, or an ADR, whichever the repo already has, and record the `file:line` it landed at in the retro's **Promoted** section. With no such file in the repo it degrades to the next bucket — a decision naming the line and where you would put it, never a file you create unasked.
+4. **Escalate it as a decision.** What genuinely needs the user survives: a tradeoff only they can weigh, or an action only a human can perform (a visual smoke check, a credential you don't hold).
 
-Completion criterion: every loose end is settled, fixed, or written as a decision with a recommendation — none merely restates a fact you could have checked this session.
+Completion criterion: every loose end is settled, fixed, promoted with the `file:line` it landed at, or written as a decision with a recommendation — none merely restates a fact you could have checked this session.
 
 ### 6. Retro
 
