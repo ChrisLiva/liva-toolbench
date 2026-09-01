@@ -48,6 +48,8 @@ FLAG_LITERALS = {
         "self-invalidating citation",
         "unclaimed file",
     ],
+    "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["prose the diff falsified"],
+    "plugins/crank/skills/crank-review/REVIEW-BRIEF.md": ["made untrue"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
