@@ -42,6 +42,8 @@ The current plugins (`crank`, `crank-lite`, `effective-html`) all ship as cross-
 
 > **Common mistake**: only `plugin.json` goes inside `.claude-plugin/` or `.codex-plugin/`. Skills, commands, agents, hooks, scripts, and other runtime files live at the **plugin root**.
 
+> **`CLAUDE.md` is a symlink to `AGENTS.md`.** Edit `AGENTS.md` and stage that path: `git add CLAUDE.md` reports success and stages nothing, leaving the edit in the worktree.
+
 ---
 
 ## Authoring a new plugin
@@ -216,9 +218,11 @@ It holds the eight adversarial-reviewer dispatch sites to the rules their prose
 carries — each sends its whole lookup frontier as one batch, names what it reads,
 and (for the plan and spec briefs) lands findings through one uniqueness-asserting
 edit script — and holds every site to prose free of cost justification and of the
-Claude-only preprocessing listed under *Cross-harness plugins*. It also replaces the
-hand-run `diff -q` loop over the reference copies: for every reference a skill's own
-markdown links, the copy must exist and match its canonical.
+Claude-only preprocessing listed under *Cross-harness plugins*. Beyond the sites, it
+presence-checks the literals an orchestrator skill's own prose promises — the
+`PRESENCE_LITERALS` map — with no vocabulary or preprocessing rule applied. It also
+replaces the hand-run `diff -q` loop over the reference copies: for every reference a
+skill's own markdown links, the copy must exist and match its canonical.
 
 `python3 scripts/measure-review-cost.py <transcript.jsonl | directory>` is the
 companion measurement, not a gate. It reports how a review thread spent its turns —
