@@ -1,0 +1,7 @@
+interface:
+  display_name: "Effective HTML"
+  short_description: "Turn a document into a single-file HTML artifact"
+  default_prompt: "Use $effective-html to render this as a single-file HTML artifact."
+
+policy:
+  allow_implicit_invocation: false
