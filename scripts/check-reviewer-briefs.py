@@ -43,7 +43,10 @@ APPLY_LITERALS = {
 
 # Flags a site's reviewer must carry, each named in that site's own words.
 FLAG_LITERALS = {
-    "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": ["unprobed oracle"],
+    "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": [
+        "unprobed oracle",
+        "self-invalidating citation",
+    ],
 }
 
 # Brief prose states what the agent does, with no cost justification.

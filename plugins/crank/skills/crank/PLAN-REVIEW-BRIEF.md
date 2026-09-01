@@ -26,6 +26,7 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 - **interface drift** — a task's `Consumes` names a signature no earlier task `Produces` or that contradicts the codebase, or a `Produces` no later task and no acceptance criterion ever uses.
 - **Global Constraints violations** — a task contradicts a rule in the plan's Global Constraints, or a Global Constraints value isn't copied verbatim from the spec.
 - **order problems** — a task imports what no earlier task built.
+- **self-invalidating citation** — an oracle, line-number citation, or population count that an earlier task in the same plan moves or destroys; re-key it on something stable — the file plus its enclosing symbol rather than a line number, a count re-derived at task time rather than pinned.
 - **layering** — a task adds an import that crosses layers the wrong way or closes a cycle; route it through the layer that owns the dependency.
 - **unpinned refactor** — a Refactor scope task reshapes a module with no characterization step before it, or a task's `Check:` names no exemplar to model after.
 
