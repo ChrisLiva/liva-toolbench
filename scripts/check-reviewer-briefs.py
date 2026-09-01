@@ -41,6 +41,11 @@ APPLY_LITERALS = {
     "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["spec-review-edits.py", "MISS"],
 }
 
+# Flags a site's reviewer must carry, each named in that site's own words.
+FLAG_LITERALS = {
+    "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": ["unprobed oracle"],
+}
+
 # Brief prose states what the agent does, with no cost justification.
 COST_PATTERN = re.compile(r"token|budget|cheaper|expensive|bloat|context window", re.I)
 
@@ -78,7 +83,12 @@ def check_sites(failures):
         if text is None:
             failures.append(f"FAIL {rel}: file is missing")
             continue
-        for literal in BATCH_LITERALS + READ_LITERALS.get(rel, []) + APPLY_LITERALS.get(rel, []):
+        for literal in (
+            BATCH_LITERALS
+            + READ_LITERALS.get(rel, [])
+            + APPLY_LITERALS.get(rel, [])
+            + FLAG_LITERALS.get(rel, [])
+        ):
             if literal not in text:
                 failures.append(f"FAIL {rel}: missing literal {literal!r}")
         cost = COST_PATTERN.findall(text)

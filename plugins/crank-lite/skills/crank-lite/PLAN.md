@@ -8,7 +8,7 @@ Resolve every implementation decision, and plan the smallest change that ships t
 
 A risk no check can retire is a decision: put it to the user during the interview, the plan ships with no open questions.
 
-Run it, don't recall: any build-tool, CLI-flag, or pinned-dependency behavior the plan leans on gets run once during the interview's fact lookups, and the plan records what the run printed; one you cannot run in this session becomes a plan risk, paired with the check that would settle it. And when the work keys, transforms, or migrates data that already exists, run the proposed invariant over the full real dataset and record the count checked; canned fixtures can't stand in for it.
+Run it, don't recall: any build-tool, CLI-flag, or pinned-dependency behavior the plan leans on gets run once during the interview's fact lookups, and the plan records what the run printed — an exact output, exit code, or API contract stated in prose carries the run just as an embedded block does; one you cannot run in this session becomes a plan risk, paired with the check that would settle it. And when the work keys, transforms, or migrates data that already exists, run the proposed invariant over the full real dataset and record the count checked; canned fixtures can't stand in for it.
 
 ## Vocabulary
 

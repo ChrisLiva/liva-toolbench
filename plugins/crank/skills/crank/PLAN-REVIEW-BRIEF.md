@@ -9,6 +9,7 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 
 - **underspecified steps** — a behavior missing its oracle (exact input → expected output), an interface missing a concrete signature: not concrete enough to build from without a design conversation.
 - **unsurveyed embedded code** — an embedded block with no evidence line naming what verified it (a probe run, a read of the live file, a doc check); verify it against the codebase yourself and fix it, or rewrite the behavior as prose-with-contract or pseudo-code.
+- **unprobed oracle** — a behavior or `Verify:` pinning a third-party tool's exact output, exit code, or API contract with no evidence line naming the run that produced it; run it yourself and correct the pinned value, or rewrite the step to derive it at task time.
 - **coverage holes** — a behavior from your walk that no Coverage row proves, a row whose verify step doesn't exercise the behavior, an empty verify cell whose stated reason doesn't hold.
 - **name / type / path inconsistencies** — across tasks or against the codebase.
 - **placeholder language** — `similar to Task N` / "add appropriate handling" / vague instructional prose / a symbol no task defines.
