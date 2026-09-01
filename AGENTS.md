@@ -214,7 +214,7 @@ The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, 
 after editing any skill, brief, or reference file, and before every commit; it
 prints one line per failed check and exits non-zero when any fails.
 
-It holds the nine adversarial-reviewer dispatch sites to the rules their prose
+It holds the ten adversarial-reviewer dispatch sites to the rules their prose
 carries — each sends its whole lookup frontier as one batch, names what it reads,
 (for the plan and spec briefs) lands findings through one uniqueness-asserting
 edit script, and carries the flag phrases its own `FLAG_LITERALS` entry names — and
