@@ -46,6 +46,7 @@ FLAG_LITERALS = {
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": [
         "unprobed oracle",
         "self-invalidating citation",
+        "unclaimed file",
     ],
 }
 
