@@ -74,7 +74,7 @@ instruction.
 
 Worth ~5.0M/run averaged, 8-14M on an edit-heavy plan phase.
 
-`PLAN-REVIEW-BRIEF.md:31` lists eighteen flag categories, then says to edit the plan file
+`PLAN-REVIEW-BRIEF.md:34` lists eighteen flag categories, then says to edit the plan file
 "to fix every item you flagged." With no batching rule the reviewer issues one `Edit` per
 finding, and each request re-bills its whole ~200-250k accumulated context. Across six runs,
 **41.2% of all subagent tokens** sit in requests whose only tool call is a single `Edit`:
@@ -89,7 +89,7 @@ finding, and each request re-bills its whole ~200-250k accumulated context. Acro
 `ddbe2e3f` batched its edits unprompted and came in **8x cheaper on the same instruction**.
 The shape is already reachable; the brief just never asks for it.
 
-**Where:** `PLAN-REVIEW-BRIEF.md:31` and `:38`; mirror in `SPEC-REVIEW-BRIEF.md`.
+**Where:** `PLAN-REVIEW-BRIEF.md:34` and `:41`; mirror in `SPEC-REVIEW-BRIEF.md`.
 
 **The edit:** two passes. The reviewer collects every finding and writes the list to its own
 scratch file, then applies them at **one edit per task block** (per section, in the spec
@@ -127,7 +127,7 @@ does not count against the budget.
   topics, of which a flat cap drops six.
 - **Keep it out of `SUBAGENT-TIERS.md`.** Six skills carry that copy, and a blanket cap
   contradicts `REVIEW-BRIEF.md:41` (unbounded per-finding format) and
-  `IMPLEMENTER-BRIEF.md:112` (its own ~15-line cap on a different schema).
+  `IMPLEMENTER-BRIEF.md:115` (its own ~15-line cap on a different schema).
 - **Leave `BRAINSTORM.md:109-119` alone.** The research brief returns library comparisons
   with source links, where `file:line` does not apply.
 
@@ -143,7 +143,7 @@ Worth 108-225k/run.
 structurally removable; the other half precede a text-only message, and a message carrying a
 tool call cannot end the turn.
 
-**The repo already solved this once.** `crank-execute/SKILL.md:91` caps the list at one
+**The repo already solved this once.** `crank-execute/SKILL.md:92` caps the list at one
 tracked task per plan task — `462b3de`, written after reviewing a real 8-task run. The
 coordinator lacks that cap, which is why `ddbe2e3f` ran 13 tracked tasks in one phase.
 
@@ -210,13 +210,13 @@ Est. 8-10M on a large execute run. Not verified to the standard of A-D.
   behavior lines. The implementer reads that one section — already allowed by `orientation.md`'s
   Run boundaries line, now narrowed to "and read no other part of it."
 - **Reviewer returns are uncapped** while the implementer's is capped at ~15 lines
-  (`IMPLEMENTER-BRIEF.md:112`). Give the three review briefs the same shape. ~700k.
+  (`IMPLEMENTER-BRIEF.md:115`). Give the three review briefs the same shape. ~700k.
   **Landed as:** each brief writes its full review to a dispatch-named path (`task-<N>-review.md`,
   `final-review.md`) and returns the check lines, the verdict, and one line per finding. The
   read-only rule in all three gained a carve-out for that file, or the rule forbids the write.
 - **The orchestrator holds the whole 109KB plan** for ~150 turns. Delegating the
   task-by-task walk is worth ~3.7M and is the riskiest item here —
-  `crank-execute/SKILL.md:110-113` is a real gate.
+  `crank-execute/SKILL.md:111-114` is a real gate.
   **Landed as:** step 1 reads the plan's frame (header, Global Constraints, Refactor scope, File
   structure, Coverage, Out of scope, task titles) and dispatches the task-by-task walk at the
   standard tier; each task body is read at step 3 as its turn comes. The gate itself is
@@ -246,8 +246,8 @@ with `git log -S'<phrase>'` before touching anything that looks redundant.
 | `crank/SKILL.md:37` live task tracking, "not in a batch" | `62d5b74` | The old fenced checklist was reproduced verbatim as plain text and never updated |
 | `crank/SKILL.md:36` load one phase at a time, never at triage | `b602602` | Replaced a preload block; a preload reverses it |
 | `READBACK.md` pacing and the 4-message cap | `7dd6aa1`, `60c0c9b` | From the 2026-08-07 usage retro. Post-cap runs already end at one pause via the standing exit at `:20` |
-| `crank-execute/SKILL.md:153` brief *file*, not pasted task text | `d055b31` | Crank's own statement of the resident-cost model, and why measured re-reads are near zero |
-| `crank-execute/SKILL.md:91` lean task list | `462b3de` | Written after reviewing a real 8-task run; the model for change C |
+| `crank-execute/SKILL.md:155` brief *file*, not pasted task text | `d055b31` | Crank's own statement of the resident-cost model, and why measured re-reads are near zero |
+| `crank-execute/SKILL.md:92` lean task list | `462b3de` | Written after reviewing a real 8-task run; the model for change C |
 | `crank-deepen/SKILL.md:22` never re-read as a source of truth | `a80f52e` | |
 | `crank-review/SKILL.md:105` point subagents at it, don't reproduce it | `a52e7a6` | |
 | `crank-review/REVIEW-BRIEF.md:4` "Scope your reading to the diff plus targets" | `a52e7a6` | Already bounds the tree-wide read a cost pass would try to batch |
@@ -275,8 +275,8 @@ Six proposals that measurement kills. Each is the kind a fresh cost pass propose
 - **Deduplicating the shared reference copies on disk.** No session loads two copies together
   across 16 runs, so the 25,420 tokens of on-disk duplication cost nothing at runtime.
 - **A size gate on triage.** crank triages on how settled the ask is, never how big
-  (`crank/SKILL.md:26-32`), while `crank-execute` makes the size call twice (`:137` solo
-  shape, `:159` low-risk review skip). The asymmetry is real, but all seven measured runs are
+  (`crank/SKILL.md:26-32`), while `crank-execute` makes the size call twice (`:139` solo
+  shape, `:161` low-risk review skip). The asymmetry is real, but all seven measured runs are
   large efforts — plan phases against finished specs producing 8, 11, and 14 tasks — so the
   corpus holds no instance of the overpay a gate would fix. Revisit if a full crank run on a
   one-file fix appears in a transcript.

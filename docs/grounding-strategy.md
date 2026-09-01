@@ -23,7 +23,7 @@ re-derives those facts. The four measured leaks:
 2. **Plan → execute.** Plan grounding collects exemplar tests with their conventions and
    any drift from the spec (PLAN.md:47-48), and proves toolchain behavior by running it
    (PLAN.md:76), but the plan template has no slot for most of it. Execute's pre-flight pays a fresh repo-sweep subagent to rebuild
-   the same facts into orientation.md (crank-execute SKILL.md:144), and every implementer
+   the same facts into orientation.md (crank-execute SKILL.md:145), and every implementer
    re-greps for helpers per task (IMPLEMENTER-BRIEF.md:49).
 3. **Deepen's quarantine.** Deepen's explorers produce file:line evidence, dependency maps,
    and deletion-test verdicts for every candidate, but the report holding them is a temp
