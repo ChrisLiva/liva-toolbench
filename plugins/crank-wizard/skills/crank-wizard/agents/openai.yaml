@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Wizard"
+  short_description: "Generate a cross-platform Bubble Tea setup wizard"
+  default_prompt: "Use $crank-wizard to build a wizard that walks a human through this procedure."
+
+policy:
+  allow_implicit_invocation: false

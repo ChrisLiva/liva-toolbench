@@ -24,6 +24,14 @@
       "tags": ["crank", "lite", "brainstorm", "spec", "plan", "execute"]
     },
     {
+      "name": "crank-wizard",
+      "source": "./plugins/crank-wizard",
+      "description": "Generates committed, cross-platform TUI wizards (Go + Bubble Tea) that walk a human through the steps only they can perform — brief up-front grilling, an immutable runtime, macOS and Windows builds verified.",
+      "version": "0.1.0",
+      "category": "tools",
+      "tags": ["wizard", "tui", "bubbletea", "charm", "go", "cross-platform"]
+    },
+    {
       "name": "effective-html",
       "source": "./plugins/effective-html",
       "description": "User-summoned skill that nudges the coding agent to produce single-file HTML communication artifacts (reviews, reports, explainers, throwaway editors) instead of wall-of-markdown — distilled from anthropics/html-effectiveness.",

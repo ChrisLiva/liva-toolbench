@@ -1,0 +1,10 @@
+{
+  "name": "crank-wizard",
+  "version": "0.1.0",
+  "description": "Generates committed, cross-platform TUI wizards (Go + Bubble Tea) that walk a human through the steps only they can perform — grills briefly up front, authors only steps.go against an immutable runtime, and verifies macOS and Windows builds.",
+  "keywords": ["wizard", "tui", "bubbletea", "charm", "go", "cross-platform"],
+  "interface": {
+    "displayName": "Crank Wizard",
+    "developerName": "Chris Liva"
+  }
+}

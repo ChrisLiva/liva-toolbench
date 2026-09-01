@@ -15,6 +15,11 @@
       "category": "tools"
     },
     {
+      "name": "crank-wizard",
+      "source": { "source": "local", "path": "./plugins/crank-wizard" },
+      "category": "tools"
+    },
+    {
       "name": "effective-html",
       "source": { "source": "local", "path": "./plugins/effective-html" },
       "category": "tools"

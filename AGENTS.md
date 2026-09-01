@@ -2,7 +2,7 @@
 
 This repo is a **plugin marketplace and development sandbox** for Claude Code and Codex. Each subdirectory under `plugins/` is a self-contained plugin you can install via the marketplace catalogs or load directly for fast iteration.
 
-When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin).
+When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin, `crank-wizard` for a skill that ships a compilable code template).
 
 ---
 
@@ -38,7 +38,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
         └── scripts/               # arbitrary helper scripts (referenced via ${CLAUDE_PLUGIN_ROOT})
 ```
 
-The current plugins (`crank`, `crank-lite`, `effective-html`) all ship as cross-harness plugins and currently contain manifests plus `skills/`. Other component directories shown above are supported by the plugin format when a plugin needs them.
+The current plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) all ship as cross-harness plugins and currently contain manifests plus `skills/`. Other component directories shown above are supported by the plugin format when a plugin needs them.
 
 > **Common mistake**: only `plugin.json` goes inside `.claude-plugin/` or `.codex-plugin/`. Skills, commands, agents, hooks, scripts, and other runtime files live at the **plugin root**.
 
@@ -102,7 +102,7 @@ The current plugins (`crank`, `crank-lite`, `effective-html`) all ship as cross-
 Cross-harness plugins ship for **both** Claude Code and Codex — they carry a
 `.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`, and both manifests
 read the same `skills/` tree. All current marketplace plugins are cross-harness:
-`crank`, `crank-lite`, and `effective-html`.
+`crank`, `crank-lite`, `crank-wizard`, and `effective-html`.
 
 **The Codex manifest** mirrors the Claude one for `name`, `version`, `description`,
 and `keywords`, and adds an `interface` block for Codex display metadata:
@@ -223,7 +223,10 @@ Claude-only preprocessing listed under *Cross-harness plugins*. Beyond the sites
 presence-checks the literals an orchestrator skill's own prose promises — the
 `PRESENCE_LITERALS` map — with no vocabulary or preprocessing rule applied. It also
 replaces the hand-run `diff -q` loop over the reference copies: for every reference a
-skill's own markdown links, the copy must exist and match its canonical.
+skill's own markdown links, the copy must exist and match its canonical. Finally it
+compiles `crank-wizard`'s Go template (`go vet`, then `go build` natively and with
+`GOOS=windows`), so a template edit that breaks either shipped OS fails the gate on
+this darwin machine instead of on a teammate's.
 
 `python3 scripts/measure-review-cost.py <transcript.jsonl | directory>` is the
 companion measurement, not a gate. It reports how a review thread spent its turns —

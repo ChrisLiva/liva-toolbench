@@ -6,7 +6,9 @@ Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
 """
 
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -87,7 +89,11 @@ CANONICAL = {
     "INTERVIEW": "plugins/crank-lite/skills/crank-lite",
 }
 
-SKILL_DIRS = ["plugins/crank/skills", "plugins/crank-lite/skills"]
+SKILL_DIRS = ["plugins/crank/skills", "plugins/crank-lite/skills", "plugins/crank-wizard/skills"]
+
+# The crank-wizard skill ships a compilable Go template; a wizard generator
+# whose own template does not compile is the failure this gate exists to catch.
+TEMPLATE_DIR = "plugins/crank-wizard/skills/crank-wizard/template"
 
 
 def read(rel):
@@ -165,11 +171,38 @@ def check_sync(failures):
                     failures.append(f"FAIL sync {copy_rel}: differs from {canonical_dir}/{name}.md")
 
 
+def check_template(failures):
+    """The wizard template must pass vet and compile for both shipped OSes."""
+    tdir = ROOT / TEMPLATE_DIR
+    if not tdir.is_dir():
+        failures.append(f"FAIL {TEMPLATE_DIR}: directory is missing")
+        return
+    runs = [
+        (["go", "vet", "./..."], {}),
+        (["go", "build", "-o", os.devnull, "."], {}),
+        (["go", "build", "-o", os.devnull, "."], {"GOOS": "windows"}),
+    ]
+    for cmd, extra_env in runs:
+        label = " ".join([f"{k}={v}" for k, v in extra_env.items()] + cmd)
+        try:
+            proc = subprocess.run(
+                cmd, cwd=tdir, env={**os.environ, **extra_env},
+                capture_output=True, text=True,
+            )
+        except FileNotFoundError:
+            failures.append(f"FAIL {TEMPLATE_DIR}: go toolchain not found, template unverified")
+            return
+        if proc.returncode != 0:
+            tail = (proc.stderr or proc.stdout).strip().splitlines()[-5:]
+            failures.append(f"FAIL {TEMPLATE_DIR}: {label}: " + " | ".join(tail))
+
+
 def main():
     failures = []
     check_sites(failures)
     check_presence(failures)
     check_sync(failures)
+    check_template(failures)
     for line in failures:
         print(line)
     print(f"{len(failures)} failure(s)")
