@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	goruntime "runtime"
 	"strconv"
 	"strings"
@@ -46,6 +47,7 @@ type Ctx struct {
 	w        *Wizard
 	st       *state
 	envFile  string
+	doN      int // Do lines numbered so far on the current step
 	ghTested bool
 	ghOK     bool
 }
@@ -114,6 +116,11 @@ func run(w *Wizard, list, fresh bool, envOverride string) error {
 		return nil
 	}
 
+	root, err := chdirRepoRoot()
+	if err != nil {
+		return err
+	}
+
 	st := loadState(w.Name)
 	if fresh {
 		st = newState()
@@ -124,6 +131,7 @@ func run(w *Wizard, list, fresh bool, envOverride string) error {
 	banner := styleTitle.Render("✦ "+w.Title) + "\n" +
 		styleDim.Render(fmt.Sprintf("%d steps · values land in %s", len(w.Steps), envFile))
 	fmt.Println(styleBanner.Render(banner))
+	fmt.Println(styleDim.Render("Working in " + root))
 	if w.Intro != "" {
 		fmt.Println(wrap(w.Intro))
 	}
@@ -158,6 +166,7 @@ func run(w *Wizard, list, fresh bool, envOverride string) error {
 		fmt.Println(styleStage.Render(fmt.Sprintf("▸ Step %d/%d · %s", i+1, len(w.Steps), step.Title)))
 		fmt.Println(progressDots(i, len(w.Steps)))
 		fmt.Println()
+		c.doN = 0
 		if err := step.Run(c); err != nil {
 			c.saveState()
 			return err
@@ -171,6 +180,26 @@ func run(w *Wizard, list, fresh bool, envOverride string) error {
 }
 
 // ---------- step-flow chrome ----------
+
+// chdirRepoRoot moves to the nearest ancestor holding a .git entry and returns
+// it, so Check commands, the env file, and saved progress all land at the repo
+// root however the wizard was launched (`go -C wizards/<name> run .` from the
+// root, or `go run .` from inside the wizard's directory). Outside any
+// checkout it stays where it started.
+func chdirRepoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	for probe := dir; ; probe = filepath.Dir(probe) {
+		if _, err := os.Stat(filepath.Join(probe, ".git")); err == nil {
+			return probe, os.Chdir(probe)
+		}
+		if filepath.Dir(probe) == probe {
+			return dir, nil
+		}
+	}
+}
 
 func clearScreen() { fmt.Print("\033[2J\033[H") }
 
@@ -290,6 +319,13 @@ func (c *Ctx) Note(s string) { fmt.Println(styleDim.Render(wrap(s))) }
 // Warn prints a yellow caution line.
 func (c *Ctx) Warn(s string) { fmt.Println(styleWarn.Render("⚠ " + s)) }
 
+// Do prints one action the human takes, numbered from 1 on each step and in
+// the step's accent color, so the clicks are the brightest lines on screen.
+func (c *Ctx) Do(s string) {
+	c.doN++
+	fmt.Println(styleStage.Render(fmt.Sprintf("  %d. ", c.doN)) + wrap(s))
+}
+
 // OpenURL opens url in the default browser (macOS/Windows) and says so.
 // When opening fails, it tells the human to open the URL themselves.
 func (c *Ctx) OpenURL(url string) {
@@ -308,8 +344,10 @@ func (c *Ctx) OpenURL(url string) {
 	}
 }
 
-// Copy puts text on the system clipboard and says what landed there.
-func (c *Ctx) Copy(label, text string) {
+// Copy puts text on the system clipboard, says what landed there, and waits
+// for Enter before returning: the clipboard holds one value, so the next Copy
+// only runs once this one has been pasted.
+func (c *Ctx) Copy(label, text string) error {
 	var cmd *exec.Cmd
 	switch goruntime.GOOS {
 	case "windows":
@@ -322,9 +360,10 @@ func (c *Ctx) Copy(label, text string) {
 	cmd.Stdin = strings.NewReader(text)
 	if err := cmd.Run(); err != nil {
 		c.Note(fmt.Sprintf("Clipboard unavailable — copy this yourself: %s", text))
-		return
+	} else {
+		fmt.Println(styleOK.Render("✓ ") + label + styleDim.Render(" — copied to clipboard"))
 	}
-	fmt.Println(styleOK.Render("✓ ") + label + styleDim.Render(" — copied to clipboard"))
+	return pause("Press Enter once you've pasted it")
 }
 
 // ---------- input helpers ----------
@@ -451,8 +490,10 @@ func (m checkModel) View() string {
 }
 
 // Check runs command behind a spinner and gates the step on it passing.
-// On failure the human chooses retry, skip (logged for the finish screen's
-// hand-finish list), or abort.
+// It runs the moment it is reached: when the human must act first, pause
+// before it with the done condition named ("Press Enter once the rule is
+// deployed"). On failure the human chooses retry, skip (logged for the finish
+// screen's hand-finish list), or abort.
 func (c *Ctx) Check(label, command string) error {
 	for {
 		ctx, cancel := context.WithCancel(context.Background())

@@ -27,7 +27,7 @@
       "name": "crank-wizard",
       "source": "./plugins/crank-wizard",
       "description": "Generates committed, cross-platform TUI wizards (Go + Bubble Tea) that walk a human through the steps only they can perform — brief up-front grilling, an immutable runtime, macOS and Windows builds verified.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "tools",
       "tags": ["wizard", "tui", "bubbletea", "charm", "go", "cross-platform"]
     },

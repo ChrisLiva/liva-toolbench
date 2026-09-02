@@ -6,8 +6,21 @@ package main
 
 import (
 	"fmt"
+	"os"
 	goruntime "runtime"
 )
+
+// appMarker stands in for "the app now shows in the dashboard": the demo has
+// no real Acme, so the human creates this file and the wizard checks for it.
+const appMarker = "acme-app.created"
+
+// exists builds a portable "this file is present" check.
+func exists(path string) string {
+	if goruntime.GOOS == "windows" {
+		return "if not exist " + path + " exit 1"
+	}
+	return "test -f " + path
+}
 
 func wizardDef() *Wizard {
 	return &Wizard{
@@ -31,11 +44,22 @@ func wizardDef() *Wizard {
 				},
 			},
 			{
+				// The dashboard-step shape: why, the page, the numbered actions,
+				// a pause that names the done condition, then the check.
 				Title: "Create the Acme app",
 				Run: func(c *Ctx) error {
-					c.Say("Create the app in the Acme dashboard. The wizard opens the page; you click New App and pick a region.")
+					c.Say("CI needs an Acme app to talk to. Create it in the dashboard; the wizard then checks it exists.")
 					c.OpenURL("https://example.com/")
 					c.Note("(Stand-in for https://dashboard.acme.dev/apps/new — this is the demo.)")
+					c.Do("Click New App.")
+					c.Do("Pick a region, name the app, and click Create.")
+					c.Do("Demo stand-in for the app appearing in the dashboard: create an empty file named " + appMarker + " in this directory.")
+					if err := pause("Press Enter once the app exists"); err != nil {
+						return err
+					}
+					if err := c.Check("the app exists", exists(appMarker)); err != nil {
+						return err
+					}
 					region, err := c.Select("ACME_REGION", "Which region did you pick?",
 						"us-east", "eu-west", "ap-south")
 					if err != nil {
@@ -56,8 +80,12 @@ func wizardDef() *Wizard {
 				Title: "Capture credentials",
 				Run: func(c *Ctx) error {
 					c.Say("On the app's Settings → API page, Acme shows an App ID and a one-time API key.")
-					c.Copy("Suggested key label", "acme-ci ("+c.st.Values["ACME_APP_NAME"]+")")
-					c.Note("Paste that label into the 'key name' field so the key is findable later.")
+					c.Do("Open Settings → API and click Create key.")
+					// Copy waits for Enter, so a second Copy never overwrites
+					// a value the human has not pasted yet.
+					if err := c.Copy("Suggested key label", "acme-ci ("+c.st.Values["ACME_APP_NAME"]+")"); err != nil {
+						return err
+					}
 					appID, err := c.Ask("ACME_APP_ID", "App ID (starts with app_)")
 					if err != nil {
 						return err
@@ -117,6 +145,7 @@ func wizardDef() *Wizard {
 					if err := c.Check("Env file holds the ACME_ values", probe); err != nil {
 						return err
 					}
+					_ = os.Remove(appMarker)
 					c.Note("A real wizard verifies against the live service: call the API with the new key, or trigger a CI dry run.")
 					return nil
 				},
