@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The ten adversarial-reviewer dispatch sites: eight brief files, plus the two
+# The eleven adversarial-reviewer dispatch sites: nine brief files, plus the two
 # crank-lite skills that carry their reviewer instruction as dispatch prose.
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
@@ -23,7 +23,8 @@ SITES = [
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-execute/RE-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-review/REVIEW-BRIEF.md",
-    "plugins/crank/skills/crank-deslop/DESLOP-BRIEF.md",
+    "plugins/crank/skills/crank-deslop/SLOP-BRIEF.md",
+    "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md",
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md",
     "plugins/crank-lite/skills/lite-execute/SKILL.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
@@ -55,6 +56,8 @@ FLAG_LITERALS = {
     ],
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["prose the diff falsified"],
     "plugins/crank/skills/crank-review/REVIEW-BRIEF.md": ["made untrue"],
+    "plugins/crank/skills/crank-deslop/SLOP-BRIEF.md": ["reflexive guard", "type-silencing cast"],
+    "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md": ["code-judo", "spaghetti growth", "deletion test"],
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md": ["made untrue", "fragile"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
 }

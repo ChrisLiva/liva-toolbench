@@ -9,21 +9,21 @@ disable-model-invocation: true
 
 ## Goal
 
-A concise fix plan over one declared scope, built from three altitudes of opportunity. The first two are defined in full in [DESLOP-BRIEF.md](DESLOP-BRIEF.md), the third in [PROSE-BRIEF.md](PROSE-BRIEF.md):
+A concise fix plan over one declared scope, built by three specialized finders, one per altitude of opportunity. Each altitude is defined in full in its finder's brief:
 
-- **Slop** — the residue agent-written code leaves behind: reflexive guards, type-silencing casts, needless nesting, style at odds with the surrounding file. Removed surgically, behavior identical.
-- **Structure** — code-judo moves: restructurings that keep behavior while whole branches, flags, wrappers, or layers disappear.
-- **Prose** — comments, docstrings, and in-scope docs: deleted when they restate the code, trimmed, consolidated to one site, corrected where the code has made them untrue, and freed of fragile references such as line numbers.
+- **Slop**, per [SLOP-BRIEF.md](SLOP-BRIEF.md): the residue agent-written code leaves behind: reflexive guards, type-silencing casts, needless nesting, style at odds with the surrounding file. Removed surgically, behavior identical.
+- **Structure**, per [STRUCTURE-BRIEF.md](STRUCTURE-BRIEF.md): the thermonuclear pass. Code-judo moves: restructurings that keep behavior while whole branches, flags, wrappers, or layers disappear, plus spaghetti growth, shallow abstractions, muddy type boundaries, logic in the wrong layer, and files past a thousand lines.
+- **Prose**, per [PROSE-BRIEF.md](PROSE-BRIEF.md): comments, docstrings, and in-scope docs: deleted when they restate the code, trimmed, consolidated to one site, corrected where the code has made them untrue, and freed of fragile references such as line numbers.
 
 High conviction over coverage: a plan of five moves worth making beats an inventory of fifty observations.
 
 ## Hard Rules
 
-- **Three finders, ever.** Partition the scope into at most two logical sections and spawn one section finder per section, plus one prose finder over the whole scope, all in a single wave. A scope one section finder can read whole gets one section finder and the prose finder. Never a fourth finder, never a second wave — a scope too large for two section finders is narrowed with the user, not fanned wider.
+- **Three finders, ever.** One slop finder, one structure finder, and one prose finder, each over the whole scope, all in a single wave. Never a fourth finder, never a second wave, never a partition: a scope one finder cannot read whole is narrowed with the user, not fanned wider.
 - **Read-only until approval.** Scoping, finding, and planning mutate nothing. Fixes land only after the user accepts the plan.
 - **Behavior unchanged.** Every planned fix preserves behavior; the one exception is a clear bug, and its plan row declares the behavior change explicitly.
 - **Not a linter.** Anything a compiler, type-checker, formatter, or linter catches — and any matter of taste — never reaches the plan.
-- **Never cut required behavior.** Trust-boundary validation, data-loss and error paths, security checks, and accessibility affordances are not slop; the brief's [Never cut required behavior](DESLOP-BRIEF.md) section governs.
+- **Never cut required behavior.** Trust-boundary validation, data-loss and error paths, security checks, and accessibility affordances are not slop; the *Never cut required behavior* section each brief carries governs.
 
 ## Flow
 
@@ -40,13 +40,19 @@ The user names the scope when invoking; the argument resolves to one of four sha
 
 ### 2. Find
 
-Partition the scope into at most two logical sections — split along module, layer, or directory boundaries so each section is coherent, never by raw file count alone. Spawn one standard finder per section, handing each only [DESLOP-BRIEF.md](DESLOP-BRIEF.md), its section's file inventory or diff command, and any user focus — pointers, never your characterization of the code. In the same wave, spawn one standard prose finder over the whole scope, handing it only [PROSE-BRIEF.md](PROSE-BRIEF.md), the full file inventory or diff command, and any user focus; comments, docstrings, and in-scope docs are its material, so the section finders leave them alone. Each finder returns opportunity rows per its brief's return format.
+Spawn the three standard finders in one wave, each over the whole scope. Hand each only its brief, the full file inventory or diff command, and any user focus: pointers, never your characterization of the code.
+
+- The **slop finder** gets [SLOP-BRIEF.md](SLOP-BRIEF.md).
+- The **structure finder** gets [STRUCTURE-BRIEF.md](STRUCTURE-BRIEF.md).
+- The **prose finder** gets [PROSE-BRIEF.md](PROSE-BRIEF.md).
+
+Each finder owns one altitude and returns opportunity rows per its brief's return format. A finder's closing line may point at a sibling's altitude; that line is a lead for step 3, not a row.
 
 **Done when:** every finder has returned its rows.
 
 ### 3. Plan
 
-Merge the rows yourself. Each section finder saw one section, so cross-section work is yours: dedupe rows that are one pattern surfacing twice, fold repeats of the same slop shape into one plan item listing its sites, and drop any row you cannot ground in the code when you read its cited lines. A prose row about a comment a structure move deletes anyway folds into that move. Order structure, then slop, then prose, biggest deletion first.
+Merge the rows yourself. Each finder saw one altitude, so cross-altitude work is yours: a slop or prose row inside code a structure move deletes anyway folds into that move; a lead a finder left about a sibling's altitude becomes a row only once you ground it in the code yourself; fold repeats of the same slop shape into one plan item listing its sites; drop any row you cannot ground in the code when you read its cited lines. Order structure, then slop, then prose, biggest deletion first.
 
 Render the plan:
 
@@ -86,7 +92,7 @@ Apply the accepted items — smallest diff per item, structure moves one at a ti
 
 ### Subagents
 
-This skill spawns finders at the **standard** tier — resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). Each finder gets a clean, fresh context and forms its own read of its section or of the scope's prose; the three run concurrently in one wave.
+This skill spawns finders at the **standard** tier — resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). Each finder gets a clean, fresh context and forms its own read of the whole scope at its altitude; the three run concurrently in one wave.
 
 ### Vocabulary
 
@@ -94,4 +100,4 @@ Defined in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion te
 
 ### Rubric
 
-The fixed rubric every section finder applies — the two code altitudes, the conviction bar, the never-cut list, and the return format — lives in [DESLOP-BRIEF.md](DESLOP-BRIEF.md). The prose finder's rubric — the four kinds of prose opportunity, fragile references, the never-cut list for tool-read prose, and its return format — lives in [PROSE-BRIEF.md](PROSE-BRIEF.md). Point each finder at its brief; don't reproduce it in the dispatch.
+Each finder applies one fixed rubric. The slop finder's, the four slop patterns, the conviction bar, the never-cut list, and its return format, lives in [SLOP-BRIEF.md](SLOP-BRIEF.md). The structure finder's, the code-judo bar, the nine kinds of structural opportunity, the never-cut list, and its return format, lives in [STRUCTURE-BRIEF.md](STRUCTURE-BRIEF.md). The prose finder's, the four kinds of prose opportunity, fragile references, the never-cut list for tool-read prose, and its return format, lives in [PROSE-BRIEF.md](PROSE-BRIEF.md). Point each finder at its brief; don't reproduce it in the dispatch.
