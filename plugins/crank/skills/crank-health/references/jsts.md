@@ -1,6 +1,6 @@
 # JS/TS analyzers
 
-Run from the repo root unless a row says otherwise. `<files>` is the project's tracked `.ts .tsx .mts .cts .js .jsx .mjs .cjs` files from the inventory, batched at ~200 per invocation. Ephemeral form is `npx --yes <pkg>@latest`; when the binary name differs from the package: `npx --yes --package <pkg>@latest -- <bin>`. A repo-owned tool runs as `<nearest node_modules/.bin>/<bin>` with the repo's config. Record the version each tool prints.
+Run from the repo root unless a row says otherwise. `<files>` is the project's tracked `.ts .tsx .mts .cts .js .jsx .mjs .cjs` files from the inventory, batched at ~200 per invocation. `<format-files>` is `<files>` plus the project's tracked `.css .scss .less .json .jsonc .graphql .gql .md .mdx .yaml .yml .html .vue` files, minus lockfiles: the format letter is a ratio over files, not over KLOC, so widening it to the styling and data files a formatter owns moves no density band. Only the two format rows take it; every other row takes `<files>`. Drop what the repo's own `.prettierignore` or Biome `files.includes` `!`-entries exclude: a file its formatter is configured to skip belongs in neither half of the ratio. Ephemeral form is `npx --yes <pkg>@latest`; when the binary name differs from the package: `npx --yes --package <pkg>@latest -- <bin>`. A repo-owned tool runs as `<nearest node_modules/.bin>/<bin>` with the repo's config. Record the version each tool prints.
 
 | category | default | repo-owned only (never imposed) |
 | --- | --- | --- |
@@ -31,16 +31,17 @@ eslint --format json --no-color --no-warn-ignored <files>
 **biome** (lint and format, owned only). cwd must be the directory of the highest `biome.json[c]` in the ancestry: Biome refuses a config below its cwd as "nested". JSON is on stdout after other lines: take the first line starting with `{` that parses and has `diagnostics`. Never `--write`, `--fix`, `--suppress`.
 ```sh
 biome lint   --reporter=json --max-diagnostics=none --colors=off --no-errors-on-unmatched --vcs-enabled=true --vcs-client-kind=git --vcs-use-ignore-file=true --vcs-root=<repo> <files>
-biome format --reporter=json --max-diagnostics=none --colors=off --no-errors-on-unmatched --vcs-enabled=true --vcs-client-kind=git --vcs-use-ignore-file=true --vcs-root=<repo> <files>
+biome format --reporter=json --max-diagnostics=none --colors=off --no-errors-on-unmatched --vcs-enabled=true --vcs-client-kind=git --vcs-use-ignore-file=true --vcs-root=<repo> <format-files>
 ```
+Exit 1 = findings, 0 = clean. `summary.changed` counts files written, so a check run always reports 0: the format metric is the count of distinct `location.path` among the `diagnostics` rows whose `category` is `format`. `summary.errors` is not that count, because a `parse` row lands in it too, and a `parse` row is a tool error on that file rather than a format failure. Diagnostic paths are relative to cwd, so the cwd rule above also decides how findings anchor. The denominator is `summary.unchanged`, the files Biome parsed, never the length of the list you handed it: it formats `.css`, `.json[c]` and `.graphql` but drops `.scss`, `.less`, `.md`, `.yaml` and `.html` without counting them in `skipped` either, and in `.vue` and `.svelte` it reads the `<script>` block alone.
 
 **prettier** (format). Prints one path per line for each file that would change. Exit 1 = some would change, 2 = failure. `--check` and `--list-different` are mutually exclusive.
 ```sh
-prettier --list-different --ignore-unknown <files>
+prettier --list-different --ignore-unknown <format-files>
 # no repo config: add
 --no-config --no-editorconfig
 ```
-Format grades even on the default config (the measure is "formatted at all").
+Format grades even on the default config (the measure is "formatted at all"). Prettier parses every extension in `<format-files>` but `.svelte`, which needs a plugin it does not ship; `--ignore-unknown` drops that one without a word, so leave it out of the denominator.
 
 **tsc** (types). Always name the project explicitly, or a monorepo grabs another package's tsconfig. `--incremental false` stops `.tsbuildinfo` being written.
 ```sh
