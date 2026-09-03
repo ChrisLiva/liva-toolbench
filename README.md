@@ -53,6 +53,7 @@ Forces a **spec → plan → execute** sequence before any code is written. Each
 | `crank:crank-refine` | `/crank-refine` | Grills an existing brainstorm, spec, or plan **at its own altitude** until nothing consequential is left undecided — one informed question at a time, sharpening the artifact in place. Standalone pass; doesn't advance the pipeline. |
 | `crank:crank-review` | `/crank-review` | Reviews a PR, commit range, or uncommitted changes for a **short list of high-confidence findings** — does the code do what it says, what can be deleted, what edge case slips through — each independently validated before it ships. |
 | `crank:crank-test-prune` | `/crank-test-prune` | Verdicts every test in scope **KEEP / DELETE / REFACTOR / MERGE** so only behavior-pinning tests survive — redundancy judged suite-wide, expected values from an independent source of truth, full suite green after applying. |
+| `crank:crank-health` | `/crank-health [--pr <base>] [--deep] [--fix]` | Runs the repo's analyzers (its own where it owns them, the latest pinned-by-run defaults where it doesn't) across JS/TS, Python, C# and Go, **grades eight categories** A–F with the arithmetic shown, and writes a ≤20-task fix plan with a verify command per task. Zero footprint, secrets never quoted, quick profile never executes repo code. |
 
 **Typical flow:**
 
@@ -109,6 +110,8 @@ plugins/
       crank-refine/…            #   the other crank skills
       crank-review/…
       crank-test-prune/…
+      crank-health/SKILL.md     # references/ per language, assets/ templates,
+                                #   scripts/ detect + footprint gate
   crank-lite/
     .claude-plugin/plugin.json
     .codex-plugin/plugin.json

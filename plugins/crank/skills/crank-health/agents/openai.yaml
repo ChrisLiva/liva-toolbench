@@ -1,0 +1,7 @@
+interface:
+  display_name: "Crank Health"
+  short_description: "Grade a repo with its analyzers and emit a fix plan"
+  default_prompt: "Use $crank:crank-health to scan this repo with its analyzers, grade the eight categories, and write the fix plan."
+
+policy:
+  allow_implicit_invocation: false
