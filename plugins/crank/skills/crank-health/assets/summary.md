@@ -15,7 +15,7 @@ Inventory: <n> files, <n> lines (<KLOC>)
 | tsc | 5.9.2 | repo tsconfig | error | | | exit 2, no diagnostics: <first stderr line> |
 | knip | 6.34.0 | default | not-available | | | no package.json in ancestry |
 
-State is one of ok, error (stderr's first line), not-available (why, with the install hint), skipped (never imposed, or nothing to scan), timeout. One tool per row.
+State is one of ok; error, carrying stderr's first line; not-available, carrying why and the install hint; skipped, carrying `never imposed` or `nothing to scan`; timeout, for a tool the budget killed. One tool per row, and a state other than ok is what stands in for its findings file.
 Metric is `<numerator> / <denominator> <unit> (<percent>)`: `4 / 210 files (1.9%)`, `9 / 412 functions over 15 (2.2%)`, `8240 / 268415 tokens (3.07%)`. Graded and advisory columns follow the rules in `references/grading.md`.
 
 ## Findings

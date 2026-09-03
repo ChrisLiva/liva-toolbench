@@ -20,3 +20,16 @@ Run dir `<run-dir>` · `<repo>` @ `<sha>` · <quick|deep> · scope: <all project
 
 Provenance vocabulary, exactly: `repo config (<file>), repo binary` · `repo config (<file>), ephemeral` · `default config, ephemeral` · `default config, ephemeral, standby behind <owner>` · `skill config, ephemeral` · `system binary` · `skipped: <reason>` · `not available: <hint>`.
 Version is `latest` until the tool prints one; the scan subagent replaces it.
+
+## Resolving a row
+
+A tool the repo owns runs its binary against its config; owned but not installed runs ephemeral
+against the repo's config; not owned runs the default at the latest version. Ownership itself was
+settled in step 1, by the ownership rule in that language's reference.
+
+eslint, biome, mypy, golangci-lint, stryker, cosmic-ray, gremlins and Stryker.NET are **never
+imposed**: unowned, they get a `skipped: not owned (never imposed)` row and no run.
+
+The default lint, format and types tool still runs behind an owner as a **standby**, and its
+findings are dropped once the owner graded the category. An owner that errored leaves the standby's
+findings in the grade, and the plan says so.

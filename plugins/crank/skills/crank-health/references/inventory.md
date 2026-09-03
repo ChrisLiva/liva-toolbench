@@ -2,8 +2,7 @@
 
 Step 1 writes `<run-dir>/inventory.md`: what code is in scope, how it splits into projects, how
 many lines of each language each project holds, and which analyzers each project already owns.
-Every later step reads it. Ownership rules are not restated here; each language reference states
-its own and is the only place that does.
+Every later step reads it.
 
 ## What is in scope
 
@@ -41,14 +40,16 @@ lint's denominator grows by them ([grading.md](grading.md)).
 
 Read each project's manifests and configs and record what it owns, by the ownership rule in the
 reference for that language: [jsts.md](jsts.md), [python.md](python.md), [go.md](go.md),
-[csharp.md](csharp.md). Each rule covers ancestors, so a config above the project still owns.
+[csharp.md](csharp.md). Each of those four states its own rule and is the only place that does.
+Each rule covers ancestors, so a config above the project still owns.
 
 Read a manifest, never grep it. `"eslint"` sits in `scripts` far more often than in any dependency
 block, and a `scripts` entry never decides ownership; a grep that cannot tell the two apart
 imposes a tool the repo never chose.
 
-Record what is on PATH too, since a missing binary degrades a whole language or category: `uv`,
-`go` (1.25+), `dotnet` (10+), `gitleaks`, `opengrep`, `osv-scanner`.
+Record what is on PATH too, with the install hint for each one missing: `uv`, `go` (1.25+),
+`dotnet` (10+), `gitleaks`, `opengrep`, `osv-scanner`. A missing toolchain is what a whole
+language's `not assessed (reason)` will cite, so the reason has to be readable here.
 
 ## Snapshot the footprint
 

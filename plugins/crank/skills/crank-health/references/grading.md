@@ -53,8 +53,6 @@ Across categories the rows stay separate and link to each other, so one place ca
 
 ## Shapes and bands
 
-Severity weights: critical 5, error 5, warning 1, info 0.2.
-
 | category     | shape                              | A     | B    | C    | D    | else |
 | ------------ | ---------------------------------- | ----- | ---- | ---- | ---- | ---- |
 | lint         | weighted findings / KLOC           | ≤ 1   | ≤ 5  | ≤ 15 | ≤ 40 | F    |
@@ -89,8 +87,7 @@ Measured on zustand, requests, datasette and crank-health with these exact bands
 - Untyped Python under ty or pyright measures 25 to 75 errors/KLOC (F). That is the honest reading;
   say "no type safety" rather than bending the band.
 - knip and fallow on a library with no configured entry points report the public modules, tests and
-  examples as unused. Read the package's `exports`/`main`/`bin` and the test globs before grading
-  dead code; findings there are advisory.
+  examples as unused. That is the advisory case above, not a D.
 - Format is bimodal: 0 to 2% (formats in CI) or 30%+ (does not, or an older formatter).
 - Complexity discriminates cleanly: well-kept repos measure 0.1% to 4%.
 - Duplication: a test-heavy repo can read F on its test suite alone. Report where the clones sit.

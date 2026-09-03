@@ -77,6 +77,5 @@ cosmic-ray dump <scratch>/session.sqlite
 ## Gotchas
 
 - `uv` missing from PATH: every Python category is not assessed, hint `brew install uv`.
-- Untyped code under ty or pyright measures 25 to 75 errors/KLOC. That grades F and the report says "no type safety"; do not soften it by dropping rules.
 - `__pycache__` and `.pytest_cache`: `PYTHONDONTWRITEBYTECODE=1` and `-p no:cacheprovider` on anything that imports the code.
 - The ruff default select is deliberately the old `E4,E7,E9,F` set, not ruff's modern default, so the grade reflects correctness rules only.

@@ -12,7 +12,7 @@ Three file lists, each the project's tracked files of those extensions from the 
 | --- | --- | --- |
 | lint | oxlint | eslint, biome lint, react-doctor (when `react` is a dependency) |
 | format | prettier | biome format |
-| types | tsc (needs a `tsconfig.json` in the project itself; a parent's does not count) | |
+| types | tsc (needs a `tsconfig.json` in the project itself) | |
 | dead code | knip | fallow dead-code |
 | complexity | fallow health | |
 | test quality (deep) | | stryker |
