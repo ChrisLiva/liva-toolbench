@@ -67,6 +67,12 @@ Severity weights: critical 5, error 5, warning 1, info 0.2.
 | security     | absolute counts, never normalized  | zero findings of any kind | ≤ 2 warning and ≤ 10 info | more | any error (high) | any critical → F |
 
 KLOC is the assessed lines of that language in that project (`scripts/detect.sh` prints it).
+Lint is the one density whose denominator follows the tool rather than the language: it is the
+KLOC the tool that graded lint actually read. Only biome reads past the language's own files,
+adding the `css` and `graphql` lines `detect.sh` prints on the project's `lint assets` row; every
+other lint tool reads the language files alone, so its denominator is the language KLOC unchanged.
+Types, dead code and complexity always divide by the language KLOC, so an asset line never
+flatters them.
 A density category with findings and zero KLOC is F; with no graded findings it is A.
 A secret is always critical and never advisory: one leaked credential is F in a million-line repo.
 Security A is reserved for nothing found at all; advisory-only lands at B.

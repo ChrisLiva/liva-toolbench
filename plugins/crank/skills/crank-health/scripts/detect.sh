@@ -34,6 +34,8 @@ lang_of() {
     *.py|*.pyi) echo python ;;
     *.cs) echo csharp ;;
     *.go) echo go ;;
+    *.css) echo css ;;
+    *.graphql|*.gql) echo graphql ;;
     *) echo other ;;
   esac
 }
@@ -94,13 +96,14 @@ report() { printf '  %-14s %s\n' "$1" "${2:-(none)}"; }
 while read -r d; do
   if [ ${#only[@]} -gt 0 ]; then keep=0; for o in "${only[@]}"; do [ "${o%/}" = "$d" ] && keep=1; done; [ $keep -eq 1 ] || continue; fi
   total=$(awk -F'\t' -v d="$d" '$1==d{s+=$3} END{print s+0}' "$tmp")
-  nfiles=$(awk -F'\t' -v d="$d" '$1==d{c++} END{print c+0}' "$tmp")
+  nfiles=$(awk -F'\t' -v d="$d" '$1==d && $2!="css" && $2!="graphql"{c++} END{print c+0}' "$tmp")
   echo "## project $d"
   if [ "$nfiles" -eq 0 ]; then echo "  workspace shell: no source of its own"; echo; continue; fi
   echo "  manifests: $(printf '%s\n' "$manifests" | awk -v d="$d" '{p=$0; sub(/(^|\/)[^\/]+$/,"",p); if(p=="")p="."; if(p==d)printf "%s ", $0}')"
-  awk -F'\t' -v d="$d" '$1==d{l[$2]+=$3; c[$2]++} END{for(k in l) printf "  %-8s %6d files %8d lines (%.1f KLOC)\n", k, c[k], l[k], l[k]/1000}' "$tmp" | sort
+  awk -F'\t' -v d="$d" '$1==d && $2!="css" && $2!="graphql"{l[$2]+=$3; c[$2]++} END{for(k in l) printf "  %-8s %6d files %8d lines (%.1f KLOC)\n", k, c[k], l[k], l[k]/1000}' "$tmp" | sort
+  report "lint assets" "$(awk -F'\t' -v d="$d" '$1==d && ($2=="css"||$2=="graphql"){l[$2]+=$3; c[$2]++} END{for(k in l) printf "%s %d files %d lines (%.1f KLOC); ", k, c[k], l[k], l[k]/1000}' "$tmp" | sed 's/; $//')"
   echo "  owned tools:"
-  langs=$(awk -F'\t' -v d="$d" '$1==d{print $2}' "$tmp" | sort -u)
+  langs=$(awk -F'\t' -v d="$d" '$1==d && $2!="css" && $2!="graphql"{print $2}' "$tmp" | sort -u)
   if grep -q js-ts <<<"$langs"; then
     report tsc        "$(ls "$d"/tsconfig*.json 2>/dev/null | head -1 || true)"
     report eslint     "$(owns "$d" 'eslint.config.*' '.eslintrc*' || dep "$d" eslint || true)"
