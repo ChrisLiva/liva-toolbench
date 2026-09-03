@@ -66,10 +66,10 @@ Severity weights: critical 5, error 5, warning 1, info 0.2.
 | test quality | mutation score % (higher better)   | ≥ 80  | ≥ 65 | ≥ 50 | ≥ 35 | F    |
 | security     | absolute counts, never normalized  | zero findings of any kind | ≤ 2 warning and ≤ 10 info | more | any error (high) | any critical → F |
 
-KLOC is the assessed lines of that language in that project (`scripts/detect.sh` prints it).
+KLOC is the assessed lines of that language in that project (`<run-dir>/inventory.md` holds it).
 Lint is the one density whose denominator follows the tool rather than the language: it is the
 KLOC the tool that graded lint actually read. Only biome reads past the language's own files,
-adding the `css` and `graphql` lines `detect.sh` prints on the project's `lint assets` row; every
+adding the `css` and `graphql` lines `inventory.md` records on the project's `lint assets` row; every
 other lint tool reads the language files alone, so its denominator is the language KLOC unchanged.
 Types, dead code and complexity always divide by the language KLOC, so an asset line never
 flatters them.
