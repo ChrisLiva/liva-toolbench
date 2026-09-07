@@ -68,6 +68,16 @@ Standing defect rules while implementing:
 
 The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a detour — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations; beside the task's Progress flip, append the corrected fact as one line in the plan's Grounding section ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), so a resumed run stops re-hitting the same stale detail. A fix that would change what ships is a reroute: stop and surface it with your recommendation. Pre-existing bugs off the plan's path stay retro notes, never side quests.
 
+## Short run
+
+A run that ends with boxes still unchecked in the `## Progress` block — the user bounded it ("do task 2, then stop"), or a reroute stopped it — is a **short run**: the review, the loop-close, and the retro below belong to the run that lands the **last** plan task, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
+
+- On each unchecked task's line, append `— open: <a question this run raised about it>` and `— note: <an interface, path, or contract its task text no longer matches>`; on each task that landed this run, append the review findings and observations the retro would otherwise have carried.
+- Bank each corrected repo fact with its evidence in the plan's Grounding section ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), which is what a resumed run and its implementers read.
+- Under the Progress block's `Base:` line, write `Stopped: <why> — resume at Task <N>`; the run that resumes overwrites it.
+
+Then report the tasks that landed with their commit SHAs, the tasks that remain, and `/lite-execute <plan path>` to resume. Completion criterion: every unchecked task carries what this run changed for it or is confirmed unaffected, and the `Stopped:` line names the resume point.
+
 ## Review and commit
 
 Once done implementing the entire plan, dispatch a heavy-tier reviewer (see Subagent tiers) to adversarially review the work against the plan, handing it pointers only — the plan path, the Progress block's `Base` SHA, the diff command `git diff <Base>..HEAD`, and the absolute path to this skill's `VOCABULARY.md`, whose **dead seam**, **implementation-detail test**, and **redundant test** the review turns on — never your characterization of the diff. Tell it to work its lookups in **rounds**: a round's **frontier** is every lookup whose answer it does not need before issuing the next one, and the whole frontier goes out as one batch in a single turn, every return read before it composes the next round. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence, defaulting to `REFUTED` when the evidence is thin. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
@@ -76,7 +86,7 @@ Before committing, inspect the worktree and stage only the files this plan's wor
 
 ## Close the loop
 
-Before the retro, settle every loose end (reviewer findings, plan risks, your own "worth noting" observations) with a command, read, or test this session; a loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation. A fact that cost this run a detour and would cost the next run the same — a fixture landmine, a known flake, a toolchain trap — outlives the effort: append one line carrying its evidence to the repo's `CLAUDE.md`, `CONTEXT.md`, or an ADR, whichever the repo already has, and name where it landed in the retro; with no such file it survives as a decision naming the line and its target.
+Before the retro, settle every loose end (what earlier short runs parked on the Progress lines, reviewer findings, plan risks, your own "worth noting" observations) with a command, read, or test this session; a loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation. A fact that cost this run a detour and would cost the next run the same — a fixture landmine, a known flake, a toolchain trap — outlives the effort: append one line carrying its evidence to the repo's `CLAUDE.md`, `CONTEXT.md`, or an ADR, whichever the repo already has, and name where it landed in the retro; with no such file it survives as a decision naming the line and its target.
 
 ## Retro
 

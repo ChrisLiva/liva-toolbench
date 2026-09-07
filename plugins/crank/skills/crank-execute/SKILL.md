@@ -22,7 +22,7 @@ Ship the plan. Treat the plan as the source of truth — direct, don't redesign.
 - **A stated dispatch binds you to spawn.** The moment your output says a task gets a subagent — or the run's chosen shape says so — your *next* action is that spawn, never the work done inline (the pre-flight roster is not itself the dispatch). If main-thread work is the right call, say you're staying on-thread and why (for a shape change, re-state the shape) instead of announcing a dispatch.
 - **A dispatch is a blocking call.** From spawn to return the subagent owns the work: your next action is reading its return, and everything else — the next task, edits near its files, a peek at its progress — queues behind that return. In parallel mode the batch of spawns goes out in one message and blocks as one; every return is read before anything else moves. The one exit from the wait is the quiet-dispatch rule below.
 - **Oscillation stops the loop.** A review round that demands reversing what a prior round required is oscillation, not progress — never flip the code blind; stop and surface both verdicts to the user with your recommendation.
-- **A stop instruction bounds the unit of work, not the phase.** When the user says "do X, then stop," the run ends after X's verification, whatever X uncovers — newly discovered defects become surfaced findings with a recommendation, never a new fix round.
+- **A stop instruction bounds the unit of work, not the phase.** When the user says "do X, then stop," the run ends after X's verification, whatever X uncovers — newly discovered defects become surfaced findings with a recommendation, never a new fix round. A run that ends with plan tasks still unchecked is a **short run**: it exits through Flow step 4, which hands the ledger forward and leaves the final gate to the run that lands the last task.
 - **Off-plan fixes are bounded.** A fix that isn't a plan task gets exactly one investigation, one test-first fix, one review — routed through this skill's own dispatch shapes, never an ad-hoc harness workflow — then stop and report, whatever that review finds.
 - **A quiet dispatch is reconciled, not narrated.** When a subagent is out past the point you expected it back, reconcile against durable state — `git log` since BASE, the ledger, its report file on disk — then resume the agent or surface the stall with your recommendation; a "standing by" turn is never the move.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
@@ -35,11 +35,11 @@ This skill spawns subagents at two tiers — resolve each to your harness per [S
 
 ### Vocabulary
 
-Read [VOCABULARY.md](VOCABULARY.md) before step 2. Step 3's prose leans on the **seam**, the **journey test**, and the **tracer bullet** against its opposite the **horizontal slice**. Hold the **deletion test**, **depth** (**deep** / **shallow**), **spaghetti growth**, the **implementation-detail test**, and the **redundant test** when you verdict a reviewer's findings at steps 3 and 4 — a finding that misapplies one of these meanings is a dismissal.
+Read [VOCABULARY.md](VOCABULARY.md) before step 2. Step 3's prose leans on the **seam**, the **journey test**, and the **tracer bullet** against its opposite the **horizontal slice**. Hold the **deletion test**, **depth** (**deep** / **shallow**), **spaghetti growth**, the **implementation-detail test**, and the **redundant test** when you verdict a reviewer's findings at steps 3 and 5 — a finding that misapplies one of these meanings is a dismissal.
 
 ### Review verdicts
 
-Both review gates, per task (Flow step 3) and final (Flow step 4), resolve a verdict the same way:
+Both review gates, per task (Flow step 3) and final (Flow step 5), resolve a verdict the same way:
 
 - Dismiss only what you can disprove, never what you'd rather not fix, and record the reasoning that disproved it.
 - A confirmed gap is a failed review.
@@ -78,7 +78,7 @@ Flip a task's box to `[x]` the moment it lands and append its commit SHA(s) and 
 
 ### Retro
 
-Written to the effort's `.crank/<slug>/` directory (see Flow → Retro). Sections:
+Written by the run that lands the **last** plan task, to the effort's `.crank/<slug>/` directory (see Flow → Retro); a short run hands the ledger forward instead (Flow step 4). Sections:
 
 - **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
 - **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
@@ -166,9 +166,23 @@ Completion criterion: the filled block is in your reply, `.crank/<slug>/exec/` e
 
    After the fixer lands, dispatch a **re-review, not a fresh review**: the same pointer shape as the first review, except the rubric is `re-review-rubric.md`, the findings file replaces the plan-task pointer, the review path is the same `task-<N>-review.md` appended under a `## Round <R>` heading, and the diff range is FIX_BASE — tell it to run `git diff <FIX_BASE>..HEAD` itself, and hand it the task's BASE SHA too for the rubric's comparative exception. A re-review that returns `CHANGES_REQUESTED` starts the next round from a new FIX_BASE. Its Out-of-scope observations route as Notes do (References → Review verdicts). The loop runs until approved — but that is not "obey every round": oscillation stops the loop (see Hard Rules), and a re-review verdict that merely restyles or reopens a point the last round settled is a finding to dismiss here, not an order to follow.
 
-### 4. Verify the whole
+### 4. Short run: hand the ledger forward
 
-Before claiming completion, three gates in order — any failure stops the run:
+The final gate, the loop-close, and the retro belong to the run that lands the **last** plan task: the gate reads the whole diff against the whole plan and its Coverage table, so it earns a verdict once. When the task loop ends with boxes still unchecked on the ledger — the user bounded the run ("do task 3, then stop"), or a reroute or a `BLOCKED` report stopped it — the run is a **short run** and ends here, with the ledger left able to brief whoever picks the plan up.
+
+Read each unchecked task against what this run actually shipped, then write what changed for it:
+
+- **On the ledger's task lines** — for each unchecked task, `— open: <one line>` for a question this run raised about it and `— note: <one line>` for a landed interface, path, or contract its plan text no longer matches, both read at step 3 by whoever implements it; for each task that landed this run, the reviewer Notes and deferred findings it left, which the retro reads off the ledger instead of losing them with the session.
+- **In `.crank/<slug>/grounding.md`** — every corrected repo fact with its evidence, per Deliverables → Progress ledger. That file seeds `orientation.md` for the next run's implementers, so a fact wider than one task lands here rather than on a line.
+- **Under the ledger's anchor** — one `Stopped: <why> — resume at Task <N>` line, which the run that resumes overwrites.
+
+Then hand back per step 8.
+
+Completion criterion: every unchecked task has been read against this run's diff and either carries what it needs or is confirmed unaffected, each landed task's Notes are on its line, the `Stopped:` line names the resume point, and `git status --short` is clean or its leftovers named in the hand-back.
+
+### 5. Verify the whole
+
+Every plan task is `[x]` on the ledger by now — a run that stopped earlier left through step 4. Before claiming completion, three gates in order — any failure stops the run:
 
 1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's gate commands — its `Gates:` header line, or suite / lint / typecheck / build if the plan predates one — fresh this turn and read the output.
 2. **Coverage walk.** Walk the plan's Coverage table row by row; for each row, confirm its verify step ran green *this session* — re-run any that are stale or that earlier tasks may have broken. Rows marked human-only go in the retro's Open items, not silently skipped. If the plan has no Coverage table, walk the spec's acceptance criteria (or, with no spec, the plan's stated goal) and check each against the diff yourself.
@@ -176,9 +190,9 @@ Before claiming completion, three gates in order — any failure stops the run:
 
 On `CHANGES_REQUESTED`, vet each finding before you touch code, per References → Review verdicts. The final reviewer is fresh-eyes but context-starved by design (pointers only, no cross-task memory), so a finding can be a false positive your spec-and-plan context disproves: it read correct reuse as duplication, or called an acceptance criterion missing that a file outside its narrow read already satisfies. Dismiss those here, recorded in the retro's Final review section. Apply the surviving fixes and nothing else — failing test first for behavioral fixes, separate commits, no amending. A horizontal-slice finding is settled by demonstrating each sliced test still fails without its implementation; the demonstrated slice is then recorded in the retro's Final review section rather than re-committed. Then re-review once: the same dispatch shape, re-using `final-review-rubric.md` and appending to `final-review.md` under a `## Round <R>` heading, plus the **FIX_BASE** (the HEAD the reviewer judged) and the surviving findings, which route it into the rubric's **Fix round** branch. A finding you can't fix becomes a retro Open item, stated plainly. A surviving finding that would reverse a change an earlier per-task review required is oscillation — stop and surface per Hard Rules.
 
-### 5. Close the loop
+### 6. Close the loop
 
-You ship finished work. Before writing the retro, gather every loose end the run produced — reviewer Notes, deferred findings, plan risks, human-only Coverage rows, your own "worth noting" observations — and triage each:
+You ship finished work. Before writing the retro, gather every loose end the plan produced — what earlier short runs parked on the ledger's task lines, plus this run's reviewer Notes, deferred findings, plan risks, human-only Coverage rows, and your own "worth noting" observations — and triage each:
 
 1. **Settle it.** If a command, read, or test can settle it this session, run it now and read the output — a verified fact is settled and appears nowhere in the hand-back. Settling is verification, not rework: a check that reveals a real defect routes to the next bucket, and a confirmed nit stays a deferred finding in the retro, never a fresh fix-loop.
 2. **Fix it.** A defect in shipped code fails the final gate — route it back through Verify the whole.
@@ -187,13 +201,15 @@ You ship finished work. Before writing the retro, gather every loose end the run
 
 Completion criterion: every loose end is settled, fixed, promoted with the `file:line` it landed at, or written as a decision with a recommendation — none merely restates a fact you could have checked this session.
 
-### 6. Retro
+### 7. Retro
 
 Write a retro to `.crank/<slug>/retro.md` at the repository root, with the sections listed in **Deliverables → Retro**.
 
-### 7. Hand back
+### 8. Hand back
 
 Report finished work: what shipped, the verification that proves it, and — only when items survived Close the loop — each one as written there.
+
+A short run reports what it has instead: the tasks that landed with their commit SHAs, the tasks that remain, why it stopped, and the ledger path, with **Next:** `/crank-execute .crank/<slug>/plan.md` to resume — the ledger carries the rest.
 
 Don't end on a disposition menu — take the safe defaults, state them, and lead with the durable next step:
 
