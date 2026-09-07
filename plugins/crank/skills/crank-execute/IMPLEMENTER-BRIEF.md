@@ -46,15 +46,15 @@ Copy this block into the brief directory once per run, verbatim — every task b
 
 - Do not push, amend earlier commits, or rewrite history.
 - Return only when every command you started has finished. Run long verifications synchronously and read their output in the same turn you report it — work parked behind a background watcher at return time is work not done.
-- The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Deviations. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute; a detour needing files outside the block returns `NEEDS_CONTEXT` first. A `Stop if:` condition in your task's plan section, once observed, is a `BLOCKED` return naming what you observed, never something to work around.
-- Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, note that in the report's Concerns so the reviewer knows the codebase was searched.
+- The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Detours, `settled` when your brief, `orientation.md`, grounding, or the coordinator already directed that fix, `open` when you chose it yourself. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute; a detour needing files outside the block returns `NEEDS_CONTEXT` first. A `Stop if:` condition in your task's plan section, once observed, is a `BLOCKED` return naming what you observed, never something to work around.
+- Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, record the search and its result under the report's Observations.
 - Before reaching for a new third-party dependency, exhaust the lighter options in order: an existing in-repo helper, the stdlib, a native platform feature, then a dependency already in the manifest. Don't add a dependency for what a few lines do; if the task genuinely needs one the plan didn't name, return `NEEDS_CONTEXT` instead of importing it silently.
 
 ## Standing defect rules
 
 - A probe step (a throwaway deterministic check the plan embeds) runs from the OS temp dir, never the working tree: watch it fail once, run it green, paste its output into the report's Verification, and delete it — `git status` shows no probe artifact at commit time.
 - Any encode/decode, save/restore, or serialize/parse pair gets a round-trip assertion using a hostile real value — sub-millisecond timestamps, unicode, boundary sizes — not a friendly fixture.
-- When you handle one member of an error family, check its siblings (EPERM beside EACCES, ENOTDIR beside ENOENT): handle the family, or record the single-case choice in the report's Concerns.
+- When you handle one member of an error family, check its siblings (EPERM beside EACCES, ENOTDIR beside ENOENT): handle the family, or record the single-case choice in the report's Observations.
 - Every parser or loop over external input gets the empty / zero-length / missing case exercised once.
 - Address entries in parsed structures by name — a named capture group, or search for the entry; a positional index into parsed output breaks on the first reordering.
 - When modifying user-owned files (configs, gitignores), assert the lines your change doesn't touch survive byte-identical.
@@ -63,7 +63,7 @@ Copy this block into the brief directory once per run, verbatim — every task b
 
 - Follow TDD where the task changes behavior: RED for the expected reason, minimal GREEN, then the task verify command; for a multi-behavior task, one cycle per behavior as tracer bullets: test A -> impl A -> test B -> impl B.
 - A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test.
-- A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow.
+- A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow. A test born green and failed by its mutation, or one cycle serving two behaviors because one is the other's implementation, is evidence: record it in that behavior's TDD evidence block.
 - The `- [ ] Behavior N:` lines in your brief's **Behaviors** list are the test list — one RED→GREEN cycle per numbered behavior, and no test outside the list. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
 ```
 
@@ -119,9 +119,10 @@ Put the full detail in the report path above. Return only this thin summary, fil
     Commits:
     - <sha> <subject>
     Tests: <one-line summary>
-    TDD: <RED/GREEN evidence summary; one pair per behavior, or "skipped: <reason>">
-    Deviations: <none, or one-line detour summary>
-    Concerns: <none, or one-line summary>
+    TDD: <RED/GREEN evidence summary; one pair per behavior, or "skipped: <the plan line, quoted>">
+    Detours: <none | settled only | open: <one line>>
+    Concerns: <none, or one line>
+    Observations: <none, or one line per item a later task or the retro must carry>
     Report: <path to task-<N>-report.md>
 ```
 
@@ -180,7 +181,7 @@ Behavior <N>: <name> — one block per behavior line in the brief's Behaviors li
 - RED: `<command>` -> <output proving the expected failure>
 - GREEN: `<command>` -> <passing output>
 
-TDD skipped because: <plan explicitly allowed config/doc/generated/no-behavior change, or "not skipped">
+TDD skipped because: <the plan's `Check:` line or task text that skips it, quoted, or "not skipped">
 
 ## Verification
 
@@ -190,11 +191,19 @@ TDD skipped because: <plan explicitly allowed config/doc/generated/no-behavior c
 
 - <short bullet list of what changed>
 
-## Deviations
+## Detours
 
-- <detour: what blocked -> the smallest fix, or "none">
+- <what blocked -> the smallest fix> — settled: <the brief line, grounding entry, or coordinator answer that directed it> | open, or "none"
 
 ## Concerns
 
+A doubt about this diff: a `Check:` or `Stop if:` prediction that did not hold, a behavior no test could pin, a contract you changed without confirming every consumer follows. Status is `DONE_WITH_CONCERNS` exactly when this section is not "none".
+
 - <concern, or "none">
+
+## Observations
+
+What you learned that changes no verdict on this diff: the helper search and its result, a single-case error-family choice, an environment fact (timing, nondeterminism, a stale count in `orientation.md`), a pre-existing bug the task did not hit. Name the task or file each one affects; the coordinator routes it there. (per project decision: a week of runs showed 40 of 41 per-task reviews approving, most dispatched on these notes and on settled detours, so only open detours and Concerns earn a review.)
+
+- <observation, or "none">
 ```
