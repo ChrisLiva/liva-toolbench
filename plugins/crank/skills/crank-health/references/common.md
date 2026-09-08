@@ -24,18 +24,18 @@ go run golang.org/x/vuln/cmd/govulncheck@latest -json ./...
 uvx --quiet zizmor --format json-v1 --offline --no-exit-codes --no-progress -- <abs workflow files>
 ```
 
-**opengrep** (SAST, JS/TS and Python, when installed). Only a local ruleset: `--config auto`, `p/…` and URLs pull semgrep-registry rules under semgrep's license. Use the repo's own `.opengrep/` or `.semgrep/` rules dir when it has one; otherwise skip with the note "no local ruleset". Rule id = last dotted segment of `check_id`. Strip `extra.lines` from the saved JSON.
+**opengrep** (SAST, JS/TS, Python and C/C++, when installed). Only a local ruleset: `--config auto`, `p/…` and URLs pull semgrep-registry rules under semgrep's license. Use the repo's own `.opengrep/` or `.semgrep/` rules dir when it has one; otherwise skip with the note "no local ruleset". Rule id = last dotted segment of `check_id`. Strip `extra.lines` from the saved JSON.
 ```sh
 opengrep scan --config <rules-dir> --json --disable-version-check --quiet <abs files>
 ```
 
 **jscpd** (duplication, one pass over the whole tree). cwd = scratch, always the skill's own config (a repo's `minTokens` would tune its own grade). Pass the scan directory, never a file list. Ignore globs go in the config file (`--ignore` splits on commas) and each is anchored to the absolute scan root, or a checkout under a dotted directory matches `**/.*/**` and reads a flattering 0%.
 ```sh
-jscpd --reporters json --output <scratch>/jscpd --format javascript,jsx,typescript,tsx,python,csharp,go --config <scratch>/jscpd.json --absolute --no-colors <repo>
+jscpd --reporters json --output <scratch>/jscpd --format javascript,jsx,typescript,tsx,python,csharp,go,c,c-header,cpp,cpp-header --config <scratch>/jscpd.json --absolute --no-colors <repo>
 ```
 `<scratch>/jscpd.json`: `{"minTokens":50,"minLines":5,"ignore":["<abs>/**/node_modules/**","<abs>/**/vendor/**","<abs>/**/dist/**","<abs>/**/build/**","<abs>/**/bin/**","<abs>/**/obj/**","<abs>/**/.*/**", <repo's own Biome/fallow excludes>]}`. Grade = `statistics.total.percentageTokens`; its denominator counts only files at or above `minLines`, so print the token counts beside the percent. Clones are listed as evidence, not graded one by one. Say where the clones sit (a test suite alone can read F). One pass per project directory for the project letter, one over the selection for the rollup.
 
-**aislop** (AI-slop lint across all four languages, complementary). Scans a mirror of the inventory under `<scratch>/aislop/repo` so its git calls and config discovery never touch the repo. The mirror must be a git repo with one commit (`git init -q && git add -A && git commit -qm scan`): aislop's file walk is git-backed and an un-committed mirror scans 0 files at exit 0. Copy the repo's `.aislop/` config beside it when there is one. Env `AISLOP_NO_TELEMETRY=1`. Exit 0 or 1. `--json` returns only the summary; `--sarif` carries the per-finding rows, with paths relative to the scan root.
+**aislop** (AI-slop lint across all five languages, complementary). Scans a mirror of the inventory under `<scratch>/aislop/repo` so its git calls and config discovery never touch the repo. The mirror must be a git repo with one commit (`git init -q && git add -A && git commit -qm scan`): aislop's file walk is git-backed and an un-committed mirror scans 0 files at exit 0. Copy the repo's `.aislop/` config beside it when there is one. Env `AISLOP_NO_TELEMETRY=1`. Exit 0 or 1. `--json` returns only the summary; `--sarif` carries the per-finding rows, with paths relative to the scan root.
 ```sh
 npx --yes aislop@latest scan --sarif <scratch>/aislop/repo > <raw>/aislop.sarif
 ```

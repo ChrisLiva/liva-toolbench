@@ -9,12 +9,13 @@ A category no tool measured is `not assessed (reason)`, never A. All eight appea
 Only graded findings count toward a letter. A finding is advisory when:
 
 - the tool ran on the skill's default config and the rule is style or pedantic (correctness-class
-  rules grade; `S`, `B`, `E`, `F`, `security`, `correctness`, `suspicious` groups grade, `style`,
-  `pedantic`, `nursery` do not);
+  rules grade; `S`, `B`, `E`, `F`, `security`, `correctness`, `suspicious`, `bugprone`,
+  `clang-analyzer` groups grade, `style`, `pedantic`, `nursery`, clang-tidy `performance` do not);
 - it is a type diagnostic in a JS/TS project with no `node_modules` (a missing `@types/*` is an
   install that never ran, not a code defect);
 - it is dead code reported by knip/fallow in a package no entry point reaches, or an unused *export*
-  in a library (its consumers are outside the repo);
+  in a library, or a function cppcheck calls unused in a library (its consumers are outside the
+  repo);
 - vulture confidence < 90%;
 - bandit severity < HIGH and confidence < HIGH under the default config;
 - a vulnerable dependency has no fixed version, is reachable only from devDependencies, or
@@ -32,15 +33,16 @@ source path is a task ("remove the waiver on `src/x` or the finding it hides").
 Tool severities land on four levels: critical 5, error 5, warning 1, info 0.2.
 
 - secrets (gitleaks, gosec G101, bandit B105 to B107 at high confidence): critical
-- type checker errors (tsc, ty, pyright, mypy, staticcheck `compile`, CS diagnostics): error;
-  their warnings and notes: info
+- type checker errors (tsc, ty, pyright, mypy, staticcheck `compile`, CS diagnostics,
+  `clang-diagnostic-error`): error; their warnings and notes: info
 - lint: the tool's own error/warning where it has one (eslint 2/1, biome, oxlint correctness =
   error, suspicious and perf = warning); ruff `E9` and syntax = error, every other ruff rule =
-  warning; staticcheck non-compile, go vet, golangci-lint, CA rules = warning; aislop = warning
+  warning; staticcheck non-compile, go vet, golangci-lint, CA rules = warning; cppcheck `style`,
+  `performance`, `portability` = warning; clang-tidy = warning; aislop = warning
 - dead code: warning (knip unused dependencies and vulture below 90%: info)
-- security: bandit and gosec HIGH = error, MEDIUM = warning, LOW = info; zizmor High = error except
-  `unpinned-uses` and `unpinned-images` = warning, Medium = warning, Low = info; osv-scanner
-  advisory severity HIGH or CRITICAL = error, else warning
+- security: bandit and gosec HIGH = error, MEDIUM = warning, LOW = info; cppcheck `error` = error,
+  `warning` = warning; zizmor High = error except `unpinned-uses` and `unpinned-images` = warning,
+  Medium = warning, Low = info; osv-scanner advisory severity HIGH or CRITICAL = error, else warning
 - format and complexity and duplication are ratios, not weighted
 
 ## One defect, one finding

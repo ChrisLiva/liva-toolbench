@@ -20,15 +20,19 @@ exit 0, and zsh does not word-split an unquoted variable at all.
 
 ## Projects
 
-A project is a directory holding `package.json`, `pyproject.toml`, `go.mod`, `*.csproj` or
-`*.sln`. Each in-scope file belongs to the project whose directory is the longest prefix of its
-path. A candidate that ends up holding no source of its own is a workspace shell: say so and scan
-nothing there. A monorepo is N projects plus the rollup.
+A project is a directory holding `package.json`, `pyproject.toml`, `go.mod`, `*.csproj`, `*.sln`,
+`*.vcxproj`, `configure.ac`, `BUILD.bazel` or `BUILD`, or a `CMakeLists.txt` or `meson.build` that
+calls `project(`: a subdirectory's list file without that call belongs to the enclosing project. A
+bare `Makefile` counts only with C or C++ sources beside it. Each in-scope file belongs to the
+project whose directory is the longest prefix of its path. A candidate that ends up holding no
+source of its own is a workspace shell: say so and scan nothing there. A monorepo is N projects
+plus the rollup.
 
 ## Lines
 
 Per project, count each language's in-scope files with `wc -l`, blank and comment lines included:
-js-ts (`.ts .tsx .mts .cts .js .jsx .mjs .cjs`), python (`.py .pyi`), csharp (`.cs`), go (`.go`).
+js-ts (`.ts .tsx .mts .cts .js .jsx .mjs .cjs`), python (`.py .pyi`), csharp (`.cs`), go (`.go`),
+c-cpp (`.c .h .cpp .cc .cxx .c++ .hpp .hh .hxx .h++`).
 KLOC is that count over 1000. It is the denominator for types, dead code and complexity, so print
 the file count and the line count beside it and let the reader redo the division.
 
@@ -40,16 +44,18 @@ lint's denominator grows by them ([grading.md](grading.md)).
 
 Read each project's manifests and configs and record what it owns, by the ownership rule in the
 reference for that language: [jsts.md](jsts.md), [python.md](python.md), [go.md](go.md),
-[csharp.md](csharp.md). Each of those four states its own rule and is the only place that does.
-Each rule covers ancestors, so a config above the project still owns.
+[csharp.md](csharp.md), [cpp.md](cpp.md). Each reference is the only place its rule lives: jsts,
+python and cpp state one rule up front, go and csharp state it beside each owned-only tool. Every
+rule covers ancestors, so a config above the project still owns.
 
 Read a manifest, never grep it. `"eslint"` sits in `scripts` far more often than in any dependency
 block, and a `scripts` entry never decides ownership; a grep that cannot tell the two apart
 imposes a tool the repo never chose.
 
 Record what is on PATH too, with the install hint for each one missing: `uv`, `go` (1.25+),
-`dotnet` (10+), `gitleaks`, `opengrep`, `osv-scanner`. A missing toolchain is what a whole
-language's `not assessed (reason)` will cite, so the reason has to be readable here.
+`dotnet` (10+), `cmake` or `meson` (C/C++ under `--deep`), `gitleaks`, `opengrep`, `osv-scanner`.
+A missing toolchain is what a whole language's `not assessed (reason)` will cite, so the reason has
+to be readable here.
 
 ## Snapshot the footprint
 

@@ -1,4 +1,4 @@
-# Scan summary: <js-ts|python|go|csharp|repo-wide> · <project path>
+# Scan summary: <js-ts|python|go|csharp|c-cpp|repo-wide> · <project path>
 
 Saved by the caller as `<run-dir>/summary/<language>--<project path with / as ->.md` (`repo-wide.md` for the repo-wide scan).
 
