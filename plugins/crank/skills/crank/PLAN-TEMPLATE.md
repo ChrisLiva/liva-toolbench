@@ -11,6 +11,7 @@ Goal: <one sentence>
 Architecture: <2-3 sentences>
 Tech stack: <pinned versions>
 Gates: <exact test / lint / typecheck / build commands, each proven to run>
+Base: <the HEAD SHA grounding read, so every anchor's line number has a tree>
 
 ## Global Constraints
 
@@ -41,7 +42,7 @@ Interfaces:
 - Consumes: `<signature or contract>`
 - Produces: `<signature or contract>`
 
-Check: <test-first | lightest-check | probe>, model after `<path to the existing test or file grounding found>`
+Check: <test-first | lightest-check | probe>, model after `<anchor of the existing test or file grounding found>`
 Stop if: <the assumption this task rests on that grounding could not prove, or omit>
 
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
