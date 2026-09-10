@@ -19,7 +19,7 @@ Before locking Technical decisions, hunt for the re-framing that makes the chang
 
 Treat each of these as a design problem to resolve in the spec, never a detail to leave for the implementer:
 
-- **Spaghetti growth the spec would introduce** — a one-off boolean, nullable mode, or special-case branch threaded through an existing flow. Re-frame the state model so the branch disappears, or route the behavior behind the module that owns the concept.
+- **Spaghetti growth the spec would introduce.** Re-frame the state model so the branch disappears, or route the behavior behind the module that owns the concept.
 - **Feature-specific logic landing in a shared path.** Move the ownership boundary so the feature becomes part of the module that owns the concept, instead of a check scattered through code that shouldn't know about it.
 - **A near-duplicate of something the codebase already has.** Reuse the canonical helper the grounding subagents reported; a bespoke twin is architectural drift.
 - **Make impossible states unrepresentable.** An interface that leans on optionality, casts, or silent fallbacks hides an invariant; make it explicit instead — if a field is sometimes absent, the spec says when and why.
@@ -36,19 +36,19 @@ This phase dispatches **standard** subagents for what the codebase can answer �
 
 ### Vocabulary
 
-[VOCABULARY.md](VOCABULARY.md). This phase leans on **module**, **interface**, **depth** (**leverage** / **locality**), the **deletion test**, **seam**, **dead seam**, **port** / **adapter**, **spaghetti growth**, the **probe**, the **implementation-detail test**, the **rewrite test**, and the **journey test**.
+[VOCABULARY.md](VOCABULARY.md) — both sections; this phase uses its terms bare.
 
 ## Deliverables
 
 A single self-contained spec written to the `.crank/` file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
 
-- **Header** — title, then `Grounding:` (absolute path to the effort's grounding file, when it holds entries — [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding; the plan phase and any reader handed only the spec reach the banked facts from here).
+- **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 - **Problem** — what the user is trying to solve, in their words.
 - **Solution** — the proposed change, in user-facing terms.
 - **User stories** — `As an <actor>, I want <feature>, so that <benefit>`, when distinct actors or user goals clarify the scope. Omit for small bugs, internal refactors, or technical changes where the real contract is the acceptance criteria plus Technical decisions.
 - **Acceptance criteria** — a numbered list of independently checkable statements, one per behavior: every interaction, keybinding, alias, edge case, state transition, and validation. Each criterion must be falsifiable by an agent or a named human smoke check — "works correctly" is not a criterion; "pressing `Esc` closes the dialog without saving" is. This list is the contract the plan's Coverage table and execute's final review key off: a behavior not listed here is invisible to every downstream check.
 - **Technical decisions** — every architecturally-meaningful call landed on: modules touched, interfaces, schemas, data flow, dependencies (pinned), failure modes. Name the chosen option and one sentence on why; when a real alternative was on the table, also name what the chosen option gives up — a decision recorded with only its upside reads as unexamined and invites re-litigating. For each layer touched (DB, IPC, renderer state, renderer queries), name the existing surface the change goes through and cite the prior-art `file:line` — `repository function: …`, `IPC endpoint: …`, `renderer hook: …`, `query key: …`. If the grounding subagents reported no analogous surface, say so explicitly. Inline prototype snippets when they pin a decision more precisely than prose (type shape, reducer, schema, query) — the decisive slice, not a demo.
-- **Testing approach** — what makes a good test for this work (external behavior, not internals), which seams to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element. A test that fires synthetic events past the production seam is a **dead seam**. Steer the plan and implementer away from an **implementation-detail test** toward a behavior test driven through the seam. Where the work builds checkable logic — a transform, migration, parser, calculation — name the oracle (known-good examples, a naive reference implementation, a round-trip inverse, an invariant that must hold) so the plan can turn it into tests or **probes**. Size the suite here too: name the criteria that ride one **journey test** together, so the plan doesn't spec a sibling test per criterion, and every test this section calls for must pass the **rewrite test**. The plan slices the acceptance criteria into separate test-then-code cycles, so this section sets the bar each cycle's test must clear — it doesn't restate the criteria.
+- **Testing approach** — what makes a good test for this work (external behavior, not internals), which **seams** to test, prior art in the codebase. Name the same code path real users hit: if the listener attaches to `window`, dispatch on `window`; if a click traverses a button with `role`/`tabindex`, click that element — a test that fires past the production seam is a **dead seam**, and one coupled to internals an **implementation-detail test**. Where the work builds checkable logic — a transform, migration, parser, calculation — name the **oracle** so the plan can turn it into tests or **probes**. Size the suite here too: name the criteria that ride one **journey test** together, and every test this section calls for must pass the **rewrite test**. The plan slices the acceptance criteria into separate test-then-code cycles, so this section sets the bar each cycle's test must clear — it doesn't restate the criteria.
 - **Refactor scope** (architecture-improvement specs only) — when the spec's goal *is* to change existing structure (deepen a module, consolidate, extract, re-seam), name the existing modules / files / boundaries that are intentionally in play, each with the `path` and one line on the reshape intended. This is the explicit allowlist that opens those modules to redesign downstream; anything not listed keeps its current boundary. Tests move with the seam: name the existing tests the reshape supersedes — the plan deletes them and writes new ones at the deepened interface, rather than layering new over old. Omit this section entirely for ordinary feature/fix specs.
 - **Out of scope** — what was discussed and explicitly punted.
 
@@ -58,7 +58,7 @@ A single self-contained spec written to the `.crank/` file (see Hard Rules). Inc
 
 Read the repo's intent docs where they exist: `CONTEXT.md` (domain vocabulary the spec uses by name), ADRs (commonly `docs/adr/`, `docs/decisions/`), `DESIGN.md`, and the conventions section of `CLAUDE.md`/`AGENTS.md`. A tradeoff an ADR records is settled: Simplify first and the reviewer leave it alone. Code that has drifted from what an ADR says is an **Updates since spec** entry for the plan, since either the doc or the code is wrong — bank it as a grounding entry now; the spec has no section to hold it.
 
-Read `.crank/<slug>/grounding.md` too, where it exists ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), and verify-then-trust its entries: for a layer the file covers, prepend the covered entries to that layer's brief as previously-established facts to confirm at their citations, so its dispatch gap-fills and drift-checks instead of re-deriving — every layer still gets a dispatch, and a survey entry (canonical helper, convention winner, any absence) only narrows the re-search to its recorded scope.
+Read `.crank/<slug>/grounding.md` too, where it exists, and verify-then-trust its entries ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding): prepend the entries that cover a layer to that layer's brief as facts to confirm at their citations, so its dispatch gap-fills and drift-checks instead of re-deriving — every layer still gets a dispatch.
 
 Before drafting Technical decisions, dispatch standard subagents in parallel — one per layer the change touches (database, api, frontend, tests, etc.) — to find the existing surface in the codebase. Pass each one this brief verbatim:
 
@@ -123,8 +123,6 @@ Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md]
 
 ### 6. Hand back
 
-The natural next step is the plan phase, which decomposes this spec into ordered, committable, TDD-flavored tasks. Hand off per [SKILL.md](SKILL.md) → Phase gates.
+Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 - **Next:** continue to the plan now — say "continue" and you'll read [PLAN.md](PLAN.md) and run its flow on the approved spec — or in a fresh session: `/crank plan .crank/<slug>/spec.md`.
-
-Completion criterion: the path and resume command are stated and you've stopped — the plan phase loaded only on an explicit "continue".

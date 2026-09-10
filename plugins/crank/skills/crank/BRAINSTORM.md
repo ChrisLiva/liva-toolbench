@@ -19,7 +19,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 The high-level design brief, written to the `.crank/` file (see Hard Rules). Include whichever sections apply (omit ones that don't earn their place — this is a brief, not a spec):
 
-- **Header** — title, then `Grounding:` (absolute path to the effort's grounding file, once step 6 flushes entries to it — [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding; the spec phase and any reader handed only the brief reach the banked facts from here).
+- **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding, once step 6 flushes entries.
 - **Idea / Problem** — what the user wants and why, in their words.
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
 - **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them. A rough sketch or short list, not a file map.
@@ -31,9 +31,9 @@ The high-level design brief, written to the `.crank/` file (see Hard Rules). Inc
 
 ### 1. Explore project context
 
-Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches. Hold each returned codebase fact — surface, exemplar, canonical helper — as a grounding entry per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding, banked in-thread for now; step 6 flushes them to the effort's grounding file, so an abandoned brainstorm leaves no directory behind.
+Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches.
 
-Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked as a grounding entry for the step-6 flush.
+Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) for the step-6 flush, so an abandoned brainstorm leaves no directory behind.
 
 ### 2. Name the destination
 
@@ -61,7 +61,7 @@ Completion criterion: the frontier is empty — every consequential design quest
 
 ### 5. Propose approaches
 
-Once the shape is clear enough, propose **2–3 approaches, each optimizing for a different thing**, conversationally, with trade-offs — name the axis each one wins on (e.g. one minimizes the moving parts, one stays most flexible for the likely next ask, one hugs the existing idiom closest). Two approaches that optimize for the same thing are the same approach — drop one. If two genuinely combine, propose the hybrid as your recommendation rather than leaving the user to merge them. Lead with your recommendation and why. Reach for the Vocabulary here: prefer the approach whose central piece is *deeper* (more behavior behind a smaller interface), and name the leverage and locality the chosen shape buys over its alternative. If an approach's key piece fails the deletion test, say so — that's a reason to drop it.
+Once the shape is clear enough, propose **2–3 approaches, each optimizing for a different thing**, conversationally, with trade-offs — name the axis each one wins on (e.g. one minimizes the moving parts, one stays most flexible for the likely next ask, one hugs the existing idiom closest). Two approaches that optimize for the same thing are the same approach — drop one. If two genuinely combine, propose the hybrid as your recommendation rather than leaving the user to merge them. Lead with your recommendation and why. Prefer the approach whose central piece is **deeper**, and name the **leverage** and **locality** the chosen shape buys over its alternative. If an approach's key piece fails the **deletion test**, say so — that's a reason to drop it.
 
 Completion criterion: the user has explicitly picked an approach (or your recommended hybrid) — having heard the options isn't a pick.
 
@@ -69,17 +69,15 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
-Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines). With the brief file started, flush the grounding entries banked at step 1 to `.crank/<slug>/grounding.md` beside it, and write the brief's `Grounding:` header line naming that file.
+Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines). With the brief file started, flush the entries banked at step 1 to the effort's grounding file.
 
 Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file, the banked grounding entries are flushed to the effort's grounding file, and the brief's header names it.
 
 ### 7. Hand off
 
-The brief is the front door to the crank pipeline (brainstorm → spec → plan → execute); the natural next step is the spec phase, which turns it into a full PRD-plus-technical-spec. Hand off per [SKILL.md](SKILL.md) → Phase gates.
+Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 - **Next:** continue to the spec now — say "continue" and you'll read [SPEC.md](SPEC.md) and run its flow on the approved brief — or in a fresh session: `/crank spec .crank/<slug>/brainstorm.md`.
-
-Completion criterion: the path and resume command are stated and you've stopped — the spec phase loaded only on an explicit "continue".
 
 ## References
 
@@ -121,4 +119,4 @@ Cite sources, and flag what you're unsure of rather than asserting it.
 
 ### Vocabulary
 
-[VOCABULARY.md](VOCABULARY.md) → **Design language** — read that section before step 5. This phase leans on **module**, **interface**, **depth** (and its payoffs, **leverage** / **locality**), and the **deletion test** when weighing one shape against another.
+[VOCABULARY.md](VOCABULARY.md) → **Design language** — read that section before step 5; this phase uses its terms bare.
