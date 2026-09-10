@@ -47,7 +47,7 @@ Stop if: <the assumption this task rests on that grounding could not prove, or o
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
       <pseudo-code or embedded code, only where PLAN.md's ladder calls for it; embedded code names its evidence>
 - [ ] Behavior 2: <next behavior in tracer-bullet order — or a directive line for a mechanical change>
-- [ ] Verify: `<exact command>` → <exact success reading>
+- [ ] Verify: `<exact command>` → <exact success reading; for a count, grep, or probe: base: <what it prints now> → target: <what it must print>>
 
 ### Task 2 — <independently committable outcome>
 
