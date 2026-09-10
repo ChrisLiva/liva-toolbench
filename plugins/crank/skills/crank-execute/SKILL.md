@@ -128,11 +128,11 @@ Every run, fresh or resumed, opens with the block below as reply text — every 
 - Grounding: <.crank/<slug>/grounding.md — N entries seeded | none>
 - Branch: <current branch>
 - Shape: <solo | sequential | parallel>
-- Subagents: standard = <model> (implement, per-task review) · heavy = <model> (final review)
+- Subagents: standard = <model> (implement, per-task review) · heavy = <model> (final review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 - Tasks: <N> (<M> remaining)
 ```
 
-Line rules: the Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names — omit it when there are none. The Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and how many of its entries were seeded into `orientation.md` (in solo, which stocks no `orientation.md`, name the file and its entry count). Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied for this harness, never bare tier labels. In solo the Subagents line reads `heavy = <model> (final review) — implementation inline`. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`.
+Line rules: the Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names — omit it when there are none. The Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and how many of its entries were seeded into `orientation.md` (in solo, which stocks no `orientation.md`, name the file and its entry count). Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied for this harness, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one; `harness fallback` beside a stated preference is a wrong line. In solo the Subagents line reads `heavy = <model> (final review) — implementation inline`, with the same `resolved from` tail. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`.
 
 - **Solo (in this session)** — *Gains:* zero dispatch overhead, in-flight state carries between tasks. *Costs:* every task's source stays in your window; no per-task review — the final gate is solo's one review. *Fits:* small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes.
 - **Sequential subagents** — *Gains:* fresh context per task, an independent reviewer per diff. *Costs:* you must brief completely or the implementer guesses. *Fits:* the default for >3 tasks.

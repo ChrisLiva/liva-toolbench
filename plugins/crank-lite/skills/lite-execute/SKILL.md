@@ -28,7 +28,7 @@ Read the check's output in the same turn it runs. When a change has no test seam
 
 ## Subagent tiers
 
-A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tiers onto it, even when it names a weaker model than a fallback below. With no such preference stated, use your harness's fallback:
+Resolve the tiers once per run, before the Pre-flight block, and reuse the mapping at every dispatch. A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tiers onto it, even when it names a weaker model than a fallback below, and a preference that covers all subagent work covers implementers too. With no such preference stated, use your harness's fallback:
 
 <subagent-tiers>
 - **standard** (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
@@ -53,11 +53,11 @@ Write this block into your reply with every line filled, then continue in the sa
 - Plan: .crank/<slug>/plan.md (spec: spec.md · brainstorm: brainstorm.md)
 - Branch: <current branch>
 - Shape: <solo | orchestrate>
-- Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review)
+- Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 - Tasks: <N> (<M> remaining)
 ```
 
-The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`; drop it when there are none. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
+The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one; `harness fallback` beside a stated preference is a wrong line. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
 
 ## Implement
 
