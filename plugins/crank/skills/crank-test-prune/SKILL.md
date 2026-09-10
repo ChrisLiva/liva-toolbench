@@ -53,7 +53,7 @@ Render the verdict table (every test in scope), counts per verdict, the net line
 
 ### Subagents
 
-This skill spawns verdict subagents at the **standard** tier — resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+This skill spawns verdict subagents at the **standard** tier — resolve it per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback.
 
 ### Vocabulary
 

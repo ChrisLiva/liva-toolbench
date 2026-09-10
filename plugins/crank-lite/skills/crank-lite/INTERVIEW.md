@@ -15,8 +15,8 @@ Once the frontier is empty, read the artifact back to the user before writing an
 
 ## Subagent tiers
 
-Resolve the tier once per run and reuse it. A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tier onto it, even when it names a weaker model than the fallback below. With no such preference stated, use your harness's fallback:
+Resolve the tier once per run and reuse it. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tier onto it, even when it names a weaker model than the fallback below. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
 
 <subagent-tiers>
-- **standard** (exploration and codebase lookups): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
+- **standard** fallback (exploration and codebase lookups): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
 </subagent-tiers>

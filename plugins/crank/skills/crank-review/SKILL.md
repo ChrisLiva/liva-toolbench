@@ -94,7 +94,7 @@ Then **recommend the handoff**: suggest the user run `/crank plan` to turn the s
 
 ### Subagents
 
-This skill spawns finders and validators at the **standard** tier — resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). Bias toward dispatch: each finder and validator gets a clean, fresh context and sees the diff with fresh eyes, which is the whole point of independent validation. **Fan out in small waves** — a handful of concurrent spawns at a time, letting one wave return before launching the next; a large concurrent burst (one validator per candidate on a big diff) trips transient API errors. (Step 4's reconciliation — the oscillation walk and, for a PR, the thread read — is a factual read; keep it on-thread or dispatch one standard agent, your call.)
+This skill spawns finders and validators at the **standard** tier — resolve it per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. Bias toward dispatch: each finder and validator gets a clean, fresh context and sees the diff with fresh eyes, which is the whole point of independent validation. **Fan out in small waves** — a handful of concurrent spawns at a time, letting one wave return before launching the next; a large concurrent burst (one validator per candidate on a big diff) trips transient API errors. (Step 4's reconciliation — the oscillation walk and, for a PR, the thread read — is a factual read; keep it on-thread or dispatch one standard agent, your call.)
 
 ### Vocabulary
 

@@ -83,7 +83,7 @@ Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 ### Subagents
 
-**Facts are yours; decisions are the user's** — two jobs to dispatch: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this — web search in scope). Both run at the **standard** tier; resolve the tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+**Facts are yours; decisions are the user's** — two jobs to dispatch: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this — web search in scope). Both run at the **standard** tier; resolve the tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback.
 
 Dispatch each job with the matching brief, filled in.
 

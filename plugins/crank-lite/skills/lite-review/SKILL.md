@@ -69,8 +69,8 @@ Then offer the next step: apply the small fixes in-session on the user's approva
 
 ## Subagent tiers
 
-Resolve the tier once per run and reuse it. A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tier onto it, even when it names a weaker model than the fallback below. With no such preference stated, use your harness's fallback:
+Resolve the tier once per run and reuse it. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tier onto it, even when it names a weaker model than the fallback below. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
 
 <subagent-tiers>
-- **heavy** (adversarial validation): Claude Code `model: opus` · Codex GPT-5.6-Sol at high effort · Cursor GPT-5.6-Sol at high effort
+- **heavy** fallback (adversarial validation): Claude Code `model: opus` · Codex GPT-5.6-Sol at high effort · Cursor GPT-5.6-Sol at high effort
 </subagent-tiers>

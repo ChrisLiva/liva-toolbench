@@ -32,7 +32,7 @@ Read both files this section names — [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) an
 
 ### Subagents
 
-This phase dispatches **standard** subagents for what the codebase can answer — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true. The adversarial review is its only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
+This phase dispatches **standard** subagents for what the codebase can answer — does this surface exist, what's the exact signature, is a claim you're about to write into the spec actually true. The adversarial review is its only **heavy** dispatch. Resolve each tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread: a loaded instruction file's preference first, its harness models only as the fallback.
 
 ### Vocabulary
 

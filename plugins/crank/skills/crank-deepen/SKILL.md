@@ -154,7 +154,7 @@ Completion criterion: the brief file exists with every section that earned its p
 
 ### Subagents
 
-This skill spawns subagents at two tiers — resolve each to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md). **standard** = the read-only explorers of Flow step 2, the bulk of the run's dispatch; **heavy** = the design-it-twice interface proposals of Flow step 4, the only heavy dispatch this skill makes and only on the user's say-so.
+This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = the read-only explorers of Flow step 2, the bulk of the run's dispatch; **heavy** = the design-it-twice interface proposals of Flow step 4, the only heavy dispatch this skill makes and only on the user's say-so.
 
 ### Vocabulary
 

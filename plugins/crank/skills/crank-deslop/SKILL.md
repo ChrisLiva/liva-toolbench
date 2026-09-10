@@ -93,7 +93,7 @@ Apply the accepted items: smallest diff per item, structure moves one at a time,
 
 ### Subagents
 
-Finders run at the **standard** tier; resolve it to your harness per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
+Finders run at the **standard** tier; resolve it per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback.
 
 ### Vocabulary
 

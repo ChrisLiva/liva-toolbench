@@ -37,7 +37,7 @@ Read both files this section names — [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) an
 
 ### Subagents
 
-This phase dispatches **standard** subagents for what the codebase can answer — an exact signature, prior art for a pattern, whether a spec claim still holds. The adversarial review is its only **heavy** dispatch. Resolve each tier to your harness, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread.
+This phase dispatches **standard** subagents for what the codebase can answer — an exact signature, prior art for a pattern, whether a spec claim still holds. The adversarial review is its only **heavy** dispatch. Resolve each tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread: a loaded instruction file's preference first, its harness models only as the fallback.
 
 Dispatch each grounding read with this brief, filled in:
 

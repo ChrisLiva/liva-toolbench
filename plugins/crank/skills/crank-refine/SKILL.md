@@ -31,7 +31,7 @@ For the full design rules behind a phase, read that phase's file in the `crank` 
 
 ### Subagents & research
 
-Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, at the **standard** tier resolved to your harness there. Each of the three research jobs has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md), read at Flow step 3; checking a current fact against today's docs is the antidote to a recommendation built on a stale training cutoff.
+Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, at the **standard** tier resolved there: a loaded instruction file's preference first, its harness models only as the fallback. Each of the three research jobs has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md), read at Flow step 3; checking a current fact against today's docs is the antidote to a recommendation built on a stale training cutoff.
 
 ### Vocabulary
 

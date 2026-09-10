@@ -28,11 +28,11 @@ Read the check's output in the same turn it runs. When a change has no test seam
 
 ## Subagent tiers
 
-Resolve the tiers once per run, before the Pre-flight block, and reuse the mapping at every dispatch. A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tiers onto it, even when it names a weaker model than a fallback below, and a preference that covers all subagent work covers implementers too. With no such preference stated, use your harness's fallback:
+Resolve the tiers once per run, before the Pre-flight block, and reuse the mapping at every dispatch. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tiers onto it, even when it names a weaker model than a fallback below, and a preference that covers all subagent work covers implementers too. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
 
 <subagent-tiers>
-- **standard** (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
-- **heavy** (adversarial review): Claude Code `model: opus` · Codex GPT-5.6-Sol at high effort · Cursor GPT-5.6-Sol at high effort
+- **standard** fallback (implementers): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
+- **heavy** fallback (adversarial review): Claude Code `model: opus` · Codex GPT-5.6-Sol at high effort · Cursor GPT-5.6-Sol at high effort
 </subagent-tiers>
 
 ## Shape
