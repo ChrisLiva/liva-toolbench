@@ -204,7 +204,7 @@ over the others, and run the repo's gate before committing (see *The repo's gate
 below). The gate holds a copy to the canonical byte for byte, and fails just as
 loudly when a skill links a reference whose copy is gone.
 
-The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, `crank-review`, `crank-deslop`) paraphrase `VOCABULARY.md`'s terms per phase (over a spec, a plan, a diff, a scope of standing code); they are not copies of one rubric. When editing a brief, align its meaning with the definition in `VOCABULARY.md`, not its wording, and don't flatten a per-phase qualifier into a generic copy.
+The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, `crank-review`, `crank-deslop`, `lite-execute`) paraphrase `VOCABULARY.md`'s terms per phase (over a spec, a plan, a diff, a scope of standing code); they are not copies of one rubric. When editing a brief, align its meaning with the definition in `VOCABULARY.md`, not its wording, and don't flatten a per-phase qualifier into a generic copy.
 
 ---
 

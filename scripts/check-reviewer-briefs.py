@@ -14,8 +14,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The eleven adversarial-reviewer dispatch sites: nine brief files, plus the two
-# crank-lite skills that carry their reviewer instruction as dispatch prose.
+# The eleven adversarial-reviewer dispatch sites: ten brief files, plus the
+# crank-lite review skill that carries its reviewer instruction as dispatch prose.
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md",
@@ -26,7 +26,7 @@ SITES = [
     "plugins/crank/skills/crank-deslop/SLOP-BRIEF.md",
     "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md",
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md",
-    "plugins/crank-lite/skills/lite-execute/SKILL.md",
+    "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
 ]
 
@@ -59,7 +59,7 @@ FLAG_LITERALS = {
     "plugins/crank/skills/crank-deslop/SLOP-BRIEF.md": ["reflexive guard", "type-silencing cast"],
     "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md": ["code-judo", "spaghetti growth", "deletion test"],
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md": ["made untrue", "fragile"],
-    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
+    "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md": ["dead seam", "implementation-detail test", "redundant test"],
 }
 
 # Files outside SITES that must carry a literal their own prose promises.
@@ -72,6 +72,7 @@ PRESENCE_LITERALS = {
         "Standing defect rules",
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules"],
+    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
