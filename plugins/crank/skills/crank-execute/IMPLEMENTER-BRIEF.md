@@ -4,7 +4,7 @@ Use these templates only in subagent execution modes.
 
 ## `orientation.md`
 
-Write this once per run, after the brief/report directory is chosen. Bounds: one Touched areas bullet per directory named across the plan's Files blocks; every Commands row filled with a command or the literal `none`; each Local conventions line quoting a real file the implementer can open. Done when no `<…>` remains and no plan Files-block directory is missing from Touched areas. The Commands block copies the plan's `Gates:` header line when the plan carries one — don't re-discover the toolchain. The `Grounding:` line copies the plan's `Grounding:` header path, or the effort's `grounding.md` when it holds entries the plan predates; `none` otherwise.
+Write this once per run, after the brief/report directory is chosen. Bounds: one Touched areas bullet per directory named across the plan's Files blocks; every Commands row filled with a command or the literal `none`; each Local conventions line quoting a real file the implementer can open. Done when no `<…>` remains and no plan Files-block directory is missing from Touched areas. The Commands block copies the plan's `Gates:` header line when the plan carries one. The `Grounding:` line copies the plan's `Grounding:` header path, or the effort's `grounding.md` when it holds entries the plan predates; `none` otherwise.
 
 ```md
 # Crank execute orientation
@@ -31,24 +31,22 @@ Run base: <base SHA from the progress ledger>
 - Imports: <project-specific import idiom>
 - Tests: <where tests live and naming pattern>
 - Fixtures/helpers: <canonical helpers to reuse>
-
-## Run boundaries
-
-- Read this file and your task brief. Open the plan only at the section your brief names by heading, and read no other part of it.
 ```
 
 ## `implementer-rules.md`
 
-Copy this block into the brief directory once per run, verbatim — every task brief and fix brief points at it, so it is written once and read by every implementer.
+Copy this block into the brief directory once per run; every task brief and fix brief points at it.
 
 ```md
 # Implementer rules
 
+- Read `orientation.md` and your brief in full, and the plan only at the section your brief names by heading — nothing else from the plan, and no sweep of the tree beyond the areas your task touches.
+- Edit only inside your brief's Files block; a change that needs a file outside it returns `NEEDS_CONTEXT` first.
 - Do not push, amend earlier commits, or rewrite history.
 - Return only when every command you started has finished. Run long verifications synchronously and read their output in the same turn you report it — work parked behind a background watcher at return time is work not done.
-- The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Detours, `settled` when your brief, `orientation.md`, grounding, or the coordinator already directed that fix, `open` when you chose it yourself. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute; a detour needing files outside the block returns `NEEDS_CONTEXT` first. A `Stop if:` condition in your task's plan section, once observed, is a `BLOCKED` return naming what you observed, never something to work around.
+- The task's destination — what it ships — is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks this task, fix it as a detour: the smallest change, inside the files block, that still ships exactly what the task promises — and record it in the report's Detours, `settled` when your brief, `orientation.md`, grounding, or the coordinator already directed that fix, `open` when you chose it yourself. A fix that would change what ships is not yours to make — return `BLOCKED` naming the reroute. A `Stop if:` condition in your task's plan section, once observed, is a `BLOCKED` return naming what you observed, never something to work around.
 - Before writing a new function, class, or helper, check for one that already exists: read orientation.md's Fixtures/helpers and grep the areas this task touches. If one does the job, call it instead of re-implementing it; if none does, record the search and its result under the report's Observations.
-- Before reaching for a new third-party dependency, exhaust the lighter options in order: an existing in-repo helper, the stdlib, a native platform feature, then a dependency already in the manifest. Don't add a dependency for what a few lines do; if the task genuinely needs one the plan didn't name, return `NEEDS_CONTEXT` instead of importing it silently.
+- Before reaching for a new third-party dependency, exhaust the lighter options in order: an existing in-repo helper, the stdlib, a native platform feature, then a dependency already in the manifest. A dependency the plan didn't name returns `NEEDS_CONTEXT`.
 
 ## Standing defect rules
 
@@ -69,7 +67,7 @@ Copy this block into the brief directory once per run, verbatim — every task b
 
 ## `task-<N>-brief.md`
 
-Write one file per dispatched task; the implementer reads this file, `orientation.md`, and the one plan section the Task block names. That block is a pointer plus the task's behavior lines — never the task's steps pasted in. Fill every `<…>` slot; the Files block sentence and the Return section are fixed text — copy them byte-for-byte, never summarized or trimmed for the task at hand. Completion criterion: the written brief has no unfilled `<…>` and its fixed sections diff clean against this template.
+Write one file per dispatched task. The Task block is a pointer plus the task's behavior lines. Fill every `<…>` slot; the Return section is fixed text, copied verbatim. Completion criterion: the written brief has no unfilled `<…>` and its Return section diffs clean against this template.
 
 ```md
 # Task <N>: <title>
@@ -81,7 +79,7 @@ Report path: <path to task-<N>-report.md>
 
 ## Task
 
-Plan: <plan path>, section `### Task <N> — <title>`. Read that one section for your steps, its `Check:` line, and its `Stop if:` line — and nothing else from the plan.
+Plan: <plan path>, section `### Task <N> — <title>` — your steps, its `Check:` line, and its `Stop if:` line.
 
 Behaviors — your test list, each line copied verbatim from that section:
 
@@ -100,15 +98,13 @@ Produces:
 
 - <path/glob this task may touch>
 
-Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
-
 ## Verify
 
 `<exact verify command from the plan>`
 
 ## Constraints
 
-- Rules: `implementer-rules.md` in this directory — read it before your first edit.
+- Rules: `implementer-rules.md` in this directory — read it first.
 - <constraint this task adds beyond the rules file — a Global Constraint value the task must honor — or "none">
 
 ## Return
@@ -128,7 +124,7 @@ Put the full detail in the report path above. Return only this thin summary, fil
 
 ## `task-<N>-fix-brief.md`
 
-Write one file per fix round, in the same directory. The fixer reads it, `implementer-rules.md`, and the findings file it names — never a pasted finding list.
+Write one file per fix round, in the same directory. The fixer reads it, `implementer-rules.md`, and the findings file it names.
 
 ```md
 # Task <N> fix round <R>
@@ -141,13 +137,11 @@ Report path: <path to task-<N>-report.md>
 
 ## Scope
 
-Apply the findings under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings) — the fix diff is this round's whole scope. A behavioral fix gets its failing test first; the original brief's behavior list does not bound this round. Rules: `implementer-rules.md` in this directory — read it before your first edit.
+Apply the findings under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings) — the fix diff is this round's whole scope. A behavioral fix gets its failing test first; the original brief's behavior list does not bound this round. Rules: `implementer-rules.md` in this directory — read it first.
 
 ## Files block
 
 - <every path the findings cite, plus the files their fixes reach>
-
-Do not touch files outside this block unless you return `NEEDS_CONTEXT` first.
 
 ## Verify
 
@@ -203,7 +197,7 @@ A doubt about this diff: a `Check:` or `Stop if:` prediction that did not hold, 
 
 ## Observations
 
-What you learned that changes no verdict on this diff: the helper search and its result, a single-case error-family choice, an environment fact (timing, nondeterminism, a stale count in `orientation.md`), a pre-existing bug the task did not hit. Name the task or file each one affects; the coordinator routes it there. (per project decision: a week of runs showed 40 of 41 per-task reviews approving, most dispatched on these notes and on settled detours, so only open detours and Concerns earn a review.)
+What you learned that changes no verdict on this diff: the helper search and its result, a single-case error-family choice, an environment fact (timing, nondeterminism, a stale count in `orientation.md`), a pre-existing bug the task did not hit. Name the task or file each one affects; the coordinator routes it there.
 
 - <observation, or "none">
 ```
