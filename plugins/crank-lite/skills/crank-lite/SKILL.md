@@ -15,6 +15,8 @@ Route the user's ask to the right phase — **brainstorm → spec → plan** —
 | `spec` | [SPEC.md](SPEC.md) | The idea is formed (or a brainstorm brief exists) and needs acceptance criteria and key technical decisions. |
 | `plan` | [PLAN.md](PLAN.md) | Behavior and design are settled — a finished spec, or a well-understood change like a scoped bug fix — and only "how to build it" remains. |
 
+Every phase interviews and reads back per [INTERVIEW.md](INTERVIEW.md); read it before the phase's first question.
+
 Execution is not a route: when a plan is done, recommend the user run `/lite-execute` and stop.
 
 ## Triage
@@ -33,6 +35,6 @@ Every phase ends the same way: when every readback section stands approved, writ
 
 ## Phase gates
 
-Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue" — never auto-advance. The hand-off is the phase file's next-step line, then a single trailing sentence noting the artifact can be copied elsewhere, printed inline, or deleted on request: prose, not a numbered question.
+Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue". The hand-off is prose: the phase file's next-step line, then a single trailing sentence noting the artifact can be copied elsewhere, printed inline, or deleted on request.
 
 Continuing keeps this conversation as the next phase's primary source, so recommend it while less than 100k of context has been used; past that, recommend a fresh session invoked with the artifact instead.

@@ -1,14 +1,17 @@
 # Phase: Plan
 
-Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD — the build strategy, code boundaries, risks, and verification approach — until the frontier is empty. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
+Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD — the build strategy, code boundaries, risks, and verification approach — until the frontier is empty.
 
 ## Interview
 
 Resolve every implementation decision, and plan the smallest change that ships the spec: a new or reshaped module that fails the **deletion test** folds into its caller.
 
-A risk no check can retire is a decision: put it to the user during the interview, the plan ships with no open questions.
+Risks:
 
-Run it, don't recall: any build-tool, CLI-flag, or pinned-dependency behavior the plan leans on gets run once during the interview's fact lookups, and the plan records what the run printed — an exact output, exit code, or API contract stated in prose carries the run just as an embedded block does; one you cannot run in this session becomes a plan risk, paired with the check that would settle it. And when the work keys, transforms, or migrates data that already exists, run the proposed invariant over the full real dataset and record the count checked; canned fixtures can't stand in for it.
+- A risk no check can retire is a decision: put it to the user during the interview, so the plan ships with no open questions.
+- A fact you cannot confirm this session is a risk, paired with the check that would settle it.
+
+Run it, don't recall: any build-tool, CLI-flag, or pinned-dependency behavior the plan leans on gets run once during the interview's fact lookups, and the plan records what the run printed — an exact output, exit code, or API contract stated in prose carries the run just as an embedded block does. When the work keys, transforms, or migrates data that already exists, run the proposed invariant over the full real dataset and record the count checked; canned fixtures can't stand in for it.
 
 ## Vocabulary
 
@@ -16,8 +19,23 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Plan
 
-The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the goal, assumptions, ordered tasks, verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding). Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or — where no committed test fits — a **probe**; the check that retires a risk names one of these instruments, and a check whose reading is a count or a probe output records what the tree prints now beside what it must print; equal readings are a **dead seam**. Plan tests as a minimalist: one **journey test** per workflow, accreting one assertion per behavior; a **redundant test**, or one that fails the **rewrite test**, stays out of the plan. Writing the plan surfaces facts the interview never asked: a signature, a file a task edits, a count a check pins. Confirm each at its source as you write it and record what you read in Grounding; a fact you cannot confirm this turn is a risk paired with the check that would settle it.
+The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the goal, assumptions, ordered tasks, verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
 
-Write every task for the weakest executor it may get — one that sees that task's text and file paths and nothing more: each task carries its own paths, contract, and check. Route reuse by name: a task that needs a helper the repo already has names it. Each task names the existing test or file to model after. A module being reshaped with no test at its seam gets a characterization task first. If no gate command runs, the first task establishes one. A task tightening a shared contract — a field made required, a shared symbol renamed, a validator narrowed — carries every call site the grep found, not the files the change belongs to. A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
+Verification checks:
+
+- Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or — where no committed test fits — a **probe**. The check that retires a risk names one of these instruments.
+- A check whose reading is a count or a probe output records what the tree prints now beside what it must print; equal readings are a **dead seam**.
+- Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
+- Writing the plan surfaces facts the interview never asked: a signature, a file a task edits, a count a check pins. Confirm each at its source as you write it and record what you read in Grounding; one you cannot confirm now lands under Risks.
+
+Write every task for the weakest executor it may get — one that sees that task's text and file paths and nothing more:
+
+- Each task carries its own paths, contract, and check.
+- Route reuse by name: a task that needs a helper the repo already has names it.
+- Each task names the existing test or file to model after.
+- A module being reshaped with no test at its seam gets a characterization task first.
+- If no gate command runs, the first task establishes one.
+- A task tightening a shared contract — a field made required, a shared symbol renamed, a validator narrowed — carries every call site the grep found.
+- A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
 
 Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one.

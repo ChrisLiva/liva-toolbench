@@ -13,7 +13,7 @@ Read back only what the user could veto:
 - **New or changed** — content settled since the previous phase's approved artifact (or, with no prior artifact, since the interview's settled answers).
 - **Judgment calls** — decisions where a defensible alternative was rejected; name the rejected option, so the veto is a real choice between stated options.
 
-Everything else is carried-forward: state it in one line ("Sections X and Y carry forward from the approved spec unchanged") and move on. A Grounding section is always carried-forward material — state it in one line, never walk it for veto.
+Everything else is carried-forward: state it in one line ("Sections X and Y carry forward from the approved spec unchanged") and move on. A Grounding section is always carried-forward material: state it in one line.
 
 ## Pace
 
@@ -25,7 +25,7 @@ Everything else is carried-forward: state it in one line ("Sections X and Y carr
 
 ## Make the veto easy
 
-- **Show the actual items** — the decisions, criteria, cuts, and rows themselves — so the user can strike or amend specific lines, not react to finished prose.
+- **Show the actual items** — the decisions, criteria, cuts, and rows themselves — so the user can strike or amend specific lines.
 - **Prefer pictures where they're easier to veto.** Where an interface, flow, or piece of logic reads better in picture form, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
 - **The test for each message: could the user veto a specific item from it, with every item already answered?** If all they can say is "sounds good", you've sent a summary; if they have to pick an option, you've sent an interview round.
 

@@ -1,6 +1,6 @@
 # Phase: Spec
 
-Interview the user relentlessly at a PRD/Spec level about every aspect of their idea — the user-facing behavior, acceptance criteria, key technical decisions, and validation strategy — until the frontier is empty and the failure catalogue is walked. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
+Interview the user relentlessly at a PRD/Spec level about every aspect of their idea — the user-facing behavior, acceptance criteria, key technical decisions, and validation strategy — until the frontier is empty and the failure catalogue is walked.
 
 ## Vocabulary
 
@@ -10,7 +10,18 @@ Before the design and test-methodology questions, read [VOCABULARY.md](VOCABULAR
 
 Resolve the key technical decisions: data structures, interfaces/seams, test methodology, validation strategies, and the general shape an implementation might take.
 
-Before the first question, read `CONTEXT.md`, any ADRs, the conventions in `CLAUDE.md`/`AGENTS.md` where they exist, and the incoming artifact's Grounding section (or the `grounding.md` its `Grounding:` header names, when the full crank pipeline wrote it) — a covered lookup becomes a confirm at its cited evidence, and an absence entry re-runs its recorded search; a tradeoff an ADR records is settled. For each new or reshaped module, apply the **deletion test**: a module whose complexity just vanishes folds into its caller. Sketch it two ways under different constraints (smallest interface vs. most flexible), take the **deeper** shape, and when they tie, the one a test at its seam proves with fewer stand-ins. Where the analogous features disagree on convention, follow the one the repo converged on most recently. A one-off flag or special case threaded through a shared flow is **spaghetti growth** — a spec bug to reframe, not a detail for the plan. When the user rejects a load-bearing recommendation for a reason a future spec would need, offer to record it as an ADR in the repo.
+Before the first question, read:
+
+- `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist. A tradeoff an ADR records is settled.
+- The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
+
+Design rules, applied as each module comes up:
+
+- **Deletion test** on every new or reshaped module: one whose complexity just vanishes folds into its caller.
+- Sketch the module two ways under different constraints (smallest interface vs. most flexible) and take the **deeper** shape; when they tie, the one a test at its seam proves with fewer stand-ins.
+- Where the analogous features disagree on convention, follow the one the repo converged on most recently.
+- **Spaghetti growth** is a spec bug: reframe it here.
+- When the user rejects a load-bearing recommendation for a reason a future spec would need, offer to record it as an ADR in the repo.
 
 Settle the test methodology as a minimalist: every test the spec calls for pins a distinct observable behavior through a **seam** and passes the **rewrite test**; acceptance criteria that fall along one workflow share one **journey test** rather than a test per criterion.
 

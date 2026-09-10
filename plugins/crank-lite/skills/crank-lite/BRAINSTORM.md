@@ -1,6 +1,6 @@
 # Phase: Brainstorm
 
-Interview the user at a high level about every aspect of their idea — every section the brief holds, listed below — until the agenda and the frontier are both empty. Interview and readback follow the shared discipline in [INTERVIEW.md](INTERVIEW.md) — read it before your first question.
+Interview the user at a high level about every aspect of their idea — every section the brief holds, listed below — until the agenda and the frontier are both empty.
 
 ## Interview
 
