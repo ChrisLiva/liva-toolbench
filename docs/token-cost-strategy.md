@@ -204,7 +204,7 @@ test.
 Est. 8-10M on a large execute run. Not verified to the standard of A-D.
 
 - **Briefs quote the plan task verbatim** (`IMPLEMENTER-BRIEF.md`'s old `## Task text`). Briefs
-  averaged 15.7KB; a bounded pointer keeps only the `- [ ] Behavior N:` lines the TDD rule
+  averaged 15.7KB; a bounded pointer keeps only the `- [ ] Behavior N:` lines the RED→GREEN→REFACTOR rule
   at `:63` keys off. ~27k output + 2.3M cache-read.
   **Landed as:** a `## Task` block naming the plan path plus `### Task <N> — <title>`, over the
   behavior lines. The implementer reads that one section — already allowed by `orientation.md`'s
