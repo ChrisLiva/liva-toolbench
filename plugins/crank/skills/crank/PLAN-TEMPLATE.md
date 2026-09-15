@@ -54,6 +54,12 @@ Stop if: <the assumption this task rests on that grounding could not prove, or o
 
 <repeat every block above in full — the implementer sees only this task, so no line may point at Task 1>
 
+## Stages
+
+| stage | tasks | closes criteria | exit state |
+|---|---|---|---|
+| 1 | Task 1–Task <N> | <criteria proved at this gate, or `scaffolding` for a first stage that closes none> | <what works at the gate and what stage 2 adds> |
+
 ## Coverage
 
 | criterion | task # | verify step that proves it |

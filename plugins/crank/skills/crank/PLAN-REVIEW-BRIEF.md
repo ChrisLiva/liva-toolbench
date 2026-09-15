@@ -1,7 +1,7 @@
 # Adversarial plan review brief
 
 <brief>
-Read the spec at `<spec-path>` in full: it is the contract. Read the plan's frame at `<plan-path>` — its header (`Spec:`, `Goal:`, `Gates:`), **Global Constraints**, **Updates since spec**, **Refactor scope**, **File structure**, **Coverage**, and **Out of scope**, plus every task's title. Each task body comes as you reach it in the walk, read by heading from that same file. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
+Read the spec at `<spec-path>` in full: it is the contract. Read the plan's frame at `<plan-path>` — its header (`Spec:`, `Goal:`, `Gates:`), **Global Constraints**, **Updates since spec**, **Refactor scope**, **File structure**, **Stages** when present, **Coverage**, and **Out of scope**, plus every task's title. Each task body comes as you reach it in the walk, read by heading from that same file. Each task will be handed alone to a standard-tier implementer that sees only that task's block and a repo orientation, never the spec, the other tasks, or this review. Read each task as that implementer receives it: a gap you can fill from the spec or a neighboring task is a gap it cannot.
 
 Work your lookups in **rounds**. A round's **frontier** is every lookup whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
 
@@ -12,6 +12,7 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 - **unprobed oracle** — a behavior or `Verify:` pinning a third-party tool's exact output, exit code, or API contract with no evidence line naming the run that produced it; run it yourself and correct the pinned value, or rewrite the step to derive it at task time.
 - **coverage holes** — a behavior from your walk that no Coverage row proves, a row whose verify step doesn't exercise the behavior, an empty verify cell whose stated reason doesn't hold.
 - **unclaimed file** — a row in the plan's **File structure** table that no task's Files block names, or a Files block naming a path the table omits; the two are one list stated twice, and a file in only one of them is a task told not to touch what it must change.
+- **hollow stage gate** — in a plan carrying a **Stages** table: a stage whose last task leaves a `Gates:` command unrun, a Coverage row the stage claims that no task at or before its cut proves, or an exit state no `Verify:` step reads; also a task number in no stage row, or in two. Move the cut to the task whose `Verify:` backs the gate, or rewrite the row to what that task proves.
 - **name / type / path inconsistencies** — across tasks or against the codebase.
 - **placeholder language** — `similar to Task N` / "add appropriate handling" / vague instructional prose / a symbol no task defines.
 - **dead-seam verify steps** — a test that drives a node, handler, or endpoint the production code never wires up, so it would pass even if the feature were absent.

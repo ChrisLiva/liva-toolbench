@@ -19,7 +19,7 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Plan
 
-The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the goal, assumptions, ordered tasks, verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
+The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the goal, assumptions, ordered tasks, stages past ten tasks ([STAGES.md](STAGES.md), read once the task list settles, each cut read back beside the cut it rejected), verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
 
 Verification checks:
 
@@ -38,4 +38,4 @@ Write every task for the weakest executor it may get — one that sees that task
 - A task tightening a shared contract — a field made required, a shared symbol renamed, a validator narrowed — carries every call site the grep found.
 - A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
 
-Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one.
+Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one. For a staged plan, bound the first run at the stage 1 gate (`stop after Task <N>`), then a fresh session per stage; a gate short of the last task ends a short run, reviewed when the last stage lands.

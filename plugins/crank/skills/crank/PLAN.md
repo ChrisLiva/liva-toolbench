@@ -71,6 +71,7 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 - **File structure** — the table from Map the files.
 - **Tasks** — each with a `Files:` block; an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty); a `Check:` line naming the per-task call (test-first / lightest-check / probe) and the exemplar to model after; a `Stop if:` line per Hard Rules → Cite what you assert, so the executor returns `BLOCKED` instead of improvising (omit when grounding proved every assumption); then one checkbox per behavior — each carrying its oracle and, where a test drives it, its seam (naming the existing journey test to extend when that seam is already walked) — ending on the task's `Verify:` step.
 - **Coverage** — a table with one row per acceptance criterion in the spec (if the spec lacks a numbered list, enumerate the behaviors it describes yourself): `criterion | task # | verify step that proves it`. Every criterion gets a row; several rows proved along one workflow share that journey test's verify step — a shared cell is the minimal-suite shape, not a gap; a row whose verify cell is empty must say why (e.g. human-only smoke check) — silence is a gap, not a pass. Execute walks this table before claiming completion.
+- **Stages** — past ten tasks, the table per [STAGES.md](STAGES.md) → Shape, each row's exit state what the user reads at that stage gate; omit for a plan within ten.
 - **Smoke tests for the user** — anything the spec flagged as needing real-human verification. Omit if none.
 - **Out of scope** — copy from the spec.
 
@@ -115,13 +116,15 @@ A Refactor scope module with no test at its seam gets a **characterization** tas
 
 **Wide refactors are the exception to the one-task green tree.** A **wide refactor** is one mechanical change — rename a shared symbol, retype a column — whose blast radius fans across the codebase, so a single edit breaks call sites everywhere at once and no one task can land it green. Don't force it into one tracer bullet; sequence it as **expand–contract**: an *expand* task adds the new form beside the old so nothing breaks, *migrate* tasks move call sites over in batches sized by blast radius (per package, per directory) — each batch still ends on a green tree because the old form stands — and one *contract* task deletes the old form once no caller remains. If even the batches can't stay green alone, keep the sequence but say so in the plan: green is promised only at a final integrate-and-verify task.
 
+**Stages.** A plan past ten tasks is cut into stages per [STAGES.md](STAGES.md), read here: each stage ends on a stage gate the user can stop at.
+
 Whether a given task is **test-first** or a **lightest-check** is a per-task call — see Guidelines → Test-first or lightest-check.
 
-Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree — no task bundles two green-tree outcomes.
+Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree — no task bundles two green-tree outcomes; a staged plan's rows meet STAGES.md's completion criterion.
 
 ### 4. Read back the shape
 
-Decomposition settled the shape; before writing the tasks in full, read it back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the file map first (the actual path / action / responsibility rows), then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
+Decomposition settled the shape; before writing the tasks in full, read it back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the file map first (the actual path / action / responsibility rows), then in a staged plan the Stages table, each cut shown beside the cut it rejected, then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
 
 ### 5. Write the tasks
 
@@ -138,7 +141,7 @@ Route reuse by name: if grounding (or the spec) surfaced an existing utility, th
 - every test-driven behavior names the production seam it drives, the one the spec's Testing approach named;
 - every reuse the grounding surfaced is named in the task that needs it;
 - every claim about the current code cited or on a `Stop if:` line per Hard Rules → Cite what you assert, each citation opened this phase;
-- the finished file's counts read back clean — `tasks: <N> / coverage rows: <N> / placeholders: <N> / criteria <first>..<last>` — one Coverage row per acceptance criterion and zero placeholders. Count them with a command over the file and state the line; counting by eye is what lets a criterion go missing.
+- the finished file's counts read back clean — `tasks: <N> / stages: <S> / coverage rows: <N> / placeholders: <N> / criteria <first>..<last>` — one Coverage row per acceptance criterion, zero placeholders, and in a staged plan every task number in exactly one stage row. Count them with a command over the file and state the line; counting by eye is what lets a criterion go missing.
 
 A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
@@ -151,3 +154,4 @@ Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch it per [SKILL.md]
 Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 - **Next:** `/crank-execute .crank/<slug>/plan.md` — in this session or a fresh one; the plan is self-contained.
+- **Next, for a staged plan:** `/crank-execute .crank/<slug>/plan.md` bounded at the stage 1 gate (`stop after Task <N>`), then a fresh session per stage, each bounded at its gate. Say in the hand-back that a gate short of the last task ends a short run: the final review and the retro belong to the run that lands the last stage.

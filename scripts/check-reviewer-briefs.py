@@ -53,6 +53,7 @@ FLAG_LITERALS = {
         "unprobed oracle",
         "self-invalidating citation",
         "unclaimed file",
+        "hollow stage gate",
     ],
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["prose the diff falsified"],
     "plugins/crank/skills/crank-review/REVIEW-BRIEF.md": ["made untrue"],
@@ -73,6 +74,8 @@ PRESENCE_LITERALS = {
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
+    "plugins/crank/skills/crank/PLAN.md": ["past ten tasks"],
+    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["past ten tasks"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
@@ -93,6 +96,7 @@ CANONICAL = {
     "GRILLING": "plugins/crank/skills/crank",
     "READBACK": "plugins/crank/skills/crank",
     "ARTIFACT-HOME": "plugins/crank/skills/crank",
+    "STAGES": "plugins/crank/skills/crank",
     "INTERVIEW": "plugins/crank-lite/skills/crank-lite",
 }
 
