@@ -38,4 +38,4 @@ Write every task for the weakest executor it may get — one that sees that task
 - A task tightening a shared contract — a field made required, a shared symbol renamed, a validator narrowed — carries every call site the grep found.
 - A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
 
-Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one. For a staged plan, bound the first run at the stage 1 gate (`stop after Task <N>`), then a fresh session per stage; a gate short of the last task ends a short run, reviewed when the last stage lands.
+Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one; one run carries the plan through its last task. For a staged plan, add one sentence: the user may bound a run at any stage gate (`stop after Task <N>`, the gate's last task), and a gate short of the last task ends a short run, reviewed when the last stage lands.

@@ -55,9 +55,10 @@ Write this block into your reply with every line filled, then continue in the sa
 - Shape: <solo | orchestrate>
 - Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 - Tasks: <N> (<M> remaining)
+- Bound: <Task <N>, the plan's last | Task <N>, the stage <S> gate the user named>
 ```
 
-The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one; `harness fallback` beside a stated preference is a wrong line. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
+The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one; `harness fallback` beside a stated preference is a wrong line. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's Stages table); a Stages table on its own leaves the bound at the last task. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
 
 ## Implement
 
@@ -80,7 +81,7 @@ The plan's destination is frozen; the road is not. When a bug, stale detail (ren
 
 ## Short run
 
-A run that ends with boxes still unchecked in the `## Progress` block — the user bounded it ("do task 2, then stop"), or a reroute stopped it — is a **short run**: the review, the loop-close, and the retro below belong to the run that lands the **last** plan task, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
+A run that ends with boxes still unchecked in the `## Progress` block — its Bound (Pre-flight) fell short of the last task, or a reroute stopped it — is a **short run**: the review, the loop-close, and the retro below belong to the run that lands the **last** plan task, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
 
 - On each unchecked task's line, append `— open: <a question this run raised about it>` and `— note: <an interface, path, or contract its task text no longer matches>`; on each task that landed this run, append the review findings and observations the retro would otherwise have carried.
 - Bank each corrected repo fact, detour or not, with its evidence in the plan's grounding as under Implement.

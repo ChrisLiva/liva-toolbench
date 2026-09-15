@@ -1,6 +1,6 @@
 # Stages
 
-A **stage** is a contiguous range of the plan's ordered tasks that ends on a **stage gate**: a tree the user can stop at, merge, and resume from later. A staged plan keeps every stage within ten tasks.
+A **stage** is a contiguous range of the plan's ordered tasks that ends on a **stage gate**: a tree the user may end an execute run at, merge, and resume from later. A staged plan keeps every stage within ten tasks.
 
 ## Stage gate
 
