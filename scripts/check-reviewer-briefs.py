@@ -43,8 +43,8 @@ READ_LITERALS = {
 # The two sites whose reviewer edits the artifact under review land their
 # findings through one uniqueness-asserting edit script.
 APPLY_LITERALS = {
-    "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": ["plan-review-edits.py", "MISS"],
-    "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["spec-review-edits.py", "MISS"],
+    "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": ["plan-review-edits.py", "MISS", "refuted"],
+    "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["spec-review-edits.py", "MISS", "refuted"],
 }
 
 # Flags a site's reviewer must carry, each named in that site's own words.
@@ -54,7 +54,10 @@ FLAG_LITERALS = {
         "self-invalidating citation",
         "unclaimed file",
         "hollow stage gate",
+        "unpinned requirement",
     ],
+    "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["internal contradiction"],
+    "plugins/crank/skills/crank-execute/PER-TASK-REVIEW-BRIEF.md": ["unpinned"],
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["prose the diff falsified"],
     "plugins/crank/skills/crank-review/REVIEW-BRIEF.md": ["made untrue"],
     "plugins/crank/skills/crank-deslop/SLOP-BRIEF.md": ["reflexive guard", "type-silencing cast"],
@@ -71,10 +74,13 @@ PRESENCE_LITERALS = {
         "**Promote it.**",
         "- **Promoted** —",
         "Standing defect rules",
+        "**Stage gate.**",
+        "plan-walk-<stage>.md",
     ],
-    "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules"],
+    "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "The list bounds your tests"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
-    "plugins/crank/skills/crank/PLAN.md": ["past ten tasks"],
+    "plugins/crank/skills/crank/PLAN.md": ["past ten tasks", "A requirement is a Behavior line"],
+    "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert"],
     "plugins/crank-lite/skills/crank-lite/PLAN.md": ["past ten tasks"],
 }
 

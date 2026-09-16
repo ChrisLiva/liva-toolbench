@@ -10,7 +10,8 @@ Work your lookups in **rounds**. A round's **frontier** is every lookup whose an
 Flag every instance of the following, taking as settled any decision the spec records with its tradeoff and any decision an ADR in the repo records:
 
 - **ambiguity** — two engineers could implement it meaningfully differently.
-- **inaccuracy** — a claim that contradicts the codebase; verify against the repo.
+- **inaccuracy** — a claim about code, a fixture, a tool, or a file, inside this repo or outside it, that its source contradicts; open or run the source.
+- **internal contradiction** — two spec statements that cannot both hold: an interface that cannot produce a shape the spec requires elsewhere, a criterion whose gate makes another criterion's fixture unreachable, an oracle that a different construction produced than the one the spec mandates. Name both lines and which governs.
 - **criteria gaps** — a behavior the spec body describes (interaction, keybinding, edge case, state transition, validation) with no matching numbered acceptance criterion, or a criterion too vague to falsify.
 - **off-pattern** — a layer is touched without naming the existing surface for that layer (repository function, renderer hook, query key, IPC shape) that analogous features in the codebase use; grep one or two analogous files to confirm.
 - **shallow module** — a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test (removing it would not scatter complexity, so it's a pass-through that should fold into its caller). Don't flag existing modules outside the Refactor scope; their boundaries are settled.
@@ -26,8 +27,8 @@ Then fix every item you flagged in **the spec file at `<path>`** — that spec f
 
 Fix in **two passes**:
 
-1. **Collect.** Finish flagging the whole spec before you edit anything, and write the findings to `spec-review-findings.md` beside the spec — one line each: the section it lands in, the flag it trips, the edit it takes.
+1. **Collect.** Finish flagging the whole spec before you edit anything, and write the findings to `spec-review-findings.md` beside the spec — one line each: the section it lands in, the flag it trips, the edit it takes, and the read or run that confirmed every fact the edit introduces. A count, a line number, a value, a name is **confirmed** at its source, by a read or a run, before its finding lands; arithmetic over the spec's own prose confirms nothing. A finding its check refutes stays on the list as `refuted: <what the check printed>` and takes no edit.
 2. **Apply.** Write `spec-review-edits.py` beside the spec, holding every finding's edit as an exact `(section, old, new)` triple where `old` is text copied verbatim from the spec. Run it once. For each triple it counts `old` in the file: on exactly one match it replaces and prints `OK <section>`; on any other count it prints `MISS <section>: matched <n> times`, leaves the file unchanged for that triple, and the script exits non-zero. Widen each MISS's `old` to a span that appears once and run the script again, until it exits zero.
 
-Done when your lookup frontier is empty and every item on your finding list has landed in the spec file through a `spec-review-edits.py` run that exited zero. End your reply with a one-line summary of what changed.
+Done when your lookup frontier is empty and every item on your finding list is `refuted` or has landed in the spec file through a `spec-review-edits.py` run that exited zero. End your reply with a one-line summary of what changed.
 </brief>

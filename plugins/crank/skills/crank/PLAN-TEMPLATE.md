@@ -52,7 +52,7 @@ Stop if: <the assumption this task rests on that grounding could not prove, or o
 
 ### Task 2 — <independently committable outcome>
 
-<repeat every block above in full — the implementer sees only this task, so no line may point at Task 1>
+<repeat every block above in full — the implementer sees only this task and tests only its Behavior lines: no line points at Task 1, and every requirement is a Behavior line>
 
 ## Stages
 

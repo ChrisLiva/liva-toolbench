@@ -9,7 +9,7 @@ Turn what you and the user have been discussing, or the user's idea, into a sing
 - **Grill the open technical decisions before drafting** (Flow → Grill the technical decisions). Outside those, if a gap blocks the writeup, resolve it and note the assumption rather than reopening the interview.
 - **Placeholder language.** No `TODO`, `TBD`, `for later`, `v2`, "we'll figure out later", or equivalent. If a decision is open: resolve it now (one targeted question or spawn a subagent to investigate), or move it to **Out of scope** with a sentence on why.
 - **Write the draft to `.crank/<slug>/spec.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
-- **Reference real files as `path:line`** wherever you have them.
+- **Cite what you assert.** Every claim the spec makes about code as it stands — a path, a signature, a type, a fixture, a digest, a protocol's behavior, a value pinned as an oracle — is **confirmed**: opened or run this phase, inside this repo or outside it, and carries its `path:line` or the command and what it printed. An oracle names what produced it and whether that matches the construction the spec mandates. A claim you cannot confirm this phase moves to **Out of scope** with the check that would settle it.
 
 ## Guidelines
 
@@ -79,7 +79,7 @@ Don't propose a design — just surface what already exists. If no analogous sur
 
 Synthesize their findings into the Technical decisions section. The spec inherits the surfaces they reported. A spec that says "the handler calls `db.update(...)` directly" when the investigator found every analogous endpoint routes through `repo.X` has already shipped an idiom-break that code review will catch. Close the step by banking the per-layer findings — surfaces, conventions, canonical helpers, drift — to the grounding file.
 
-Completion criterion: the intent docs are read or confirmed absent, and every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — fresh, or confirmed against the grounding file by that subagent — no layer unreported, and the step's findings banked to the grounding file.
+Completion criterion: the intent docs are read or confirmed absent — each ADR banked to grounding as governing, superseded, or irrelevant to this spec, with its path — and every layer the change touches has either a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent — fresh, or confirmed against the grounding file by that subagent — no layer unreported, and the step's findings banked to the grounding file.
 
 ### 2. Grill the technical decisions
 
@@ -115,11 +115,11 @@ Completion criterion: every settled behavior has a numbered criterion, and every
 
 Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**, scaled to the topic. Carry the material the readback approved into the spec as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply **Simplify first** (see Guidelines) and, for every module that is new or named in **Refactor scope**, [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
 
-Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, and every module new or in **Refactor scope** has been through Simplify first and the design lens.
+Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and every module new or in **Refactor scope** has been through Simplify first and the design lens.
 
 ### 5. Adversarially review
 
-Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path.
+Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path. Then read back, in one message per [READBACK.md](READBACK.md), every numbered acceptance criterion the review rewrote: the user approved those criteria at step 3, and the review changed them after.
 
 ### 6. Hand back
 
