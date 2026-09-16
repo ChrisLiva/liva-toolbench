@@ -43,8 +43,6 @@ The same artifact, sharpened: every in-bounds ambiguity resolved, every conseque
 
 ## Flow
 
-Track progress with live tasks the user can watch, capped at milestones: one task per step below that settles or produces something the user sees, not one per sub-step, and flip each the moment it lands rather than in a batch at the end. Send each flip in the same turn as the work beside it, and on its own only before a question or the hand-off.
-
 ### 1. Identify the artifact and its phase
 
 Read the artifact in full. Determine which phase it belongs to — brainstorm brief, spec, or plan — from its **content and structure**, not just its filename (a brief sketches approach and shape; a spec carries acceptance criteria; a plan carries ordered, committable tasks). If it's genuinely ambiguous which phase it is, ask the user once. Set the grilling altitude from that phase (References → Grilling altitude by phase).

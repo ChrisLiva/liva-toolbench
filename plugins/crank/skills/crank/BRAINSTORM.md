@@ -92,13 +92,15 @@ Dispatch each job with the matching brief, filled in.
 <brief>
 Explore `<area or claim>` in this codebase. We're brainstorming `<one-sentence idea>`. Read-only: change nothing in the codebase or on the machine.
 
+Work your lookups in **rounds**: a round's **frontier** is every read or grep whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
+
 Report:
 
 - whether the surface or pattern in question exists, and the `file:line` where it lives (or "not found");
 - one or two existing features that do something analogous, and the convention each follows (`file:line`);
 - any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (`file:line`).
 
-Keep each item you report — one surface, one analogous feature, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long.
+Keep each item you report — one surface, one analogous feature, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. Keep the whole return under ~1,200 words; an item past the cap goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design — just surface what already exists and what's true. If the claim I'm checking is wrong, say so plainly.
 </brief>

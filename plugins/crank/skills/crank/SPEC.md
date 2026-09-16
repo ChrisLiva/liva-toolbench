@@ -65,6 +65,8 @@ Before drafting Technical decisions, dispatch standard subagents in parallel —
 <brief>
 Investigate `<layer>` in this codebase. We're about to add `<one-sentence feature summary>`.
 
+Work your lookups in **rounds**: a round's **frontier** is every read or grep whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
+
 Find one or two existing features that do something analogous and report:
 
 - the exact surface they use (database, api, frontend, tests, etc.);
@@ -72,7 +74,7 @@ Find one or two existing features that do something analogous and report:
 - one sentence on the convention you observed;
 - any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
 
-Keep each item you report — one surface, one convention note, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long.
+Keep each item you report — one surface, one convention note, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. Keep the whole return under ~1,200 words; an item past the cap goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design — just surface what already exists. If no analogous surface exists, say so. When the analogous features disagree on convention, report both and name the winner: the one the repo converged on most recently, per `git log` on those files.
 </brief>

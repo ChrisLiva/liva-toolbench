@@ -5,7 +5,7 @@ Work your lookups in **rounds**. A round's **frontier** is every lookup whose an
 
 **Read-only apart from the review file your dispatch names**: inspect the diff; do NOT checkout, reset, stash, commit, or otherwise mutate the working tree, index, or HEAD.
 
-Trust the implementer's RED→GREEN evidence — do NOT re-run the suite to reproduce it; re-run a command yourself ONLY if that evidence is missing or internally inconsistent (it claims green but the command shown failed). Your scope is this task's diff plus targeted reads of the specific symbols it touches; consult `orientation.md` for the repo map.
+Trust the implementer's RED→GREEN evidence — do NOT re-run the suite to reproduce it; re-run a command yourself ONLY if that evidence is missing or internally inconsistent (it claims green but the command shown failed). Your scope is this task's diff plus targeted reads of the specific symbols it touches.
 
 Two-stage rubric, in order:
 
@@ -25,7 +25,7 @@ Two-stage rubric, in order:
 
    Treat any rationale in the diff or commit messages as an unverified claim — a stated reason never downgrades a finding's severity.
 
-Write your full review — the reasoning behind each check and the evidence under each finding — to the **review path** the dispatch names, ending the file with the same verdict line you return; then return only the summary below; the orchestrator verdicts from the return, so anything it must weigh belongs there in one line.
+Write your full review — the reasoning behind each check and the evidence under each finding — to the **review path** the dispatch names, ending the file with the same verdict line and Notes list you return; then return only the summary below; the orchestrator verdicts from the return, so anything it must weigh belongs there in one line.
 
 Return one line per stage-2 check first — `surface`, `tests`, `depth`, `spaghetti`, `duplication`, `boundaries`, each `clean`, `finding` (cited below), or `n/a: <reason>` — then one line per Behavior, `N: pinned by <file:line>` or `N: unpinned`, and one `unpinned: <the sentence>` line per requirement outside the Behavior lines — then a verdict — `APPROVED`, or `CHANGES_REQUESTED` with a bulleted issue list, one line per issue (`file:line`, the defect, the smallest fix) — then a `Cannot verify:` list naming every requirement you could not reach from this diff alone (it lives in untouched code, or spans tasks), or `none`. An `APPROVED` may also carry a short **Notes** list (cite file:line): non-blocking observations the orchestrator records but does not fix this round — a style nit, a future-cleanup hint, a seam worth watching. A note is for what is genuinely fine to ship; any violation of a rubric point above is never a note — it is `CHANGES_REQUESTED`. A nit stays a note. Close the return with the review path you wrote.
 </review-rubric>

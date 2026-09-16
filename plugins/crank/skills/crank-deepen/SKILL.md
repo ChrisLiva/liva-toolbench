@@ -26,8 +26,6 @@ The run is: scope → parallel explorers → a visual HTML report of the candida
 
 ## Flow
 
-Track progress with live tasks the user can watch, capped at milestones: one task per step below that settles or produces something the user sees, not one per sub-step, and flip each the moment it lands rather than in a batch at the end. Send each flip in the same turn as the work beside it, and on its own only before a question or the hand-off.
-
 ### 1. Scope
 
 Scope before you scan. Deepening pays off by making future changes to a module easier, so weight the parts of the codebase that keep changing.

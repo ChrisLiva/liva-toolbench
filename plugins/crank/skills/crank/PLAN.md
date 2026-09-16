@@ -45,6 +45,8 @@ Dispatch each grounding read with this brief, filled in:
 <brief>
 Investigate `<files, symbols, or gate commands>` in this codebase. We're planning `<one-sentence change summary>`. Read-only: change nothing in the codebase or on the machine, beyond running the gate commands named below.
 
+Work your lookups in **rounds**: a round's **frontier** is every read or grep whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
+
 Report:
 
 - the exact signature and import path of each named symbol, as `file:line`;
@@ -52,7 +54,7 @@ Report:
 - any drift from what the spec claims about these files — what the spec says, what the code says;
 - the exact output of each gate command you were asked to run, verbatim, and whether it exited 0.
 
-Keep each item you report — one symbol, one exemplar, one drift note — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. Exact signatures and gate output are the answer: reproduce those in full, however long.
+Keep each item you report — one symbol, one exemplar, one drift note — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. Exact signatures and gate output are the answer: reproduce those in full, however long. Keep the whole return under ~1,200 words; an item past the cap goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design or write tasks. If something named doesn't exist, say so plainly rather than naming the nearest match as if it were the thing.
 </brief>
@@ -80,7 +82,7 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 
 ### 1. Ground first
 
-Learn what you'll touch before writing tasks. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output. Close by banking what the step proved to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
+Learn what you'll touch before writing tasks. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands — as one dispatch per area the spec touches, every dispatch sent in the same turn; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output. Close by banking what the step proved to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
 
 Completion criterion, all of:
 

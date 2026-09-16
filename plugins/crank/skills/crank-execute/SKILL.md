@@ -20,7 +20,7 @@ These hold at every step; a rule that binds one step lives with that step.
 - **Reviewers judge independently.** Every review dispatch is **cold**: the reviewer pulls its own facts — it runs the diff, reads its task from the plan, reads the implementer's evidence from the report file, and applies the fixed rubric file. Your dispatch hands it only pointers and the BASE SHA; anything more — a description or defense of the diff, a reproduced or annotated rubric — pre-judges the review you asked for.
 - **Verify once; trust the evidence.** A task's RED→GREEN evidence (the implementer's per-behavior output) is the suite's authoritative run for that task; the final gate's plan-and-coverage walk is the single authoritative re-run across the whole diff.
 - **A stated dispatch binds you to spawn.** The moment your output says a task gets a subagent — or the run's chosen shape says so — your *next* action is that spawn, never the work done inline (the pre-flight roster is not itself the dispatch). If main-thread work is the right call, say you're staying on-thread and why (for a shape change, re-state the shape) instead of announcing a dispatch.
-- **A dispatch is a blocking call.** From spawn to return the subagent owns the work: your next action is reading its return, and everything else — the next task, edits near its files, a peek at its progress — queues behind that return. In parallel mode the batch of spawns goes out in one message and blocks as one; every return is read before anything else moves. When a subagent is out past the point you expected it back, reconcile against durable state — `git log` since BASE, the ledger, its report file on disk — then resume the agent or surface the stall with your recommendation.
+- **A dispatch is a blocking call.** From spawn to return the subagent owns the work: end your turn at the spawn, let its return notification resume you, and make reading that return your next action. Everything else — the next task, edits near its files, a peek at its progress — queues behind that return. In parallel mode the batch of spawns goes out in one message and blocks as one; every return is read before anything else moves. When a subagent is out past the point you expected it back, reconcile against durable state — `git log` since BASE, the ledger, its report file on disk — then resume the agent or surface the stall with your recommendation.
 - **Oscillation stops the loop.** A review round that demands reversing what a prior round required is oscillation, not progress — never flip the code blind; stop and surface both verdicts to the user with your recommendation.
 - **Never** force-push, amend earlier commits, rewrite history, or delete a branch without explicit approval.
 
@@ -38,9 +38,9 @@ Read [VOCABULARY.md](VOCABULARY.md) before step 2. Step 3's prose leans on the *
 
 Both review gates, per task (Flow step 3) and final (Flow step 5), resolve a verdict the same way:
 
-- Dismiss only what you can disprove, and record the reasoning that disproved it. You hold the cross-task context, the spec, and the Coverage table the reviewer doesn't, so a false positive is yours to disprove rather than the reviewer's to widen its search for: correct reuse read as duplication, a cohesive single-seam test read as a horizontal slice, an acceptance criterion called missing that a file outside the reviewer's read already satisfies. A dismissal is recorded with its reasoning — on the task's ledger line for a per-task review, in the retro's Final review section for the final one.
+- Dismiss only what you can disprove, and record the reasoning that disproved it. You hold the cross-task context, the spec, and the Coverage table the reviewer doesn't, so a false positive is yours to disprove rather than the reviewer's to widen its search for: correct reuse read as duplication, a cohesive single-seam test read as a horizontal slice, an acceptance criterion called missing that a file outside the reviewer's read already satisfies. A dismissal is recorded with its reasoning — appended under a `## Dismissed` heading in `task-<N>-review.md` for a per-task review, in the retro's Final review section for the final one.
 - A confirmed gap is a failed review.
-- An `APPROVED` carrying non-blocking **Notes** is still done: record the Notes as deferred findings — on the task's ledger line for a per-task review, in the retro's Final review section for the final one — and move on, never into a fix round. A re-review's Out-of-scope observations route the same way.
+- An `APPROVED` carrying non-blocking **Notes** is still done: the Notes are the deferred findings — read from `task-<N>-review.md` for a per-task review, recorded in the retro's Final review section for the final one — so move on, never into a fix round. A re-review's Out-of-scope observations route the same way.
 
 ## Deliverables
 
@@ -77,7 +77,7 @@ Base: <the HEAD SHA when the run started>
 - `detour: <one line>` — every detour the task took, settled or open, so the retro's Deviations and the final review read them here.
 - `open: <one line>` — a question about the task nobody has settled; whoever reads the task's body at step 3 settles it, where the steps, `Check:`, and Files block usually decide it, and writes the settlement into the plan section.
 - `note: <one line>` — a fact this task must carry: a landed interface, path, or contract its plan text no longer matches, read at step 3.
-- Reviewer **Notes**, deferred findings, and dismissals with their reasoning, on the line of the task that landed them, so the retro reads them off the ledger.
+- `review: <path to task-<N>-review.md>` — where a review ran. That file holds the reviewer's Notes and your dismissals with their reasoning (References → Review verdicts), and the retro reads them there; the line carries the verdict and this pointer, and the review's content stays in the file.
 
 One line lives under the anchor instead: `Stopped: <why> — resume at Task <N>`, written when a run ends short (step 4) and overwritten by the run that resumes.
 
@@ -96,8 +96,6 @@ Written by the run that lands the **last** plan task, to `.crank/<slug>/retro.md
 
 ## Flow
 
-Track progress with live tasks the user can watch. Create **one tracked task per plan task** (the work that visibly advances), not one per Flow step below; the steps are your own orientation. Flip each plan task to complete the instant it lands — one update per transition.
-
 ### 1. Load and critically review
 
 Resolve the plan and its `.crank/<slug>/` home per [RESOLVE-PLAN.md](RESOLVE-PLAN.md).
@@ -112,7 +110,7 @@ The walk reports; you land its corrections. A citation that confirmed at a diffe
 
 - **Blockers** — the plan names a symbol the walk grepped for and did not find, cites a path that is gone, or states a precondition another task contradicts.
 - **Plan-mandated defects** — the plan's own words instruct something the review rubric rejects: a test that asserts nothing, verbatim duplication of a helper the codebase already provides, a cast or `any` papering over a contract. Quote the instruction. Overriding what the plan explicitly instructs is a reroute, never a detour — surface it and let the user say which governs.
-- **Carried** — what the walk read as open rather than broken: a step open to two readings, a name used loosely, a symbol it could not place, a requirement in the task's prose that no Behavior line pins. Each rides its task's ledger line as `open:`. A fact the walk verified along the way — the renamed symbol's current name, the moved file's path — banks to grounding.
+- **Carried** — what the walk read as open rather than broken: a step open to two readings, a name used loosely, a symbol it could not place, a requirement in the task's prose that no Behavior line pins. Each rides its task's ledger line as one `open:` line holding the question alone; a question the task's own steps, `Check:` line, or Files block already answer is written into the plan section as its settlement and rides nowhere. A fact the walk verified along the way — the renamed symbol's current name, the moved file's path — banks to grounding.
 
 Raise the two stopping buckets in a **single batched question**, not one interrupt per discovery, and stop until answered. Then check `git status --short` and the current branch; on `main`/`master` with a non-trivial change, ask once before committing.
 
@@ -167,7 +165,7 @@ Completion criterion: the filled block is in your reply, `.crank/<slug>/exec/` e
 
 2. **Review (subagent modes only).** Triage the thin return; the report stays on disk. A **clean return** — `Status: DONE`, `Detours: none` or `settled only`, `Concerns: none`, and a RED→GREEN pair per behavior or the plan line that skips the cycle quoted — skips this review. Record `review skipped (clean return)` on the ledger line. (per project decision: a week of runs showed 40 of 41 per-task reviews approving, most dispatched on observations and on settled detours, so only open detours and Concerns earn a review.) A settled detour is one the brief, `orientation.md`, grounding, or you already directed, so its judgment was made before the implementer started; it still lands on the ledger line as `detour:`.
 
-   An **open detour** or a **Concern** is a judgment neither the plan nor you have made — so is a doubt of your own about the return, which you write on the ledger line — so dispatch a standard reviewer, cold (Hard Rules → Reviewers judge independently), handing it: the **BASE SHA** you recorded; the **plan path and this task's number**, with the plan's **Global Constraints** as a standing lens; the path to the implementer's **`task-<N>-report.md`** for the RED→GREEN evidence; `review-rubric.md` plus `orientation.md` in the brief dir; and the **review path** `task-<N>-review.md` in the brief dir, where its full review goes. Observations trigger no review; route each per Deliverables → Progress ledger → Where a loose fact lives.
+   An **open detour** or a **Concern** is a judgment neither the plan nor you have made — so is a doubt of your own about the return, which you write on the ledger line — so dispatch a standard reviewer, cold (Hard Rules → Reviewers judge independently), handing it: the **BASE SHA** you recorded; the **plan path and this task's number**, with the plan's **Global Constraints** as a standing lens; the path to the implementer's **`task-<N>-report.md`** for the RED→GREEN evidence; `review-rubric.md` in the brief dir; and the **review path** `task-<N>-review.md` in the brief dir, where its full review goes. Observations trigger no review; route each per Deliverables → Progress ledger → Where a loose fact lives.
 
    It returns a line per rubric check, a line per Behavior naming the test that pins it, then a verdict, then its `Cannot verify:` list. A check returned `n/a` with no reason, or a check missing from the line, is an unrun check — send it back rather than reading the verdict. Each `unpinned:` line is a plan defect: write the Behavior line with its oracle into the task's plan section, and add the test that pins it to the round's findings. Resolve each `Cannot verify:` item yourself, then verdict per References → Review verdicts.
 
@@ -177,7 +175,7 @@ Completion criterion: the filled block is in your reply, `.crank/<slug>/exec/` e
 
 4. **Stage gate.** When the task that landed closes a stage and the Bound lies past it, walk the next stage before its first task: the step 1 dispatch over that stage's tasks against HEAD, its stopping buckets raised in one question, its corrections landed in the plan. A gate that is the Bound ends the run through Short run: hand the ledger forward.
 
-Completion criterion, per task: its ledger line is `[x]` with the commit SHA(s) and its verdict slot filled per Line grammar, every detour it took is on the line as `detour:`, and — when a review ran — `task-<N>-review.md` is on disk with every `Cannot verify:` item resolved by you.
+Completion criterion, per task: its ledger line is `[x]` with the commit SHA(s) and its verdict slot filled per Line grammar, every detour it took is on the line as `detour:`, and — when a review ran — `task-<N>-review.md` is on disk with every `Cannot verify:` item resolved by you, your dismissals appended under `## Dismissed`, and its path on the line as `review:`.
 
 ### 4. Short run: hand the ledger forward
 
@@ -186,13 +184,12 @@ A run whose task loop ends with boxes still unchecked on the ledger is a **short
 Read each unchecked task against what this run actually shipped, then write what changed, per Deliverables → Progress ledger → Line grammar:
 
 - on each unchecked task's line, `open:` for a question this run raised about it and `note:` for a landed interface, path, or contract its plan text no longer matches;
-- on each landed task's line, the reviewer Notes and deferred findings it left;
 - in `.crank/<slug>/grounding.md`, every corrected repo fact with its evidence — a fact wider than one task lands there, not on a line;
 - under the anchor, the `Stopped:` line.
 
 Then hand back per step 8.
 
-Completion criterion: every unchecked task has been read against this run's diff and either carries what it needs or is confirmed unaffected, each landed task's Notes are on its line, the `Stopped:` line names the resume point, and `git status --short` is clean or its leftovers named in the hand-back.
+Completion criterion: every unchecked task has been read against this run's diff and either carries what it needs or is confirmed unaffected, the `Stopped:` line names the resume point, and `git status --short` is clean or its leftovers named in the hand-back.
 
 ### 5. Verify the whole
 
@@ -208,7 +205,7 @@ Completion criterion: the gate commands ran green this session, every Coverage r
 
 ### 6. Close the loop
 
-You ship finished work. Before writing the retro, gather every loose end the plan produced — what earlier short runs parked on the ledger's task lines, plus this run's reviewer Notes, deferred findings, plan risks, human-only Coverage rows, and your own "worth noting" observations — and triage each:
+You ship finished work. Before writing the retro, gather every loose end the plan produced — what earlier short runs parked on the ledger's task lines, the Notes and dismissals in every `task-<N>-review.md` the ledger points at, plus this run's plan risks, human-only Coverage rows, and your own "worth noting" observations — and triage each:
 
 1. **Settle it.** If a command, read, or test can settle it this session, run it now and read the output — a verified fact is settled and appears nowhere in the hand-back. Settling is verification, not rework: a check that reveals a real defect routes to the next bucket, and a confirmed nit stays a deferred finding in the retro.
 2. **Fix it.** A defect in shipped code fails the final gate — route it back through Verify the whole. A fix that isn't a plan task is bounded: exactly one investigation, one test-first fix, one review — routed through this skill's own dispatch shapes — then stop and report, whatever that review finds.
