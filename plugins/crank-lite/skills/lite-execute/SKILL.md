@@ -42,7 +42,7 @@ Decide the shape from the plan's coupling alone:
 - **Solo** — the work is confined to one module or one area of code, or the tasks share deep in-flight state. Implement inline on this thread.
 - **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement, one per task, dispatched per [DISPATCH.md](DISPATCH.md).
 
-A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why. Every dispatch — implementer or reviewer — is a **blocking call**: everything else queues behind reading its return. The wait breaks only for a **stalled** dispatch — one out past the point you expected it back: reconcile against durable state (`git log`, the Progress block, its report), then resume it or surface the stall.
+A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why. Every dispatch — implementer or reviewer — is a **blocking call**: end your turn at the spawn, let its return notification resume you, and read that return before anything else moves. The wait breaks only for a **stalled** dispatch — one out past the point you expected it back: reconcile against durable state (`git log`, the Progress block, its report), then resume it or surface the stall.
 
 ## Pre-flight
 
@@ -61,8 +61,6 @@ Write this block into your reply with every line filled, then continue in the sa
 The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one; `harness fallback` beside a stated preference is a wrong line. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's Stages table); a Stages table on its own leaves the bound at the last task. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
 
 ## Implement
-
-Track the run with tasks — one entry per plan task, created before work starts and flipped complete the moment the task lands. Every run gets this, solo included.
 
 Before you implement, read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
@@ -83,7 +81,7 @@ The plan's destination is frozen; the road is not. When a bug, stale detail (ren
 
 A run that ends with boxes still unchecked in the `## Progress` block — its Bound (Pre-flight) fell short of the last task, or a reroute stopped it — is a **short run**: the review, the loop-close, and the retro below belong to the run that lands the **last** plan task, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
 
-- On each unchecked task's line, append `— open: <a question this run raised about it>` and `— note: <an interface, path, or contract its task text no longer matches>`; on each task that landed this run, append the review findings and observations the retro would otherwise have carried.
+- On each unchecked task's line, append `— open: <a question this run raised about it>` and `— note: <an interface, path, or contract its task text no longer matches>`; on each task that landed this run, append `— note: <one line>` per observation the retro would otherwise have carried.
 - Bank each corrected repo fact, detour or not, with its evidence in the plan's grounding as under Implement.
 - Under the Progress block's `Base:` line, write `Stopped: <why> — resume at Task <N>`; the run that resumes overwrites it.
 

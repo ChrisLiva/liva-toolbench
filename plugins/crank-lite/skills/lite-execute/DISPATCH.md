@@ -8,7 +8,7 @@ Dispatch one subagent per task with a brief, targeted instruction carrying five 
 2. the file paths it touches, plus the absolute path to this skill's `VOCABULARY.md`, plus the path the plan's `Grounding:` header names when it carries one;
 3. the task's check, which it must run and report output from;
 4. the detour rule, with any detour taken reported back in its return;
-5. the return rule — return only when every command it started has finished; long verifications run synchronously, their output read in the same turn that reports them.
+5. the return rule — return only when every command it started has finished; a long verification runs in the foreground with a timeout, or starts in the background and waits on its completion notification, one blocking wait per command, never a polling loop, its output read in the same turn that reports it.
 
 Done when the brief carries all five.
 
