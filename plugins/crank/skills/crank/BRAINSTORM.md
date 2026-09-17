@@ -6,7 +6,7 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 ## Hard Rules
 
-- **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec). When you catch yourself specifying something an implementer would type, you've dropped below altitude — pull back up.
+- **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec).
 - **Write the brief to `.crank/<slug>/brainstorm.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 
 ## Guidelines
@@ -31,7 +31,7 @@ The high-level design brief, written to the `.crank/` file (see Hard Rules). Inc
 
 ### 1. Explore project context
 
-Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents. In an existing codebase, note the established patterns the idea should follow; you'll lean on them when proposing approaches.
+Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents.
 
 Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) for the step-6 flush, so an abandoned brainstorm leaves no directory behind.
 
@@ -49,13 +49,12 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 ### 4. Grill the open questions
 
-Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here) — the agenda it opens with is this phase's decision tree — until you and the user share a clear picture. This is the heart of the skill.
+Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here) — the agenda it opens with is this phase's decision tree — until you and the user share a clear picture.
 
 If that fan-out turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to the spec phase rather than manufacture a brainstorm.
 
 - **Raise fidelity when words stall.** When a question is experiential — how something should look, behave, or read — a cheap throwaway artifact beats another round of prose: a sketch, a sample output or mock data shape, or — when the behavior itself is the question — a single self-contained HTML file (plain HTML/CSS/JS, no build, no server) the user double-clicks and drives. Offer it in place of the question, and record the reaction as the answer. An artifact that settled a key decision is a primary source: offer to commit it to a throwaway `prototype/<slug>` branch and note the branch beside the decision in the brief — the brief keeps the decision, the branch keeps the evidence.
 - **Stay at altitude.** A detail that isn't load-bearing for the approach call becomes an **Open question** for the spec — note it and move on.
-- Keep the destination in view — constraints and success criteria against it, and what's explicitly not in this.
 
 Completion criterion: the frontier is empty — every consequential design question genuinely settled with the user or recorded as an **Open question** for the spec, none waved past.
 
@@ -100,7 +99,7 @@ Report:
 - one or two existing features that do something analogous, and the convention each follows (`file:line`);
 - any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (`file:line`).
 
-Keep each item you report — one surface, one analogous feature, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. Keep the whole return under ~1,200 words; an item past the cap goes to a file in the OS temp dir, returned as its path plus a one-line summary.
+Report each item — one surface, one analogous feature, one helper — in a few sentences. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design — just surface what already exists and what's true. If the claim I'm checking is wrong, say so plainly.
 </brief>

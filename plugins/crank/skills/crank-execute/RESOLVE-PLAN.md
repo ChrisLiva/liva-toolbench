@@ -9,4 +9,4 @@ Which plan a run executes, from its argument. Every effort's artifacts live in `
 5. **No argument, several plans** — ask via a structured question listing each plan with its derived status: *not started* (no ledger in either home), *in progress* (unchecked boxes remain), *done* (all `[x]`). An effort directory without a `plan.md` (e.g. spec-only) shows as "no plan yet" and is not executable.
 6. **No argument, no plans anywhere** — say so and recommend the plan phase (`/crank plan …`).
 
-Resolving any artifact checks the per-plan path first, then the legacy paths in [LEGACY-ARTIFACTS.md](LEGACY-ARTIFACTS.md); a hit there, or a ledger whose plan directory is gone, is adopted per that file before the run proceeds.
+Resolving any artifact checks the per-plan path first, then the legacy paths in [LEGACY-ARTIFACTS.md](LEGACY-ARTIFACTS.md); a hit there is handled per that file before the run proceeds.

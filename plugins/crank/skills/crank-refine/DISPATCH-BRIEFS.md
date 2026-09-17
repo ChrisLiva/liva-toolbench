@@ -1,6 +1,6 @@
 # Dispatch briefs
 
-Fill-in templates for the three research jobs in `crank-refine` (see SKILL.md → Subagents & research). Read this file when you're about to brief a research subagent at Flow step 3; pick the brief that matches the job and fill the `<…>` slots.
+Fill-in templates for the three research jobs in `crank-refine` (see SKILL.md → Subagents & research). Pick the brief that matches the job and fill the `<…>` slots.
 
 When the effort's grounding file covers the item ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), append a **previously established** line to the filled brief:
 

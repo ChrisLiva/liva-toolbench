@@ -15,7 +15,7 @@ A short list of findings you'd stake your name on — each one a senior engineer
 2. **What can be deleted, consolidated, or refactored away?**
 3. **What edge case slips through?**
 
-Precision over coverage. A review of three real problems beats one of thirty nits — the nits spend the trust the three needed.
+Precision over coverage. A review of the real problems beats one padded with nits — the nits spend the trust the real ones needed.
 
 ## Hard Rules
 
@@ -43,8 +43,8 @@ Capture the commit list once — `git log <BASE>..HEAD --oneline` — for the os
 
 Spawn standard finders, each pointed at [REVIEW-BRIEF.md](REVIEW-BRIEF.md) and the BASE SHA, each running the diff itself. Default to two lenses, matching the driving questions:
 
-- **Correctness & contract** — the brief's questions 1 and 3: does the code do what it says, and what edge case slips through.
-- **Simplicity & deletion** — the brief's question 2: what to cut, consolidate, or refactor, per its Deletion, Magic strings, and smell-baseline sections.
+- **Correctness & contract** — the brief's questions 1 and 3.
+- **Simplicity & deletion** — the brief's question 2, per its Deletion, Magic strings, and smell-baseline sections.
 
 Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a high-confidence correctness finding. Each finder returns candidate findings only (`file:line`, the claim, why it matters, the smallest fix).
 
@@ -64,7 +64,7 @@ The diff has already been reviewed once — by the commits that built it, and, f
 
 - **PR threads (PR target only).** Read the prior review fetched in step 1. **A resolved thread is settled ground: note it as resolved, leave it closed, and drop any surviving finding it covers.** For each **unresolved** thread, drop any surviving finding that **echoes** a point it raised or **reverses** a decision it settled; the one carve-out you keep or add is a **critical or blocking comment the current diff still hasn't addressed** (unintentionally ignored — verify against the diff, then surface it under question 1). Independent of resolution: a **bug the diff newly introduced** — including one introduced while responding to a comment — is never "settled"; surface it whether or not a thread on that code is resolved (it's a finder's catch, not a re-investigation of the thread).
 
-**Done when:** every reversal is confirmed against both commits, and, for a PR, every thread is dispositioned (closed, pruned, or surfaced) and every newly introduced bug is surfaced regardless of thread state.
+**Done when:** every reversal is confirmed against both commits, and, for a PR, every thread is dispositioned (closed, pruned, or surfaced).
 
 ### 5. Report
 
@@ -86,7 +86,7 @@ Render the validated review in this shape — survivors first (ordered by severi
 - `<file:line>` — <why the validator killed it, or "already covered in PR thread">
 ```
 
-Then **recommend the handoff**: suggest the user run `/crank plan` to turn the surviving findings into a fix plan. Make no edits without approval.
+Then **recommend the handoff**: suggest the user run `/crank plan` to turn the surviving findings into a fix plan.
 
 **Done when:** the report is rendered in this shape and the handoff is offered.
 
@@ -94,7 +94,7 @@ Then **recommend the handoff**: suggest the user run `/crank plan` to turn the s
 
 ### Subagents
 
-This skill spawns finders and validators at the **standard** tier — resolve it per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. Bias toward dispatch: each finder and validator gets a clean, fresh context and sees the diff with fresh eyes, which is the whole point of independent validation. **Fan out in small waves** — a handful of concurrent spawns at a time, letting one wave return before launching the next; a large concurrent burst (one validator per candidate on a big diff) trips transient API errors. (Step 4's reconciliation — the oscillation walk and, for a PR, the thread read — is a factual read; keep it on-thread or dispatch one standard agent, your call.)
+This skill spawns finders and validators at the **standard** tier — resolve it per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. Bias toward dispatch: each finder and validator gets a clean, fresh context and sees the diff with fresh eyes, which is the whole point of independent validation. **Fan out in small waves** — a handful of concurrent spawns at a time, letting one wave return before launching the next; a large concurrent burst (one validator per candidate on a big diff) trips transient API errors. (Step 4's reconciliation — the oscillation walk and, for a PR, the thread read — is a factual read, not an independent judgment: keep it on-thread.)
 
 ### Vocabulary
 

@@ -56,6 +56,6 @@ go run github.com/go-gremlins/gremlins/cmd/gremlins@latest unleash --output <scr
 
 ## Gotchas
 
-- Timeouts: 300 s for staticcheck, vet, gosec and govulncheck; a cold module cache compiles the world.
+- Timeouts: the 300 s budget covers every Go tool here; a cold module cache compiles the world.
 - `vendor/` is out of the inventory; the tools' `./...` respects `-mod=readonly`.
 - A nested `go.mod` is its own module and its own project.

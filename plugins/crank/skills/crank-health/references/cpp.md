@@ -54,7 +54,7 @@ mull-runner-<llvm major> --reporters Sarif --report-dir <scratch>/mull --report-
 
 ## Gotchas
 
-- Timeouts: 300 s for cppcheck, the configure and clang-tidy; cppcheck tries up to 12 preprocessor configurations per file (`--max-configs`), and a large tree spends its budget there.
+- cppcheck tries up to 12 preprocessor configurations per file (`--max-configs`), and a large tree spends its budget there.
 - Dependencies: osv-scanner reads `conan.lock` and git submodule commits only. A `vcpkg.json`, a `conanfile` without a lock, or CMake `FetchContent` is invisible to it; say so in the security row.
 - opengrep ships no C or C++ ruleset, so the "no local ruleset, skip" rule in [common.md](common.md) is the whole story unless the repo carries its own rules.
 - A `.h` under a Python package (a C extension) or a Go module (cgo) joins that project by the longest-prefix rule in [inventory.md](inventory.md) and is scanned as its `c-cpp` language.

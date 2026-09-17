@@ -18,11 +18,11 @@ The run is: scope → parallel explorers → a visual HTML report of the candida
 
 ## Hard Rules
 
-- **The target repo is read-only.** This run scans, it doesn't refactor. The report goes to the OS temp dir; the brief goes to the ignored `.crank/` directory at the repository root; the only things that may land in the tracked tree are the two deliberate side effects the user approves during the grill — a term written into `CONTEXT.md`, and an offered ADR. Nothing else, and neither of them silently.
-- **The report is presentation only.** It exists to let the user *see* the candidates and pick one. It is never re-read as a source of truth — not by a later step of this run, not by the spec phase, not by a fresh session. Everything downstream needs travels in the brief, or in the effort's grounding file ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding); the brief stays sufficient alone.
+- **The target repo is read-only.** This run scans, it doesn't refactor. The report goes to the OS temp dir; the brief goes to the ignored `.crank/` directory at the repository root; the only things that may land in the tracked tree are the two deliberate side effects the user approves during the grill — a term written into `CONTEXT.md`, and an offered ADR. Nothing else.
+- **The report is presentation only.** It exists to let the user *see* the candidates and pick one. It is never re-read as a source of truth. Everything downstream needs travels in the brief, or in the effort's grounding file ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding); the brief stays sufficient alone.
 - **One candidate per grill loop.** The user picks one card; the grill walks that one to ground. Re-entry is cheap for as long as the report file survives — when a loop ends, offer to reopen the report and pick another card rather than rescanning by reflex.
 - **No interfaces before the grill.** Explorers don't propose them and cards don't commit to them. The single permitted exception is a card's **structural** pseudo-code panel — what a module exposes and what it hides — with no parameter lists, no return types, and no names anyone will be held to. Signatures are earned in the grill, not before it.
-- **Explorers are read-only and standard tier.** They read, classify, and report; they change nothing, and they don't rank across each other's territory. Dedupe and ranking happen on this thread, where the whole picture is.
+- **Explorers are read-only and standard tier.** They read, classify, and report; they change nothing.
 
 ## Flow
 
@@ -37,7 +37,7 @@ Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and 
 
 Then do the explorer arithmetic — how many explorers, and what each one owns:
 
-- **One territory per hot spot: 2–4 explorers, hard cap 4.** Carve the scope into territories along the hot spots, one explorer each, and name them so no two overlap. Four is the ceiling however many hot spots you found — fold the weakest into the neighbouring territory rather than adding a fifth.
+- **One territory per hot spot: 2–4 explorers.** Carve the scope into territories along the hot spots, one explorer each, and name them so no two overlap. Past four hot spots, fold the weakest into the neighbouring territory rather than adding a fifth.
 - **No clear hot spots?** Split by code structure instead — top-level directories, subsystems, layers — same 2–4 count.
 - **A small repo gets 1.** A scope one explorer can read end to end isn't worth splitting; splitting it just buys duplicate reading.
 - **Explicit user direction gets 1.** Send one explorer at what they named.
@@ -58,7 +58,7 @@ Hunt four friction patterns:
 - **Extracted for testability without locality** — pure functions pulled out so they could be tested in isolation, while the real bugs live in how they are called. The extraction bought coverage but no **locality**.
 - **Untestable through the interface** — code that is untested, or that cannot be driven through its current interface without a synthetic stand-in.
 
-Explore organically rather than by rigid heuristic: note where *you* hit friction reading the code, then classify it.
+Note where *you* hit friction reading the code, then classify it.
 
 Return **at most 4** candidates, strongest first. For each:
 
@@ -152,7 +152,7 @@ Completion criterion: the brief file exists with every section that earned its p
 
 ### Subagents
 
-This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = the read-only explorers of Flow step 2, the bulk of the run's dispatch; **heavy** = the design-it-twice interface proposals of Flow step 4, the only heavy dispatch this skill makes and only on the user's say-so.
+This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = the read-only explorers of Flow step 2; **heavy** = the design-it-twice interface proposals of Flow step 4.
 
 ### Vocabulary
 

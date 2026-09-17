@@ -18,7 +18,7 @@ The file's own conventions are the standard, not yours: read the surrounding cod
 - **Reflexive guard.** A try/catch, null check, or defensive branch on a trusted internal path, guarding a case that cannot occur. The remedy deletes the guard; the row names why the case cannot occur.
 - **Type-silencing cast.** A cast to `any`, `unknown`, or the language's equivalent that silences a type error instead of fixing it. The remedy states the real type. When the real fix moves a type boundary, hand it to the structure finder in your closing line instead of writing a row.
 - **Needless nesting.** Depth an early return, a guard clause, or an inverted condition would flatten. The remedy names the flattening.
-- **Style at odds with the file.** A helper style, an error-handling idiom, an import shape, or a naming scheme the surrounding file and codebase do not use. Inconsistency with the file is the test; your preference is not.
+- **Style at odds with the file.** A helper style, an error-handling idiom, an import shape, or a naming scheme the surrounding file and codebase do not use.
 
 ## Never cut required behavior
 

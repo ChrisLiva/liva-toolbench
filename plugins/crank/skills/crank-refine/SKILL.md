@@ -9,11 +9,11 @@ argument-hint: "[path to a brainstorm, spec, or plan .md]"
 
 ## Goal
 
-Take an existing crank artifact — a brainstorm brief, a spec, or a plan — and **relentlessly grill it until nothing consequential is left undecided at its altitude**. This is a standalone pass: it sharpens the artifact in place without advancing the pipeline.
+Take an existing crank artifact — a brainstorm brief, a spec, or a plan — and grill it until nothing consequential is left undecided at its altitude. This is a standalone pass: it sharpens the artifact in place without advancing the pipeline.
 
 ## Hard Rules
 
-- **Grill at the artifact's altitude — never below it.** The altitude table (References → Grilling altitude by phase) sets what each artifact's questions may reach for; everything below it is recorded as a deferred item for the next phase, never grilled and never quietly answered yourself. Dragging a brainstorm into schemas, or a spec into code, is the most common way this skill fails.
+- **Grill at the artifact's altitude — never below it.** The altitude table (References → Grilling altitude by phase) sets what each artifact's questions may reach for; everything below it is recorded as a deferred item for the next phase, never grilled and never quietly answered yourself.
 - **Sharpen in place.** Edit the input artifact file directly as decisions land. Handed a legacy flat artifact (`.crank/<phase>-<slug>.md`), move it to its per-plan home (`.crank/<slug>/<artifact>.md`) first, state the new path, then sharpen it there. Only if the artifact was pasted inline with no file of its own, write the sharpened version to a new temp file (e.g. `${TMPDIR:-/tmp}/crank-<slug>/<artifact>.md`) and tell the user the path once. Never start a parallel rewrite — the user's file is the single source of truth.
 - **Grill in rounds, every question informed.** Follow the shared interview discipline in [GRILLING.md](GRILLING.md).
 
@@ -31,11 +31,11 @@ For the full design rules behind a phase, read that phase's file in the `crank` 
 
 ### Subagents & research
 
-Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, at the **standard** tier resolved there: a loaded instruction file's preference first, its harness models only as the fallback. Each of the three research jobs has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md), read at Flow step 3; checking a current fact against today's docs is the antidote to a recommendation built on a stale training cutoff.
+Whether to dispatch or read on the main thread follows the shared default in [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, at the **standard** tier resolved there: a loaded instruction file's preference first, its harness models only as the fallback. Each of the three research jobs has a fill-in brief in [DISPATCH-BRIEFS.md](DISPATCH-BRIEFS.md), read at Flow step 3.
 
 ### Vocabulary
 
-[VOCABULARY.md](VOCABULARY.md), read before Flow step 4. Lean on **module / interface / depth** (and **leverage / locality**) and the **deletion test** when a brainstorm or spec decision is about shape; on **seam**, **tracer bullet**, and **implementation-detail test** when a plan decision is about how a task is tested.
+[VOCABULARY.md](VOCABULARY.md), read before Flow step 4.
 
 ## Deliverables
 
@@ -65,7 +65,7 @@ Completion criterion: every agenda item a fact could settle has its fact in hand
 
 Walk the agenda per [GRILLING.md](GRILLING.md) (read it here) — the agenda is its decision tree — until every item is resolved.
 
-Two defaults keep the grill from stalling: when the user overrides your recommendation, record their choice and their reason, then move on; when a decision won't converge after a real exchange, name the deadlock, record the leading option as *provisional* with the open tension noted in the artifact, and move on.
+When a decision still won't converge after the narrowed re-ask [GRILLING.md](GRILLING.md) prescribes, name the deadlock, record the leading option as *provisional* with the open tension noted in the artifact, and move on.
 
 Completion criterion: every agenda item is resolved or explicitly deferred — nothing left hanging.
 

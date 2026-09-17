@@ -12,7 +12,7 @@ Hits outside the inventory (ignored or vendored paths) are dropped with a count,
 ```sh
 osv-scanner scan source --recursive --allow-no-lockfiles --format json --output-file <scratch>/osv.json --verbosity error [--config <abs osv-scanner.toml>] <repo>
 ```
-One finding per vulnerable package, not per CVE: `lodash@4.17.15 (npm): 4 advisories; fix: upgrade to ≥4.18.0`. Walk `fixed` out of the affected ranges. Advisory, not graded: no fixed version exists; the package is reached only from `devDependencies` (`package-lock.json` marks `dev: true`; for `pnpm-lock.yaml` walk each importer's `dependencies` and `optionalDependencies`); govulncheck says the symbol is never called. Every uncertainty grades: an unreadable or missing lockfile, `yarn.lock`, a package the lockfile never mentions.
+One finding per vulnerable package, not per CVE: `lodash@4.17.15 (npm): 4 advisories; fix: upgrade to ≥4.18.0`. Walk `fixed` out of the affected ranges. Advisory, not graded: no fixed version exists; the package is reached only from `devDependencies` (`package-lock.json` marks `dev: true`; for `pnpm-lock.yaml` walk each importer's `dependencies` and `optionalDependencies`). Every uncertainty grades: an unreadable or missing lockfile, `yarn.lock`, a package the lockfile never mentions.
 
 **govulncheck** (Go reachability, once per `go.mod`, cwd = module dir, 300 s). Join to osv-scanner's rows by alias (`GO-…` vs `GHSA-…`). Verdicts: `symbol-reachable` grades, `imported-no-call` and `not-imported` move the advisory out of the grade. No `go` on PATH: every Go advisory grades, reason "reachability unknown".
 ```sh

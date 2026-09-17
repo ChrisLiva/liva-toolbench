@@ -1,6 +1,6 @@
 # Implementer artifacts
 
-Use these templates only in subagent execution modes.
+The orientation, task-brief, fix-brief, and report templates below serve the subagent shapes; the `implementer-rules.md` block is copied in every shape, solo included.
 
 ## `orientation.md`
 
@@ -109,7 +109,7 @@ Produces:
 
 ## Return
 
-Put the full detail in the report path above. Return only this thin summary, filled in (under ~15 lines):
+Put the full detail in the report path above. Return only this thin summary, filled in:
 
     Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
     Commits:

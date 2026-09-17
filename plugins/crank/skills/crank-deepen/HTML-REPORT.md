@@ -1,6 +1,6 @@
 # HTML Report Format
 
-The architectural review is rendered as a single self-contained HTML file in the OS temp directory, named `deepen-report-<timestamp>.html` so each run gets a fresh file. Tailwind and Mermaid both come from CDNs *(per project decision: CDN over offline — self-contained variant explicitly out of scope)*. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
+The architectural review is rendered as a single self-contained HTML file. Tailwind and Mermaid both come from CDNs *(per project decision: CDN over offline — self-contained variant explicitly out of scope)*. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
 
 ## Scaffold
 
@@ -49,8 +49,8 @@ Each candidate is one `<article>`:
 - **Before / After diagram** — the centrepiece. Two columns, side by side. See patterns below.
 - **Problem** — one sentence. What hurts.
 - **Solution** — one sentence. What changes.
-- **Wins** — bullets, ≤6 words each. e.g. "Tests hit one interface", "Pricing logic stops leaking", "Delete 4 shallow wrappers".
-- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. A monospaced `<pre>` panel, eight lines at most, written in exposes/hides form: what the module exposes, what it hides, where the seam lands. **No committed signatures** (Hard Rules → No interfaces before the grill).
+- **Wins** — short bullets naming the gain in glossary terms (Tone → Wins bullets).
+- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. A monospaced `<pre>` panel in exposes/hides form: what the module exposes, what it hides, where the seam lands. **No committed signatures** (Hard Rules → No interfaces before the grill).
 - **ADR callout** (if applicable) — one line in an amber-tinted box.
 
 If a diagram needs a paragraph to be understood, redraw it.

@@ -15,7 +15,7 @@ A concise fix plan over one declared scope, built by three finders, one per alti
 - **Structure**, per [STRUCTURE-BRIEF.md](STRUCTURE-BRIEF.md): the thermonuclear pass, code-judo moves that keep behavior while whole branches, flags, wrappers, or layers disappear.
 - **Prose**, per [PROSE-BRIEF.md](PROSE-BRIEF.md): comments, docstrings, and in-scope docs, deleted, trimmed, consolidated, or corrected where the code has outgrown them.
 
-High conviction over coverage: a plan of five moves worth making beats an inventory of fifty observations.
+High conviction over coverage: a plan of the moves worth making beats an inventory of observations.
 
 ## Hard Rules
 
@@ -40,7 +40,7 @@ The user names the scope when invoking; the argument resolves to one of four sha
 
 ### 2. Find
 
-Spawn the three finders in one wave, each over the whole scope. Hand each its brief (mapped under Goal), the file inventory or diff command, and any user focus, as pointers; each finder forms its own read of the code.
+Spawn the finders. Hand each its brief (mapped under Goal), the file inventory or diff command, and any user focus, as pointers; each finder forms its own read of the code.
 
 Each finder owns one altitude and returns opportunity rows per its brief's return format. A finder's closing line may point at a sibling's altitude; that line is a lead for step 3, not a row.
 
@@ -62,11 +62,9 @@ Order structure, then slop, then prose, biggest deletion first. Render the plan:
 
 ### Structure (<n>)
 1. `<file:line>` — <problem> · **move:** <restructuring, behavior preserved>
-   <!-- a row fixing a clear bug declares the behavior change here -->
 
 ### Slop (<n>)
 - `<file:line>` — <pattern> · **fix:** <surgical removal>
-  <!-- fold repeated sites of one pattern into one row listing them -->
 
 ### Prose (<n>)
 - `<file:line>` — <delete | trim | consolidate | correct> · <problem> · **fix:** <remedy>

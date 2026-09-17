@@ -13,7 +13,7 @@ A leaner suite judged against the **rewrite test**: tests exist to catch behavio
 
 ## Hard Rules
 
-- **Every test in scope gets exactly one verdict** — KEEP, DELETE, REFACTOR, or MERGE. No sampling; the verdict table accounts for every test.
+- **Every test in scope gets exactly one verdict** — KEEP, DELETE, REFACTOR, or MERGE. No sampling.
 - **Expected values come from an oracle** — a hand-verified literal from a real fixture or committed snapshot — never recomputed with the same formula the code under test uses.
 - **Redundancy is judged suite-wide, not per file** — two tests pinning the same behavior at the same seam are one KEEP and one DELETE, even when they live in different files. Which one keeps: the test at the truer seam; at equal seam fidelity, the cheaper, faster one — a slow end-to-end test duplicating behavior already pinned lower survives only as one of a handful of happy-path journeys.
 - **Tests only.** This skill edits and deletes test code; production code is never touched. A pruning pass that surfaces a production bug reports it, it doesn't fix it.

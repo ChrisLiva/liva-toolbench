@@ -40,7 +40,7 @@ This phase dispatches **standard** subagents for what the codebase can answer �
 
 ## Deliverables
 
-A single self-contained spec written to the `.crank/` file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix is 20 lines; a new subsystem is denser):
+A single self-contained spec written to the `.crank/` file (see Hard Rules). Include whichever sections apply, scaled to the topic (a bug fix stays terse; a new subsystem is denser):
 
 - **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 - **Problem** — what the user is trying to solve, in their words.
@@ -74,7 +74,7 @@ Find one or two existing features that do something analogous and report:
 - one sentence on the convention you observed;
 - any canonical helper or utility an implementer would be expected to reuse for this work (`file:line`), if one exists.
 
-Keep each item you report — one surface, one convention note, one helper — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. Keep the whole return under ~1,200 words; an item past the cap goes to a file in the OS temp dir, returned as its path plus a one-line summary.
+Report each item — one surface, one convention note, one helper — in a few sentences. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design — just surface what already exists. If no analogous surface exists, say so. When the analogous features disagree on convention, report both and name the winner: the one the repo converged on most recently, per `git log` on those files.
 </brief>
@@ -88,8 +88,6 @@ Completion criterion: the intent docs are read or confirmed absent — each ADR 
 Grounding tells you what already exists; grilling settles what's still open. After grounding, before you draft Technical decisions, list the technical decisions that are both **material** (they change the shape of the implementation) and **unsettled** (the conversation didn't land them and the grounding subagents didn't answer them).
 
 Interview the user on each per [GRILLING.md](GRILLING.md) (read it here). This is targeted, not a fresh interview — only the open technical decisions, and only the ones the codebase can't answer for you. If the conversation came through the brainstorm phase (or the user handed you a brainstorm brief), the brief's **Open questions** list is your agenda — walk it. Resolve every material item before drafting: a decision you grill into the open now is one the adversarial reviewer and the plan don't have to re-litigate, and one less `Assumption:` line standing in for a real choice.
-
-Facts are yours; decisions are the user's — if grounding found the surface, follow it.
 
 When the user rejects a load-bearing recommendation for a reason a future spec would need in order not to re-propose it, offer to record it as an ADR in the repo; skip ephemeral reasons ("not now"). The `.crank/` artifacts are gitignored, so the ADR is the only place the rejection survives the effort.
 
@@ -109,7 +107,7 @@ Completion criterion: the frontier is empty — every material, unsettled decisi
 
 ### 3. Read back the sections
 
-Grilling settled the decisions. Enumerate the acceptance criteria they imply — one per behavior, each falsifiable per **Deliverables** → Acceptance criteria — then read back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and the incoming brief's **Open questions** — each read back as the sharp question it hands the spec.
+Grilling settled the decisions. Enumerate the acceptance criteria they imply — one per behavior, each falsifiable per **Deliverables** → Acceptance criteria — then read back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and the answer grilling landed for each of the incoming brief's **Open questions**.
 
 Completion criterion: every settled behavior has a numbered criterion, and every criterion, judgment call, and cut has been read back and struck, amended, or approved.
 

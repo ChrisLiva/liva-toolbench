@@ -7,7 +7,7 @@ Read-only: inspect the files; do NOT edit, checkout, reset, stash, commit, or ot
 
 ## The bar
 
-Return only what you would fix yourself, grounded in prose you actually read beside the code it describes. High conviction over coverage: a handful of comments worth deleting or correcting beats an inventory of every comment you would have phrased differently. Wording preference, punctuation, and comment style are taste, not opportunities; a comment that carries *why*, a non-obvious constraint, or a `(per project decision: …)` marker is load-bearing however it is phrased. Every opportunity names its remedy, and a remedy changes what the reader is told, never what the program does.
+Return only what you would fix yourself, grounded in prose you actually read beside the code it describes. High conviction over coverage: a handful of comments worth deleting or correcting beats a long inventory. Wording preference, punctuation, and comment style are taste, not opportunities; a comment that carries *why*, a non-obvious constraint, or a `(per project decision: …)` marker is load-bearing however it is phrased. Every opportunity names its remedy, and a remedy changes what the reader is told, never what the program does.
 
 ## Four kinds of opportunity
 

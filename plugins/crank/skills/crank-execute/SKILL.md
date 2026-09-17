@@ -32,7 +32,7 @@ This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md
 
 ### Vocabulary
 
-Read [VOCABULARY.md](VOCABULARY.md) before step 2. Step 3's prose leans on the **seam**, the **journey test**, and the **tracer bullet** against its opposite the **horizontal slice**. Hold the **deletion test**, **depth** (**deep** / **shallow**), **spaghetti growth**, the **implementation-detail test**, and the **redundant test** when you verdict a reviewer's findings at steps 3 and 5 — a finding that misapplies one of these meanings is a dismissal.
+Read [VOCABULARY.md](VOCABULARY.md) before step 2; its terms carry those meanings everywhere below. When you verdict a reviewer's findings at steps 3 and 5, a finding that misapplies one of them is a dismissal.
 
 ### Review verdicts
 
@@ -48,7 +48,7 @@ The primary deliverable is **shipped code** — the task-by-task commits, record
 
 ### Progress ledger
 
-The ledger is the durable record of what has shipped: track task completion here, not only in your todos, in every execution shape, solo included. Its home is the git directory first; on refusal, the worktree fallback:
+The ledger is the durable record of what has shipped: track task completion here in every execution shape, solo included. Its home is the git directory first; on refusal, the worktree fallback:
 
 1. Print the git-directory path, then create it — two plain commands, not a compound one-liner (sandboxes that guard the worktree reject compound shells):
 
@@ -75,7 +75,7 @@ Base: <the HEAD SHA when the run started>
 
 - `<sha> — <verdict>`, with the box flipped to `[x]`, the moment the task lands: its commit SHA(s), then `APPROVED`, `review skipped (clean return)`, or in solo `no per-task review`. On resume, an `[x]` line means done: confirm it against `git log` and skip it.
 - `detour: <one line>` — every detour the task took, settled or open, so the retro's Deviations and the final review read them here.
-- `open: <one line>` — a question about the task nobody has settled; whoever reads the task's body at step 3 settles it, where the steps, `Check:`, and Files block usually decide it, and writes the settlement into the plan section.
+- `open: <one line>` — a question about the task nobody has settled; whoever reads the task's body at step 3 settles it, where the steps, `Check:`, and Files block usually decide it.
 - `note: <one line>` — a fact this task must carry: a landed interface, path, or contract its plan text no longer matches, read at step 3.
 - `review: <path to task-<N>-review.md>` — where a review ran. That file holds the reviewer's Notes and your dismissals with their reasoning (References → Review verdicts), and the retro reads them there; the line carries the verdict and this pointer, and the review's content stays in the file.
 
@@ -90,7 +90,7 @@ Written by the run that lands the **last** plan task, to `.crank/<slug>/retro.md
 - **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
 - **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
 - **Final review** — verdict, findings fixed (with commit SHAs), findings dismissed as false positives, findings deferred: each per References → Review verdicts.
-- **Open items** — only what survived Flow → Close the loop, each written to that step's completion criterion. Deferred findings and dismissals stay in the Final review section above — this section holds nothing you could have settled yourself.
+- **Open items** — only what survived Flow → Close the loop, each written to that step's completion criterion. Deferred findings and dismissals stay in the Final review section above.
 - **Promoted** — each fact this run sent outliving the effort: the fact, its evidence line, and the `file:line` it landed at. Empty when the run promoted nothing.
 - **Validation evidence** — commands run, outcomes.
 
@@ -131,11 +131,11 @@ Every run, fresh or resumed, opens with the block below as reply text — every 
 - Bound: <Task <N>, the plan's last | Task <N>, the stage <S> gate the user named>
 ```
 
-Line rules: the Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names — omit it when there are none. The Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and how many of its entries were seeded into `orientation.md` (in solo, which stocks no `orientation.md`, name the file and its entry count). Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one; `harness fallback` beside a stated preference is a wrong line. In solo the Subagents line reads `heavy = <model> (final review) — implementation inline`, with the same `resolved from` tail. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's **Stages** table); a Stages table on its own leaves the bound at the last task.
+Line rules: the Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names — omit it when there are none. The Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and how many of its entries were seeded into `orientation.md` (in solo, which stocks no `orientation.md`, name the file and its entry count). Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. In solo the Subagents line reads `heavy = <model> (final review) — implementation inline`, with the same `resolved from` tail. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's **Stages** table); a Stages table on its own leaves the bound at the last task.
 
-- **Solo (in this session)** — *Gains:* zero dispatch overhead, in-flight state carries between tasks. *Costs:* every task's source stays in your window; no per-task review — the final gate is solo's one review. *Fits:* small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes.
-- **Sequential subagents** — *Gains:* fresh context per task, an independent reviewer per diff. *Costs:* you must brief completely or the implementer guesses. *Fits:* the default for >3 tasks.
-- **Parallel subagents** — *Gains:* wall-clock speed. *Costs:* overlapping edits conflict. *Fits:* only when tasks touch disjoint files with no shared state.
+- **Solo (in this session)** — small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes. No per-task review: the final gate is solo's one review.
+- **Sequential subagents** — the default for >3 tasks: a fresh context and an independent reviewer per task.
+- **Parallel subagents** — only when tasks touch disjoint files with no shared state.
 
 Once stated, the shape binds the run (Hard Rules → A stated dispatch binds you to spawn).
 
@@ -159,7 +159,7 @@ Completion criterion: the filled block is in your reply, `.crank/<slug>/exec/` e
 
    In a subagent mode, write `task-<N>-brief.md` in the brief dir from [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md): its Task block points at the task's plan section by heading and carries the task's `- [ ] Behavior N:` lines, it points at `orientation.md` and `implementer-rules.md`, and it names the report path `task-<N>-report.md`. The dispatch hands the implementer that brief file and asks for the thin return. Dispatch parallel implementers in a single message only when their Files blocks don't overlap. Every spawn then blocks (Hard Rules → A dispatch is a blocking call).
 
-   The implementation itself — yours in solo, bound by `implementer-rules.md` in the brief dir, the implementer's otherwise — runs RED→GREEN→REFACTOR per behavior in the task: RED, a failing test watched failing for the expected reason; GREEN, the minimal implementation that passes it; REFACTOR, a behavior-preserving tidy of what GREEN touched with the test kept green; then the task's `verify` step. The RED is a fresh test only at a fresh seam; where a journey test already walks this seam, it is a failing assertion extended onto that test. Several behaviors mean several cycles: **tracer bullets**, never a **horizontal slice**. Skip the cycle only when the plan explicitly does (config flips, doc edits, generated code). Commit once the task is green, with a message that names the task, and flip its ledger line. A detour that corrected a fact the plan states — a count, a fixture's shape, a symbol's name — is grepped for across the plan and rewritten wherever a later section pins it, as walk corrections are.
+   The implementation itself — yours in solo, bound by `implementer-rules.md` in the brief dir, the implementer's otherwise — runs the **RED→GREEN→REFACTOR** cycle that file defines, one per behavior in the task, then the task's `verify` step. Skip the cycle only when the plan explicitly does (config flips, doc edits, generated code). Commit once the task is green, with a message that names the task, and flip its ledger line. A detour that corrected a fact the plan states — a count, a fixture's shape, a symbol's name — is grepped for across the plan and rewritten wherever a later section pins it, as walk corrections are.
 
    Implementer status: `DONE` and `DONE_WITH_CONCERNS` → the triage at 2; `NEEDS_CONTEXT` → provide and re-dispatch; `BLOCKED` naming a reroute (the destination itself must move) → surface to the user directly; any other `BLOCKED` → escalate to the heavy tier once (the sole exception to the standard-tier default), then surface to the user. A return missing RED→GREEN evidence where the cycle applies, or carrying one bulk pair for a multi-behavior task, is a `CHANGES_REQUESTED`.
 
@@ -183,7 +183,7 @@ A run whose task loop ends with boxes still unchecked on the ledger is a **short
 
 Read each unchecked task against what this run actually shipped, then write what changed, per Deliverables → Progress ledger → Line grammar:
 
-- on each unchecked task's line, `open:` for a question this run raised about it and `note:` for a landed interface, path, or contract its plan text no longer matches;
+- on each unchecked task's line, the `open:` and `note:` items it needs;
 - in `.crank/<slug>/grounding.md`, every corrected repo fact with its evidence — a fact wider than one task lands there, not on a line;
 - under the anchor, the `Stopped:` line.
 

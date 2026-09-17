@@ -7,7 +7,7 @@ argument-hint: "[path] [--pr <base>] [--deep] [--fix] [--only <category,…>] [-
 
 # Crank health
 
-Measure, then plan. The analyzers produce the evidence; you produce eight letters and at most twenty tasks a coding agent can work and verify. Grades come from `references/grading.md`, the plan from `assets/plan.md`.
+Measure, then plan. The analyzers produce the evidence; you produce eight letters and a plan of tasks a coding agent can work and verify. Grades come from `references/grading.md`, the plan from `assets/plan.md`.
 
 `references/` and `assets/` are relative to this skill's directory. The target path defaults to the current repo. Quick profile unless `--deep`. `--only <category,…>` narrows the categories; the rest read `not assessed (not selected)`. `--project` repeats; the selection is the union, the rollup covers the selection only, and repo-wide tools run over the selected directories.
 

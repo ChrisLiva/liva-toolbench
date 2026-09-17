@@ -51,7 +51,7 @@ Hunt four friction patterns:
 - **Extracted for testability without locality** — pure functions pulled out so they could be tested in isolation, while the real bugs live in how they are called. The extraction bought coverage but no **locality**.
 - **Untestable through the interface** — code that is untested, or that cannot be driven through its current interface without a synthetic stand-in.
 
-Explore organically rather than by rigid heuristic: note where *you* hit friction reading the code, then classify it.
+Note where *you* hit friction reading the code, then classify it.
 
 Return **at most 4** candidates, strongest first. For each:
 

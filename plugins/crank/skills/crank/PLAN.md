@@ -2,7 +2,7 @@
 
 ## Goal
 
-Turn the spec into tasks the **executor** can build with no further design conversation. The executor is a standard-tier subagent ([SUBAGENT-TIERS.md](SUBAGENT-TIERS.md)) that receives one task's block plus a repo orientation, never the spec, this conversation, or the other tasks. It follows explicit instructions well and fills gaps badly: an unnamed oracle becomes a guess, a back-reference to Task N becomes a missing file, an unstated assumption becomes an improvisation. Write every task for the weakest plausible executor, repeating structure across tasks rather than back-referencing. The plan resolves every implementation *decision* — boundaries, contracts, checks — and leaves construction to the executor. **Bite-sized tasks. Exact contracts. Oracles, not placeholders. Code only where surveyed.**
+Turn the spec into tasks the **executor** can build with no further design conversation. The executor is a standard-tier subagent ([SUBAGENT-TIERS.md](SUBAGENT-TIERS.md)) that receives one task's block plus a repo orientation, never the spec, this conversation, or the other tasks. It follows explicit instructions well and fills gaps badly: an unnamed oracle becomes a guess, a back-reference to Task N becomes a missing file, an unstated assumption becomes an improvisation. Write every task for the weakest plausible executor, repeating structure across tasks rather than back-referencing. The plan resolves every implementation *decision* — boundaries, contracts, checks — and leaves construction to the executor.
 
 ## Hard Rules
 
@@ -54,7 +54,7 @@ Report:
 - any drift from what the spec claims about these files — what the spec says, what the code says;
 - the exact output of each gate command you were asked to run, verbatim, and whether it exited 0.
 
-Keep each item you report — one symbol, one exemplar, one drift note — under ~150 words. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. Exact signatures and gate output are the answer: reproduce those in full, however long. Keep the whole return under ~1,200 words; an item past the cap goes to a file in the OS temp dir, returned as its path plus a one-line summary.
+Report each item — one symbol, one exemplar, one drift note — in a few sentences. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. Exact signatures and gate output are the answer: reproduce those in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design or write tasks. If something named doesn't exist, say so plainly rather than naming the nearest match as if it were the thing.
 </brief>
@@ -69,7 +69,7 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 
 - **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Grounding:` (per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions), `Gates:` (the repo's test / lint / typecheck / build commands, each proven to run during grounding — execute's final walk and every implementer inherit them from here), `Base:` (the HEAD SHA grounding read — the tree every anchor's line number belongs to).
 - **Global Constraints** — project-wide rules every task must honor: version floors, dependency limits, naming and copy rules, platform requirements — one line each, with the exact values copied verbatim from the spec. Every task's requirements implicitly include this section, and execute's per-task and final reviews run against it as a standing lens. Omit only if the spec names no such rule.
-- **Updates since spec** — drift you found while grounding. Omit if none.
+- **Updates since spec** — what the plan must resolve that the spec doesn't settle: drift found while grounding, a spec gap a `modify` or a missing seam exposed, a dependency or contract the spec never pinned, a safety behavior the spec only implies. Omit if none.
 - **Refactor scope** — copy from the spec if present; the explicit allowlist of existing modules open to reshaping. Omit if the spec had none.
 - **File structure** — the table from Map the files.
 - **Tasks** — each with a `Files:` block; an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and the ones it exposes, so an implementer who sees only this task's brief learns its neighbors' contracts; drop a side that's empty); a `Check:` line naming the per-task call (test-first / lightest-check / probe) and the exemplar to model after; a `Stop if:` line per Hard Rules → Cite what you assert, so the executor returns `BLOCKED` instead of improvising (omit when grounding proved every assumption); then one checkbox per behavior — each carrying its oracle and, where a test drives it, its seam (naming the existing journey test to extend when that seam is already walked) — ending on the task's `Verify:` step.
@@ -147,7 +147,7 @@ Route reuse by name: if grounding (or the spec) surfaced an existing utility, th
 - every requirement in every task block is a Behavior line (Hard Rules → A requirement is a Behavior line), and no task leaves a decision for execute to settle — a file with two possible homes, an id or ordering rule the behaviors assume but no line states;
 - the finished file's counts read back clean — `tasks: <N> / stages: <S> / coverage rows: <N> / placeholders: <N> / criteria <first>..<last>` — one Coverage row per acceptance criterion naming a Behavior line per clause, zero placeholders, and in a staged plan every task number in exactly one stage row. Count them with a command over the file and state the line; counting by eye is what lets a criterion go missing.
 
-A spec that names five keys and a plan that tests two is an incomplete plan, not a smaller one. And "smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
+"Smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row even where trimming would shorten the plan; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
 ### 6. Adversarially review
 
