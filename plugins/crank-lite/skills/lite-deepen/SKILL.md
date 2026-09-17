@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 Surface architectural friction and propose **deepening opportunities** — changes that turn shallow modules into deep ones. Aim at testability and navigability, not tidiness.
 
-The whole run happens in chat: scope → explore → cards → grill → brief. No report file, no task tracking. The only thing written is the brief, plus the two target-repo side effects the user approves during the grill.
+The whole run happens in chat: scope → explore → cards → grill → brief. The only thing written is the brief, plus the two target-repo side effects the user approves during the grill.
 
 ## Tone
 
@@ -76,7 +76,7 @@ Present each survivor as one card in chat:
 - **Files** — what's involved.
 - **Problem** — one sentence.
 - **Solution** — one sentence.
-- **Wins** — a few bullets, six words or fewer each, stated as **leverage** or **locality**.
+- **Wins** — a few short bullets, stated as **leverage** or **locality**.
 - **Before / after** — a small ASCII diagram of the shallowness and the deepening. Chat renders mermaid as raw text, so draw in plain characters:
 
   ```
@@ -91,7 +91,7 @@ Present each survivor as one card in chat:
   call order known only to callers        1 interface; ordering held inside
   ```
 
-- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. **Structural only**: what the module exposes and what it hides, eight lines at most, and no committed signatures — no parameter lists, no return types, no names anyone will be held to.
+- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. **Structural only**: what the module exposes and what it hides, in a few lines, and no committed signatures — no parameter lists, no return types, no names anyone will be held to.
 
   ```
   module: Order intake

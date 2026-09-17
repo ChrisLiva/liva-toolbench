@@ -33,8 +33,8 @@ If the target is genuinely ambiguous (committed work *and* uncommitted changes b
 
 Find candidates yourself, on this thread — no finder subagents. Read the diff through two lenses, matching the driving questions:
 
-- **Correctness & contract** — questions 1 and 3: does the code do what it says, and what edge case slips through.
-- **Simplicity & deletion** — question 2: what to cut, consolidate, or refactor away.
+- **Correctness & contract** — questions 1 and 3.
+- **Simplicity & deletion** — question 2.
 
 Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a correctness finding. Each candidate carries `file:line`, the claim, why it matters, and the smallest fix.
 
@@ -50,7 +50,7 @@ Read [VOCABULARY.md](VOCABULARY.md) for the working language: the **deletion tes
 
 Dispatch **one** heavy-tier subagent (see Subagent tiers) to adversarially validate the whole candidate list in a single pass. Hand it pointers — the BASE SHA, the diff command, each candidate's `file:line` and claim — never your characterization of the code or a defense of a finding; it runs the diff and reads the cited code itself, forming its own view. Tell it to work its lookups in **rounds**: a round's **frontier** is every lookup whose answer it does not need before issuing the next one, and the whole frontier goes out as one batch in a single turn, every return read before it composes the next round.
 
-Its job is to **refute**: for each candidate, decide whether the claim holds and **default to REFUTED** when the evidence is thin, the complexity a cut targets turns out to be load-bearing, or the call is a matter of taste. A candidate survives only on clear, code-grounded evidence, never on plausibility; only CONFIRMED findings ship. Every candidate leaves this step carrying a CONFIRMED or REFUTED verdict with its evidence.
+Its job is to **refute**: for each candidate, decide whether the claim holds and **default to REFUTED** when the evidence is thin, the complexity a cut targets turns out to be load-bearing, or the call is a matter of taste. Every candidate leaves this step carrying a CONFIRMED or REFUTED verdict with its code evidence; only CONFIRMED findings ship.
 
 ## Report
 

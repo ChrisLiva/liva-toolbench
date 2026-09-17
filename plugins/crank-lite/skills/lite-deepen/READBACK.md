@@ -19,9 +19,9 @@ Everything else is carried-forward: state it in one line ("Sections X and Y carr
 
 - **The first message opens with what the artifact commits to and what's explicitly out of scope**, and ends with a standing exit: "Say **approve the rest** at any point and I'll carry the remaining sections as shown."
 - **Every section closes with the settled decisions it rests on** — `settled: Q3 (in-memory cache), Q8 (fail closed)` — so a decision the interview locked is restated, never silently elided; if the user re-raises one, point at that line rather than re-litigating it.
-- **At most 4 readback messages, whatever the artifact's size.** Group material into logical sections to fit the cap rather than giving each item its own message; a selected item is grouped harder, never dropped, to fit it.
+- **A few readback messages, whatever the artifact's size.** Group material into logical sections rather than giving each item its own message; a larger artifact groups harder, and no selected item is dropped to fit.
 - Pause after each message so the user can question, refute, or change it, and fold each change in before the next.
-- **The readback is done when every selected item has been shown and approved** — each by the user's assent or an amendment folded in, or the remaining ones by "approve the rest" — not when the fourth message is sent. An unanswered objection is not approval.
+- **The readback is done when every selected item has been shown and approved** — each by the user's assent or an amendment folded in, or the remaining ones by "approve the rest" — not when the last message is sent. An unanswered objection is not approval.
 
 ## Make the veto easy
 

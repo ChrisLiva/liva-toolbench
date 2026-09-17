@@ -37,4 +37,4 @@ Every phase ends the same way: when every readback section stands approved, writ
 
 Each phase ends by offering to continue to the next; load the next phase file only on an explicit "continue". The hand-off is prose: the phase file's next-step line, then a single trailing sentence noting the artifact can be copied elsewhere, printed inline, or deleted on request.
 
-Continuing keeps this conversation as the next phase's primary source, so recommend it while less than 100k of context has been used; past that, recommend a fresh session invoked with the artifact instead.
+Continuing keeps this conversation as the next phase's primary source, so recommend it while the interview is still fully in context; after a long or compacted session, recommend a fresh session invoked with the artifact instead.

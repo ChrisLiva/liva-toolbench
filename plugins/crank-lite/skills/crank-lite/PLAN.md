@@ -1,6 +1,6 @@
 # Phase: Plan
 
-Interview the user relentlessly at an implementation level about every aspect of their idea, spec, or PRD — the build strategy, code boundaries, risks, and verification approach — until the frontier is empty.
+Interview the user at an implementation level about every aspect of their idea, spec, or PRD — the build strategy, code boundaries, risks, and verification approach — until the frontier is empty.
 
 ## Interview
 

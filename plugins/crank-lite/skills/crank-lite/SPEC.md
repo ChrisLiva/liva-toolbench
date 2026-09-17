@@ -1,6 +1,6 @@
 # Phase: Spec
 
-Interview the user relentlessly at a PRD/Spec level about every aspect of their idea — the user-facing behavior, acceptance criteria, key technical decisions, and validation strategy — until the frontier is empty and the failure catalogue is walked.
+Interview the user at a PRD/Spec level about every aspect of their idea — the user-facing behavior, acceptance criteria, key technical decisions, and validation strategy — until the frontier is empty and the failure catalogue is walked.
 
 ## Vocabulary
 
