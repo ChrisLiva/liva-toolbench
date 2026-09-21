@@ -15,6 +15,8 @@ Before the first question, read:
 - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist. A tradeoff an ADR records is settled.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 
+Offer a prototype once per effort when the change adds or reshapes a page, screen, component, CLI output, flags, help text, or TUI, and a layout, hierarchy, or interaction decision has more than one defensible answer. The offer leads the round, ahead of those decisions' questions. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it, and its verdict replaces those questions. On a no, record `Prototype: declined` among the key technical decisions. A UI change with one defensible shape gets no offer, and neither does a question about a state model alone.
+
 Design rules, applied as each module comes up:
 
 - **Deletion test** on every new or reshaped module: one whose complexity just vanishes folds into its caller.

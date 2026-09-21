@@ -8,7 +8,7 @@ Settle the destination first: one or two lines on the problem and what "done" lo
 
 Survey before you drill: share a short agenda of the consequential decisions you can already name — for greenfield, user experience, design, and workflows; for an existing project, how the idea fits the current code and how much that code has to change to take it — then walk it in rounds, keeping questions and decisions at a high level. Keep the agenda live — add decisions as answers surface them, strike ones they moot. If the agenda comes out empty — every decision you can name has one defensible answer — say so, list what you considered and why each is settled, and recommend jumping straight to the spec phase.
 
-When a question is experiential — how something should look, behave, or read — offer a cheap throwaway artifact to react to instead of another prose question: a sketch, a sample output, or for interactive behavior a single self-contained HTML file the user double-clicks. If it settles a key decision, offer to commit it to a throwaway `prototype/<slug>` branch and note the branch beside the decision in the brief.
+When a question is experiential, about how something should look, behave, or read, offer a cheap throwaway artifact to react to instead of another prose question: a sketch, a sample output, a single self-contained HTML file the user double-clicks when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. The brief records the artifact's path beside the decision it settled.
 
 ## Brief
 
