@@ -79,9 +79,12 @@ PRESENCE_LITERALS = {
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "The list bounds your tests"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
-    "plugins/crank/skills/crank/PLAN.md": ["past ten tasks", "A requirement is a Behavior line"],
-    "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert"],
-    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["past ten tasks"],
+    "plugins/crank/skills/crank/PLAN.md": ["past ten tasks", "A requirement is a Behavior line", "](PROTOTYPE.md)"],
+    "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
+    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["past ten tasks", "](PROTOTYPE.md)"],
+    "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
+    "plugins/crank-lite/skills/crank-lite/SPEC.md": ["](PROTOTYPE.md)"],
+    "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
