@@ -7,13 +7,17 @@ Read-only: inspect the files; do NOT edit, checkout, reset, stash, commit, or ot
 
 ## The bar
 
-Return only what you would fix yourself, grounded in prose you actually read beside the code it describes. High conviction over coverage: a handful of comments worth deleting or correcting beats a long inventory. Wording preference, punctuation, and comment style are taste, not opportunities; a comment that carries *why*, a non-obvious constraint, or a `(per project decision: …)` marker is load-bearing however it is phrased. Every opportunity names its remedy, and a remedy changes what the reader is told, never what the program does.
+Ground every row in prose you read beside the code it describes, and name its remedy; a remedy changes what the reader is told, never what the program does.
+
+**Prose keeps its lines by earning them.** A comment or docstring earns its place by carrying a *why*, a constraint the code cannot state, or a `(per project decision: …)` marker, load-bearing however it is phrased. Everything else is a cut. Read every comment and docstring the scope holds and judge it sentence by sentence: keep the sentence a reader could not recover from the code beside it, cut the rest. Over agent-written code that is most of them, so expect delete and trim rows by the dozen, not a handful.
+
+Rewording a load-bearing comment is taste, not an opportunity, and so are punctuation and comment style. Length is not taste: one point spread over five sentences is a trim row however well each sentence reads.
 
 ## Four kinds of opportunity
 
-**Delete**: prose that gives the reader nothing the adjacent code does not. A comment restating the line below it, a docstring that repeats the signature in sentences, a section banner, commented-out code, a TODO whose work is done, a changelog-style note about how the code used to be.
+**Delete**: prose that gives the reader nothing the adjacent code does not. A comment restating the line below it, a docstring that repeats the signature in sentences, a preamble naming what the function is responsible for, a parameter list that spells out typed names and adds no meaning, an example that walks the happy path the signature already shows, a section banner, commented-out code, a TODO whose work is done, a changelog-style note about how the code used to be.
 
-**Trim**: prose that carries one point in several sentences. Keep the sentence that names the mechanism or the constraint; the rest goes.
+**Trim**: prose that carries one point in several sentences. Cut to the shortest form that still carries it: one sentence for a comment, a one-line summary plus the parameters whose meaning the signature hides for a docstring. The sentences that go are the ones narrating the steps the code takes, restating what the types declare, hedging about what callers might do, and reintroducing the point already made above.
 
 **Consolidate**: one explanation written at several sites. The same rationale in three function comments, a module header repeated in a README, a docstring copied across siblings. Name the one place it belongs (usually the module or the function that owns the concept) and delete the copies, so the next change edits it once.
 

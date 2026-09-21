@@ -15,7 +15,7 @@ A concise fix plan over one declared scope, built by three finders, one per alti
 - **Structure**, per [STRUCTURE-BRIEF.md](STRUCTURE-BRIEF.md): the thermonuclear pass, code-judo moves that keep behavior while whole branches, flags, wrappers, or layers disappear.
 - **Prose**, per [PROSE-BRIEF.md](PROSE-BRIEF.md): comments, docstrings, and in-scope docs, deleted, trimmed, consolidated, or corrected where the code has outgrown them.
 
-High conviction over coverage: a plan of the moves worth making beats an inventory of observations.
+High conviction over coverage: a plan of the moves worth making beats an inventory of observations. Prose is the exception, and its brief says why: a comment or docstring that is not load-bearing is a row, so that section runs long.
 
 ## Hard Rules
 
