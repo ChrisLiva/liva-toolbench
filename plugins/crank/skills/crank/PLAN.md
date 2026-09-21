@@ -84,6 +84,8 @@ A single self-contained implementation plan written to the `.crank/` file (see H
 
 Learn what you'll touch before writing tasks. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands — as one dispatch per area the spec touches, every dispatch sent in the same turn; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output. Close by banking what the step proved to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
 
+**Offer a prototype when the spec left the frontend open.** Offer once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under **Updates since spec**.
+
 Completion criterion, all of:
 
 - `.crank/<slug>/grounding.md` read where it exists and its entries verify-then-trusted ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), a drifted entry rewritten in place and carried into **Updates since spec**;

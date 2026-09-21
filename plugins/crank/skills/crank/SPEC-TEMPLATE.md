@@ -27,6 +27,7 @@ Grounding: <absolute path to .crank/<slug>/grounding.md, when that file holds en
 
 - **<Decision>** — <chosen option>. Why: <one sentence>. Gives up: <trade-off, when relevant>. Prior art: `<path>:<line>`.
 - **Surfaces** — <layer>: `<path>:<line>` — one line per layer touched, or "no analogous surface" where grounding found none.
+- **Prototype:** <winner, what the user took from the other variants, `<path>`, the surface the mock stood in for>, or `declined`, or `no verdict`. Omit when no offer fired.
 
 ## Testing approach
 
