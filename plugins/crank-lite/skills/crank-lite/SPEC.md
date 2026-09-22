@@ -15,7 +15,7 @@ Before the first question, read:
 - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist. A tradeoff an ADR records is settled.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 
-When a round would ask a layout, hierarchy, or interaction question that has more than one defensible answer, about a page, screen, component, CLI output, flags, help text, or TUI the change adds or reshapes, lead that round with a prototype offer in place of the question, once per effort. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it, and its verdict replaces those questions. On a no, record `Prototype: declined` among the key technical decisions. A question about a state model alone gets no offer.
+When a round would ask a layout, hierarchy, or interaction question that has more than one defensible answer, about a page, screen, component, CLI output, flags, help text, or TUI the change adds or reshapes, lead that round with a prototype offer, 3 to 5 variants behind one switcher, in place of the question, once per effort. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it, and its verdict replaces those questions. On a no, record `Prototype: declined` among the key technical decisions. A question about a state model alone gets no offer.
 
 Design rules, applied as each module comes up:
 
