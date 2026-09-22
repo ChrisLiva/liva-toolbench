@@ -58,11 +58,13 @@ Write this block into your reply with every line filled, then continue in the sa
 - Bound: <Task <N>, the plan's last | Task <N>, the stage <S> gate the user named>
 ```
 
-The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's Stages table); a Stages table on its own leaves the bound at the last task. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
+The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's Stages table); a Stages table on its own leaves the bound at the last task. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
 
 ## Implement
 
 Before you implement, read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
+
+A plan that carries a **Global Constraints** section binds every task to it: read the section once before the first task and hold each task's work to it beside the task's own lines.
 
 Run each task's check before flipping its box. Run the full suite once, before the review dispatch.
 
@@ -75,7 +77,7 @@ Standing defect rules while implementing:
 - Edits to user-owned files (configs, gitignores) assert untouched lines survive byte-identical.
 - A new test earns its place only if it is not a **redundant test** and it survives the **rewrite test**; otherwise extend the **journey test** at that seam with a failing assertion.
 
-The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a **detour** — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations; beside the task's Progress flip, append the corrected fact as one line to the plan's grounding, so a resumed run stops re-hitting the same stale detail. A fix that would change what ships is a **reroute**: stop and surface it with your recommendation. Pre-existing bugs off the plan's path stay retro notes, never side quests.
+The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a **detour** — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations; beside the task's Progress flip, append the corrected fact as one line to the plan's grounding, so a resumed run stops re-hitting the same stale detail. A fix that would change what ships is a **reroute**: stop and surface it with your recommendation. A `Stop if:` condition the plan wrote on a task, once observed, stops that task the same way: surface what you observed with your recommendation, never work around it. Pre-existing bugs off the plan's path stay retro notes, never side quests.
 
 ## Short run
 
@@ -89,7 +91,7 @@ Then report the tasks that landed with their commit SHAs, the tasks that remain,
 
 ## Review and commit
 
-Once done implementing the entire plan, dispatch a heavy-tier reviewer to adversarially review the work against the plan, handing it pointers only — the absolute path to this skill's [REVIEW-BRIEF.md](REVIEW-BRIEF.md), the plan path, the Progress block's `Base` SHA, the diff command `git diff <Base>..HEAD`, and the absolute path to this skill's `VOCABULARY.md` — never your characterization of the diff. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
+Once done implementing the entire plan, walk the plan's **Coverage** table when it carries one, row by row: each row's verify step ran green this session, re-run when stale or when a later task may have broken it; a row marked human-only goes to Close the loop as an action only a human can perform. Then dispatch a heavy-tier reviewer to adversarially review the work against the plan, handing it pointers only — the absolute path to this skill's [REVIEW-BRIEF.md](REVIEW-BRIEF.md), the plan path, the spec path when the plan's `Spec:` header names one, the Progress block's `Base` SHA, the diff command `git diff <Base>..HEAD`, and the absolute path to this skill's `VOCABULARY.md` — never your characterization of the diff. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
 
 Before committing, inspect the worktree and stage only the files this plan's work changed. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
 
