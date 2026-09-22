@@ -462,6 +462,13 @@ Inside the session:
 - `/plugin` — manage installed plugins
 - `What skills are available?` — confirm yours appears
 
+A headless smoke run that counts a keyword (`grep -ci prototype`) catches the phase
+narrating a rule it evaluated, not only the behavior: a trigger placed in a phase's
+"before the first question" preamble made 4 of 4 crank-lite backend runs print "no
+prototype offer applies", while the same rule hung off the question it gates printed
+0 on 4 of 4 (prototype-offer smoke, 2026-09-21). Word a conditional rule as the
+action it gates, and read the transcript line behind any non-zero count.
+
 ---
 
 ## Record settled decisions where the next agent will look

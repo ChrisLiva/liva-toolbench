@@ -155,6 +155,11 @@ def check_presence(failures):
         for literal in literals:
             if literal not in text:
                 failures.append(f"FAIL {rel}: missing literal {literal!r}")
+            # A literal that is a relative link also promises its target beside the file.
+            elif literal.startswith("](") and literal.endswith(")"):
+                target = f"{os.path.dirname(rel)}/{literal[2:-1]}"
+                if read(target) is None:
+                    failures.append(f"FAIL {rel}: links {literal[2:-1]}, which is missing")
 
 
 def check_sync(failures):
