@@ -37,12 +37,13 @@ Resolve the tiers once per run, before the Pre-flight block, and reuse the mappi
 
 ## Shape
 
-Decide the shape from the plan's coupling alone:
+You are the orchestrator: standard-tier subagents implement, one per task, dispatched per [DISPATCH.md](DISPATCH.md), while this thread confirms each return, commits it, and runs the review. The run's tasks are its unchecked Progress lines through the Bound; pick the shape from them:
 
-- **Solo** — the work is confined to one module or one area of code, or the tasks share deep in-flight state. Implement inline on this thread.
-- **Orchestrate** — tasks touch genuinely disjoint file sets: you are the orchestrator; standard-tier subagents implement, one per task, dispatched per [DISPATCH.md](DISPATCH.md).
+- **Sequential** — the default. One implementer at a time, in plan order. Tasks that share files, build on an earlier task's output, or serialize on one build directory run here.
+- **Parallel** — the tasks touch disjoint file sets and their checks can run concurrently.
+- **Solo** — the run has three tasks or fewer. Implement inline on this thread.
 
-A stated shape binds the run: if you said orchestrate, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why. Every dispatch — implementer or reviewer — is a **blocking call**: end your turn at the spawn, let its return notification resume you, and read that return before anything else moves. The wait breaks only for a **stalled** dispatch — one out past the point you expected it back: reconcile against durable state (`git log`, the Progress block, its report), then resume it or surface the stall.
+A stated shape binds the run: if you said sequential or parallel, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why. Every dispatch — implementer or reviewer — is a **blocking call**: end your turn at the spawn, let its return notification resume you, and read that return before anything else moves. The wait breaks only for a **stalled** dispatch — one out past the point you expected it back: reconcile against durable state (`git log`, the Progress block, its report), then resume it or surface the stall.
 
 ## Pre-flight
 
@@ -52,7 +53,7 @@ Write this block into your reply with every line filled, then continue in the sa
 **Pre-flight**
 - Plan: .crank/<slug>/plan.md (spec: spec.md · brainstorm: brainstorm.md)
 - Branch: <current branch>
-- Shape: <solo | orchestrate>
+- Shape: <sequential | parallel | solo>
 - Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 - Tasks: <N> (<M> remaining)
 - Bound: <Task <N>, the plan's last | Task <N>, the stage <S> gate the user named>

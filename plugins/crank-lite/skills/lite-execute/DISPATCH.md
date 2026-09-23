@@ -1,6 +1,6 @@
 # Dispatch
 
-How an orchestrate run hands each plan task to a standard-tier implementer and waits for it. Every rule here reads its terms — the task's **check**, the **detour**, the Progress block — from [SKILL.md](SKILL.md).
+How a sequential or parallel run hands each plan task to a standard-tier implementer and waits for it. Every rule here reads its terms — the task's **check**, the **detour**, the Progress block — from [SKILL.md](SKILL.md).
 
 Dispatch one subagent per task with a brief, targeted instruction carrying five things:
 
@@ -12,4 +12,4 @@ Dispatch one subagent per task with a brief, targeted instruction carrying five 
 
 Done when the brief carries all five.
 
-Parallel dispatches go out in one message and block as one. Confirm each returned task yourself with a typecheck or targeted test.
+Sequential dispatches go out one at a time: the next task's dispatch follows the previous task's passing check and landed commit, and its brief names the commits already landed. Parallel dispatches go out in one message and block as one. Confirm each returned task yourself with a typecheck or targeted test.
