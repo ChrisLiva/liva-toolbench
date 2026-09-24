@@ -18,6 +18,8 @@ Every effort's artifacts live in one directory, `.crank/<slug>/`, per [ARTIFACT-
 
 Durable progress lives in the plan file. Before the first task, add a `## Progress` block at the top of the plan — `Base: <HEAD SHA before the first task>`, then one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` once that task's **check** has passed and its commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it. A plan's status reads off this block: *not started* (no block), *in progress* (unchecked boxes remain), *done* (all `[x]`).
 
+Every task number your reply gives the user from a plan with a Stages table carries its stage, as in `Task 14 (stage 2 of 3)`. The task that closes a stage also names its gate and that stage row's exit state, as in `Task 18 (stage 2 of 3, gate): <exit state>`. Progress lines and commit messages keep the bare task number.
+
 A task's **check** is the first of these that exists:
 
 1. the check the plan names for that task;
