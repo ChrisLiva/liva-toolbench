@@ -15,8 +15,9 @@ Once the frontier is empty, read the artifact back to the user before writing an
 
 ## Subagent tiers
 
-Resolve the tier once per run and reuse it. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tier onto it, even when it names a weaker model than the fallback below. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
+Resolve the tiers once per run and reuse the mapping at every dispatch. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tiers onto it, even when it names a weaker model than a fallback below. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
 
 <subagent-tiers>
 - **standard** fallback (exploration and codebase lookups): Claude Code `model: sonnet` · Codex GPT-5.6-Terra at medium effort · Cursor `cursor-composer-2-5`
+- **heavy** fallback (adversarial review): Claude Code `model: opus` · Codex GPT-5.6-Sol at high effort · Cursor GPT-5.6-Sol at high effort
 </subagent-tiers>

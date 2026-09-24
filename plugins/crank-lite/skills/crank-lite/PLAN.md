@@ -40,4 +40,12 @@ Write every task for the weakest executor it may get — one that sees that task
 - A task tightening a shared contract — a field made required, a shared symbol renamed, a validator narrowed — carries every call site the grep found.
 - A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
 
+## Review
+
+Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with pointers only: the brief's absolute path, the plan's absolute path, the spec's absolute path when one exists, and the absolute path to this skill's `VOCABULARY.md`. The dispatch is a blocking call: end your turn at it and let its return resume you.
+
+Its return carries each finding as `CONFIRMED` or `REFUTED`, with an exact `old` → `new` edit per `CONFIRMED` finding. Facts are yours; decisions are the user's ([INTERVIEW.md](INTERVIEW.md)): an edit that corrects a fact lands in `plan.md` verbatim, its `old` widened to a span the file holds once when it matches elsewhere; an edit with more than one defensible replacement is a decision, asked as one more interview round and its answer then landed. A `REFUTED` finding takes no edit. Strike or rewrite any Grounding entry a landed edit contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding). Then report each landed finding in one line and the refuted count.
+
+Completion criterion: every `CONFIRMED` finding is in `plan.md`, directly or through the user's answer, and the report names each landed finding and the refuted count.
+
 Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one; one run carries the plan through its last task. For a staged plan, add one sentence: the user may bound a run at any stage gate (`stop after Task <N>`, the gate's last task), and a gate short of the last task ends a short run, reviewed when the last stage lands.

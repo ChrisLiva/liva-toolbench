@@ -204,7 +204,7 @@ over the others, and run the repo's gate before committing (see *The repo's gate
 below). The gate holds a copy to the canonical byte for byte, and fails just as
 loudly when a skill links a reference whose copy is gone.
 
-The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, `crank-review`, `crank-deslop`, `lite-execute`) paraphrase `VOCABULARY.md`'s terms per phase (over a spec, a plan, a diff, a scope of standing code); they are not copies of one rubric. When editing a brief, align its meaning with the definition in `VOCABULARY.md`, not its wording, and don't flatten a per-phase qualifier into a generic copy.
+The adversarial-review briefs (`crank`'s spec and plan phases, `crank-lite`'s plan phase, `crank-execute`, `crank-review`, `crank-deslop`, `lite-execute`) paraphrase `VOCABULARY.md`'s terms per phase (over a spec, a plan, a diff, a scope of standing code); they are not copies of one rubric. When editing a brief, align its meaning with the definition in `VOCABULARY.md`, not its wording, and don't flatten a per-phase qualifier into a generic copy.
 
 ---
 
@@ -214,9 +214,9 @@ The adversarial-review briefs (`crank`'s spec and plan phases, `crank-execute`, 
 after editing any skill, brief, or reference file, and before every commit; it
 prints one line per failed check and exits non-zero when any fails.
 
-It holds the eleven adversarial-reviewer dispatch sites to the rules their prose
+It holds the twelve adversarial-reviewer dispatch sites to the rules their prose
 carries — each sends its whole lookup frontier as one batch, names what it reads,
-(for the plan and spec briefs) lands findings through one uniqueness-asserting
+(for crank's plan and spec briefs) lands findings through one uniqueness-asserting
 edit script, and carries the flag phrases its own `FLAG_LITERALS` entry names — and
 holds every site to prose free of cost justification and of the
 Claude-only preprocessing listed under *Cross-harness plugins*. Beyond the sites, it

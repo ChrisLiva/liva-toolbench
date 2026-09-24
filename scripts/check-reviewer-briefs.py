@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The eleven adversarial-reviewer dispatch sites: ten brief files, plus the
+# The twelve adversarial-reviewer dispatch sites: eleven brief files, plus the
 # crank-lite review skill that carries its reviewer instruction as dispatch prose.
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
@@ -28,6 +28,7 @@ SITES = [
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md",
     "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
+    "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md",
 ]
 
 # Every site sends its whole frontier as one batch per turn.
@@ -38,6 +39,7 @@ READ_LITERALS = {
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": ["the plan's frame"],
     "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["Read the spec at"],
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["read the spec in full"],
+    "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md": ["Read the plan in full"],
 }
 
 # The two sites whose reviewer edits the artifact under review land their
@@ -64,6 +66,13 @@ FLAG_LITERALS = {
     "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md": ["code-judo", "spaghetti growth", "deletion test"],
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md": ["made untrue", "fragile"],
     "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md": ["dead seam", "implementation-detail test", "redundant test"],
+    "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md": [
+        "unverifiable check",
+        "unretired risk",
+        "uncited claim",
+        "hollow stage gate",
+        "dead seam",
+    ],
 }
 
 # Files outside SITES that must carry a literal their own prose promises.
@@ -81,7 +90,7 @@ PRESENCE_LITERALS = {
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
     "plugins/crank/skills/crank/PLAN.md": ["past ten tasks", "A requirement is a Behavior line", "](PROTOTYPE.md)"],
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
-    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["past ten tasks", "](PROTOTYPE.md)"],
+    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["past ten tasks", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)"],
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/SPEC.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)"],

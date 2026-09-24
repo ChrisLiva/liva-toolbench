@@ -31,7 +31,7 @@ First rule that applies wins:
 
 ## Writing the artifact
 
-Every phase ends the same way: when every readback section stands approved, write the phase's artifact and stop. Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md) before writing when this is the effort's first artifact (it fixes the slug), when `.crank/<slug>/` already holds a different effort, or when you are outside a git repo; a later artifact of the same effort writes straight into its existing `.crank/<slug>/` directory. Either way, create `.crank/` if it is missing, with a `.gitignore` containing `*`, and tell the user the path once.
+Every phase ends the same way: when every readback section stands approved, write the phase's artifact and stop; the plan phase reviews the written file before it stops ([PLAN.md](PLAN.md) → Review). Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md) before writing when this is the effort's first artifact (it fixes the slug), when `.crank/<slug>/` already holds a different effort, or when you are outside a git repo; a later artifact of the same effort writes straight into its existing `.crank/<slug>/` directory. Either way, create `.crank/` if it is missing, with a `.gitignore` containing `*`, and tell the user the path once.
 
 ## Phase gates
 
