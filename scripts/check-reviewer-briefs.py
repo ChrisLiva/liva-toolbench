@@ -94,6 +94,9 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/SPEC.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)"],
+    "plugins/crank/skills/crank/PROTOTYPE.md": ["until the plan's execution finishes"],
+    "plugins/crank-lite/skills/crank-lite/PROTOTYPE.md": ["until the plan's execution finishes"],
+    "plugins/crank/skills/crank/ARTIFACT-HOME.md": ["until the plan's execution finishes"],
 }
 
 # Brief prose states what the agent does, with no cost justification.
