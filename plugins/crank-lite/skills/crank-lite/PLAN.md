@@ -21,7 +21,7 @@ Shared design language across the crank pipeline, defined once in [VOCABULARY.md
 
 ## Plan
 
-The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the goal, assumptions, ordered tasks, stages past ten tasks ([STAGES.md](STAGES.md), read once the task list settles, each cut read back beside the cut it rejected), verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
+The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the goal, assumptions, ordered tasks, stages for a long plan ([STAGES.md](STAGES.md), read once the task list settles, each cut read back beside the cut it rejected), verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
 
 Verification checks:
 
