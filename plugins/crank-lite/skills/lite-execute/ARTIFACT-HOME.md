@@ -6,7 +6,7 @@ Where every pipeline artifact lives, so a later session resumes from the file.
 - **One slug per effort** — `<slug>` is two to four kebab-case words naming the effort (`dark-mode-toggle`), derived once when its first artifact is written. Handed an artifact from an earlier phase, or continuing in this session, write into that artifact's existing directory rather than deriving a new slug.
 - If `.crank/<slug>/` already holds a *different* effort — its `plan.md`, `spec.md`, or `brainstorm.md` describes work other than the effort at hand — use `<slug>-2`, `<slug>-3`, …; the existing directory keeps its name and contents.
 - Only outside a git repo, fall back to `${TMPDIR:-/tmp}/crank-<slug>/<artifact>.md` and say so.
-- Tell the user the path once. Artifacts, and any throwaway a phase produces (a prototype HTML file, a sample output), go under `.crank/<slug>/` and nowhere else.
+- Tell the user the path once. Artifacts, and any mock a phase produces for the user to react to (a prototype HTML file, a sample output), go under `.crank/<slug>/` and nowhere else. A mock stays on disk until the plan's execution finishes, and no phase before then deletes or moves it, because later phases read it at the path an artifact recorded.
 
 ## Grounding
 

@@ -1,6 +1,6 @@
 # Prototype
 
-Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file is throwaway and lives under `.crank/<slug>/prototype/` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). A phase reads this file once the user accepts its offer. On a reopen, skip to step 3 with the files already there. (per project decision: standalone mocks only. No variant mounts in a real route, and no branch or worktree holds one, so a native-screen mock shows layout and hierarchy, not platform feel.)
+Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). No mock code ships, and every file stays on disk until the plan's execution finishes. No phase before then deletes or moves a prototype file, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records. A phase reads this file once the user accepts its offer. On a reopen, skip to step 3 with the files already there. (per project decision: standalone mocks only. No variant mounts in a real route, and no branch or worktree holds one, so a native-screen mock shows layout and hierarchy, not platform feel.)
 
 ## Flow
 
@@ -21,7 +21,7 @@ Completion criterion: the question, the rung, and one distinct structural direct
 Run `git status --porcelain` and keep the output. Dispatch one **standard** subagent per variant, resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md), every dispatch sent in the same turn, each with this brief filled in. The batch is a blocking call: end your turn at the dispatch and let the returns resume you.
 
 <brief>
-Build variant `<key>: <name>` of a throwaway prototype. The question it helps answer: `<question>`.
+Build variant `<key>: <name>` of a prototype whose code never ships. The question it helps answer: `<question>`.
 
 Write exactly one file, `<absolute path to .crank/<slug>/prototype/variant-<key>.html>`, and write nowhere else: no other file, no branch, no worktree, no install.
 

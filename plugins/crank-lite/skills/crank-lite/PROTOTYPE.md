@@ -1,6 +1,6 @@
 # Prototype
 
-Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file is throwaway and lives under `.crank/<slug>/prototype/`. Read this once the user accepts a phase's offer. On a reopen, skip to the handover with the files already there.
+Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/`. No mock code ships, and every file stays on disk until the plan's execution finishes. No phase before then deletes or moves a prototype file, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records. Read this once the user accepts a phase's offer. On a reopen, skip to the handover with the files already there.
 
 State the question the prototype answers in one line, then take the rung the surface names:
 
@@ -13,7 +13,7 @@ Default to 3 variants and cap at 5. Variants differ in layout, information hiera
 Run `git status --porcelain` and keep the output, then dispatch **one** standard-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with this brief, filled in. The dispatch is a blocking call: end your turn at it and let its return resume you.
 
 <brief>
-Build a throwaway prototype of `<N>` variants. The question it answers: `<question>`.
+Build a prototype of `<N>` variants whose code never ships. The question it answers: `<question>`.
 
 Write only under `<absolute path to .crank/<slug>/prototype/>` and nowhere else: no other file, no branch, no worktree, no install.
 
