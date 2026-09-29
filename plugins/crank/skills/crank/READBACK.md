@@ -1,39 +1,43 @@
 # Readback protocol
 
-The phase file lists the artifact's sections; this file decides which earn a pause, and how much.
+The readback shows the user the written artifact in one message, after any adversarial review has landed its edits, then folds the user's feedback into the file until the user approves it.
 
-## Readback opens on an empty frontier
+## Opens after the review
 
-Readback is the veto pass over settled material. It begins once the interview's frontier is empty, so the user strikes or amends lines, never answers questions. A decision the interview missed gets one more interview round: ask it, fold in the answer, then resume the readback.
+Open the readback once the artifact is written and, where the phase runs an adversarial review, the review's edits are in the file. The interview settled every decision, so the user reads finished items and strikes or amends them.
 
-Open it by sending the first readback message, whatever the last reply said. A reply to an interview round that says "approve the rest" settles that round and approves no readback item, because none has been shown yet.
+## The readback message
 
-## Select what earns a pause
+Send the whole artifact as one message, compressed:
 
-Read back only what the user could veto:
+- **Open with what the artifact commits to and what it cuts**, in two or three lines.
+- **Walk every section in the artifact's order**, each as its items: the decisions, criteria, cuts, tasks, and rows themselves, one line each. A section copied unchanged from the previous phase's artifact, and the Grounding section, each get one line naming the section and its item count.
+- **Show each judgment call beside the option it beat**, so a veto is a real choice.
+- **Mark the review's work.** Where a review ran, tag each item the review added or rewrote `(review)`, and after the last section state how many findings the review landed and how many it refuted.
+- **Draw what reads better as a picture.** Show an interface, flow, or logic as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
+- **Close on one line:** reply with changes, or say **done** to finish.
 
-- **New or changed** — content settled since the previous phase's approved artifact (or, with none, since the interview's settled answers).
-- **Judgment calls** — decisions where a defensible alternative was rejected; name the rejected option, so the veto is a real choice.
+The test for the message: could the user strike or amend a specific item from it? If the only reply it invites is "sounds good", it describes the artifact; rewrite it as items.
 
-State everything else as carried-forward in one line ("Sections X and Y carry forward from the approved spec unchanged") and move on. A Grounding section is always carried-forward.
+## Fold in feedback
 
-## Pace
+Sort each reply:
 
-- **The first message opens with what the artifact commits to and what's explicitly out of scope**, and ends with a standing exit: "Say **approve the rest** at any point and I'll carry the remaining sections as shown."
-- **"Approve the rest" approves only items a readback message has already shown.** On it, carry every shown item the user has not struck or amended. If a selected item has not been shown yet, send every such item in one more message and pause on it before writing the artifact.
-- **Every section closes with the settled decisions it rests on** — `settled: Q3 (in-memory cache), Q8 (fail closed)` — so no locked decision is silently elided; if the user re-raises one, point at that line rather than re-litigating it.
-- **A few readback messages, whatever the artifact's size.** Group into logical sections rather than a message per item, harder as the artifact grows, but drop no selected item to fit.
-- Pause after each message for questions, refutations, or changes, and fold each change in before the next.
-- **The readback is done when every selected item has been shown and approved** — each by the user's assent or an amendment folded in, or the remaining shown ones by "approve the rest" — not when the last message is sent. An unanswered objection is not approval.
+- **Approval**, such as "done" or "looks good", ends the readback.
+- **A question** about an item gets an answer in chat, then the same closing line.
+- **A change the user states outright**, such as strike this, reword that, or add this criterion, goes to one standard-tier subagent, resolved the way this skill resolves its other standard-tier dispatches, with the brief below.
+- **A change with more than one defensible landing** is a decision: ask it as one interview round, then dispatch the answer.
 
-## Make the veto easy
+<brief>
+Apply the user's feedback below to the artifact at `<artifact-path>`. The feedback is settled; land exactly what it asks.
 
-- **Show the actual items** — the decisions, criteria, cuts, and rows themselves — not a description of them.
-- **Prefer pictures where they're easier to veto.** Where an interface, flow, or logic reads better as a picture, show it as pseudo-code, a call graph, or a small plain-text diagram (ASCII; chat renders mermaid as raw text).
-- **The test for each message: could the user veto a specific item from it, with every item already answered?** If all they can say is "sounds good", you've sent a summary; if they have to pick an option, you've sent an interview round.
+Read the artifact in full first. Land each change everywhere the artifact states the item it touches, so no two sections disagree: a struck acceptance criterion also takes the rows and lines that prove only it, and a renamed interface changes in every section that names it. A change that forces a decision the feedback does not make stays unlanded and comes back as a question.
 
-## Carry what was approved
+Feedback, verbatim: <the user's reply>
 
-A sketch, diagram, or list the user approved during readback goes into the artifact as vetted — the next phase inherits the exact shape, not a prose paraphrase.
+Return one line per edit, `<section>: <old> → <new>`, then any question.
+</brief>
 
-A decision first composed after the readback carries no approval. Such decisions include a recommended answer attached to an open question, a judgment call the draft or the review adds, shown with the alternative it rejected, and an item settled differently from how it was shown. Detail that elaborates a shown item without changing it is not one. Once the artifact is written and any review of it has landed its edits, send one message that shows every such decision as the actual item, pause on it as on a readback message, and fold each strike or amendment into the artifact before the hand-off. Until the user approves, strikes, or amends each one, neither the artifact nor your messages call it approved. When writing composed none, hand off without mentioning this check.
+When the subagent returns, send one message listing its edits and any question it raised, closed on the readback message's closing line.
+
+The readback is done when the user approves the artifact as it stands in the file. An unanswered objection is not approval.

@@ -11,7 +11,7 @@ The shared discipline for every crank-lite phase. Each phase file says *what* to
 
 ## Readback
 
-Once the frontier is empty, read the artifact back to the user before writing anything, per [READBACK.md](READBACK.md): read it before the first readback message.
+Once the frontier is empty, write the artifact. Once any review of it has landed its edits, read it back to the user per [READBACK.md](READBACK.md): read that file before the readback message.
 
 ## Subagent tiers
 

@@ -63,13 +63,15 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
+Once the user has picked the approach, write the brief file, every applicable Deliverables section shaped per the Guidelines. When the Shape involves a flow — data, control, or a user workflow — sketch it in the brief as a small plain-text diagram. Once the brief file exists, flush the entries banked at step 1 to the effort's grounding file.
 
-Capture each approved section in the brief file as you go, shaping the pieces per the Guidelines. Once the brief file exists, flush the entries banked at step 1 to the effort's grounding file.
+Completion criterion: every applicable Deliverables section is in the brief file, the banked grounding entries are flushed, and the brief's header names the grounding file.
 
-Completion criterion: every applicable Deliverables section is user-approved and in the brief file, the banked grounding entries are flushed, and the brief's header names the grounding file.
+### 7. Read back the brief
 
-### 7. Hand off
+Read back the brief per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the Approach beside the alternatives it beat, the Shape's diagram, and each Open question as the sharp question it hands the spec.
+
+### 8. Hand off
 
 Hand off per [SKILL.md](SKILL.md) → Phase gates.
 

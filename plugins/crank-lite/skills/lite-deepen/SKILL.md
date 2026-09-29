@@ -123,7 +123,7 @@ Two side effects land on the target repo during the grill. Offer each inline as 
 
 ## Brief
 
-When the readback stands approved, write the brief to `.crank/<slug>/deepen-brief.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file. Then read back any decision writing it composed, per [READBACK.md](READBACK.md) → Carry what was approved.
+When the grill's frontier is empty, write the brief to `.crank/<slug>/deepen-brief.md` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file. Then read it back per [READBACK.md](READBACK.md).
 
 Sections, omitting any that didn't earn its place:
 
@@ -137,7 +137,7 @@ Sections, omitting any that didn't earn its place:
 
 **No acceptance criteria** — those belong to the spec phase.
 
-Write the brief so a fresh session can run it without this chat. If writing it composed a decision the readback never showed, wait for the user's reply to that readback and fold in their changes. Then end by recommending the next step: `/crank-lite spec .crank/<slug>/deepen-brief.md`.
+Write the brief so a fresh session can run it without this chat. Once the readback is done, end by recommending the next step: `/crank-lite spec .crank/<slug>/deepen-brief.md`.
 
 ## Subagent tiers
 

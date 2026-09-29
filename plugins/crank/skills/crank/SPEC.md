@@ -105,21 +105,19 @@ Before declaring the frontier empty, walk the **failure catalogue**, giving each
 
 Completion criterion: the frontier is empty — every material, unsettled decision has a user answer or a subagent-settled fact, and the failure catalogue is walked, each item settled or asked.
 
-### 3. Read back the sections
+### 3. Draft
 
-Grilling settled the decisions. Enumerate the acceptance criteria they imply — one per behavior, each falsifiable per **Deliverables** → Acceptance criteria — then read back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and the answer grilling landed for each of the incoming brief's **Open questions**.
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**, scaled to the topic. Grilling settled the decisions; enumerate the acceptance criteria they imply, one per behavior, each falsifiable per **Deliverables** → Acceptance criteria. Before locking **Technical decisions**, apply **Simplify first** (see Guidelines) and, for every module that is new or named in **Refactor scope**, [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
 
-Completion criterion: every settled behavior has a numbered criterion, and every criterion, judgment call, and cut has been read back and struck, amended, or approved.
+Completion criterion: every settled behavior has a numbered criterion, every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and every module new or in **Refactor scope** has been through Simplify first and the design lens.
 
-### 4. Draft
+### 4. Adversarially review
 
-Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**, scaled to the topic. Carry the material the readback approved into the spec as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply **Simplify first** (see Guidelines) and, for every module that is new or named in **Refactor scope**, [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
+Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path.
 
-Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and every module new or in **Refactor scope** has been through Simplify first and the design lens.
+### 5. Read back the spec
 
-### 5. Adversarially review
-
-Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path. Then read back, in one message per [READBACK.md](READBACK.md), every numbered acceptance criterion the review rewrote, since the user approved those at step 3, and in that same message every decision READBACK.md → Carry what was approved names.
+Read back the reviewed spec per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the acceptance criteria as a numbered list and the answer the spec lands for each of the incoming brief's **Open questions**.
 
 ### 6. Hand back
 

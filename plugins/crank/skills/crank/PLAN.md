@@ -6,7 +6,7 @@ Turn the spec into tasks the **executor** builds with no further design conversa
 
 ## Hard Rules
 
-- Read the spec from the path triage handed you (the skill's arguments or an earlier phase), else from the conversation. With no spec at all — a settled change routed straight to plan — write the acceptance criteria yourself from the user's ask before grounding, read them back at step 4, and treat that list as the spec everywhere below (Coverage, the review brief, Updates since spec).
+- Read the spec from the path triage handed you (the skill's arguments or an earlier phase), else from the conversation. With no spec at all — a settled change routed straight to plan — write the acceptance criteria yourself from the user's ask before grounding, show them first in step 6's readback, and treat that list as the spec everywhere below (Coverage, the review brief, Updates since spec).
 - **Write the plan to `.crank/<slug>/plan.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing the file.
 - **Oracles, not placeholders.** A step may omit code, never proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **A requirement is a Behavior line.** A task ships its `- [ ] Behavior N:` lines and honors Global Constraints; every other sentence in its block orients. A rule, an ordering, a gesture, a fallback stated in prose is **unpinned** until a Behavior line carries it with its oracle: write that line, lift a project-wide rule to Global Constraints, or delete the sentence. The implementer tests the Behavior lines and nothing else, so an unpinned requirement ships untested or not at all.
@@ -126,13 +126,9 @@ Make each task's **test-first** or **lightest-check** call here, per Guidelines 
 
 Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree; a staged plan's rows meet STAGES.md's completion criterion.
 
-### 4. Read back the shape
+### 4. Write the tasks
 
-Decomposition settled the shape; before writing the tasks in full, read it back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the file map first (the actual path / action / responsibility rows), then in a staged plan the Stages table, each cut shown beside the cut it rejected, then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
-
-### 5. Write the tasks
-
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Give each task the blocks listed at Deliverables → **Tasks**. Two calls are step 5's, and each elaborates a task section step 4 showed rather than adding a decision to read back per [READBACK.md](READBACK.md) → Carry what was approved: which exemplar the `Check:` line names — the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern — and how far each behavior climbs from prose toward embedded code (see Guidelines → Prose, pseudo-code, or embedded code). Writing surfaces claims grounding never met — a signature for an Interfaces line, an exemplar at a seam step 1 did not read, a count a `Verify:` pins; Hard Rules → Cite what you assert applies in the turn that writes each: open the file, run the grep, or dispatch the brief at References → Subagents.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Give each task the blocks listed at Deliverables → **Tasks**. Two calls land here: which exemplar the `Check:` line names — the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern — and how far each behavior climbs from prose toward embedded code (see Guidelines → Prose, pseudo-code, or embedded code). Writing surfaces claims grounding never met — a signature for an Interfaces line, an exemplar at a seam step 1 did not read, a count a `Verify:` pins; Hard Rules → Cite what you assert applies in the turn that writes each: open the file, run the grep, or dispatch the brief at References → Subagents.
 
 Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** with its oracle and expected output pinned here and the step ending in its deletion. Where the reading is a count, a grep, or a probe's output, run the instrument now against the current tree and pin both readings in the step: `base: <what it printed>` → `target: <what it must print>`; a target that equals the base is a **dead seam**. Name the seam the spec's Testing approach named in each test-driven behavior line, so the specified test and the production wiring point at the same place — a prose test case that reads its oracle through a back channel is an **implementation-detail test**. Where the Coverage table shows the workflow already walked, the behavior line extends that **journey test** with its assertion rather than adding a **redundant test**.
 
@@ -150,9 +146,13 @@ Route reuse by name: if grounding (or the spec) surfaced an existing utility, th
 
 "Smaller" never means thinner safety: trust-boundary validation, data-loss and error handling, security, and accessibility are behavior, not surface — keep each in a task and a Coverage row; where the spec only implies one, surface it in **Updates since spec** rather than dropping it.
 
-### 6. Adversarially review
+### 5. Adversarially review
 
 Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, substituting the plan's absolute path and the spec's path into it. If the spec exists only in the conversation, drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into it instead.
+
+### 6. Read back the plan
+
+Read back the reviewed plan per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the file map as its path / action / responsibility rows, each stage cut in a staged plan beside the cut it rejected, and each task as what it builds with its test-first, lightest-check, or probe call where that call was a real choice.
 
 ### 7. Hand back
 
