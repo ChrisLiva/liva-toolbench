@@ -119,7 +119,7 @@ Completion criterion: every Deliverables section that applies is written to the 
 
 ### 5. Adversarially review
 
-Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path. Then read back, in one message per [READBACK.md](READBACK.md), every numbered acceptance criterion the review rewrote, since the user approved those at step 3.
+Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path. Then read back, in one message per [READBACK.md](READBACK.md), every numbered acceptance criterion the review rewrote, since the user approved those at step 3, and in that same message every decision READBACK.md → Carry what was approved names.
 
 ### 6. Hand back
 

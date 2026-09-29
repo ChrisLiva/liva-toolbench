@@ -35,3 +35,5 @@ State everything else as carried-forward in one line ("Sections X and Y carry fo
 ## Carry what was approved
 
 A sketch, diagram, or list the user approved during readback goes into the artifact as vetted — the next phase inherits the exact shape, not a prose paraphrase.
+
+A decision first composed after the readback carries no approval. Such decisions include a recommended answer attached to an open question, a judgment call the draft or the review adds, shown with the alternative it rejected, and an item settled differently from how it was shown. Detail that elaborates a shown item without changing it is not one. Once the artifact is written and any review of it has landed its edits, send one message that shows every such decision as the actual item, pause on it as on a readback message, and fold each strike or amendment into the artifact before the hand-off. Until the user approves, strikes, or amends each one, neither the artifact nor your messages call it approved. When writing composed none, hand off without mentioning this check.
