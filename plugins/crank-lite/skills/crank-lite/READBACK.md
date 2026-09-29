@@ -6,6 +6,8 @@ The phase file lists the artifact's sections; this file decides which earn a pau
 
 Readback is the veto pass over settled material. It begins once the interview's frontier is empty, so the user strikes or amends lines, never answers questions. A decision the interview missed gets one more interview round: ask it, fold in the answer, then resume the readback.
 
+Open it by sending the first readback message, whatever the last reply said. A reply to an interview round that says "approve the rest" settles that round and approves no readback item, because none has been shown yet.
+
 ## Select what earns a pause
 
 Read back only what the user could veto:
@@ -18,10 +20,11 @@ State everything else as carried-forward in one line ("Sections X and Y carry fo
 ## Pace
 
 - **The first message opens with what the artifact commits to and what's explicitly out of scope**, and ends with a standing exit: "Say **approve the rest** at any point and I'll carry the remaining sections as shown."
+- **"Approve the rest" approves only items a readback message has already shown.** On it, carry every shown item the user has not struck or amended. If a selected item has not been shown yet, send every such item in one more message and pause on it before writing the artifact.
 - **Every section closes with the settled decisions it rests on** — `settled: Q3 (in-memory cache), Q8 (fail closed)` — so no locked decision is silently elided; if the user re-raises one, point at that line rather than re-litigating it.
 - **A few readback messages, whatever the artifact's size.** Group into logical sections rather than a message per item, harder as the artifact grows, but drop no selected item to fit.
 - Pause after each message for questions, refutations, or changes, and fold each change in before the next.
-- **The readback is done when every selected item has been shown and approved** — each by the user's assent or an amendment folded in, or the remaining ones by "approve the rest" — not when the last message is sent. An unanswered objection is not approval.
+- **The readback is done when every selected item has been shown and approved** — each by the user's assent or an amendment folded in, or the remaining shown ones by "approve the rest" — not when the last message is sent. An unanswered objection is not approval.
 
 ## Make the veto easy
 
