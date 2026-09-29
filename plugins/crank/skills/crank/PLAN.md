@@ -67,7 +67,7 @@ Don't propose a design or write tasks. If something named doesn't exist, say so 
 
 One self-contained implementation plan at the `.crank/` path (see Hard Rules), with whichever sections apply, scaled to the change (a small fix is 2–4 tasks; a subsystem is denser):
 
-- **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Grounding:` (per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), `Goal:`, `Architecture:`, `Tech stack:` (pinned versions), `Gates:` (each command proven to run during grounding — execute's final walk and every implementer inherit them from here), `Base:` (the HEAD SHA grounding read — the tree every anchor's line number belongs to).
+- **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Grounding:` (per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions), `Gates:` (the repo's test / lint / typecheck / build commands, each proven to run during grounding — execute's final walk and every implementer inherit them from here), `Base:` (the HEAD SHA grounding read — the tree every anchor's line number belongs to).
 - **Global Constraints** — project-wide rules every task must honor: version floors, dependency limits, naming and copy rules, platform requirements — one line each, exact values copied verbatim from the spec. Execute's reviews hold every task to it. Omit only if the spec names no such rule.
 - **Updates since spec** — what the plan must resolve that the spec doesn't settle: drift found while grounding, a spec gap a `modify` or a missing seam exposed, a dependency or contract the spec never pinned, a safety behavior the spec only implies. Omit if none.
 - **Refactor scope** — the spec's explicit allowlist of existing modules open to reshaping, copied over. Omit if the spec had none.
@@ -82,7 +82,7 @@ One self-contained implementation plan at the `.crank/` path (see Hard Rules), w
 
 ### 1. Ground first
 
-Dispatch the wide reads on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands — one dispatch per area the spec touches, all sent in the same turn; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output.
+Learn what you'll touch before writing tasks. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands — as one dispatch per area the spec touches, every dispatch sent in the same turn; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output. Close by banking what the step proved to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
 
 **Offer a prototype when the spec left the frontend open.** Offer a prototype, 3 to 5 variants behind one switcher, once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under **Updates since spec**. When no offer fires, move to the questions without mentioning a prototype.
 
@@ -96,7 +96,7 @@ Completion criterion, all of:
 - every claim about the current code you can already name checked at its source per Hard Rules → Cite what you assert, its citation in hand; a population claim (the only caller, no other use, the canonical helper, an absence) records the scope searched;
 - for a change that tightens a shared contract — a field made required, a shared symbol renamed, a validator narrowed — every call site grepped once, that **blast radius** deciding which files the tasks name;
 - where the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), the proposed invariant run over the full real dataset and the count checked recorded — canned fixtures can't stand in for the data the work will meet;
-- the step's proven facts banked to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
+- the step's proven facts banked to the grounding file.
 
 ### 2. Map the files
 
@@ -128,7 +128,7 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Before writing the tasks in full, read the shape back per [READBACK.md](READBACK.md), read here. Walk the file map first, then in a staged plan the Stages table, each cut beside the cut it rejected, then the task sections, each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
+Decomposition settled the shape; before writing the tasks in full, read it back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the file map first (the actual path / action / responsibility rows), then in a staged plan the Stages table, each cut shown beside the cut it rejected, then the task sections — each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
 
 ### 5. Write the tasks
 

@@ -34,6 +34,7 @@ The first rule that applies wins:
 ## Phase gates
 
 - **Load one phase at a time.** Read a phase file only when routing into it; the reference docs and templates beside it load when that phase file says, never at triage, except the artifact-home read in triage rule 2.
+- **Read back before drafting.** Where a phase's flow has a read-back step, walk the material that step names per [READBACK.md](READBACK.md), which fixes when the readback opens and when it is done.
 - **The adversarial review is one heavy dispatch.** Where a phase's flow has one: spawn one heavy subagent resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md), and pass it the phase's review brief verbatim with the step's artifact paths substituted in. Completion criterion: the reviewer's edits are in the artifact file and its one-line summary is quoted back to the user.
 - **Hand off the same way in every phase.** State the filing rather than asking how to file: one line saying the artifact stays at its `.crank/` path (with the path), then the step's **Next:** line. Close with one trailing prose sentence, not a numbered question, noting the artifact can instead be copied elsewhere, printed inline, or deleted on request, then stop.
 - **Advancing is the user's call.** Load the next phase file only on an explicit "continue".

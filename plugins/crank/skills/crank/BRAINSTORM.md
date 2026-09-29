@@ -43,7 +43,7 @@ Completion criterion: the user has explicitly confirmed the destination; it anch
 
 ### 3. Scope check
 
-If the idea describes several independent subsystems (e.g., "a platform with chat, file storage, billing, and analytics"), flag it now, before spending questions on one corner of a project that needs decomposing. Help the user split it: name the independent pieces, how they relate, and the build order. Brainstorm the first sub-project through the normal flow; each sub-project gets its own brief → spec → plan → execute cycle.
+Before refining details, assess scope. If the idea describes several independent subsystems (e.g., "a platform with chat, file storage, billing, and analytics"), flag it now — don't spend questions polishing one corner of a project that needs decomposing first. Help the user split it: name the independent pieces, how they relate, and what order to build them. Then brainstorm the first sub-project through the normal flow; each sub-project gets its own brief → spec → plan → execute cycle.
 
 Completion criterion: the idea is confirmed buildable as one project, or split — pieces named, order agreed, first sub-project chosen.
 
@@ -63,7 +63,7 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Draft the brief from the picked approach, reading the material back before it lands per [READBACK.md](READBACK.md), read here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a data, control, or user-workflow flow, sketch it as a small plain-text diagram.
+Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
 
 Capture each approved section in the brief file as you go, shaping the pieces per the Guidelines. Once the brief file exists, flush the entries banked at step 1 to the effort's grounding file.
 

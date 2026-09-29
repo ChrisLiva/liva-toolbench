@@ -21,7 +21,7 @@ State everything else as carried-forward in one line ("Sections X and Y carry fo
 - **Every section closes with the settled decisions it rests on** — `settled: Q3 (in-memory cache), Q8 (fail closed)` — so no locked decision is silently elided; if the user re-raises one, point at that line rather than re-litigating it.
 - **A few readback messages, whatever the artifact's size.** Group into logical sections rather than a message per item, harder as the artifact grows, but drop no selected item to fit.
 - Pause after each message for questions, refutations, or changes, and fold each change in before the next.
-- **The readback is done when every selected item has been shown and approved** — by assent, a folded-in amendment, or "approve the rest" — not when the last message is sent. An unanswered objection is not approval.
+- **The readback is done when every selected item has been shown and approved** — each by the user's assent or an amendment folded in, or the remaining ones by "approve the rest" — not when the last message is sent. An unanswered objection is not approval.
 
 ## Make the veto easy
 

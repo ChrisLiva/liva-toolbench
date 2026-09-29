@@ -107,15 +107,15 @@ Completion criterion: the frontier is empty — every material, unsettled decisi
 
 ### 3. Read back the sections
 
-Enumerate the acceptance criteria the settled decisions imply per **Deliverables** → Acceptance criteria, then read back per [READBACK.md](READBACK.md), read here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and grilling's answer to each of the incoming brief's **Open questions**.
+Grilling settled the decisions. Enumerate the acceptance criteria they imply — one per behavior, each falsifiable per **Deliverables** → Acceptance criteria — then read back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and the answer grilling landed for each of the incoming brief's **Open questions**.
 
 Completion criterion: every settled behavior has a numbered criterion, and every criterion, judgment call, and cut has been read back and struck, amended, or approved.
 
 ### 4. Draft
 
-Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**. Before locking **Technical decisions**, apply **Simplify first** and [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**, scaled to the topic. Carry the material the readback approved into the spec as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply **Simplify first** (see Guidelines) and, for every module that is new or named in **Refactor scope**, [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
 
-Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and both passes above have covered every new or **Refactor scope** module.
+Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and every module new or in **Refactor scope** has been through Simplify first and the design lens.
 
 ### 5. Adversarially review
 
