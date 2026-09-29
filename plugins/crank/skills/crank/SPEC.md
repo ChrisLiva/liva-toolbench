@@ -77,9 +77,9 @@ Report each item — one surface, one convention note, one helper — in a few s
 Don't propose a design; just surface what already exists. If no analogous surface exists, say so. When the analogous features disagree on convention, report both and name the winner: the one the repo converged on most recently, per `git log` on those files.
 </brief>
 
-Synthesize their findings into Technical decisions; the spec inherits the surfaces they reported. A spec that has the handler call `db.update(...)` directly when every analogous endpoint routes through `repo.X` has shipped an idiom-break. Close the step by banking the per-layer findings — surfaces, conventions, canonical helpers, drift — to the grounding file.
+Synthesize their findings into Technical decisions; the spec inherits the surfaces they reported. A spec that has the handler call `db.update(...)` directly when every analogous endpoint routes through `repo.X` has shipped an idiom-break.
 
-Completion criterion: the intent docs are read or confirmed absent, each ADR banked to grounding with its path as governing, superseded, or irrelevant to this spec; every layer the change touches has a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent, fresh or confirmed against the grounding file by that subagent; and the step's findings are banked.
+Completion criterion: the intent docs are read or confirmed absent, each ADR banked to grounding with its path as governing, superseded, or irrelevant to this spec; every layer the change touches has a reported surface (`file:line`) or an explicit "no analogous surface" from its grounding subagent, fresh or confirmed by that subagent; and the step's findings are banked to the grounding file, including each layer's surfaces, conventions, canonical helpers, and drift.
 
 ### 2. Grill the technical decisions
 
@@ -103,19 +103,19 @@ Before declaring the frontier empty, walk the **failure catalogue**, giving each
 
 *Which* failures exist is a fact to enumerate (dispatch a subagent); only the policy call goes to the user, and the answer lands as an acceptance criterion so the plan's Coverage table forces a verify step for it.
 
-Completion criterion: the frontier is empty — every material, unsettled decision has a user answer or a subagent-settled fact, none carried into the draft as an implicit choice, and the failure catalogue is walked, each item settled or asked.
+Completion criterion: the frontier is empty — every material, unsettled decision has a user answer or a subagent-settled fact, and the failure catalogue is walked, each item settled or asked.
 
 ### 3. Read back the sections
 
-Enumerate the acceptance criteria the settled decisions imply — one per behavior, each falsifiable per **Deliverables** → Acceptance criteria — then read back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and grilling's answer to each of the incoming brief's **Open questions**.
+Enumerate the acceptance criteria the settled decisions imply per **Deliverables** → Acceptance criteria, then read back per [READBACK.md](READBACK.md), read here. The material to walk: the acceptance criteria as a numbered list, the judgment-call technical decisions, the scope cuts by name, and grilling's answer to each of the incoming brief's **Open questions**.
 
 Completion criterion: every settled behavior has a numbered criterion, and every criterion, judgment call, and cut has been read back and struck, amended, or approved.
 
 ### 4. Draft
 
-Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**, carrying the readback-approved material as vetted (READBACK.md → Carry what was approved). Before locking **Technical decisions**, apply **Simplify first** and, for every module that is new or named in **Refactor scope**, [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
+Read [SPEC-TEMPLATE.md](SPEC-TEMPLATE.md), then write the spec to its `.crank/` file, section by section per **Deliverables**. Before locking **Technical decisions**, apply **Simplify first** and [DESIGN-LENS.md](DESIGN-LENS.md) (read it here).
 
-Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and every module new or in **Refactor scope** has been through Simplify first and the design lens.
+Completion criterion: every Deliverables section that applies is written to the spec file, no template placeholder survives, every claim about existing code is confirmed per Hard Rules → Cite what you assert, and both passes above have covered every new or **Refactor scope** module.
 
 ### 5. Adversarially review
 

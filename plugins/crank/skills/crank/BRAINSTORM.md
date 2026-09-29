@@ -6,7 +6,7 @@ Turn a raw idea into a **high-level design brief** at **design altitude**: the i
 
 ## Hard Rules
 
-- **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise leave it for the spec).
+- **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise record it as an **Open question** for the spec).
 - **Write the brief to `.crank/<slug>/brainstorm.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 
 ## Guidelines
@@ -19,7 +19,7 @@ Turn a raw idea into a **high-level design brief** at **design altitude**: the i
 
 The high-level design brief. Include the sections that apply; this is a brief, not a spec:
 
-- **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding, once step 6 flushes entries.
+- **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 - **Idea / Problem** — what the user wants and why, in their words.
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
 - **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them. A rough sketch or short list, not a file map.
@@ -31,7 +31,7 @@ The high-level design brief. Include the sections that apply; this is a brief, n
 
 ### 1. Explore project context
 
-Before asking the user anything, read recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents.
+Before asking the user anything, read recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads with the **Explore the codebase** brief at References → Subagents.
 
 Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm leaves no directory behind.
 
@@ -52,7 +52,6 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here); the agenda it opens with is this phase's decision tree. If that fan-out shows the way from idea to spec is already clear, say so and offer to skip to the spec phase rather than manufacture a brainstorm.
 
 - **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a throwaway artifact in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. The brief records the artifact's path beside the decision it settled.
-- **Stay at altitude.** A detail not load-bearing for the approach call becomes an **Open question** for the spec; note it and move on.
 
 Completion criterion: the frontier is empty — every consequential design question settled with the user or recorded as an **Open question**, none waved past.
 
@@ -64,11 +63,11 @@ Completion criterion: the user has explicitly picked an approach (or your recomm
 
 ### 6. Draft the high-level brief
 
-Draft the brief from the picked approach, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a data, control, or user-workflow flow, sketch it as a small plain-text diagram.
+Draft the brief from the picked approach, reading the material back before it lands per [READBACK.md](READBACK.md), read here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a data, control, or user-workflow flow, sketch it as a small plain-text diagram.
 
 Capture each approved section in the brief file as you go, shaping the pieces per the Guidelines. Once the brief file exists, flush the entries banked at step 1 to the effort's grounding file.
 
-Completion criterion: every applicable Deliverables section is user-approved and captured in the brief file, the banked grounding entries are flushed, and the brief's header names the grounding file.
+Completion criterion: every applicable Deliverables section is user-approved and in the brief file, the banked grounding entries are flushed, and the brief's header names the grounding file.
 
 ### 7. Hand off
 

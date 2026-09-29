@@ -53,16 +53,14 @@ Completion criterion: `.crank/<slug>/prototype/` holds `index.html` and one `var
 
 Give the user the path and the run command: double-click `index.html`, `go run ./.crank/<slug>/prototype`, or the project's equivalent. Do not open the prototype yourself.
 
-Completion criterion: the user has the path and one command.
-
 ### 4. Verdict
 
-Ask which variant wins and what to take from the others. A revision request goes back to a builder as a new `variant-<key>.html` with a new key and direction, added to `index.html`. Repeat until the user names a winner. On a hedge, ask the open look and interaction decisions in prose per [GRILLING.md](GRILLING.md) and record `no verdict`.
+Ask which variant wins and what to take from the others. A revision request goes back to a builder as a new `variant-<key>.html` with a new key and direction, added to `index.html`, then ask again. On a hedge, ask the open look and interaction decisions in prose per [GRILLING.md](GRILLING.md) and record `no verdict`.
 
 Completion criterion: the user has named a winner, or every open look and interaction decision has a prose answer.
 
 ### 5. Record
 
-Write one `Prototype:` line: the winner, what the user took from the other variants, the prototype's path, and the surface the mock stood in for, or `no verdict`. From the spec phase the line lands in Technical decisions, and the winner's behaviors land as numbered acceptance criteria. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the brief's **Key decisions** records the path beside the decision it settled. The plan writes the real UI from the verdict and lifts no mock code.
+Write one `Prototype:` line: the winner, what the user took from the other variants, the prototype's path, and the surface the mock stood in for, or `no verdict`. From the spec phase the line lands in Technical decisions, and every behavior the user chose lands as a numbered acceptance criterion. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the brief's **Key decisions** records the path beside the decision it settled. The plan writes the real UI from the verdict and lifts no mock code.
 
-Completion criterion: the artifact carries the line, and every behavior the user chose is a numbered criterion or an **Updates since spec** entry.
+Completion criterion: the artifact carries the line, and every chosen behavior is a numbered criterion or an **Updates since spec** entry.

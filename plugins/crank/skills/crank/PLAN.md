@@ -27,7 +27,7 @@ Test-first sets the rhythm, not the count: behaviors along one workflow ride one
 Three rungs, climbed only as far as the decision demands (per project decision: the executor constructs code from a pinned contract — the plan stopped scripting keystrokes):
 
 <tradeoff>
-**Prose-with-contract** — behavior, oracle, exact signatures — is the default: short and drift-tolerant. **Pseudo-code** pins an algorithm's shape — the tricky loop, ordering, or state machine that is itself a design decision — without forging unverified code; a sketch the readback approved carries in verbatim. **Embedded code** fixes exact text, at the cost of length and of shipping the planner's unverified first draft: stale embedded code is where execute's detours start. Embed only the **surveyed** — verified during grounding (a regex probed against a corpus, migration SQL run and checked, a signature read from the live file) — and text that *is* the requirement (a public API signature, user-facing copy, config values); embedded code names its evidence in the step ("probed, output below", "read from `foo.ts:12`"). A purely mechanical change needs none of the three: a directive line (`change < to <= at foo.ts:18`) is enough.
+**Prose-with-contract** — behavior, oracle, exact signatures — is the default: short and drift-tolerant. **Pseudo-code** pins an algorithm's shape — the tricky loop, ordering, or state machine that is itself a design decision — without forging unverified code. **Embedded code** fixes exact text, at the cost of length and of shipping the planner's unverified first draft: stale embedded code is where execute's detours start. Embed only the **surveyed** — verified during grounding (a regex probed against a corpus, migration SQL run and checked, a signature read from the live file) — and text that *is* the requirement (a public API signature, user-facing copy, config values); embedded code names its evidence in the step ("probed, output below", "read from `foo.ts:12`"). A purely mechanical change needs none of the three: a directive line (`change < to <= at foo.ts:18`) is enough.
 </tradeoff>
 
 Tests follow the same ladder: state the test *cases* — the oracle's exact inputs → expected outputs and the seam the test drives — and let the executor write the test to the conventions of the exemplar the `Check:` line names; embed test code only when the harness shape itself was surveyed (a subtle async fixture, a mock grounding worked out).
@@ -82,7 +82,7 @@ One self-contained implementation plan at the `.crank/` path (see Hard Rules), w
 
 ### 1. Ground first
 
-Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands — one dispatch per area the spec touches, all sent in the same turn; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output. Close by banking what the step proved to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
+Dispatch the wide reads on the brief at References → Subagents — the file and symbol reads, the drift check, and the gate commands — one dispatch per area the spec touches, all sent in the same turn; the embed survey, the toolchain probes, and the full-dataset sweep stay where you can read their output.
 
 **Offer a prototype when the spec left the frontend open.** Offer a prototype, 3 to 5 variants behind one switcher, once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under **Updates since spec**. When no offer fires, move to the questions without mentioning a prototype.
 
@@ -96,7 +96,7 @@ Completion criterion, all of:
 - every claim about the current code you can already name checked at its source per Hard Rules → Cite what you assert, its citation in hand; a population claim (the only caller, no other use, the canonical helper, an absence) records the scope searched;
 - for a change that tightens a shared contract — a field made required, a shared symbol renamed, a validator narrowed — every call site grepped once, that **blast radius** deciding which files the tasks name;
 - where the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), the proposed invariant run over the full real dataset and the count checked recorded — canned fixtures can't stand in for the data the work will meet;
-- the step's proven facts banked to the grounding file.
+- the step's proven facts banked to the grounding file: the proven `Gates:` commands, the single-test invocation pattern, toolchain probe outputs, and convention exemplars.
 
 ### 2. Map the files
 
@@ -112,7 +112,7 @@ Completion criterion: every file the plan touches has a path / action / responsi
 
 ### 3. Decompose
 
-A **task** is independently committable (green tree at end) and implements one cohesive thing. Execute supplies the working rhythm — failing test → minimal impl → verify → commit — so size tasks to that cycle rather than scripting it. A multi-behavior task's steps slice **vertically**, one **tracer bullet** at a time, never a **horizontal slice**. Order tasks so each builds on the prior green tree. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
+A **task** is independently committable (green tree at end) and implements one cohesive thing. Execute supplies the working rhythm — failing test → minimal impl → verify → commit — so size tasks to that cycle rather than scripting it. A multi-behavior task's steps slice **vertically**, one **tracer bullet** at a time, never a **horizontal slice**. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
 
 When the spec's **Refactor scope** reshapes a module, **replace tests, don't layer them**: the task that adds tests at the deepened interface must also *delete* the superseded tests on the old shallow interface — write the literal step (`delete the N tests in foo.test.ts`), don't just describe the new ones.
 
@@ -128,11 +128,11 @@ Completion criterion: every task is independently committable, right-sized per t
 
 ### 4. Read back the shape
 
-Before writing the tasks in full, read the shape back per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Walk the file map first, then in a staged plan the Stages table, each cut beside the cut it rejected, then the task sections, each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
+Before writing the tasks in full, read the shape back per [READBACK.md](READBACK.md), read here. Walk the file map first, then in a staged plan the Stages table, each cut beside the cut it rejected, then the task sections, each showing what it builds and the judgment calls behind it, such as a test-first vs. lightest-check call where that's a real call.
 
 ### 5. Write the tasks
 
-Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape, carrying the material the readback approved in as vetted (READBACK.md → Carry what was approved). Give each task the blocks listed at Deliverables → **Tasks**. Two calls are step 5's: which exemplar the `Check:` line names — the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern — and how far each behavior climbs from prose toward embedded code (see Guidelines → Prose, pseudo-code, or embedded code). Writing surfaces claims grounding never met — a signature for an Interfaces line, an exemplar at a seam step 1 did not read, a count a `Verify:` pins; Hard Rules → Cite what you assert applies in the turn that writes each: open the file, run the grep, or dispatch the brief at References → Subagents.
+Read [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md), then write the plan into that shape. Give each task the blocks listed at Deliverables → **Tasks**. Two calls are step 5's: which exemplar the `Check:` line names — the existing test grounding read at that seam, or for a lightest-check task the file that shows the code pattern — and how far each behavior climbs from prose toward embedded code (see Guidelines → Prose, pseudo-code, or embedded code). Writing surfaces claims grounding never met — a signature for an Interfaces line, an exemplar at a seam step 1 did not read, a count a `Verify:` pins; Hard Rules → Cite what you assert applies in the turn that writes each: open the file, run the grep, or dispatch the brief at References → Subagents.
 
 Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a deterministic instrument — the task's test, a `Gates:` command, or a **probe** with its oracle and expected output pinned here and the step ending in its deletion. Where the reading is a count, a grep, or a probe's output, run the instrument now against the current tree and pin both readings in the step: `base: <what it printed>` → `target: <what it must print>`; a target that equals the base is a **dead seam**. Name the seam the spec's Testing approach named in each test-driven behavior line, so the specified test and the production wiring point at the same place — a prose test case that reads its oracle through a back channel is an **implementation-detail test**. Where the Coverage table shows the workflow already walked, the behavior line extends that **journey test** with its assertion rather than adding a **redundant test**.
 
@@ -141,9 +141,9 @@ Route reuse by name: if grounding (or the spec) surfaced an existing utility, th
 **Completion criterion**, all of:
 
 - every behavior the spec lists lands in a task's behavior line or verify, proved by walking the spec to build the **Coverage table**;
-- every `Verify:` names an exact command and its exact success reading, and every count, grep, or probe reading carries the base reading it was run against, unequal to its target;
-- every test-driven behavior names the production seam it drives, the one the spec's Testing approach named;
-- every reuse the grounding surfaced is named in the task that needs it;
+- every `Verify:` names an exact command and exact success reading, each count, grep, or probe reading pinned as base → target, the two unequal;
+- every test-driven behavior names the seam the spec's Testing approach named;
+- every reuse grounding surfaced is named in its task;
 - every claim about the current code cited or on a `Stop if:` line per Hard Rules → Cite what you assert, each citation opened this phase;
 - every requirement in every task block is a Behavior line (Hard Rules → A requirement is a Behavior line), and no task leaves a decision for execute to settle — a file with two possible homes, an id or ordering rule the behaviors assume but no line states;
 - the finished file's counts read back clean — `tasks: <N> / stages: <S> / coverage rows: <N> / placeholders: <N> / criteria <first>..<last>` — one Coverage row per acceptance criterion naming a Behavior line per clause, zero placeholders, and in a staged plan every task number in exactly one stage row. Count them with a command over the file and state the line; counting by eye is what lets a criterion go missing.
