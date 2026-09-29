@@ -1,6 +1,6 @@
 # Prototype
 
-Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). No mock code ships, and every file stays on disk until the plan's execution finishes. No phase before then deletes or moves a prototype file, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records. A phase reads this file once the user accepts its offer. On a reopen, skip to step 3 with the files already there. (per project decision: standalone mocks only. No variant mounts in a real route, and no branch or worktree holds one, so a native-screen mock shows layout and hierarchy, not platform feel.)
+Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). No mock code ships, and every file stays on disk until the plan's execution finishes: no phase deletes or moves one before then, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records. On a reopen, skip to step 3 with the files already there. (per project decision: standalone mocks only, never mounted in a real route or held on a branch or worktree, so a native-screen mock shows layout and hierarchy, not platform feel.)
 
 ## Flow
 
@@ -8,7 +8,7 @@ Several structurally different variants of one user-facing surface, one switcher
 
 State the question the prototype answers in one line, then take the rung the surface names:
 
-- **Browser, native app, or desktop app.** An HTML mock inside a static reproduction of the host page's chrome: header, sidebar, spacing, density. It uses the project's design tokens and fixture data. With no host page, the mock carries the app's global chrome only, and `index.html` says so at the top.
+- **Browser, native app, or desktop app.** An HTML mock inside a static reproduction of the host page's chrome, using the project's design tokens and fixture data.
 - **CLI output, help text, or flags.** Fenced blocks in chat, one per variant, over one shared sample input. You compose this rung yourself and write no file, since a subagent cannot print to the conversation. Skip to step 4. On the user's request, a scratch script under the prototype directory prints the same variants.
 - **Interactive TUI.** A scratch program under the prototype directory that imports the project's TUI library, runs by one command, and cycles variants on one key.
 
@@ -18,12 +18,12 @@ Completion criterion: the question, the rung, and one distinct structural direct
 
 ### 2. Build
 
-Run `git status --porcelain` and keep the output. Dispatch one **standard** subagent per variant, resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md), every dispatch sent in the same turn, each with this brief filled in. The batch is a blocking call: end your turn at the dispatch and let the returns resume you.
+Run `git status --porcelain` and keep the output. Dispatch one **standard** subagent per variant, resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md), all in the same turn, each with this brief filled in. The batch is a blocking call: end your turn at the dispatch and let the returns resume you.
 
 <brief>
-Build variant `<key>: <name>` of a prototype whose code never ships. The question it helps answer: `<question>`.
+Build variant `<key>: <name>` of a prototype whose code never ships, to help answer `<question>`.
 
-Write exactly one file, `<absolute path to .crank/<slug>/prototype/variant-<key>.html>`, and write nowhere else: no other file, no branch, no worktree, no install.
+Write only `<absolute path to .crank/<slug>/prototype/variant-<key>.html>`: no other file, no branch, no worktree, no install.
 
 - **Purpose of the surface:** `<what the page or screen is for, and who uses it>`
 - **Data to show:** `<fixture or seed file paths>`. Copy sample values from these. Read no live database and no env file, and put no secret in the file.
@@ -36,18 +36,18 @@ The file is self-contained HTML, CSS, and JavaScript that opens by double-click,
 Return the path you wrote and one sentence on the structure you built.
 </brief>
 
-The TUI program and a requested CLI script go to one builder instead, because the variants share one entry file: send the same brief with every variant's direction listed, the output path set to the prototype directory, and the file paragraph replaced by the program's contract, which is the project's TUI library imported, one command to run it, and one key that cycles variants.
+The TUI program and a requested CLI script go to one builder instead, because the variants share one entry file: send the same brief with every variant's direction listed, the output path set to the prototype directory, and the file paragraph replaced by the program's contract: import the project's TUI library, run by one command, and cycle variants on one key.
 
-When every builder has returned, run `git status --porcelain` again. When the two outputs differ, name the differing paths to the user and stop before handing over. Revert nothing yourself.
+When every builder has returned, rerun `git status --porcelain`. If the output differs from the first, name the differing paths to the user, revert nothing, and stop before handing over.
 
 Then write `index.html` beside the variants:
 
-- the question in one line at the top, plus the no-host-page note where it applies;
+- the question in one line at the top, plus a note when no host page exists and the mock carries only the app's global chrome;
 - one iframe filling the page, its source the current variant's file;
 - a floating bar fixed at bottom-center, visually distinct from the design, with previous, a label reading `B: Sidebar layout`, and next, wrapping around;
 - the bar reads and sets `?variant=<key>`, so a reload keeps the variant.
 
-Completion criterion: `.crank/<slug>/prototype/` holds `index.html` and one `variant-<key>.html` per variant, or the one scratch program, and the second `git status --porcelain` output equals the first.
+Completion criterion: `.crank/<slug>/prototype/` holds `index.html` and one `variant-<key>.html` per variant, or the one scratch program, and the two `git status --porcelain` outputs match.
 
 ### 3. Hand over
 
@@ -63,6 +63,6 @@ Completion criterion: the user has named a winner, or every open look and intera
 
 ### 5. Record
 
-Write one `Prototype:` line. It reads the verdict, which is the winner, what the user took from the other variants, the prototype's path, and the surface the mock stood in for, or it reads `no verdict`. From the spec phase the line lands in Technical decisions, and the winner's behaviors land as numbered acceptance criteria. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the brief's **Key decisions** records the path beside the decision it settled. The plan writes the real UI from the verdict and lifts no mock code.
+Write one `Prototype:` line: the winner, what the user took from the other variants, the prototype's path, and the surface the mock stood in for, or `no verdict`. From the spec phase the line lands in Technical decisions, and the winner's behaviors land as numbered acceptance criteria. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the brief's **Key decisions** records the path beside the decision it settled. The plan writes the real UI from the verdict and lifts no mock code.
 
 Completion criterion: the artifact carries the line, and every behavior the user chose is a numbered criterion or an **Updates since spec** entry.

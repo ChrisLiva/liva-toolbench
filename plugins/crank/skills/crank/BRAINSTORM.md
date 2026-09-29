@@ -2,7 +2,7 @@
 
 ## Goal
 
-Turn a raw idea into a **high-level design brief** — the problem, the chosen approach, the major pieces and how they relate, and the decisions that change everything downstream, all at **design altitude**. It's the input to the spec phase ([SPEC.md](SPEC.md)), which turns the brief into a full spec.
+Turn a raw idea into a **high-level design brief** at **design altitude**: the input the spec phase ([SPEC.md](SPEC.md)) turns into a full spec.
 
 ## Hard Rules
 
@@ -11,80 +11,76 @@ Turn a raw idea into a **high-level design brief** — the problem, the chosen a
 
 ## Guidelines
 
-**Design for isolation.** Give each piece of the Shape a **module**'s shape: one purpose, and an **interface** you can state without its internals. A piece you can't describe that way is a boundary that needs another pass. (You're naming boundaries here, not designing the interfaces across them — that's the spec's job.)
+**Design for isolation.** Give each piece of the Shape a **module**'s shape: one purpose, and an **interface** you can state without its internals. A piece you can't describe that way is a boundary that needs another pass. Name the boundaries here; designing the interfaces across them is the spec's job.
 
-**Working in an existing codebase.** Let the structure you explored shape the brief: follow the established patterns rather than inventing parallel ones. Where existing code genuinely gets in the way of the idea (a file that's grown too large, a tangled responsibility the work has to touch), fold a targeted improvement into the Approach — the way a good engineer improves code they're working in. Don't propose unrelated refactoring; stay on what serves the idea.
+**Working in an existing codebase.** Follow the patterns you explored rather than inventing parallel ones. Where existing code genuinely gets in the way of the idea (a file that's grown too large, a tangled responsibility the work has to touch), fold a targeted improvement into the Approach. Propose no refactoring that doesn't serve the idea.
 
 ## Deliverables
 
-The high-level design brief, written to the `.crank/` file (see Hard Rules). Include whichever sections apply (omit ones that don't earn their place — this is a brief, not a spec):
+The high-level design brief. Include the sections that apply; this is a brief, not a spec:
 
 - **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding, once step 6 flushes entries.
 - **Idea / Problem** — what the user wants and why, in their words.
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
 - **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them. A rough sketch or short list, not a file map.
-- **Key decisions** — the consequential choices settled during brainstorming, each with one line on why. These are what the spec inherits and details.
-- **Open questions** — technical decisions deliberately left for the spec to ground and settle; this list becomes the spec's grilling agenda. The admission test: you can state the question precisely *now*, even though answering it is the spec's job. Anything you can't yet phrase that sharply is a design hole, not an open question — resolve it with the user before handing off. Only genuinely spec-level detail goes on this list.
+- **Key decisions** — the consequential choices settled during brainstorming, each with one line on why; the spec inherits and details them.
+- **Open questions** — technical decisions left for the spec to ground and settle; this list becomes the spec's grilling agenda. The admission test: the question is spec-level and you can state it precisely *now*. One you can't yet phrase that sharply is a design hole, not an open question — resolve it with the user before handing off.
 - **Out of scope** — what was discussed and explicitly cut.
 
 ## Flow
 
 ### 1. Explore project context
 
-Before asking the user anything, learn the lay of the land: recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents.
+Before asking the user anything, read recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread, with the **Explore the codebase** brief at References → Subagents.
 
-Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or recorded as "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) for the step-6 flush, so an abandoned brainstorm leaves no directory behind.
+Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm leaves no directory behind.
 
 ### 2. Name the destination
 
-Before refining anything, settle what reaching the end looks like: the problem being solved and what "done" means for the user, in one or two lines. The destination fixes scope — every later question, approach, and cut orients to it — so it's settled first. If the user's opening message already states it, read your one-or-two-line version back for confirmation instead of re-asking; if not, this is your first question.
+Settle the problem being solved and what "done" means for the user, in one or two lines. The destination fixes scope: every later question, approach, and cut orients to it. If the user's opening message already states it, read your version back for confirmation instead of re-asking; if not, this is your first question.
 
-Completion criterion: a one-or-two-line destination the user has explicitly confirmed — it anchors the brief's **Idea / Problem** section and every scope call after it.
+Completion criterion: the user has explicitly confirmed the destination; it anchors the brief's **Idea / Problem** section.
 
 ### 3. Scope check
 
-Before refining details, assess scope. If the idea describes several independent subsystems (e.g., "a platform with chat, file storage, billing, and analytics"), flag it now — don't spend questions polishing one corner of a project that needs decomposing first. Help the user split it: name the independent pieces, how they relate, and what order to build them. Then brainstorm the first sub-project through the normal flow; each sub-project gets its own brief → spec → plan → execute cycle.
+If the idea describes several independent subsystems (e.g., "a platform with chat, file storage, billing, and analytics"), flag it now, before spending questions on one corner of a project that needs decomposing. Help the user split it: name the independent pieces, how they relate, and the build order. Brainstorm the first sub-project through the normal flow; each sub-project gets its own brief → spec → plan → execute cycle.
 
 Completion criterion: the idea is confirmed buildable as one project, or split — pieces named, order agreed, first sub-project chosen.
 
 ### 4. Grill the open questions
 
-Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here) — the agenda it opens with is this phase's decision tree — until you and the user share a clear picture.
+Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here); the agenda it opens with is this phase's decision tree. If that fan-out shows the way from idea to spec is already clear, say so and offer to skip to the spec phase rather than manufacture a brainstorm.
 
-If that fan-out turns up nothing genuinely open — the way from idea to spec is already clear — say so and offer to skip straight to the spec phase rather than manufacture a brainstorm.
+- **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a throwaway artifact in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. The brief records the artifact's path beside the decision it settled.
+- **Stay at altitude.** A detail not load-bearing for the approach call becomes an **Open question** for the spec; note it and move on.
 
-- **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a throwaway artifact in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior itself is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. The brief records the artifact's path beside the decision it settled.
-- **Stay at altitude.** A detail that isn't load-bearing for the approach call becomes an **Open question** for the spec — note it and move on.
-
-Completion criterion: the frontier is empty — every consequential design question genuinely settled with the user or recorded as an **Open question** for the spec, none waved past.
+Completion criterion: the frontier is empty — every consequential design question settled with the user or recorded as an **Open question**, none waved past.
 
 ### 5. Propose approaches
 
-Once the shape is clear enough, propose **2–3 approaches, each optimizing for a different thing**, conversationally, with trade-offs — name the axis each one wins on (e.g. one minimizes the moving parts, one stays most flexible for the likely next ask, one hugs the existing idiom closest). Two approaches that optimize for the same thing are the same approach — drop one. If two genuinely combine, propose the hybrid as your recommendation rather than leaving the user to merge them. Lead with your recommendation and why. Prefer the approach whose central piece is **deeper**, and name the **leverage** and **locality** the chosen shape buys over its alternative. If an approach's key piece fails the **deletion test**, say so — that's a reason to drop it.
+Propose **2–3 approaches, each optimizing for a different thing**, conversationally, naming the axis each wins on and its trade-offs (e.g. fewest moving parts, most flexible for the likely next ask, closest to the existing idiom). Two approaches that optimize for the same thing are one approach; drop one. If two genuinely combine, recommend the hybrid rather than leaving the user to merge them. Lead with your recommendation and why. Prefer the approach whose central piece is **deeper**, and name the **leverage** and **locality** it buys over the alternatives. If an approach's key piece fails the **deletion test**, say so; that's a reason to drop it.
 
 Completion criterion: the user has explicitly picked an approach (or your recommended hybrid) — having heard the options isn't a pick.
 
 ### 6. Draft the high-level brief
 
-Once the user has signed off on the approach, crystallize it into the brief, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a flow — data, control, or a user workflow — sketch it as a small plain-text diagram: easier to veto than prose.
+Draft the brief from the picked approach, reading the material back before it lands per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. The material to walk: the Approach with the alternatives it beat, the Shape, the Key decisions, each Open question as the sharp question it hands the spec, and the scope cuts by name. When the Shape involves a data, control, or user-workflow flow, sketch it as a small plain-text diagram.
 
-Capture each approved section in the brief file as you go. As you shape the pieces, apply the **Design for isolation** and **Working in an existing codebase** guidelines (see Guidelines). With the brief file started, flush the entries banked at step 1 to the effort's grounding file.
+Capture each approved section in the brief file as you go, shaping the pieces per the Guidelines. Once the brief file exists, flush the entries banked at step 1 to the effort's grounding file.
 
-Completion criterion: every Deliverables section that applies is user-approved and captured in the brief file, the banked grounding entries are flushed to the effort's grounding file, and the brief's header names it.
+Completion criterion: every applicable Deliverables section is user-approved and captured in the brief file, the banked grounding entries are flushed, and the brief's header names the grounding file.
 
 ### 7. Hand off
 
 Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
-- **Next:** continue to the spec now — say "continue" and you'll read [SPEC.md](SPEC.md) and run its flow on the approved brief — or in a fresh session: `/crank spec .crank/<slug>/brainstorm.md`.
+- **Next:** say "continue" to run the spec phase ([SPEC.md](SPEC.md)) on the approved brief now, or in a fresh session: `/crank spec .crank/<slug>/brainstorm.md`.
 
 ## References
 
 ### Subagents
 
-**Facts are yours; decisions are the user's** — two jobs to dispatch: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make actually true) and **research a topic** (compare libraries or approaches, find prior art, check how others solve this — web search in scope). Both run at the **standard** tier; resolve the tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback.
-
-Dispatch each job with the matching brief, filled in.
+**Facts are yours; decisions are the user's** — two jobs to dispatch: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make true) and **research a topic** (compare libraries or approaches, find prior art — web search in scope). Both run at the **standard** tier; resolve the tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. Dispatch each job with its brief below, filled in.
 
 **Explore the codebase:**
 
@@ -101,7 +97,7 @@ Report:
 
 Report each item — one surface, one analogous feature, one helper — in a few sentences. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
-Don't propose a design — just surface what already exists and what's true. If the claim I'm checking is wrong, say so plainly.
+Don't propose a design; surface what exists and what's true. If the claim I'm checking is wrong, say so plainly.
 </brief>
 
 **Research a topic** (web search in scope):

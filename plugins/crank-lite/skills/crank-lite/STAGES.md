@@ -12,10 +12,10 @@ The last task of a stage leaves all of:
 
 ## Where to cut
 
-Cut where the decomposition already turns: after the task that establishes the gate; after a characterization-and-reshape pair, before the feature that rides on it; between the criteria groups one journey test proves; at a milestone the spec itself names.
+Cut where the decomposition already turns: after the task that establishes the gate; after a characterization-and-reshape pair, before the feature that rides on it; between the criteria groups one journey test proves; at a milestone the spec names.
 
 ## Shape
 
-The plan's **Stages** table has one row per stage: `stage | tasks | closes criteria | exit state`. Tasks keep their global numbers and headings; a stage is a range over them.
+The plan's **Stages** table has one row per stage: `stage | tasks | closes criteria | exit state`. Tasks keep their global numbers and headings.
 
 Completion criterion: every task number falls in exactly one stage row, every stage closes a criterion or is the named first scaffolding stage, and every exit state names the check that proves it at the gate.
