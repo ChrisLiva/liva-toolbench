@@ -249,7 +249,7 @@ with `git log -S'<phrase>'` before touching anything that looks redundant.
 | `crank-execute/SKILL.md:155` brief *file*, not pasted task text | `d055b31` | Crank's own statement of the resident-cost model, and why measured re-reads are near zero |
 | `crank-execute/SKILL.md:92` lean task list | `462b3de` | Written after reviewing a real 8-task run; the model for change C |
 | `crank-deepen/SKILL.md:22` never re-read as a source of truth | `a80f52e` | |
-| `crank-review/SKILL.md:105` point subagents at it, don't reproduce it | `a52e7a6` | |
+| `crank-review/SKILL.md:26` never add the rubric's text to a dispatch | `a52e7a6` | |
 | `crank-review/REVIEW-BRIEF.md:4` "Scope your reading to the diff plus targets" | `a52e7a6` | Already bounds the tree-wide read a cost pass would try to batch |
 | `VOCABULARY.md` / `SUBAGENT-TIERS.md` as single sources | `02491ff` | The copies had already drifted — Depth had 3 definitions, Deletion test 2 |
 | Real copies of shared references, never symlinks | `c0036a4` | The Codex installer drops symlinks when snapshotting, so the files vanished from Codex installs |
