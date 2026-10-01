@@ -13,7 +13,7 @@ You are the orchestrator of one plan's execution. Every effort's artifacts live 
 2. Read its Progress block and confirm each done task (Plan state).
 3. Resolve the subagent tiers.
 4. Set the Bound and pick the shape (Shape).
-5. Write the Pre-flight block.
+5. Write the Pre-flight lines into the plan's Progress block (Pre-flight).
 6. Run the task loop through the Bound (Implement).
 7. A run that ends with boxes unchecked ends as a short run. A run that ends with every box checked goes on to Review, Close the loop, and Retro; when `.crank/<slug>/retro.md` already exists, report the plan done and stop.
 
@@ -30,7 +30,7 @@ Take the first case that matches:
 
 ## Plan state
 
-Durable progress lives in a `## Progress` block directly under the plan's title. `Base` is HEAD before the first task, and each task has one line carrying its subject. When a task's **check** has passed and its commit lands, flip its box and put the commit SHA right after the subject, ahead of any `— open:` or `— note:`:
+Durable progress lives in a `## Progress` block directly under the plan's title. It opens with the current run's Pre-flight lines (see Pre-flight). `Base` is HEAD before the first task, and each task has one line carrying its subject. When a task's **check** has passed and its commit lands, flip its box and put the commit SHA right after the subject, ahead of any `— open:` or `— note:`:
 
 ```
 ## Progress
@@ -44,7 +44,7 @@ On invocation, read this block first. An `[x]` line is done: confirm it in `git 
 
 The plan's **grounding** is the file its `Grounding:` header names, or else its `## Grounding` section, one `- <claim> | <evidence> | <phase>, <date>` line per fact ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding). Confirm an entry at its evidence before you build on it.
 
-In a plan with a Stages table, every task number in a message to the user carries its stage, as in `Task 14 (stage 2 of 3)`. The task that closes a stage also names its gate and that stage row's exit state, as in `Task 18 (stage 2 of 3, gate): <exit state>`. Progress lines, commit messages, and the Pre-flight block keep the bare task number.
+In a plan with a Stages table, every task number in a message to the user carries its stage, as in `Task 14 (stage 2 of 3)`. The task that closes a stage also names its gate and that stage row's exit state, as in `Task 18 (stage 2 of 3, gate): <exit state>`. Progress lines, commit messages, and the Pre-flight lines keep the bare task number.
 
 A task's **check** is the first of these that exists:
 
@@ -56,7 +56,7 @@ Read the check's output in the same turn it runs. When a change has no test seam
 
 ## Subagent tiers
 
-Resolve the tiers once per run, before the Pre-flight block, and reuse the mapping at every dispatch. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tiers onto it, even when it names a weaker model than a fallback below, and a preference that covers all subagent work covers implementers too. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
+Resolve the tiers once per run, before the Pre-flight lines, and reuse the mapping at every dispatch. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tiers onto it, even when it names a weaker model than a fallback below, and a preference that covers all subagent work covers implementers too. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
 
 <subagent-tiers>
 - **standard** fallback (implementers): Claude Code `model: sonnet` · Codex Terra at medium effort · Cursor Composer
@@ -77,26 +77,26 @@ Every dispatch, implementer or reviewer, is a **blocking call**. When it runs in
 
 ## Pre-flight
 
-Write this block into your reply with every line filled, then continue in the same turn, every invocation, resumed runs included:
+Every invocation, resumed runs included, write these lines with every line filled at the top of the plan's `## Progress` block, between the heading and `Base:`, replacing the lines an earlier run left there. When the plan has no Progress block yet, this same edit adds it, with `Base:` and one unchecked line per task. This edit is the run's first file change, ahead of every other edit, commit, and dispatch, and its diff is the user's one look at the models, shape, and bound before a long run. Then continue in the same turn.
 
 ```
-**Pre-flight**
-- Plan: .crank/<slug>/plan.md (spec: spec.md · brainstorm: brainstorm.md)
-- Branch: <current branch>
-- Shape: <sequential | parallel | solo>
-- Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
-- Tasks: <N> (<M> remaining, <R> this run)
-- Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
+## Progress
+
+Pre-flight: branch <current branch>
+Shape: <sequential | parallel | solo>
+Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
+Tasks: <N> (<M> remaining, <R> this run)
+Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
+Base: <HEAD before the first task>
 ```
 
 Fill rules, line by line:
 
-- `Plan`: the parenthetical names only sibling artifacts present in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names; drop it when there are none.
-- `Subagents`: the resolved model names, never bare tier labels. `resolved from` names the instruction file whose subagent preference you mapped the tiers onto, or `harness fallback` when no loaded instruction file states one. A solo run's line reads `- Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`.
+- `Subagents`: the resolved model names, never bare tier labels. `resolved from` names the instruction file whose subagent preference you mapped the tiers onto, or `harness fallback` when no loaded instruction file states one. A solo run's line reads `Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`.
 - `Tasks`: `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. `<R>` is the run's tasks, the unchecked ones up to and including the Bound; Shape counts `<R>`.
 - `Bound`: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`; `stop at the stage 1 gate` means the last task of stage 1 in the plan's Stages table). A Stages table on its own leaves the bound at the last task.
 
-Completion criterion: the filled block is in your reply text ahead of the Progress block, the first edit, and the first dispatch.
+Completion criterion: the plan's Progress block opens with this run's filled Pre-flight lines, written before any other edit, commit, or dispatch. Your reply need not repeat them.
 
 ## Implement
 

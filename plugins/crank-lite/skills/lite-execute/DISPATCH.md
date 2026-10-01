@@ -1,6 +1,6 @@
 # Dispatch
 
-Send each task to one standard-tier implementer, the standard model the Pre-flight block names, with this message and every slot filled:
+Send each task to one standard-tier implementer, the standard model the Pre-flight lines name, with this message and every slot filled:
 
 ```
 Read <absolute path to this skill's IMPLEMENTER-BRIEF.md> and follow it.
