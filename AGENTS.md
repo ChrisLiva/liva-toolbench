@@ -17,7 +17,8 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 ├── scripts/
 │   ├── check-reviewer-briefs.py  # the repo's gate (see The repo's gate)
 │   ├── measure-review-cost.py    # how a review thread spent its turns
-│   └── fixtures/                 # the measurement's oracle transcripts
+│   ├── fixtures/                 # the measurement's oracle transcripts
+│   └── smoke/lite-execute/       # headless smoke harness for lite-execute
 └── plugins/
     └── <plugin-name>/
         ├── .claude-plugin/
@@ -237,6 +238,13 @@ is visible in a number. Handed a directory it recurses, which reaches
 `scripts/fixtures/` is its oracle: `review-thread.jsonl` pins the counting rules and
 `apply-shapes.jsonl` pins every apply tool, every shell-write form, and the
 non-lookup bucket.
+
+`scripts/smoke/lite-execute/` measures a lite-execute prose change on the models
+that execute it. `batch.sh` runs three scenarios (a fresh five-task plan, a resumed
+run that must stop at a `Stop if:`, and a spec handed in place of a plan) on Sonnet
+and Haiku orchestrators for each plugin copy you name, and `score.py` prints each
+rule's pass rate per copy. Its README names the fixture's traps and how to read a
+score.
 
 ---
 
