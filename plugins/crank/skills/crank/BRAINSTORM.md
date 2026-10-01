@@ -33,7 +33,7 @@ The high-level design brief. Include the sections that apply; this is a brief, n
 
 Before asking the user anything, read recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads with the **Explore the codebase** brief at References → Subagents.
 
-Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm leaves no directory behind.
+Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm that wrote no mock leaves no directory behind.
 
 ### 2. Name the destination
 
@@ -51,7 +51,7 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here); the agenda it opens with is this phase's decision tree. If that fan-out shows the way from idea to spec is already clear, say so and offer to skip to the spec phase rather than manufacture a brainstorm.
 
-- **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a throwaway artifact in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. The brief records the artifact's path beside the decision it settled.
+- **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a mock in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. Write the mock under `.crank/<slug>/` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing it, and keep it on disk until the plan's execution finishes. The brief records the mock's path beside the decision it settled.
 
 Completion criterion: the frontier is empty — every consequential design question settled with the user or recorded as an **Open question**, none waved past.
 
