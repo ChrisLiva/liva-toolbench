@@ -90,3 +90,7 @@ Apply the accepted rows: smallest diff per row, structure moves one at a time, s
 ### Subagents
 
 Finders run at the **standard** tier; resolve it per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback.
+
+### Vocabulary
+
+Defined in [VOCABULARY.md](VOCABULARY.md). This skill leans on the **deletion test**, **depth**, and **spaghetti growth**.

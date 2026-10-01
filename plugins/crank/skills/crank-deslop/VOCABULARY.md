@@ -1,0 +1,26 @@
+# Vocabulary
+
+Shared design language for the crank and crank-lite skills. Use these terms with these meanings. Design work leans on the first section, test and review work on the second.
+
+## Design language
+
+- **Module** — anything with an interface and an implementation: a function, class, file, or larger slice.
+- **Interface** — the full contract a caller must understand: signatures, invariants, ordering, errors, config.
+- **Implementation** — everything behind the interface. Complexity moved here is hidden; complexity moved to the interface is not.
+- **Depth** — how much an interface hides. A **deep** module exposes a small interface over substantial behavior; a **shallow** one exposes nearly as much as it hides. Depth lives in the interface, not the implementation: a deep module may be built of many small internal parts so long as they don't show through; a thin wrapper over a big library is shallow however many lines sit behind it.
+- **Leverage / locality** — the two payoffs of depth. Callers get **leverage**: more behavior per unit of interface they must learn. Maintainers get **locality**: change, bugs, and knowledge concentrate in one place instead of spreading across callers.
+- **Deletion test** — imagine the module gone. If its complexity vanishes, it was a pass-through and shouldn't be its own piece; if that complexity reappears across many callers, the boundary earned its place.
+- **Seam** — a place where behavior can be swapped without editing there; the location of an interface, and the surface tests drive — the production node, endpoint, or entry point a real caller reaches.
+- **Port / adapter** — a seam that crosses a dependency: the **port** is the interface, an **adapter** is a concrete fill (production HTTP/db vs. in-memory test double). Two adapters justify a port; one is just indirection.
+- **Spaghetti growth** — a one-off conditional, flag, or special case bolted onto a flow the spec/plan never named. A design problem, not a style nit: route the behavior behind the module that owns the concept, or surface the spec gap.
+
+## Verification language
+
+- **Dead seam** — a verify step that drives a node, handler, or endpoint the production code never wires up. It passes with the feature absent — worse than no check, because it hides the gap.
+- **Implementation-detail test** — a test coupled to *how* the code works instead of *what* it does: it mocks an internal collaborator, asserts on call counts or call order, reaches a private method, or verifies through a back channel (reading the database directly) instead of reading back through the interface. It breaks on a refactor that changes no behavior, and passes while behavior is broken. The opposite is a behavior test through the **seam**: input a real caller gives, output a real caller reads.
+- **Rewrite test** — imagine the code under test rewritten in another language, behavior intact: a test earns its place only if it would still pass, and still fail on the same regression. What survives pins observable behavior through the **seam**; what dies was pinning the code's shape.
+- **Journey test** — one test that walks a meaningful workflow end-to-end through a seam, carrying as many assertions as the journey needs. The unit of a minimal suite: a behavior met along the workflow lands as an assertion on its journey test, not as a sibling one-assertion test rebuilding the same setup.
+- **Redundant test** — a test that re-pins a behavior another test already pins at the same seam: maintenance cost, no added protection. Judged suite-wide, not per file. The usual repair merges it into the **journey test** already passing through that behavior; between true duplicates, the test at the truer seam survives.
+- **Tracer bullet / vertical slice** — one test, then the minimal code that passes it, then the next, each test shaped by what the last cycle revealed; a multi-behavior unit of work runs `test A → impl A → test B → impl B`. Its opposite, a **horizontal slice**, writes every test first and then all the implementation; it pins *imagined* behavior (data shapes, signatures) and yields tests that pass when behavior breaks.
+- **Oracle** — the authority for what code must output: exact input → expected output pairs, known-good examples, a naive reference implementation, a round-trip inverse (parse, then print back), or an invariant that must hold. A behavior with a named oracle can be checked deterministically. An oracle earns trust the way a test does: watch the check fail once, against the tree without the change, before believing its pass.
+- **Probe** — a throwaway deterministic check that settles one factual question about the code: a short script running the real function on known inputs and asserting the outputs, a row-count query before and after a migration, a static-analysis run scoped to the changed files. A probe ends in an assertion that exits non-zero on failure and takes its expected values from a named **oracle**, carrying that oracle's falsification. Probes live in the OS temp dir, never the working tree, and are gone before the commit; a check worth keeping is a test at the seam. Reach for one where behavior deserves deterministic verification but no real seam exists for a committed test.
