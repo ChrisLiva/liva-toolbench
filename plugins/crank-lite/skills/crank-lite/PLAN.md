@@ -36,7 +36,7 @@ Verification checks:
 - Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
 - Writing the plan surfaces facts the interview never asked: a signature, a file a task edits, a count a check pins. Confirm each at its source as you write it and record what you read in Grounding; one you cannot confirm now lands under Risks.
 
-Write every task for the weakest executor it may get — one that sees that task's text and file paths and nothing more:
+Write every task for the weakest executor it may get — one that sees one task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, and the commits already landed, and nothing more:
 
 - Each task carries its own paths, contract, and check.
 - Route reuse by name: a task that needs a helper the repo already has names it.

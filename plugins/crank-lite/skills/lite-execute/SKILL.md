@@ -1,30 +1,56 @@
 ---
 name: lite-execute
-description: "Execute a PRD, spec, or implementation plan: implement, verify, review, and commit the work."
+description: "Execute an implementation plan task by task: implement, verify, review, and commit the work."
 argument-hint: "[path to plan.md, or a .crank/ plan slug]"
 disable-model-invocation: true
 ---
 
-Every effort's artifacts live in one directory, `.crank/<slug>/`, per [ARTIFACT-HOME.md](ARTIFACT-HOME.md); read it before resolving or writing any artifact. Resolve the plan first:
+You are the orchestrator of one plan's execution. Every effort's artifacts live in one directory, `.crank/<slug>/`, per [ARTIFACT-HOME.md](ARTIFACT-HOME.md); read it before resolving or writing any artifact.
 
-1. **Explicit path** — read it as-is; the slug is the plan's parent directory name.
-2. **Bare slug** — resolves to `.crank/<slug>/plan.md`.
-3. **No argument, plan in the conversation** — use it; derive a slug from the plan's title.
-4. **No argument, exactly one plan on disk** — use it without asking.
-5. **No argument, several plans** — ask via a structured question listing each plan with its status (see Plan state). An effort directory without a `plan.md` (e.g. spec-only) shows as "no plan yet" and is not executable.
-6. **No argument, no plans anywhere** — say so and recommend the plan phase (`/crank-lite plan …`).
+## Steps
+
+1. Resolve the plan.
+2. Read its Progress block and confirm each done task (Plan state).
+3. Resolve the subagent tiers.
+4. Set the Bound and pick the shape (Shape).
+5. Write the Pre-flight block.
+6. Run the task loop through the Bound (Implement).
+7. A run that ends with boxes unchecked ends as a short run. A run that ends with every box checked goes on to Review, Close the loop, and Retro; when `.crank/<slug>/retro.md` already exists, report the plan done and stop.
+
+## Resolve the plan
+
+Take the first case that matches:
+
+1. **Explicit path**: read it as-is; the slug is the plan's parent directory name. A file with no task list, such as a spec, PRD, or brainstorm, is not a plan: say so, recommend the plan phase (`/crank-lite plan …`), and stop.
+2. **Bare slug**: resolves to `.crank/<slug>/plan.md`.
+3. **No argument, plan in the conversation**: derive a slug from the plan's title, write the plan to `.crank/<slug>/plan.md`, and use that file.
+4. **No argument, exactly one plan on disk**: use it without asking.
+5. **No argument, several plans**: ask via a structured question listing each plan with its status (see Plan state). An effort directory without a `plan.md` (a spec-only effort, say) shows as "no plan yet" and is not executable.
+6. **No argument, no plans anywhere**: say so and recommend the plan phase (`/crank-lite plan …`).
 
 ## Plan state
 
-Durable progress lives in the plan file. Before the first task, add a `## Progress` block at the top of the plan — `Base: <HEAD SHA before the first task>`, then one `- [ ] Task N: <subject>` line per task — and flip each line to `[x] — <commit SHA>` once that task's **check** has passed and its commit lands. On invocation, read this block first: an `[x]` line is done — confirm it against `git log` and never redo it. A plan's status reads off this block: *not started* (no block), *in progress* (unchecked boxes remain), *done* (all `[x]`).
+Durable progress lives in a `## Progress` block directly under the plan's title. `Base` is HEAD before the first task, and each task has one line carrying its subject. When a task's **check** has passed and its commit lands, flip its box and put the commit SHA right after the subject, ahead of any `— open:` or `— note:`:
 
-Every task number your reply gives the user from a plan with a Stages table carries its stage, as in `Task 14 (stage 2 of 3)`. The task that closes a stage also names its gate and that stage row's exit state, as in `Task 18 (stage 2 of 3, gate): <exit state>`. Progress lines and commit messages keep the bare task number.
+```
+## Progress
+
+Base: 9f8e7d6
+- [x] Task 1: Add the parser — a1b2c3d
+- [ ] Task 2: Wire the CLI flag
+```
+
+On invocation, read this block first. An `[x]` line is done: confirm it in `git log` by its SHA, or after a squash or rebase merge by its commit subject (`git log --grep`), and never redo it. A done task that neither search finds stops the run; tell the user. A plan's status reads off this block: *not started* (no block), *in progress* (unchecked boxes remain), *done* (all `[x]`).
+
+The plan's **grounding** is the file its `Grounding:` header names, or else its `## Grounding` section, one `- <claim> | <evidence> | <phase>, <date>` line per fact ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding). Confirm an entry at its evidence before you build on it.
+
+In a plan with a Stages table, every task number in a message to the user carries its stage, as in `Task 14 (stage 2 of 3)`. The task that closes a stage also names its gate and that stage row's exit state, as in `Task 18 (stage 2 of 3, gate): <exit state>`. Progress lines, commit messages, and the Pre-flight block keep the bare task number.
 
 A task's **check** is the first of these that exists:
 
 1. the check the plan names for that task;
-2. the gate the plan's grounding records ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding);
-3. the repo's typecheck plus the test file covering the touched behavior.
+2. the gate command the plan's grounding records;
+3. the repo's typecheck plus the test file covering the touched behavior. A task with no such test gets one at the seam it changes; a task with no testable behavior, such as docs, gets the repo's typecheck or lint.
 
 Read the check's output in the same turn it runs. When a change has no test seam, validate it with a **probe** and treat its passing output as the check.
 
@@ -39,17 +65,19 @@ Resolve the tiers once per run, before the Pre-flight block, and reuse the mappi
 
 ## Shape
 
-You are the orchestrator: standard-tier subagents implement, one per task, dispatched per [DISPATCH.md](DISPATCH.md), while this thread confirms each return, commits it, and runs the review. The run's tasks are its unchecked Progress lines through the Bound; pick the shape from them:
+The run's tasks are its unchecked Progress lines up to and including the **Bound**, the task the run ends after: the plan's last task, or an earlier one the user named. Take the first shape that matches the run's tasks:
 
-- **Sequential** — the default. One implementer at a time, in plan order. Tasks that share files, build on an earlier task's output, or serialize on one build directory run here.
-- **Parallel** — the tasks touch disjoint file sets and their checks can run concurrently.
-- **Solo** — the run has three tasks or fewer. Implement inline on this thread.
+1. **Solo**: the run has three tasks or fewer. Implement them inline on this thread. Count only the run's tasks: a twelve-task plan resumed at Task 10, or bounded at Task 2 with Task 1 done, is solo.
+2. **Parallel**: the tasks touch disjoint file sets and their checks can run concurrently. Standard-tier subagents implement them, dispatched per [DISPATCH.md](DISPATCH.md).
+3. **Sequential**: every other run, including tasks that share files, build on an earlier task's output, or serialize on one build directory. One standard-tier subagent per task, dispatched per [DISPATCH.md](DISPATCH.md), in plan order.
 
-A stated shape binds the run: if you said sequential or parallel, the first action on each task is a dispatch, not an inline edit. Drop back to solo only by saying so and why. Every dispatch — implementer or reviewer — is a **blocking call**: end your turn at the spawn, let its return notification resume you, and read that return before anything else moves. The wait breaks only for a **stalled** dispatch — one out past the point you expected it back: reconcile against durable state (`git log`, the Progress block, its report), then resume it or surface the stall.
+The shape you state binds the run: in a sequential or parallel run, the first action on each task is a dispatch, not an inline edit.
+
+Every dispatch, implementer or reviewer, is a **blocking call**. When it runs in the background, end your turn at the spawn and let its completion notification resume you; when its result comes back in the same call, read it there. Either way, read the return before anything else moves, and leave the dispatched work to the dispatch: no sleeping, polling, or doing its task yourself while it is out. In a parallel run, a sibling's return is not a reason to act on the others: read it and end your turn again. A dispatch is **stalled** when a user message, or a notice that the subagent ended without returning, resumes you while it is still out. Run `git status` and `git diff` on its task's files once, then resume it or tell the user it stalled and what those files show.
 
 ## Pre-flight
 
-Write this block into your reply with every line filled, then continue in the same turn — every invocation, resumed runs included:
+Write this block into your reply with every line filled, then continue in the same turn, every invocation, resumed runs included:
 
 ```
 **Pre-flight**
@@ -57,51 +85,94 @@ Write this block into your reply with every line filled, then continue in the sa
 - Branch: <current branch>
 - Shape: <sequential | parallel | solo>
 - Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
-- Tasks: <N> (<M> remaining)
-- Bound: <Task <N>, the plan's last | Task <N>, the stage <S> gate the user named>
+- Tasks: <N> (<M> remaining, <R> this run)
+- Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
 ```
 
-The Plan line's parenthetical names only sibling artifacts present in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names; drop it when there are none. Models are the resolved names, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. Solo's Subagents line reads `heavy = <model> (adversarial review) — implementation inline`, with the same `resolved from` tail. `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's Stages table); a Stages table on its own leaves the bound at the last task. Completion criterion: the filled block stands in your reply text ahead of the Progress block, the first edit, and the first dispatch.
+Fill rules, line by line:
+
+- `Plan`: the parenthetical names only sibling artifacts present in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names; drop it when there are none.
+- `Subagents`: the resolved model names, never bare tier labels. `resolved from` names the instruction file whose subagent preference you mapped the tiers onto, or `harness fallback` when no loaded instruction file states one. A solo run's line reads `- Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`.
+- `Tasks`: `<M>` is the Progress block's unchecked boxes, or `<N>` before the block exists. `<R>` is the run's tasks, the unchecked ones up to and including the Bound; Shape counts `<R>`.
+- `Bound`: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`; `stop at the stage 1 gate` means the last task of stage 1 in the plan's Stages table). A Stages table on its own leaves the bound at the last task.
+
+Completion criterion: the filled block is in your reply text ahead of the Progress block, the first edit, and the first dispatch.
 
 ## Implement
 
-Before you implement, read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it: this skill leans on the **probe**, its **oracle**, the **seam**, the **journey test**, the **redundant test**, and the **rewrite test**.
+Before the first task:
 
-A plan that carries a **Global Constraints** section binds every task to it: read the section once before the first task and hold each task's work to it beside the task's own lines.
+- Read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it, and the plan's **Global Constraints** section when it has one. Global Constraints bind every task alongside the task's own lines.
+- Read the `While implementing` and `Detours and stops` sections of [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md). In a solo run, hold your inline work to them; in every run, hold your own fixes to them.
+- Run `git status --porcelain` and keep its file list: those files hold the user's uncommitted work.
+- If the plan has no Progress block, add it.
 
-Run each task's check before flipping its box. Run the full suite once, before the review dispatch.
+Then run this loop for each of the run's tasks, in plan order. A parallel run sends its dispatches in one message and ends its turn; once every dispatch has returned, it runs steps 2 to 5 for each task in plan order.
 
-Standing defect rules while implementing:
+1. **Implement.** Sequential and parallel: dispatch the task per [DISPATCH.md](DISPATCH.md). Solo: implement it inline.
+2. **Check.** Run the task's check yourself and read its output. A failing check goes back to the implementer with its output, or in a solo run, to your own fix, at most twice. A check that still fails, or a return that reports a reroute or an observed `Stop if:`, goes to Detours and stops below.
+3. **Commit.** Run `git status`. Stage only the files this task changed, by path, and commit only those paths (`git commit -- <paths>`). A file this task changed that was on the pre-run list holds user edits: ask the user before committing it.
+4. **Record.** Flip the task's Progress line to `[x]` with the commit SHA. When the task took a detour, add its corrected fact to the plan's grounding in the same step.
+5. **Stage gate.** When this task closes a stage in the plan's Stages table, run every gate command the plan names. A red gate is fixed before the next task, unless the same command also fails at `Base` (Review step 1); that failure is a retro note.
 
-- Any encode/decode or save/restore pair gets a round-trip assertion on a hostile real value (sub-millisecond timestamps, unicode, boundary sizes).
-- Handling one member of an error family means checking its siblings (EPERM beside EACCES) or noting the single-case choice.
-- Every parser or loop over external input gets its empty case exercised once.
-- A test that passed on its first run gets one deliberate mutation to watch it fail.
-- Edits to user-owned files (configs, gitignores) assert untouched lines survive byte-identical.
-- A new test earns its place only if it is not a **redundant test** and it survives the **rewrite test**; otherwise extend the **journey test** at that seam with a failing assertion.
+## Detours and stops
 
-The plan's destination is frozen; the road is not. When a bug, stale detail (renamed symbol, moved file), or failed assumption blocks a task, fix it as a **detour** — the smallest change that still ships exactly what the plan promises — and note it in the retro's deviations; beside the task's Progress flip, append the corrected fact as one line to the plan's grounding, or rewrite in place the entry it contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), so a resumed run stops re-hitting the same stale detail. A fix that would change what ships is a **reroute**: stop and surface it with your recommendation. A `Stop if:` condition the plan wrote on a task, once observed, stops that task the same way: surface what you observed with your recommendation, never work around it. Pre-existing bugs off the plan's path stay retro notes, never side quests.
+The plan's destination is frozen; the road is not. Classify each surprise by what it does to what ships:
+
+| You find | It is | Then |
+| --- | --- | --- |
+| A bug, a stale detail (renamed symbol, moved file), or a failed assumption blocks the task, and the smallest fix still ships exactly what the plan promises | a **detour** | Fix it and note it for the retro's deviations. Beside the task's Progress flip, append the corrected fact as one line to the plan's grounding, or rewrite in place the entry it contradicts, so a resumed run stops re-hitting the same stale detail. |
+| A fix that would change what ships, or a check that still fails after two fixes | a **reroute** | Stop the run. Tell the user what you found, with the check's output where there is one and your recommendation. |
+| A `Stop if:` condition the plan wrote on the task, observed | a **stop** | Stop the run without working around it. Tell the user what you observed, with your recommendation. |
+| A pre-existing bug off the plan's path | a retro note | Record it for the retro and leave it unfixed. |
+
+A reroute or a stop leaves the task unchecked and its edits uncommitted; name those files in your report. In a parallel run, first finish steps 2 to 5 for every other task that returned. Then finish as a short run.
 
 ## Short run
 
-A run that ends with boxes still unchecked in the `## Progress` block — its Bound (Pre-flight) fell short of the last task, or a reroute stopped it — is a **short run**: the review, the loop-close, and the retro below belong to the run that lands the **last** plan task, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
+A run that ends with boxes still unchecked in the `## Progress` block is a **short run**: its Bound fell short of the last task, or a reroute or stop ended it. The review, the loop-close, and the retro below belong to the run that ends with every box checked, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
 
-- On each unchecked task's line, append `— open: <a question this run raised about it>` and `— note: <an interface, path, or contract its task text no longer matches>`; on each task that landed this run, append `— note: <one line>` per observation the retro would otherwise have carried.
-- Bank each corrected repo fact, detour or not, with its evidence in the plan's grounding as under Implement.
+- Read each unchecked task's text against this run's diff. On its line, append `— open: <a question this run raised about it>` or `— note: <an interface, path, or contract its task text no longer matches>`, as many as apply. A task this run did not affect gets `— note: unaffected`, unless its line already carries one.
+- On each task that landed this run, append `— note: <one line>` per observation the retro would otherwise have carried.
+- Add each corrected repo fact, detour or not, with its evidence to the plan's grounding as under Detours and stops.
 - Under the Progress block's `Base:` line, write `Stopped: <why> — resume at Task <N>`; the run that resumes overwrites it.
 
-Then report the tasks that landed with their commit SHAs, the tasks that remain, and `/lite-execute <plan path>` to resume. Completion criterion: every unchecked task carries what this run changed for it or is confirmed unaffected, and the `Stopped:` line names the resume point.
+```
+Base: 9f8e7d6
+Stopped: Task 2's Stop if observed, every route sets JSON — resume at Task 2
+- [x] Task 1: Add the parser — a1b2c3d
+- [ ] Task 2: Wire the CLI flag — open: may the export route bypass the middleware?
+- [ ] Task 3: Document the flag — note: unaffected
+```
 
-## Review and commit
+Then report the tasks that landed this run with their commit SHAs (or that none did), the tasks that remain, and `/lite-execute <plan path>` to resume. Completion criterion: every unchecked task was read against this run's diff and its line carries an `— open:` or `— note:`, and the `Stopped:` line names the resume point.
 
-Once done implementing the entire plan, walk the plan's **Coverage** table when it carries one, row by row: each row's verify step ran green this session, re-run when stale or when a later task may have broken it; a row marked human-only goes to Close the loop as an action only a human can perform. Then dispatch a heavy-tier reviewer to adversarially review the work against the plan, handing it pointers only — the absolute path to this skill's [REVIEW-BRIEF.md](REVIEW-BRIEF.md), the plan path, the spec path when the plan's `Spec:` header names one, the Progress block's `Base` SHA, the diff command `git diff <Base>..HEAD`, and the absolute path to this skill's `VOCABULARY.md` — never your characterization of the diff. It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence. Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
+## Review
 
-Before committing, inspect the worktree and stage only the files this plan's work changed. If unrelated user changes are present, leave them untouched and ask before committing only when you cannot separate your changes safely.
+Once every box is checked:
+
+1. Run the full suite once. Fix what this run broke and commit each fix, staged as in the task loop, so the reviewer's diff holds it. A failure counts as pre-existing only when the same test fails the same way at `Base`: check it in a temporary `git worktree` at `Base` with the repo's dependencies installed, then remove the worktree. A pre-existing failure is a retro note.
+2. Walk the plan's **Coverage** table, when it carries one, row by row. Re-run a row's verify step unless it ran green this session after the last commit that touched a file it exercises. A row marked human-only goes to Close the loop as an action only a human can perform.
+3. Dispatch one heavy-tier reviewer with this message, filled, and nothing else; the reviewer gathers its own facts:
+
+   ```
+   Read <absolute path to this skill's REVIEW-BRIEF.md> and follow it.
+   Plan: <plan path>
+   Spec: <the path the plan's Spec: header names, or none>
+   Base: <the Progress block's Base SHA>
+   Diff: git diff <Base>..HEAD
+   Vocabulary: <absolute path to this skill's VOCABULARY.md>
+   ```
+
+   It returns each finding as `CONFIRMED` or `REFUTED` with the code evidence.
+4. Fix every `CONFIRMED` finding and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. Commit the fixes, staged as in the task loop.
+
+Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
 
 ## Close the loop
 
-Before the retro, settle every loose end (what earlier short runs parked on the Progress lines, reviewer findings, plan risks, your own "worth noting" observations) with a command, read, or test this session; a loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation. A fact that cost this run a detour and would cost the next run the same — a fixture landmine, a known flake, a toolchain trap — outlives the effort: append one line carrying its evidence to the repo's `CLAUDE.md`, `CONTEXT.md`, or an ADR, whichever the repo already has, and name where it landed in the retro; with no such file it survives as a decision naming the line and its target.
+Before the retro, settle every loose end with a command, read, or test this session: what earlier short runs left on the Progress lines, reviewer findings, plan risks, and your own "worth noting" observations. A loose end survives only as a decision the user must make or an action only a human can perform, written with your recommendation. A fact that cost this run a detour and would cost the next run the same, such as a fixture that breaks tests in a way the code does not show, a known flaky test, or a flag a toolchain command needs, outlives the effort: append one line carrying its evidence to the repo's `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, or an ADR, whichever the repo already has, commit it, and name where it landed in the retro; with no such file it survives as a decision naming the line and its target.
 
 ## Retro
 
-Record the retro to `.crank/<slug>/retro.md` and stop. Include, when each earns its place: what changed, verification run, review outcome, deviations from the plan, where any promoted fact landed, and any surviving decisions. Tell the user the commit SHA and retro path; when nothing survived the loop-close, say the work is complete.
+Record the retro to `.crank/<slug>/retro.md` and stop. Include, when each earns its place: what changed, verification run, review outcome, deviations from the plan, where any promoted fact landed, and any surviving decisions. Tell the user the commit SHAs this run landed and the retro path; when nothing survived the loop-close, say the work is complete.
