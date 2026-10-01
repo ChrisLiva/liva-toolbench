@@ -14,6 +14,9 @@ case ${SMOKE_PERMISSION_MODE:-bypass} in
   bypass) perm=(--dangerously-skip-permissions) ;;
   *) perm=(--permission-mode "$SMOKE_PERMISSION_MODE") ;;
 esac
+# SMOKE_SETTING_SOURCES=project,local leaves out the user-level CLAUDE.md, to test whether
+# its instructions override a skill rule.
+if [ -n "${SMOKE_SETTING_SOURCES:-}" ]; then perm+=(--setting-sources "$SMOKE_SETTING_SOURCES"); fi
 
 case $scenario in
   fresh|spec-path) seed=$seeds/seed-fresh ;;

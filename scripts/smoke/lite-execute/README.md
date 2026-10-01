@@ -22,7 +22,7 @@ python3 scripts/smoke/lite-execute/score.py $S/batch          # pass rate per ch
 python3 scripts/smoke/lite-execute/score.py --json $S/batch   # one JSON object per run
 ```
 
-`batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> ...` runs every scenario for Sonnet and Haiku orchestrators. `run.sh` drives one session and saves its stream (`turns/*.jsonl`), the repo, and `.crank/` before and after. Each session works in a throwaway clone with permission prompts skipped: in auto mode a headless implementer's `Write` calls were denied and the run stalled on Task 1. Set `SMOKE_PERMISSION_MODE=<mode>` to run under a permission mode instead.
+`batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> ...` runs every scenario for Sonnet and Haiku orchestrators; `SMOKE_SCENARIOS="fresh stop-if"` and `SMOKE_MODELS=sonnet` narrow it. `run.sh` drives one session and saves its stream (`turns/*.jsonl`), the repo, and `.crank/` before and after. Each session works in a throwaway clone with permission prompts skipped: in auto mode a headless implementer's `Write` calls were denied and the run stalled on Task 1. Set `SMOKE_PERMISSION_MODE=<mode>` to run under a permission mode instead. Set `SMOKE_SETTING_SOURCES=project,local` to leave out the user-level `CLAUDE.md`; implementers then fall back to the skill's harness tiers.
 
 The sessions load the user-level `CLAUDE.md`, so its subagent model preference sets the implementer and reviewer models. `--settings` disables the marketplace installs of crank and crank-lite, so only the `--plugin-dir` copy loads.
 

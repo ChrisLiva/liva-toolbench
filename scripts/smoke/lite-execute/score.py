@@ -85,11 +85,20 @@ def preflight(items):
     return None
 
 
+def preflight_file(run):
+    """The Pre-flight lines a run wrote at the top of the plan's Progress block, if any."""
+    m = re.search(r"^## Progress\n(.*?)^Base:", plan_text(run, "crank-after"), re.M | re.S)
+    return m.group(1) if m and re.search(r"^-? ?Shape:", m.group(1), re.M) else None
+
+
 def preflight_line(block, field):
+    """A field's value from a Pre-flight block written one field per line or as one `·`-joined line."""
     if not block:
         return None
-    m = re.search(rf"^- {field}:(.*)$", block, re.M)
-    return m.group(1).strip() if m else None
+    m = re.search(rf"(?:^|·)\s*-?\s*{field}:([^\n]*)", block, re.M)
+    if not m:
+        return None
+    return re.split(r" · (?:Plan|Branch|Shape|Subagents|Tasks|Bound):", m.group(1))[0].strip()
 
 
 def plan_text(run, which):
@@ -125,13 +134,23 @@ def rate(hits, total):
 
 
 def common(run, items, events):
-    block = preflight(items)
-    pf_idx = first_index(items, lambda it: it[0] == "text" and "**Pre-flight**" in it[1])
+    reply = preflight(items)
+    in_plan = preflight_file(run)
+    block = reply or in_plan
     mut_idx = first_index(items, is_mutation)
+    if reply is not None:
+        pf_idx = first_index(items, lambda it: it[0] == "text" and "**Pre-flight**" in it[1])
+        first = int(mut_idx is None or pf_idx < mut_idx)
+    elif in_plan is not None:
+        first = int(mut_idx is not None and "Shape:" in json.dumps(items[mut_idx][1].get("input", {})))
+    else:
+        first = None
     subagents = preflight_line(block, "Subagents") or ""
     return block, {
         "preflight_present": int(block is not None),
-        "preflight_first": None if block is None else int(mut_idx is None or pf_idx < mut_idx),
+        "preflight_in_reply": int(reply is not None),
+        "preflight_in_plan": int(in_plan is not None),
+        "preflight_first": first,
         "tiers_resolved_from_user": None if block is None else int("user CLAUDE.md" in subagents),
         "no_sleep_polling": int(not any("sleep" in bash_cmd(it) for it in items)),
     }
@@ -142,7 +161,7 @@ def score_fresh(run, items, events, block, s):
     rev_idx = reviewer[0][0] if reviewer else len(items)
     shape = (preflight_line(block, "Shape") or "").lower()
     subagents = preflight_line(block, "Subagents") or ""
-    std = re.search(r"standard = ([^(]+)", subagents)
+    std = re.search(r"standard = ([^(,·]+)", subagents)
     s["shape_sequential"] = None if block is None else int("sequential" in shape)
     s["standard_tier_opus"] = None if not std else int("opus" in std.group(1).lower())
     s["impl_dispatches"] = len(impl)
