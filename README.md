@@ -17,6 +17,7 @@ Once added, install any plugin by name:
 /plugin install crank
 /plugin install crank-lite
 /plugin install effective-html
+/plugin install agent-effort
 ```
 
 For Codex, the repo doubles as a local marketplace (`.agents/plugins/marketplace.json`):
@@ -37,7 +38,7 @@ Then `/reload-plugins` after any edits.
 
 ## Plugins
 
-All three plugins ship **cross-harness** — the same `skills/` tree runs under both Claude Code and Codex (each carries a `.claude-plugin/` and a `.codex-plugin/` manifest).
+Every skill plugin ships **cross-harness**: the same `skills/` tree runs under both Claude Code and Codex, and each carries a `.claude-plugin/` and a `.codex-plugin/` manifest. `agent-effort` is the exception. It is a Claude Code mod written as function hooks, which only Claude Code runs.
 
 ### `crank` — design-first development pipeline
 
@@ -87,6 +88,16 @@ A user-summoned skill that nudges the coding agent to answer with a **single sel
 |---|---|---|
 | `effective-html:effective-html` | `/effective-html <what to make>` | Produces one offline-safe HTML artifact for the thing you describe. User-invoked only. |
 
+### `agent-effort` shows each subagent's effort level in Claude Code
+
+This Claude Code mod shows the effort each spawned subagent actually runs at. It reads the effort from the subagent's own model requests, so an agent definition's `effort:` or a per-model effort setting shows as applied. It has no skills or commands. Once installed, it draws in three places:
+
+| Where | What it shows |
+|---|---|
+| The Agent call's row | `Explore(probe bg · effort high)` |
+| A background agent's completion notice | `Agent "probe bg" finished · effort high · 49s` |
+| A band above the prompt | One row per running background agent: `probe bg · Explore · effort high` |
+
 ---
 
 ## Repository layout
@@ -124,6 +135,11 @@ plugins/
     .claude-plugin/plugin.json
     .codex-plugin/plugin.json
     skills/effective-html/SKILL.md
+  agent-effort/                 # Claude-only mod of function hooks
+    .claude-plugin/plugin.json
+    hooks/register.tsx          # the hooks module hooks/hooks.json names
+    types/index.d.ts            # the $.state values it keeps
+    tests/                      # run by `claude plugin test`
 ```
 
 See `CLAUDE.md` for authoring conventions, the cross-harness rules, and the version-bump checklist.

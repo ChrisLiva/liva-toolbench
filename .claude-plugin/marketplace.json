@@ -38,6 +38,14 @@
       "version": "0.5.1",
       "category": "tools",
       "tags": ["html", "communication", "artifact", "single-file", "anthropic"]
+    },
+    {
+      "name": "agent-effort",
+      "source": "./plugins/agent-effort",
+      "description": "Shows the effort level each spawned subagent runs at on its Agent row and its completion notice, and lists running background agents with their effort in a band above the prompt",
+      "version": "0.1.0",
+      "category": "tools",
+      "tags": ["subagent", "effort", "mod", "hooks"]
     }
   ]
 }
