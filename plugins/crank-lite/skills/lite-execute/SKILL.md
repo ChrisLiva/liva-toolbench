@@ -73,7 +73,7 @@ The run's tasks are its unchecked Progress lines up to and including the **Bound
 
 The shape you state binds the run: in a sequential or parallel run, the first action on each task is a dispatch, not an inline edit.
 
-Every dispatch, implementer or reviewer, is a **blocking call**. When it runs in the background, end your turn at the spawn and let its completion notification resume you; when its result comes back in the same call, read it there. Either way, read the return before anything else moves, and leave the dispatched work to the dispatch: no sleeping, polling, or doing its task yourself while it is out. In a parallel run, a sibling's return is not a reason to act on the others: read it and end your turn again. A dispatch is **stalled** when a user message, or a notice that the subagent ended without returning, resumes you while it is still out. Run `git status` and `git diff` on its task's files once, then resume it or tell the user it stalled and what those files show.
+Every dispatch, implementer or reviewer, is a **blocking call**. When the harness offers a blocking wait on a subagent, wait on it. When the harness instead resumes you with a completion notification, end your turn at the spawn and let the notification resume you. When the result comes back in the same call, read it there. Ending your turn while a dispatch is out is safe only under that notification; under any other harness it ends the run. A wait that comes back before the subagent does, such as a timeout, is not a return, so wait again. Either way, read the return before anything else moves, and leave the dispatched work to the dispatch: no sleeping, polling, or doing its task yourself while it is out. In a parallel run, a sibling's return is not a reason to act on the others. Read it and wait for the rest the same way. A dispatch is **stalled** when a user message, or a notice that the subagent ended without returning, resumes you while it is still out. Run `git status` and `git diff` on its task's files once, then resume it, or dispatch the task again with the files it already changed on the `Settled:` line. A second stall on the same task is a decision for the user.
 
 ## Pre-flight
 
@@ -107,7 +107,7 @@ Before the first task:
 - Run `git status --porcelain` and keep its file list: those files hold the user's uncommitted work.
 - If the plan has no Progress block, add it.
 
-Then run this loop for each of the run's tasks, in plan order. A parallel run sends its dispatches in one message and ends its turn; once every dispatch has returned, it runs steps 2 to 5 for each task in plan order.
+Then run this loop for each of the run's tasks, in plan order. A parallel run sends its dispatches in one message and waits on them as blocking calls; once every dispatch has returned, it runs steps 2 to 5 for each task in plan order.
 
 1. **Implement.** Sequential and parallel: dispatch the task per [DISPATCH.md](DISPATCH.md). Solo: implement it inline.
 2. **Check.** Run the task's check yourself and read its output. A failing check goes back to the implementer with its output, or in a solo run, to your own fix, at most twice. A check that still fails, or a return that reports a reroute or an observed `Stop if:`, goes to Detours and stops below.
@@ -115,22 +115,25 @@ Then run this loop for each of the run's tasks, in plan order. A parallel run se
 4. **Record.** Flip the task's Progress line to `[x]` with the commit SHA. When the task took a detour, add its corrected fact to the plan's grounding in the same step.
 5. **Stage gate.** When this task closes a stage in the plan's Stages table, run every gate command the plan names. A red gate is fixed before the next task, unless the same command also fails at `Base` (Review step 1); that failure is a retro note.
 
+The loop hands the turn back to the user only for a decision: a pre-run file in step 3, or a decision from Detours and stops. Everything else leads straight to the next step in the same turn: a subagent's return, a check's output, a commit, a stage gate, a detour. A progress report between tasks is not a stopping point. Completion criterion: every task through the Bound is checked, or a decision the user must make ended the run.
+
 ## Detours and stops
 
-The plan's destination is frozen; the road is not. Classify each surprise by what it does to what ships:
+The plan's destination is frozen; the road is not, and you orchestrate the road. Settle every surprise that leaves what ships unchanged, and stop the run only for a decision the user must make. Classify each surprise by what it does to what ships:
 
 | You find | It is | Then |
 | --- | --- | --- |
 | A bug, a stale detail (renamed symbol, moved file), or a failed assumption blocks the task, and the smallest fix still ships exactly what the plan promises | a **detour** | Fix it and note it for the retro's deviations. Beside the task's Progress flip, append the corrected fact as one line to the plan's grounding, or rewrite in place the entry it contradicts, so a resumed run stops re-hitting the same stale detail. |
-| A fix that would change what ships, or a check that still fails after two fixes | a **reroute** | Stop the run. Tell the user what you found, with the check's output where there is one and your recommendation. |
-| A `Stop if:` condition the plan wrote on the task, observed | a **stop** | Stop the run without working around it. Tell the user what you observed, with your recommendation. |
+| A `Stop if:` condition the plan wrote on the task, observed | a **stop** | Settle it before you stop anything. Read the code the condition names and look for a route that code already offers, such as an existing parameter, helper, or pattern used the way its other callers use it, that ships exactly what the task promises and edits no code outside the task's own additions. Such a route makes the stop a detour. Take it inline in a solo run, or dispatch the task again with the route on its `Settled:` line ([DISPATCH.md](DISPATCH.md)). A stop with no such route is a decision. |
+| A check that still fails after two fixes | a **stuck check** | Diagnose it yourself. Read its output and the code it names, and run a **probe** when the output leaves the cause open. When the fix for that cause still ships what the plan promises, make one more fix that carries the diagnosis, inline or on the `Settled:` line. A check that fails after that fix is a decision. |
+| A **reroute**, meaning a fix that would change what ships; a stop with no route the code offers; or a stuck check that failed its diagnosed fix | a **decision** | Stop the run. Tell the user what you found, with the check's output where there is one, and give numbered options with your recommendation marked. |
 | A pre-existing bug off the plan's path | a retro note | Record it for the retro and leave it unfixed. |
 
-A reroute or a stop leaves the task unchecked and its edits uncommitted; name those files in your report. In a parallel run, first finish steps 2 to 5 for every other task that returned. Then finish as a short run.
+A settled stop and a diagnosed stuck check send the task back to step 2 of the loop. A decision leaves the task unchecked and its edits uncommitted; name those files in your report. In a parallel run, first finish steps 2 to 5 for every other task that returned. Then finish as a short run.
 
 ## Short run
 
-A run that ends with boxes still unchecked in the `## Progress` block is a **short run**: its Bound fell short of the last task, or a reroute or stop ended it. The review, the loop-close, and the retro below belong to the run that ends with every box checked, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
+A run that ends with boxes still unchecked in the `## Progress` block is a **short run**: its Bound fell short of the last task, or a decision ended it. The review, the loop-close, and the retro below belong to the run that ends with every box checked, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
 
 - Read each unchecked task's text against this run's diff. On its line, append `— open: <a question this run raised about it>` or `— note: <an interface, path, or contract its task text no longer matches>`, as many as apply. A task this run did not affect gets `— note: unaffected`, unless its line already carries one.
 - On each task that landed this run, append `— note: <one line>` per observation the retro would otherwise have carried.

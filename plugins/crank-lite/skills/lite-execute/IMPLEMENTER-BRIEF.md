@@ -1,6 +1,6 @@
 # Implementer brief
 
-You implement one task of a plan. The message that sent you names the task, its files, its check, the plan's Global Constraints, its grounding, the commits already landed, and a `VOCABULARY.md` path.
+You implement one task of a plan. The message that sent you names the task, its files, its check, the plan's Global Constraints, its grounding, the commits already landed, a `VOCABULARY.md` path, and a `Settled:` line. `Settled:` reads `none` unless an earlier pass at this task stopped, failed its check, or stalled. Then it carries the orchestrator's ruling on that pass, and you follow it.
 
 Before you start, read that `VOCABULARY.md`'s `## Verification language` section, plus the **seam** entry above it. Hold your work to the Global Constraints as well as the task text. A grounding line is a claim: confirm it at its evidence before you build on it.
 
@@ -17,7 +17,7 @@ Before you start, read that `VOCABULARY.md`'s `## Verification language` section
 
 - **Detour**: a bug, a stale detail (renamed symbol, moved file), or a failed assumption blocks the task. Make the smallest change that still ships exactly what the task and the plan promise, changing no contract another task names, and report the corrected fact with its evidence. Edit only the files your message names, plus a test file your check needs; a failure in any other file goes in your return unfixed.
 - **Reroute**: the fix would change what ships. Stop, make no further change, and return what you found with your recommendation.
-- **Stop**: the task's `Stop if:` condition, once observed. Stop the same way and return what you observed, never a workaround.
+- **Stop**: the task's `Stop if:` condition, once observed. Stop the same way and return what you observed, plus any route around it that the code already offers, untaken. A route your `Settled:` line names is the one exception: take it.
 - **Off-path bug**: a pre-existing bug off the task's path. Leave it unfixed and name it in your return.
 
 ## Return
