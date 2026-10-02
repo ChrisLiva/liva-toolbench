@@ -41,7 +41,7 @@ Copy this block into the brief directory once per run; every task brief and fix 
 # Implementer rules
 
 - Read `orientation.md` and your brief in full, and the plan only at the section your brief names by heading — nothing else from the plan, and no sweep of the tree beyond the areas your task touches.
-- A `Prototype:` line in your task's plan section makes its winning variant the reference for the surface you build: read the variant at that path before your first edit. Your Behavior lines pin what ships, and the variant guides the details they leave open, such as spacing and copy. Build nothing the line says the verdict left out, replace the mock's fixture values and static host chrome with the real data and the host's own chrome, build with the project's own components, and import or copy no prototype file into the source tree. Where a Behavior line and the variant disagree, the Behavior line wins; record the difference under the report's Observations.
+- A `Prototype:` line in your task's plan section makes its winning variant the reference for the surface you build: read the variant at that path, or the block copied beneath a line that reads `in chat`, before your first edit. Your plan section states what ships, and the variant guides the details the section leaves open, such as spacing and copy. Build nothing the line says the user left out of the winner, replace the mock's fixture values and static host chrome with the real data and the host's own chrome, build with the project's own components, and import or copy no prototype file into the source tree. Where your plan section and the variant disagree, the section wins, and you record the difference under the report's Observations.
 - Edit only inside your brief's Files block; a change that needs a file outside it returns `NEEDS_CONTEXT` first.
 - Do not push, amend earlier commits, or rewrite history.
 - Return only when every command you started has finished. A long verification runs in the foreground with a timeout, or starts in the background and waits on its completion notification: one blocking wait per command, never a polling loop. Read its output in the same turn you report it — work parked behind a background watcher at return time is work not done.
@@ -80,7 +80,7 @@ Report path: <path to task-<N>-report.md>
 
 ## Task
 
-Plan: <plan path>, section `### Task <N> — <title>` — your steps, its `Check:` line, and its `Stop if:` line.
+Plan: <plan path>, section `### Task <N> — <title>`: your steps, its `Check:` line, its `Stop if:` line, and its `Prototype:` line when it has one.
 
 Behaviors — your test list, each line copied verbatim from that section:
 

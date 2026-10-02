@@ -9,11 +9,11 @@ Resolve every implementation decision, and plan the smallest change that ships t
 Before the first question, read:
 
 - The incoming artifact in full, when one exists.
-- The winning variant a `Prototype:` line names, and any mock the incoming artifact records, opened at its path.
+- The winning variant the incoming artifact's `Prototype:` line names, and any other mock it records, read at its path.
 - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, when one exists, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding. Rewrite a drifted entry in place where it lives, in that section or that `grounding.md`, with the new evidence, phase, and date, then carry the drift into the plan's updates since spec.
 
-Offer a prototype, 3 to 5 variants behind one switcher, once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under the plan's assumptions. When no offer fires, move to the questions without mentioning a prototype.
+Offer a prototype, 3 to 5 variants behind one switcher, once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under the plan's assumptions. When the incoming artifact is a brainstorm brief, copy its `Prototype:` line, with any block copied beneath it, under the plan's assumptions as written. When no offer fires, move to the questions without mentioning a prototype.
 
 Risks:
 
@@ -37,10 +37,10 @@ Verification checks:
 - Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
 - Writing the plan surfaces facts the interview never asked: a signature, a file a task edits, a count a check pins. Confirm each at its source as you write it and record what you read in Grounding; one you cannot confirm now lands under Risks.
 
-Write every task for the weakest executor it may get — one that sees one task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds that line's surface, and the commits already landed, and nothing more:
+Write every task for the weakest executor it may get — one that sees one task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds or reshapes that line's surface, and the commits already landed, and nothing more:
 
 - Each task carries its own paths, contract, and check.
-- A task that builds or reshapes the surface a `Prototype:` line covers, in the spec or the plan, names the winning variant's path as its reference and which part of the verdict it builds.
+- Before you write a task that builds or reshapes the surface a `Prototype:` line covers, in the spec or the plan, read the winning variant at the path the line names, or the block copied beneath a line that reads `in chat`. That task names the variant's path, or `in chat`, as its reference, and which part of the verdict it builds.
 - Route reuse by name: a task that needs a helper the repo already has names it.
 - Each task names the existing test or file to model after.
 - A module being reshaped with no test at its seam gets a characterization task first.
@@ -50,7 +50,7 @@ Write every task for the weakest executor it may get — one that sees one task'
 
 ## Review
 
-Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with pointers only: the brief's absolute path, the plan's absolute path, the spec's absolute path when one exists, and the absolute path to this skill's `VOCABULARY.md`. The dispatch is a blocking call: end your turn at it and let its return resume you.
+Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with pointers only: the brief's absolute path, the plan's absolute path, the spec's absolute path when one exists, and the absolute path to this skill's `VOCABULARY.md`. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
 
 Its return carries each finding as `CONFIRMED` or `REFUTED`, with an exact `old` → `new` edit per `CONFIRMED` finding. Facts are yours; decisions are the user's ([INTERVIEW.md](INTERVIEW.md)): an edit that corrects a fact lands in `plan.md` verbatim, its `old` widened to a span the file holds once when it matches elsewhere; an edit with more than one defensible replacement is a decision, landed as the reviewer wrote it and shown in the readback beside the replacement it beat. A `REFUTED` finding takes no edit. Strike or rewrite any Grounding entry a landed edit contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
 

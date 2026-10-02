@@ -25,4 +25,4 @@ Before you start, read that `VOCABULARY.md`'s `## Verification language` section
 
 - Leave your changes uncommitted. The orchestrator runs the check again and commits each task.
 - Return only when every command you started has finished. Run a long command in the foreground with a timeout, or start it in the background and make one blocking wait on its completion notification, never a polling loop. Read each command's output in the same turn you report it.
-- Run the task's check after your last edit. Your return lists the files you changed, that check's output, each detour with its corrected fact and evidence, any off-path bug, and any reroute or stop with what you observed.
+- Run the task's check after your last edit. Your return lists the files you changed, that check's output, each detour with its corrected fact and evidence, any off-path bug, any reroute or stop with what you observed and any route the code offers around it, and each place you followed the task text over the prototype variant.
