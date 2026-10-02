@@ -100,7 +100,7 @@ This Claude Code mod shows the effort each spawned subagent actually runs at. It
 
 ### `crank-mods` adds a resume suggestion and a run band to crank in Claude Code
 
-This Claude Code mod works off the commands, artifacts and agents the crank and crank-lite skills already produce, so the skills need no change to use it. It has no skills or commands, and each feature has a toggle in its plugin options.
+This Claude Code mod works off the commands, artifacts and agents the crank and crank-lite skills produce. It has no skills or commands, and each feature has a toggle in its plugin options.
 
 | Feature | What it shows |
 |---|---|

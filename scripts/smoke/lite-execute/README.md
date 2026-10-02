@@ -4,7 +4,9 @@ Runs crank-lite's `lite-execute` skill headless against a small standard-library
 
 ## Scenarios
 
-The fixture plan (`fixture/crank/plan.md`) adds a CSV export to a ledger package in five tasks across two stages. It carries a Global Constraint (every CSV is UTF-8 with a BOM), a stale function name in Task 3 (`read_all`, which the repo calls `load_entries`), tasks with no named check, a Coverage table with a human-only row, and a `Stop if:` line on Task 2.
+The CSV-export fixture plan (`fixture/crank/plan.md`) adds a CSV export to a ledger package in five tasks across two stages. It carries a Global Constraint (every CSV is UTF-8 with a BOM), a stale function name in Task 3 (`read_all`, which the repo calls `load_entries`), tasks with no named check, a Coverage table with a human-only row, and a `Stop if:` line on Task 2.
+
+The prototype fixture (`fixture/prototype/`) adds an HTML report page to a ledger CSV reader. Its spec's `Prototype:` line names the winning variant, `prototype/variant-b.html`, with what the user took from variant A (sticky month headers) and left out of B (sparklines). Its plans restate the verdict as "totals in a left sidebar" and never mention the prototype, the shape a plan takes when its writer summarized the verdict into task text. No artifact's text places the memo filter, but variant B puts it inside the sidebar as the winner's primary affordance, so the verdict commits that placement. Variant B also shows two open details that no artifact's text names: negatives in parentheses, and each month header carrying that month's net.
 
 | Scenario | Seed | Invocation | What it exercises |
 | --- | --- | --- | --- |
@@ -14,8 +16,6 @@ The fixture plan (`fixture/crank/plan.md`) adds a CSV export to a ledger package
 | `spec-path` | `seed-fresh` | `/crank-lite:lite-execute .crank/csv-export/spec.md` | Refusing a file that is not a plan |
 | `prototype` | `seed-prototype` | `/crank-lite:lite-execute .crank/ledger-report/plan.md` | A four-task sequential run whose page task restates a prototype verdict: the page dispatch carries the spec's `Prototype:` line, its implementer reads the winning variant, and the page follows the verdict and the mock's open details |
 | `prototype-solo` | `seed-prototype` | the same, with the three-task `plan-solo.md` | The same page built inline by a solo orchestrator |
-
-The prototype fixture (`fixture/prototype/`) adds an HTML report page to a ledger CSV reader. Its spec's `Prototype:` line names the winning variant, `prototype/variant-b.html`, with what the user took from variant A (sticky month headers) and left out of B (sparklines). Its plans restate the verdict as "totals in a left sidebar" and never mention the prototype, the shape a plan takes when its writer summarized the verdict into task text. Variant B also shows details no artifact's text names: the memo filter inside the sidebar, negatives in parentheses, and each month header carrying that month's net.
 
 ## Run
 
@@ -41,6 +41,6 @@ A Codex session loads the arm's `skills/lite-execute` as a repo skill under the 
 
 ## Reading the scores
 
-A check scores 1 when the run did what the skill's rules ask, 0 when it did not, and `n/a` when the run never reached the point the check judges. `finished_first_turn` (fresh) and `no_user_stop` (stop-if-detour) catch an orchestrator that ends its turn after a subagent returns or after settling a stop: `run.sh` answers such a stop with a "continue" reply, so the run still finishes but takes more than one turn. Read the transcript behind a surprising number before trusting it: a keyword count catches a run narrating a rule as well as following it.
+A check scores 1 when the run did what the skill's rules ask, 0 when it did not, and `n/a` when the run never reached the point the check judges. `finished_first_turn` (fresh and both prototype scenarios) and `no_user_stop` (stop-if-detour) catch an orchestrator that ends its turn after a subagent returns or after settling a stop: `run.sh` answers such a stop with a "continue" reply, so the run still finishes but takes more than one turn. Read the transcript behind a surprising number before trusting it: a keyword count catches a run narrating a rule as well as following it.
 
-In the prototype scenarios, `filter_in_sidebar`, `sticky_month_headers`, and `no_sparklines` follow the verdict, and `parenthesized_negatives` and `month_net` follow details only the mock shows. The open-detail pair carries the signal: on Sonnet orchestrators with three reps per arm, crank-lite 1.49.0 scored 0/6 on each across both scenarios, and 1.50.0 scored 5/6 and 6/6 (2026-10-02). A solo orchestrator may render the page in a headless browser to compare it with the mock, and the `sleep` in its cleanup trips `no_sleep_polling`.
+In the prototype scenarios, `filter_in_sidebar`, `sticky_month_headers`, and `no_sparklines` follow the verdict, and `parenthesized_negatives` and `month_net` follow the open details. The open-detail pair carries the signal: on Sonnet orchestrators with three reps per arm, crank-lite 1.49.0 scored 0/6 on each across both scenarios, and 1.50.0 scored 5/6 and 6/6 (2026-10-02). A solo orchestrator may render the page in a headless browser to compare it with the mock, and the `sleep` in its cleanup trips `no_sleep_polling`.
