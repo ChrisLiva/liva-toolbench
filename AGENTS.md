@@ -19,6 +19,8 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 │   ├── measure-review-cost.py    # how a review thread spent its turns
 │   ├── fixtures/                 # the measurement's oracle transcripts
 │   └── smoke/lite-execute/       # headless smoke harness for lite-execute
+├── tools/
+│   └── claude-effort/            # TUI for the effort keys in ~/.claude/settings.json (not a plugin)
 └── plugins/
     └── <plugin-name>/
         ├── .claude-plugin/
@@ -40,6 +42,8 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 ```
 
 The current plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) all ship as cross-harness plugins and currently contain manifests plus `skills/`. Other component directories shown above are supported by the plugin format when a plugin needs them.
+
+`tools/` holds standalone utilities that no marketplace catalog lists. `tools/claude-effort/claude_effort.py` is a standard-library curses TUI that edits the effort keys in your user settings. It also shows each model's effort precedence and the level a session or subagent on that model starts at. Run it from a project directory with `python3 tools/claude-effort/claude_effort.py`, and test it with `python3 -m unittest discover tools/claude-effort`.
 
 > **Common mistake**: only `plugin.json` goes inside `.claude-plugin/` or `.codex-plugin/`. Skills, commands, agents, hooks, scripts, and other runtime files live at the **plugin root**.
 
