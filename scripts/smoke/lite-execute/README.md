@@ -9,7 +9,8 @@ The fixture plan (`fixture/crank/plan.md`) adds a CSV export to a ledger package
 | Scenario | Seed | Invocation | What it exercises |
 | --- | --- | --- | --- |
 | `fresh` | `seed-fresh`, plus an uncommitted README edit | `/crank-lite:lite-execute .crank/csv-export/plan.md` | The whole run: Pre-flight, dispatch briefs, per-task commits, the stage gate, Coverage, review, retro |
-| `stop-if` | `seed-stop-if`: Task 1 committed, every route forced through `json_middleware` | the same, plus `stop at the stage 1 gate` | A resumed bounded run that must stop at Task 2's `Stop if:` and leave a short-run ledger |
+| `stop-if` | `seed-stop-if`: Task 1 committed, every route forced through `json_middleware` | the same, plus `stop at the stage 1 gate` | A resumed bounded run whose Task 2 `Stop if:` has no route the code offers: it must stop, put the decision to the user as numbered options, and leave a short-run ledger |
+| `stop-if-detour` | `seed-stop-if-detour`: the same, but `json_middleware` honors a `keep_content_type=True` opt-out that `/health` already uses | the same | A `Stop if:` the orchestrator must settle itself: commit Task 2 through the opt-out without editing the middleware, reach the Bound in one turn, and bank the fact in grounding |
 | `spec-path` | `seed-fresh` | `/crank-lite:lite-execute .crank/csv-export/spec.md` | Refusing a file that is not a plan |
 
 ## Run
@@ -26,6 +27,14 @@ python3 scripts/smoke/lite-execute/score.py --json $S/batch   # one JSON object 
 
 The sessions load the user-level `CLAUDE.md`, so its subagent model preference sets the implementer and reviewer models. `--settings` disables the marketplace installs of crank and crank-lite, so only the `--plugin-dir` copy loads.
 
+`SMOKE_HARNESS=codex` runs the same scenarios under `codex exec`, with `SMOKE_MODELS` naming Codex models and `SMOKE_EFFORT` setting `model_reasoning_effort` (default `high`):
+
+```bash
+SMOKE_HARNESS=codex SMOKE_MODELS=gpt-6-luna ./scripts/smoke/lite-execute/batch.sh $S/batch 3 6 base=... fix=...
+```
+
+A Codex session loads the arm's `skills/lite-execute` as a repo skill under the clone's `.agents/skills/`, kept out of `git status` by `.git/info/exclude`, and runs with the installed crank and crank-lite plugins disabled. It runs in Codex's `workspace-write` sandbox with approvals off and the clone's `.git` as an extra writable root, so it writes only inside the clone. The `--json` stream leaves out spawns and some commands, so `run.sh` copies the session's rollout files (the orchestrator thread and every subagent thread under it) from `~/.codex/sessions` into `rollouts/`, and `score.py` reads those. Codex encrypts the message a spawn sends, so the brief checks score `n/a` on Codex; `impl_reads_brief` scores whether each implementer opened `IMPLEMENTER-BRIEF.md` instead. The user-level `~/.codex/AGENTS.md` sets the subagent model, which `impl_model_user` checks against.
+
 ## Reading the scores
 
-A check scores 1 when the run did what the skill's rules ask, 0 when it did not, and `n/a` when the run never reached the point the check judges. Read the transcript behind a surprising number before trusting it: a keyword count catches a run narrating a rule as well as following it.
+A check scores 1 when the run did what the skill's rules ask, 0 when it did not, and `n/a` when the run never reached the point the check judges. `finished_first_turn` (fresh) and `no_user_stop` (stop-if-detour) catch an orchestrator that ends its turn after a subagent returns or after settling a stop: `run.sh` answers such a stop with a "continue" reply, so the run still finishes but takes more than one turn. Read the transcript behind a surprising number before trusting it: a keyword count catches a run narrating a rule as well as following it.

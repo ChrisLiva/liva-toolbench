@@ -245,11 +245,13 @@ is visible in a number. Handed a directory it recurses, which reaches
 non-lookup bucket.
 
 `scripts/smoke/lite-execute/` measures a lite-execute prose change on the models
-that execute it. `batch.sh` runs three scenarios (a fresh five-task plan, a resumed
-run that must stop at a `Stop if:`, and a spec handed in place of a plan) on Sonnet
-and Haiku orchestrators for each plugin copy you name, and `score.py` prints each
-rule's pass rate per copy. Its README names the fixture's traps and how to read a
-score.
+that execute it. `batch.sh` runs four scenarios (a fresh five-task plan, a resumed
+run whose `Stop if:` needs the user's decision, a resumed run whose `Stop if:` the
+orchestrator must settle and carry on past, and a spec handed in place of a plan) on
+Sonnet and Haiku orchestrators for each plugin copy you name, and `score.py` prints
+each rule's pass rate per copy. `SMOKE_HARNESS=codex` runs the same scenarios under
+`codex exec` on the Codex models `SMOKE_MODELS` names. Its README names the fixture's
+traps, the Codex sandbox and rollout setup, and how to read a score.
 
 ---
 
