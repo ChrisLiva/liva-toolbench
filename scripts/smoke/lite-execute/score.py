@@ -204,8 +204,9 @@ def preflight_line(block, field):
 
 
 def plan_text(run, which):
-    p = run / which / "csv-export" / "plan.md"
-    return p.read_text(encoding="utf-8") if p.exists() else ""
+    """The plan of the one effort run.sh copied into .crank/."""
+    plans = sorted((run / which).glob("*/plan.md"))
+    return plans[0].read_text(encoding="utf-8") if plans else ""
 
 
 def progress_lines(plan):
@@ -411,12 +412,100 @@ def score_spec_path(run, st, block, s):
     s["recommends_plan_phase"] = int(bool(re.search(r"crank-lite plan|plan phase", st.final)))
 
 
+VARIANT = "variant-b"
+
+
+def touches_variant(it):
+    return it[0] in ("Read", "Bash", "Grep") and VARIANT in json.dumps(it[1].get("input", {}))
+
+
+def subagent_variant_readers(run, st):
+    """The orchestrator tool_use ids whose subagent read the winning variant (Claude streams only)."""
+    if st.harness != "claude":
+        return set()
+    readers = set()
+    for e in load_events(run):
+        if e.get("type") == "assistant" and e.get("parent_tool_use_id"):
+            for c in e["message"]["content"]:
+                if c["type"] == "tool_use" and touches_variant((c["name"], c)):
+                    readers.add(e["parent_tool_use_id"])
+    return readers
+
+
+def filter_in_sidebar(html):
+    """The memo filter, the winner's primary affordance, sits inside the sidebar."""
+    inp = html.find("<input")
+    aside = re.search(r"<aside\b.*?</aside>", html, re.S)
+    if aside:
+        return aside.start() < inp < aside.end()
+    side = re.search(r"<\w+[^>]*class=\"[^\"]*side", html)
+    table = html.find("<table")
+    return bool(side) and side.start() < inp < (table if table > 0 else len(html))
+
+
+def month_net(html):
+    """A 2026-09 month header carries that month's net, 2,218.25, ahead of the month's first entry."""
+    for m in re.finditer(r"2026-09(?!-\d)", html):
+        nxt = re.compile(r"2026-09-\d\d").search(html, m.end())
+        if re.search(r"2,?218\.25", html[m.end():nxt.start() if nxt else len(html)]):
+            return True
+    return False
+
+
+def score_prototype(run, st, block, s):
+    """The spec's Prototype: line names variant-b.html; the plan only restates the verdict as a sidebar.
+
+    The committed checks follow the verdict: the filter in the sidebar (the winner's layout),
+    sticky month headers (taken from variant A), and no sparklines (left out). The open-detail
+    checks follow what only the mock shows: parenthesized negatives and a net on each month header."""
+    items = st.items
+    impl, reviewer = dispatches(items)
+    rev_idx = reviewer[0][0] if reviewer else len(items)
+    solo = (run / "arm").read_text().split()[0] == "prototype-solo"
+    shape = (preflight_line(block, "Shape") or "").lower()
+    s["shape_expected"] = None if block is None else int(("solo" if solo else "sequential") in shape)
+    s["orch_reads_variant"] = int(any(touches_variant(it) for it in items[:rev_idx]))
+    page = [(i, a) for i, a in impl if "Render the report page" in a.get("prompt", "")]
+    if solo:
+        s["page_dispatch_carries_variant"] = None
+        s["page_builder_reads_variant"] = s["orch_reads_variant"]
+    elif st.harness == "codex":
+        s["page_dispatch_carries_variant"] = None
+        s["page_builder_reads_variant"] = None if not impl else int(
+            any(VARIANT in a.get("child_cmds", "") for _, a in impl))
+    else:
+        readers = subagent_variant_readers(run, st)
+        s["page_dispatch_carries_variant"] = None if not page else int(any(f"{VARIANT}.html" in a["prompt"] for _, a in page))
+        s["page_builder_reads_variant"] = None if not page else int(any(items[i][1].get("id") in readers for i, _ in page))
+
+    plan = plan_text(run, "crank-after")
+    lines = progress_lines(plan)
+    s["progress_all_checked"] = int(len(lines) == (3 if solo else 4) and all(b == "x" for b, _, _ in lines))
+    s["retro_written"] = int((run / "crank-after" / "ledger-report" / "retro.md").exists())
+    s["finished_first_turn"] = int(s["retro_written"] and turns(run) == 1)
+    out = run / "report.html"
+    r = subprocess.run(["python3", "-m", "ledger.report", "data/ledger.csv", str(out)], cwd=run / "repo",
+                       capture_output=True, text=True)
+    html = out.read_text(encoding="utf-8") if r.returncode == 0 and out.exists() else ""
+    s["page_renders"] = int(bool(html))
+    for k, check in [("filter_in_sidebar", filter_in_sidebar),
+                     ("sticky_month_headers", lambda h: "sticky" in h),
+                     ("no_sparklines", lambda h: not re.search(r"<svg|<canvas|sparkline|polyline", h, re.I)),
+                     ("parenthesized_negatives", lambda h: bool(re.search(r"\(\d[\d,]*\.\d\d\)", h))),
+                     ("month_net", month_net)]:
+        s[k] = int(check(html)) if html else None
+    source = "".join(f.read_text(encoding="utf-8") for d in ("ledger", "tests") for f in (run / "repo" / d).glob("*.py"))
+    s["no_mock_in_source"] = int("Mock memo" not in source)
+    t = subprocess.run(["python3", "-m", "unittest"], cwd=run / "repo", capture_output=True, text=True)
+    s["suite_green"] = int(t.returncode == 0)
+
+
 def turns(run):
     return int((run / "turn-count").read_text()) if (run / "turn-count").exists() else None
 
 
 SCORERS = {"fresh": score_fresh, "stop-if": score_stop_if, "stop-if-detour": score_stop_if_detour,
-           "spec-path": score_spec_path}
+           "spec-path": score_spec_path, "prototype": score_prototype, "prototype-solo": score_prototype}
 
 
 def score(run):

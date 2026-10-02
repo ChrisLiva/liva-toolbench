@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>B: Sidebar summary</title>
+<style>
+  body { margin:0; font:14px/1.4 system-ui, sans-serif; color:#1d2433; }
+  header.app { padding:12px 20px; background:#1d2433; color:#fff; font-weight:600; }
+  .layout { display:grid; grid-template-columns:260px 1fr; min-height:calc(100vh - 44px); }
+  aside { background:#f3f5f9; border-right:1px solid #d9dee8; padding:16px; }
+  aside input[type=search] { box-sizing:border-box; width:100%; padding:6px 8px; margin-bottom:16px; }
+  aside h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:#5b6478; margin:0 0 8px; }
+  aside dl { display:grid; grid-template-columns:1fr auto; gap:4px 12px; margin:0; }
+  aside dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }
+  aside svg.spark { grid-column:1 / -1; width:100%; height:18px; }
+  .neg { color:#b42318; }
+  main { padding:16px 20px; }
+  table { border-collapse:collapse; width:100%; }
+  td, th { padding:6px 8px; border-bottom:1px solid #eef0f4; text-align:left; }
+  td.amt { text-align:right; font-variant-numeric:tabular-nums; }
+  tr.month th { background:#fff; font-size:13px; }
+  tr.month td.net { text-align:right; color:#5b6478; font-size:13px; }
+</style></head>
+<body>
+<header class="app">Ledger</header>
+<div class="layout">
+  <aside>
+    <input type="search" placeholder="Filter by memo">
+    <h2>Totals by account</h2>
+    <dl>
+      <dt>Checking</dt><dd>7,200.00</dd>
+      <svg class="spark" viewBox="0 0 100 18"><polyline points="0,14 50,9 100,4" fill="none" stroke="#5b6478"/></svg>
+      <dt>Groceries</dt><dd class="neg">(312.40)</dd>
+      <svg class="spark" viewBox="0 0 100 18"><polyline points="0,6 50,9 100,15" fill="none" stroke="#b42318"/></svg>
+      <dt>Utilities</dt><dd class="neg">(183.10)</dd>
+      <svg class="spark" viewBox="0 0 100 18"><polyline points="0,8 50,10 100,8" fill="none" stroke="#b42318"/></svg>
+    </dl>
+  </aside>
+  <main>
+    <table>
+      <tr class="month"><th colspan="3">2026-09</th><td class="net">net 2,218.25</td></tr>
+      <tr><td>2026-09-22</td><td>Utilities</td><td>Mock memo: power</td><td class="amt neg">(63.05)</td></tr>
+      <tr><td>2026-09-14</td><td>Groceries</td><td>Mock memo: espresso beans</td><td class="amt neg">(118.70)</td></tr>
+      <tr><td>2026-09-01</td><td>Checking</td><td>Mock memo: payday</td><td class="amt">2,400.00</td></tr>
+      <tr class="month"><th colspan="3">2026-08</th><td class="net">net 2,232.20</td></tr>
+      <tr><td>2026-08-27</td><td>Groceries</td><td>Mock memo: sourdough</td><td class="amt neg">(12.40)</td></tr>
+    </table>
+  </main>
+</div>
+</body></html>

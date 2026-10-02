@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>A: Top banner</title>
+<style>
+  body { margin:0; font:14px/1.4 system-ui, sans-serif; color:#1d2433; }
+  header.app { padding:12px 20px; background:#1d2433; color:#fff; font-weight:600; }
+  .banner { display:flex; gap:24px; padding:16px 20px; background:#f3f5f9; }
+  .banner div strong { display:block; font-size:18px; }
+  main { padding:16px 20px; }
+  main input[type=search] { width:280px; padding:6px 8px; margin-bottom:12px; }
+  table { border-collapse:collapse; width:100%; }
+  td, th { padding:6px 8px; border-bottom:1px solid #eef0f4; text-align:left; }
+  tr.month th { position:sticky; top:0; background:#fff; }
+</style></head>
+<body>
+<header class="app">Ledger</header>
+<div class="banner">
+  <div>Checking <strong>7,200.00</strong></div>
+  <div>Groceries <strong>-312.40</strong></div>
+  <div>Utilities <strong>-183.10</strong></div>
+</div>
+<main>
+  <input type="search" placeholder="Filter by memo">
+  <table>
+    <tr class="month"><th colspan="4">2026-09</th></tr>
+    <tr><td>2026-09-22</td><td>Utilities</td><td>Mock memo: power</td><td>-63.05</td></tr>
+    <tr><td>2026-09-14</td><td>Groceries</td><td>Mock memo: espresso beans</td><td>-118.70</td></tr>
+    <tr class="month"><th colspan="4">2026-08</th></tr>
+    <tr><td>2026-08-27</td><td>Groceries</td><td>Mock memo: sourdough</td><td>-12.40</td></tr>
+  </table>
+</main>
+</body></html>

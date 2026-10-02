@@ -1,5 +1,5 @@
 #!/bin/bash
-# run.sh <plugin-dir> <scenario: fresh|stop-if|stop-if-detour|spec-path> <model> <seed-dir> <run-dir>
+# run.sh <plugin-dir> <scenario: fresh|stop-if|stop-if-detour|spec-path|prototype|prototype-solo> <model> <seed-dir> <run-dir>
 # Drives one headless lite-execute session against a clone of a seed repo and saves
 # the stream, the git state, and the .crank/ artifacts under <run-dir>.
 # SMOKE_HARNESS=codex drives `codex exec` instead of `claude -p`, at SMOKE_EFFORT (default high).
@@ -28,13 +28,24 @@ esac
 case $scenario in
   fresh|spec-path) seed=$seeds/seed-fresh ;;
   stop-if|stop-if-detour) seed=$seeds/seed-$scenario ;;
+  prototype|prototype-solo) seed=$seeds/seed-prototype ;;
   *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
 git clone -q "$seed" "$run/repo"
 cd "$run/repo"
-mkdir -p .crank/csv-export
-cp "$here/fixture/crank/spec.md" .crank/csv-export/spec.md
-cp "$here/fixture/crank/plan.md" .crank/csv-export/plan.md
+case $scenario in
+  prototype|prototype-solo)
+    slug=ledger-report; plan=plan.md
+    if [ "$scenario" = prototype-solo ]; then plan=plan-solo.md; fi
+    mkdir -p .crank/$slug
+    cp -R "$here/fixture/prototype/crank/spec.md" "$here/fixture/prototype/crank/prototype" .crank/$slug/
+    cp "$here/fixture/prototype/crank/$plan" .crank/$slug/plan.md ;;
+  *)
+    slug=csv-export
+    mkdir -p .crank/$slug
+    cp "$here/fixture/crank/spec.md" .crank/$slug/spec.md
+    cp "$here/fixture/crank/plan.md" .crank/$slug/plan.md ;;
+esac
 if [ "$harness" = codex ]; then
   # Codex loads the arm's copy as a repo skill. The exclude keeps it out of every git status
   # the session and the scorer read.
@@ -63,6 +74,8 @@ PY
     if [ "$scenario" = stop-if-detour ]; then cap=2; fi ;;
   spec-path)
     ASK="$inv .crank/csv-export/spec.md"; cap=1 ;;
+  prototype|prototype-solo)
+    ASK="$inv .crank/ledger-report/plan.md"; cap=4 ;;
 esac
 cp -R .crank "$run/crank-before"
 git rev-parse HEAD > "$run/seed-head"
@@ -91,7 +104,7 @@ for n in $(seq 1 "$cap"); do
       "${perm[@]}" --strict-mcp-config --settings "$SETTINGS" --plugin-dir "$PD" \
       "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
   fi
-  if [ "$scenario" = fresh ] && [ -f .crank/csv-export/retro.md ]; then break; fi
+  case $scenario in fresh|prototype|prototype-solo) if [ -f .crank/$slug/retro.md ]; then break; fi ;; esac
   if [ "$scenario" = stop-if-detour ] && grep -q '^- \[x\] Task 2' .crank/csv-export/plan.md; then break; fi
 done
 echo $(( $(date +%s) - start )) > "$run/seconds"

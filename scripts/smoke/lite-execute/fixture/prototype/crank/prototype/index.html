@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Ledger report prototype</title>
+<style>
+  body { margin:0; font:14px system-ui, sans-serif; }
+  p.q { margin:8px 16px; }
+  iframe { border:0; width:100%; height:calc(100vh - 40px); }
+  nav { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:8px 14px; border-radius:20px; display:flex; gap:12px; }
+  nav button { background:none; border:0; color:#fff; cursor:pointer; }
+</style></head>
+<body>
+<p class="q">Question: where do the totals and the filter sit on the ledger report page?</p>
+<iframe id="f"></iframe>
+<nav><button id="prev">&larr;</button><span id="label"></span><button id="next">&rarr;</button></nav>
+<script>
+  const variants = [["a", "A: Top banner"], ["b", "B: Sidebar summary"], ["c", "C: Month cards"]];
+  let i = Math.max(0, variants.findIndex(v => v[0] === new URLSearchParams(location.search).get("variant")));
+  function show() {
+    document.getElementById("f").src = "variant-" + variants[i][0] + ".html";
+    document.getElementById("label").textContent = variants[i][1];
+    history.replaceState(null, "", "?variant=" + variants[i][0]);
+  }
+  document.getElementById("prev").onclick = () => { i = (i + variants.length - 1) % variants.length; show(); };
+  document.getElementById("next").onclick = () => { i = (i + 1) % variants.length; show(); };
+  show();
+</script>
+</body></html>

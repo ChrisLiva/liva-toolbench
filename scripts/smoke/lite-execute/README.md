@@ -12,6 +12,10 @@ The fixture plan (`fixture/crank/plan.md`) adds a CSV export to a ledger package
 | `stop-if` | `seed-stop-if`: Task 1 committed, every route forced through `json_middleware` | the same, plus `stop at the stage 1 gate` | A resumed bounded run whose Task 2 `Stop if:` has no route the code offers: it must stop, put the decision to the user as numbered options, and leave a short-run ledger |
 | `stop-if-detour` | `seed-stop-if-detour`: the same, but `json_middleware` honors a `keep_content_type=True` opt-out that `/health` already uses | the same | A `Stop if:` the orchestrator must settle itself: commit Task 2 through the opt-out without editing the middleware, reach the Bound in one turn, and bank the fact in grounding |
 | `spec-path` | `seed-fresh` | `/crank-lite:lite-execute .crank/csv-export/spec.md` | Refusing a file that is not a plan |
+| `prototype` | `seed-prototype` | `/crank-lite:lite-execute .crank/ledger-report/plan.md` | A four-task sequential run whose page task restates a prototype verdict: the page dispatch carries the spec's `Prototype:` line, its implementer reads the winning variant, and the page follows the verdict and the mock's open details |
+| `prototype-solo` | `seed-prototype` | the same, with the three-task `plan-solo.md` | The same page built inline by a solo orchestrator |
+
+The prototype fixture (`fixture/prototype/`) adds an HTML report page to a ledger CSV reader. Its spec's `Prototype:` line names the winning variant, `prototype/variant-b.html`, with what the user took from variant A (sticky month headers) and left out of B (sparklines). Its plans restate the verdict as "totals in a left sidebar" and never mention the prototype, the shape a plan takes when its writer summarized the verdict into task text. Variant B also shows details no artifact's text names: the memo filter inside the sidebar, negatives in parentheses, and each month header carrying that month's net.
 
 ## Run
 
@@ -38,3 +42,5 @@ A Codex session loads the arm's `skills/lite-execute` as a repo skill under the 
 ## Reading the scores
 
 A check scores 1 when the run did what the skill's rules ask, 0 when it did not, and `n/a` when the run never reached the point the check judges. `finished_first_turn` (fresh) and `no_user_stop` (stop-if-detour) catch an orchestrator that ends its turn after a subagent returns or after settling a stop: `run.sh` answers such a stop with a "continue" reply, so the run still finishes but takes more than one turn. Read the transcript behind a surprising number before trusting it: a keyword count catches a run narrating a rule as well as following it.
+
+In the prototype scenarios, `filter_in_sidebar`, `sticky_month_headers`, and `no_sparklines` follow the verdict, and `parenthesized_negatives` and `month_net` follow details only the mock shows. The open-detail pair carries the signal: on Sonnet orchestrators with three reps per arm, crank-lite 1.49.0 scored 0/6 on each across both scenarios, and 1.50.0 scored 5/6 and 6/6 (2026-10-02). A solo orchestrator may render the page in a headless browser to compare it with the mock, and the `sleep` in its cleanup trips `no_sleep_polling`.
