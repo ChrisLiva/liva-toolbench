@@ -55,12 +55,14 @@ Give the user the path and the run command: double-click `index.html`, `go run .
 
 ### 4. Verdict
 
-Ask which variant wins and what to take from the others. A revision request goes back to a builder as a new `variant-<key>.html` with a new key and direction, added to `index.html`, then ask again. On a hedge, ask the open look and interaction decisions in prose per [GRILLING.md](GRILLING.md) and record `no verdict`.
+Ask which variant wins, what to take from the others, and what in the winner to leave out. A revision request goes back to a builder as a new `variant-<key>.html` with a new key and direction, added to `index.html`, then ask again. On a hedge, ask the open look and interaction decisions in prose per [GRILLING.md](GRILLING.md) and record `no verdict`.
 
 Completion criterion: the user has named a winner, or every open look and interaction decision has a prose answer.
 
 ### 5. Record
 
-Write one `Prototype:` line: the winner, what the user took from the other variants, the prototype's path, and the surface the mock stood in for, or `no verdict`. From the spec phase the line lands in Technical decisions, and every behavior the user chose lands as a numbered acceptance criterion. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the brief's **Key decisions** records the path beside the decision it settled. The plan writes the real UI from the verdict and lifts no mock code.
+Write one `Prototype:` line: the winner, what the user took from the other variants, what the user left out of the winner, the winning variant's path (`variant-<key>.html`, or the scratch program and the variant's key), and the surface the mock stood in for, or `no verdict`. A CLI rung that wrote no file reads `in chat` in place of the path, with the winning block copied beneath the line. From the spec phase the line lands in Technical decisions, and every behavior the user chose lands as a numbered acceptance criterion. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the brief's **Key decisions** records the path beside the decision it settled.
+
+The winning variant is the reference every later phase opens for that surface, and the verdict bounds it. The real UI matches the winner's layout, information hierarchy, and primary affordance, plus what the user took from the other variants, and builds nothing the user left out. The rest of the mock guides details the spec and the task leave open, and its fixture values and static host chrome are stand-ins the real UI replaces. Where the spec's or a task's text disagrees with the mock, the text wins. The plan pins the committed parts as Behavior lines and names the winning variant's path on a `Prototype:` line in each task block that builds the surface, and execution builds that surface with the project's own components. No prototype file is imported or copied into the source tree.
 
 Completion criterion: the artifact carries the line, and every chosen behavior is a numbered criterion or an **Updates since spec** entry.

@@ -44,6 +44,7 @@ Interfaces:
 
 Check: <test-first | lightest-check | probe>, model after `<anchor of the existing test or file grounding found>`
 Stop if: <the assumption this task rests on that grounding could not prove, or omit>
+Prototype: <the winning variant's path and what in it the verdict left out, when this task builds the surface a Prototype: verdict covers, or omit>
 
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
       <pseudo-code or embedded code, only where PLAN.md's ladder calls for it; embedded code names its evidence>
