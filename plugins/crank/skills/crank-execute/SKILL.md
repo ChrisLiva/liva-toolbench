@@ -61,12 +61,14 @@ The ledger is the durable record of what has shipped: track task completion here
    The ledger is `<that dir>/progress-<slug>.md` — slug-keyed, so several plans' ledgers coexist; the slug is the plan's parent directory name.
 2. If the harness refuses writes there — worktree isolation guards the shared `.git` path — use `.crank/<slug>/progress.md` at the worktree root instead, and note the fallback once.
 
-One ledger per plan per worktree. It opens with the run's anchor, then one line per plan task:
+One ledger per plan per worktree. It opens with the run's anchor and the current run's Pre-flight lines (Flow step 2), then one line per plan task:
 
 ```
 # Crank execute — <branch>
 Plan: <plan path, normally .crank/<slug>/plan.md>
 Base: <the HEAD SHA when the run started>
+
+<the Pre-flight lines>
 
 - [ ] Task 1: <subject>
 - [ ] Task 2: <subject>
@@ -80,7 +82,7 @@ Base: <the HEAD SHA when the run started>
 - `note: <one line>` — a fact this task must carry: a landed interface, path, or contract its plan text no longer matches, read at step 3.
 - `review: <path to task-<N>-review.md>` — where a review ran. That file holds the reviewer's Notes and your dismissals with their reasoning (References → Review verdicts), and the retro reads them there; the line carries the verdict and this pointer, and the review's content stays in the file.
 
-One line lives under the anchor instead: `Stopped: <why> — resume at Task <N>`, written when a run ends short (step 4) and overwritten by the run that resumes.
+One line lives under the Pre-flight lines instead: `Stopped: <why> — resume at Task <N>`, written when a run ends short (step 4) and dropped by the Pre-flight write of the run that resumes.
 
 **Where a loose fact lives.** A fact one later task must carry goes on that task's line as `note:`. A corrected repo fact — the renamed symbol's current name, the moved file's current path, a fixture landmine — goes with its evidence to `.crank/<slug>/grounding.md` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), which seeds `orientation.md`. Everything else goes to the retro's Open items.
 
@@ -103,11 +105,11 @@ Resolve the plan and its `.crank/<slug>/` home per [RESOLVE-PLAN.md](RESOLVE-PLA
 
 Read the plan's frame yourself — its header (`Spec:`, `Goal:`, `Gates:`), **Global Constraints**, **Refactor scope**, **File structure**, **Coverage**, **Stages**, **Out of scope**, and every task's title. The task bodies come one at a time, each read as you reach it at step 3. If the plan's header names a spec (`Spec:` line), read that too — it is the contract the final review runs against; the plan is only its decomposition. If the plan has a **Global Constraints** section, its values bind every task.
 
-Open the progress ledger (Deliverables → Progress ledger); one that already exists for this plan in this worktree is an interrupted run, resumed per that section; otherwise start fresh.
+Open the progress ledger (Deliverables → Progress ledger); one that already exists for this plan in this worktree is an interrupted run, resumed per that section; otherwise start fresh. Write step 2's Pre-flight lines into it now, before the plan walk. The rest of step 2 waits until this step finishes.
 
 Then dispatch the plan walk at the **standard** tier ([SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread), handing it the plan path, the effort's `.crank/<slug>/grounding.md` where one exists, the tasks it covers, and the three buckets below verbatim. The walk covers one stage: the stage holding the first unchecked task (every unchecked task in a plan without a **Stages** table), read against HEAD — a later stage pins files the earlier stages have not written yet, so each is walked at its gate (step 3, Stage gate). It writes its findings to `.crank/<slug>/plan-walk-<stage>.md` beside the plan (`plan-walk.md` without stages) — per task, each finding with its bucket, its evidence, and the corrected anchor where it found one — and returns one line per task naming each finding with its bucket, or `none`. The walk confirms what the plan cites: a claim carrying its evidence — `path:line`, a command and the output it printed, `searched <scope>, none found` — is confirmed at that citation with one read or one re-run, per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding's verify-then-trust rule; a grounding entry covering the same fact is confirmed the same way; a claim carrying no citation is derived in full. A finding stops the run only on a check the walk actually ran, quoted with its evidence — `path:line`, or the search that came back empty.
 
-The walk reports; you land its corrections. A citation that confirmed at a different line or symbol is rewritten in place in the plan section that carries it, with the new anchor, before pre-flight, so the one section each implementer reads is already true. A citation that fails to confirm routes through a bucket like any other finding, with the corrected fact banked to grounding. Two buckets **stop** the run; the third is **carried** into it:
+The walk reports; you land its corrections. A citation that confirmed at a different line or symbol is rewritten in place in the plan section that carries it, with the new anchor, before step 2 stocks the brief directory, so the one section each implementer reads is already true. A citation that fails to confirm routes through a bucket like any other finding, with the corrected fact banked to grounding. Two buckets **stop** the run; the third is **carried** into it:
 
 - **Blockers** — the plan names a symbol the walk grepped for and did not find, cites a path that is gone, or states a precondition another task contradicts.
 - **Plan-mandated defects** — the plan's own words instruct something the review rubric rejects: a test that asserts nothing, verbatim duplication of a helper the codebase already provides, a cast or `any` papering over a contract. Quote the instruction. Overriding what the plan explicitly instructs is a reroute, never a detour — surface it and let the user say which governs.
@@ -115,24 +117,22 @@ The walk reports; you land its corrections. A citation that confirmed at a diffe
 
 Raise the two stopping buckets in a **single batched question**, not one interrupt per discovery, and stop until answered. Then check `git status --short` and the current branch; on `main`/`master` with a non-trivial change, ask once before committing.
 
-Completion criterion: every task in the walked stage judged with its findings bucketed or `none`, every cited claim in it confirmed at its citation or bucketed, the stopping buckets raised in one question and answered, every carried item on its ledger line or in grounding, the branch and `git status --short` checked, and the ledger open with one line per plan task.
+Completion criterion: every task in the walked stage judged with its findings bucketed or `none`, every cited claim in it confirmed at its citation or bucketed, the stopping buckets raised in one question and answered, every carried item on its ledger line or in grounding, the branch and `git status --short` checked, and the ledger open with this run's Pre-flight lines and one line per plan task.
 
 ### 2. Pre-flight
 
-Every run, fresh or resumed, opens with the block below as reply text — every line filled — ahead of the brief directory, the first edit, and the first dispatch. Pick the execution shape from the plan — there is no required mode — then continue in the same turn.
+Every run, fresh or resumed, writes the lines below into the progress ledger at step 1, every line filled, between the anchor and the task lines, replacing the lines an earlier run left there, its `Stopped:` line included. On a fresh run the same write creates the ledger with its anchor and one unchecked line per plan task. This write is the run's first file change once the plan resolves, ahead of the plan walk and every other edit, commit, and dispatch. Pick the execution shape from the plan before the write. There is no required mode. After the write, go on to step 1's plan walk in the same turn. The rest of this step, from the brief directory on, runs once step 1 finishes. When step 1's answer moves the Bound or changes the plan's tasks, or a later shape change replaces the Shape, rewrite each changed line in the ledger before the next edit or dispatch.
 
 ```
-**Pre-flight**
-- Plan: .crank/<slug>/plan.md (spec: spec.md · brainstorm: brainstorm.md)
-- Grounding: <.crank/<slug>/grounding.md — N entries seeded | none>
-- Branch: <current branch>
-- Shape: <solo | sequential | parallel>
-- Subagents: standard = <model> (implement, per-task review) · heavy = <model> (final review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
-- Tasks: <N> (<M> remaining)
-- Bound: <Task <N>, the plan's last | Task <N>, the stage <S> gate the user named>
+Pre-flight: branch <current branch>
+Grounding: <.crank/<slug>/grounding.md — N entries | none>
+Shape: <solo | sequential | parallel>
+Subagents: standard = <model> (implement, per-task review) · heavy = <model> (final review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
+Tasks: <N> (<M> remaining)
+Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
 ```
 
-Line rules: the Plan line's parenthetical names only sibling artifacts that actually exist in `.crank/<slug>/`, plus a spec the plan's `Spec:` header names — omit it when there are none. The Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and how many of its entries were seeded into `orientation.md` (in solo, which stocks no `orientation.md`, name the file and its entry count). Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. In solo the Subagents line reads `heavy = <model> (final review) — implementation inline`, with the same `resolved from` tail. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's **Stages** table); a Stages table on its own leaves the bound at the last task.
+Line rules: the Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and its entry count. Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. In solo the Subagents line reads `standard = <model> (plan walk) · heavy = <model> (final review) — implementation inline · resolved from <source>`. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's **Stages** table); a Stages table on its own leaves the bound at the last task.
 
 - **Solo (in this session)** — small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes. No per-task review: the final gate is solo's one review.
 - **Sequential subagents** — the default for >3 tasks: a fresh context and an independent reviewer per task.
@@ -152,7 +152,7 @@ Whatever the shape, create this run's **brief directory** — where briefs, repo
 
 The orientation sweep: write the template into the brief dir, seed its unfilled slots from `.crank/<slug>/grounding.md` entries where that file exists ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), then dispatch a standard-tier subagent to fill the rest from a repo sweep — except the Commands block, which copies the plan's `Gates:` line. The sweep verifies each seeded line at its citation instead of skipping filled slots, so `orientation.md` carries only facts verified this run.
 
-Completion criterion: the filled block is in your reply, `.crank/<slug>/exec/` exists and its path is stated once, every file the table requires for this shape is on disk — copies byte-identical to their source, `orientation.md` filled in a subagent mode.
+Completion criterion: this run's filled Pre-flight lines sit under the ledger's anchor, written as the run's first file change, `.crank/<slug>/exec/` exists and its path is stated once, every file the table requires for this shape is on disk — copies byte-identical to their source, `orientation.md` filled in a subagent mode.
 
 ### 3. Per task
 
@@ -186,7 +186,7 @@ Read each unchecked task against what this run actually shipped, then write what
 
 - on each unchecked task's line, the `open:` and `note:` items it needs;
 - in `.crank/<slug>/grounding.md`, every corrected repo fact with its evidence — a fact wider than one task lands there, not on a line;
-- under the anchor, the `Stopped:` line.
+- under the Pre-flight lines, the `Stopped:` line.
 
 Then hand back per step 8.
 

@@ -78,6 +78,7 @@ FLAG_LITERALS = {
 # Files outside SITES that must carry a literal their own prose promises.
 # Presence only: these are orchestrator skills, not reviewer dispatch sites, so
 # the site vocabulary and preprocessing rules below do not reach them.
+# A leading newline pins a literal to column zero, where crank-mods parses `Bound:`.
 PRESENCE_LITERALS = {
     "plugins/crank/skills/crank-execute/SKILL.md": [
         "**Promote it.**",
@@ -85,9 +86,10 @@ PRESENCE_LITERALS = {
         "Standing defect rules",
         "**Stage gate.**",
         "plan-walk-<stage>.md",
+        "\nBound: <Task <N>, the plan's last",
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "The list bounds your tests"],
-    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort"],
+    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort", "\nBound: <Task <N>, the plan's last"],
     "plugins/crank/skills/crank/PLAN.md": ["long plan", "A requirement is a Behavior line", "](PROTOTYPE.md)"],
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)"],
