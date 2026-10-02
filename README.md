@@ -96,7 +96,7 @@ This Claude Code mod shows the effort each spawned subagent actually runs at. It
 |---|---|
 | The Agent call's row | `Explore(probe bg · effort high)` |
 | A background agent's completion notice | `Agent "probe bg" finished · effort high · 49s` |
-| A band above the prompt | One row per running background agent: `probe bg · Explore · effort high` |
+| A band above the prompt | One row per running background agent, except the agents crank-mods' run band draws: `probe bg · Explore · effort high` |
 
 ### `crank-mods` adds a resume suggestion and a run band to crank in Claude Code
 

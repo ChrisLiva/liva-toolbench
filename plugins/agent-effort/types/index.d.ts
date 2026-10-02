@@ -10,5 +10,10 @@ declare module 'claude-code' {
       /** Whether an agent's turn is running: true from its first request until its turn completes. */
       isRunning: StateFamily<boolean>
     }
+    /** Read only, and absent while crank-mods is not installed. */
+    'crank-mods': {
+      /** The agents crank-mods' hud draws a row for, by agentId. */
+      hudRoster: string[]
+    }
   }
 }

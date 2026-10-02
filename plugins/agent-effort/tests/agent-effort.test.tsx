@@ -1,10 +1,12 @@
 import { expect, test } from 'claude-code/testing'
 import type { ModelEffort, On } from 'claude-code'
-import type { Engine } from 'claude-code/testing'
+import type { Engine, Mounted, Plugin } from 'claude-code/testing'
 
 const SURFACES = ['terminal', 'desktop'] as const
 const CALL = 'toolu_probe'
 const AGENT = 'a-probe'
+const CRANK_AGENT = 'a-crank'
+const CRANK_TASK = 'Task 1 implementer'
 
 const SPAWN = {
   tool_use_id: CALL,
@@ -26,10 +28,15 @@ const AGENT_ROW = {
   isInterrupted: false,
 } as const
 
-// The engine beneath the plugin: spawns answer with AGENT, steps answer empty,
-// and each row draws the text the plugin handed down.
+function agentOf(description: string) {
+  return description === CRANK_TASK ? CRANK_AGENT : AGENT
+}
+
+// The engine beneath the plugin: spawns and Agent calls answer with the agent
+// their description names, steps answer empty, and each row draws the text
+// the plugin handed down.
 function engine(on: On) {
-  on('agent.spawn', () => ({ model: 'claude-opus-5-5', agentId: AGENT }))
+  on('agent.spawn', (_$, e) => ({ model: 'claude-opus-5-5', agentId: agentOf(e.description) }))
   on('turn.step', async function* (_$, e) {
     return { turnId: e.turnId, index: e.index, answer: '', toolUses: [], stopReason: 'end_turn', usage: null }
   })
@@ -49,11 +56,17 @@ function engine(on: On) {
 
     return <Text>engine band</Text>
   })
-  on('tool.call', { tool: 'Agent' }, () => ({
-    result: { status: 'async_launched', agentId: AGENT, description: 'probe bg', prompt: 'Reply ok.', outputFile: '/tmp/probe.output' },
+  on('tool.call', { tool: 'Agent' }, (_$, e) => ({
+    result: { status: 'async_launched', agentId: agentOf(e.description), description: e.description, prompt: 'Reply ok.', outputFile: '/tmp/probe.output' },
   }))
-  on('agent.list', () => ({ value: [{ id: AGENT, description: 'probe bg', type: 'Explore', status: 'running' }] }))
+  on('agent.list', () => ({
+    value: [
+      { id: AGENT, description: 'probe bg', type: 'Explore', status: 'running' },
+      { id: CRANK_AGENT, description: CRANK_TASK, type: 'general-purpose', status: 'running' },
+    ],
+  }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
+  on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
 }
 
 const BAND = {
@@ -61,6 +74,59 @@ const BAND = {
   component: 'AbovePrompt',
   props: { hasSurvey: false, isWorking: true, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} },
 } as const
+
+// Stands for crank-mods' hud, which lists each agent it sees spawn in its
+// roster and empties the roster when the session ends, as at /clear.
+const crankMods: Plugin = {
+  name: 'crank-mods',
+  register(on) {
+    const roster = { plugin: 'crank-mods', key: 'hudRoster' } as const
+
+    on('agent.spawn', async ($, e, next) => {
+      const spawned = await next(e)
+      const { value = [] } = await $.state.get(roster)
+
+      if (spawned.agentId !== undefined) {
+        await $.state.set(roster, [...value, spawned.agentId])
+      }
+
+      return spawned
+    })
+    on('session.end', async ($, e, next) => {
+      await $.state.set(roster, [])
+
+      return next(e)
+    })
+  },
+}
+
+// Stands for crank-mods' hud when the plugins' load order puts it beneath
+// agent-effort; the append tier puts it there in the kit.
+const bandBeneath: Plugin = {
+  name: 'band-beneath',
+  tier: 'append',
+  register(on) {
+    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+      const below = await next(e)
+      const { Box, Text } = $.ui.resolve(e)
+
+      return (
+        <Box flexDirection="column">
+          <Text>hud row</Text>
+          {below}
+        </Box>
+      )
+    })
+  },
+}
+
+async function textsOf<P extends (typeof SURFACES)[number]>(ui: Mounted<P, 'AbovePrompt'>) {
+  return (await ui.findAll({ type: 'Text' })).map(found => found.text)
+}
+
+async function bandTexts($: Engine, surface: (typeof SURFACES)[number]) {
+  return textsOf(await $.ui.mount({ ...BAND, surface }))
+}
 
 async function step($: Engine, agentId: string, effort: ModelEffort) {
   const stream = $.turn.step({ turnId: 't', index: 0, model: 'claude-opus-5-5', effort, messageCount: 1, agentId })
@@ -144,4 +210,47 @@ test('the band shows a background agent again when it resumes after waiting on i
 
   const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
   expect((await ui.find({ type: 'Text' }))?.text).toBe('probe bg · Explore · effort high')
+})
+
+test('the band draws its rows above a band beneath it', { plugins: [bandBeneath] }, async ($, on) => {
+  engine(on)
+  await $.tool.call({ tool: 'Agent', description: 'probe bg', prompt: 'Reply ok.', subagent_type: 'Explore' })
+  await step($, AGENT, 'high')
+
+  for (const surface of SURFACES) {
+    expect(await bandTexts($, surface)).toEqual(['probe bg · Explore · effort high', 'hud row', 'engine band'])
+  }
+})
+
+test("the band skips an agent in crank-mods' roster and lists another background agent", { plugins: [crankMods] }, async ($, on) => {
+  engine(on)
+  await $.agent.spawn({ ...SPAWN, tool_use_id: 'toolu_crank', description: CRANK_TASK })
+  await $.tool.call({ tool: 'Agent', description: CRANK_TASK, prompt: 'Reply ok.', subagent_type: 'general-purpose' })
+  await $.tool.call({ tool: 'Agent', description: 'probe bg', prompt: 'Reply ok.', subagent_type: 'Explore' })
+  await step($, CRANK_AGENT, 'high')
+  await step($, AGENT, 'high')
+
+  for (const surface of SURFACES) {
+    expect(await bandTexts($, surface)).toEqual(['probe bg · Explore · effort high', 'engine band'])
+  }
+})
+
+test('a band on screen drops an agent once crank-mods rosters it, and lists it again once the roster empties', { plugins: [crankMods] }, async ($, on) => {
+  engine(on)
+  await $.tool.call({ tool: 'Agent', description: CRANK_TASK, prompt: 'Reply ok.', subagent_type: 'general-purpose' })
+  await $.tool.call({ tool: 'Agent', description: 'probe bg', prompt: 'Reply ok.', subagent_type: 'Explore' })
+  await step($, CRANK_AGENT, 'high')
+  await step($, AGENT, 'high')
+  const both = ['Task 1 implementer · general-purpose · effort high', 'probe bg · Explore · effort high', 'engine band']
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+
+  expect(await textsOf(ui)).toEqual(both)
+
+  await $.agent.spawn({ ...SPAWN, tool_use_id: 'toolu_crank', description: CRANK_TASK })
+
+  expect(await textsOf(ui)).toEqual(['probe bg · Explore · effort high', 'engine band'])
+
+  await $.session.end({ reason: 'clear', sessionId: 's', resume: { id: 's' } })
+
+  expect(await textsOf(ui)).toEqual(both)
 })
