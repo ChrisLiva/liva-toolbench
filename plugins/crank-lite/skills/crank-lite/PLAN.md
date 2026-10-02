@@ -9,6 +9,7 @@ Resolve every implementation decision, and plan the smallest change that ships t
 Before the first question, read:
 
 - The incoming artifact in full, when one exists.
+- The winning variant a `Prototype:` line names, and any mock the incoming artifact records, opened at its path.
 - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, when one exists, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding. Rewrite a drifted entry in place where it lives, in that section or that `grounding.md`, with the new evidence, phase, and date, then carry the drift into the plan's updates since spec.
 
@@ -36,9 +37,10 @@ Verification checks:
 - Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
 - Writing the plan surfaces facts the interview never asked: a signature, a file a task edits, a count a check pins. Confirm each at its source as you write it and record what you read in Grounding; one you cannot confirm now lands under Risks.
 
-Write every task for the weakest executor it may get — one that sees one task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, and the commits already landed, and nothing more:
+Write every task for the weakest executor it may get — one that sees one task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds that line's surface, and the commits already landed, and nothing more:
 
 - Each task carries its own paths, contract, and check.
+- A task that builds or reshapes the surface a `Prototype:` line covers, in the spec or the plan, names the winning variant's path as its reference and which part of the verdict it builds.
 - Route reuse by name: a task that needs a helper the repo already has names it.
 - Each task names the existing test or file to model after.
 - A module being reshaped with no test at its seam gets a characterization task first.

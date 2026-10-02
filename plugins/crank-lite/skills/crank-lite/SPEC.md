@@ -31,6 +31,6 @@ Before closing the interview, walk the failure catalogue — absence, permission
 
 ## Spec
 
-The spec's file is `spec.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the problem, proposed solution, acceptance criteria, key technical decisions, testing/validation, a Grounding section holding the interview's banked entries (ARTIFACT-HOME.md → Grounding), and out of scope. Every decision in it carries its answer: one the interview left unanswered is settled now by a targeted question or a lookup, or moves to out of scope with a sentence on why.
+The spec's file is `spec.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections: the problem, proposed solution, acceptance criteria, key technical decisions, testing/validation, a Grounding section holding the interview's banked entries (ARTIFACT-HOME.md → Grounding), and out of scope. Every decision in it carries its answer: one the interview left unanswered is settled now by a targeted question or a lookup, or moves to out of scope with a sentence on why. A mock path the brainstorm brief recorded carries into the spec beside the decision it settled, so the plan and execution can open it.
 
 Next step: continue to the plan phase ([PLAN.md](PLAN.md)) in this session, or in a fresh one: `/crank-lite plan .crank/<slug>/spec.md`.

@@ -104,6 +104,7 @@ Before the first task:
 
 - Read the `## Verification language` section of [VOCABULARY.md](VOCABULARY.md), plus the **seam** entry above it, and the plan's **Global Constraints** section when it has one. Global Constraints bind every task alongside the task's own lines.
 - Read the `While implementing` and `Detours and stops` sections of [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md). In a solo run, hold your inline work to them; in every run, hold your own fixes to them.
+- Find each `Prototype:` line that names a winner, in the plan and in the spec its `Spec:` header names, and read the winning variant at the path it names. Each task that builds or reshapes a line's surface gets that line on its dispatch's `Prototype:` slot; in a solo run, build that surface from the variant yourself.
 - Run `git status --porcelain` and keep its file list: those files hold the user's uncommitted work.
 - If the plan has no Progress block, add it.
 

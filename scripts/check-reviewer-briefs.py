@@ -72,6 +72,7 @@ FLAG_LITERALS = {
         "uncited claim",
         "hollow stage gate",
         "dead seam",
+        "unreferenced prototype",
     ],
 }
 
@@ -89,7 +90,8 @@ PRESENCE_LITERALS = {
         "\nBound: <Task <N>, the plan's last",
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "The list bounds your tests"],
-    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort", "\nBound: <Task <N>, the plan's last"],
+    "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort", "\nBound: <Task <N>, the plan's last", "`Prototype:` slot"],
+    "plugins/crank-lite/skills/lite-execute/DISPATCH.md": ["\nPrototype: <"],
     "plugins/crank/skills/crank/PLAN.md": ["long plan", "A requirement is a Behavior line", "](PROTOTYPE.md)"],
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)"],
