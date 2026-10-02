@@ -8,3 +8,4 @@ reports/
 .wizard-state.*.json
 .env.acme-demo
 plugins/agent-effort/tsconfig.json
+plugins/crank-mods/tsconfig.json

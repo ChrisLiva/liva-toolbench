@@ -1,0 +1,21 @@
+{
+  "name": "crank-mods",
+  "version": "0.1.0",
+  "description": "Offers the next crank or crank-lite command a hand-off printed as the prompt's Tab suggestion after /clear or a restart, and draws a band above the prompt for a running crank-execute or lite-execute: a header with the task position, stage, landed count and bound, and a row per crank agent with its role, task, effort, elapsed time and current tool",
+  "author": { "name": "Chris" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "hud": {
+      "type": "boolean",
+      "title": "Run band",
+      "description": "Draw a band above the prompt while crank-execute or lite-execute runs: the task position, the stage, the landed count, the bound the run wrote, and how the run ended, then a row per crank agent with its role, task, effort, elapsed time, and current tool or the background shell it waits on.",
+      "default": true
+    },
+    "resume": {
+      "type": "boolean",
+      "title": "Resume suggestion",
+      "description": "Keep the next-phase command a crank or crank-lite hand-off prints, per worktree for 12 hours, and offer it as the prompt's Tab suggestion after /clear, at startup or --resume, and after /model, /effort or /config.",
+      "default": true
+    }
+  }
+}

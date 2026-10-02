@@ -38,7 +38,7 @@ Then `/reload-plugins` after any edits.
 
 ## Plugins
 
-Every skill plugin ships **cross-harness**: the same `skills/` tree runs under both Claude Code and Codex, and each carries a `.claude-plugin/` and a `.codex-plugin/` manifest. `agent-effort` is the exception. It is a Claude Code mod written as function hooks, which only Claude Code runs.
+Every skill plugin ships **cross-harness**: the same `skills/` tree runs under both Claude Code and Codex, and each carries a `.claude-plugin/` and a `.codex-plugin/` manifest. `agent-effort` and `crank-mods` are the exceptions. They are Claude Code mods written as function hooks, which only Claude Code runs.
 
 ### `crank` — design-first development pipeline
 
@@ -98,6 +98,17 @@ This Claude Code mod shows the effort each spawned subagent actually runs at. It
 | A background agent's completion notice | `Agent "probe bg" finished · effort high · 49s` |
 | A band above the prompt | One row per running background agent: `probe bg · Explore · effort high` |
 
+### `crank-mods` adds a resume suggestion and a run band to crank in Claude Code
+
+This Claude Code mod works off the commands, artifacts and agents the crank and crank-lite skills already produce, so the skills need no change to use it. It has no skills or commands, and each feature has a toggle in its plugin options.
+
+| Feature | What it shows |
+|---|---|
+| Resume suggestion | After a phase hands off, `/clear`, a restart, `/model`, `/effort` or `/config` puts the next command in the prompt as a dim Tab suggestion: `/lite-execute .crank/csv-export/plan.md`. It keeps one line per effort for 12 hours and drops it once the effort's retro exists or its path is gone. |
+| Run band | While `crank-execute` or `lite-execute` runs, a header above the prompt: `crank-execute · csv-export · Task 4 of 9 (stage 2 of 3) · 3 landed · bound Task 5`. Below it, one row per crank agent: `implementer · Task 4 · effort high · 41m, past 40m · Bash ctest 2m`. The header reads the bound from the run's own Pre-flight lines, and ends with how the run stopped. |
+
+It arms only on a crank or crank-lite command you type (or send through Remote Control), never in a `claude -p` run.
+
 ---
 
 ## Repository layout
@@ -140,6 +151,11 @@ plugins/
     hooks/register.tsx          # the hooks module hooks/hooks.json names
     types/index.d.ts            # the $.state values it keeps
     tests/                      # run by `claude plugin test`
+  crank-mods/                   # Claude-only mod: resume suggestion + run band
+    .claude-plugin/plugin.json  # userConfig toggles `hud` and `resume`
+    hooks/register.tsx          # the hooks module; imports parse, hud, resume, roster
+    types/index.d.ts            # the $.state contract; agent-effort reads hudRoster
+    tests/
 ```
 
 See `CLAUDE.md` for authoring conventions, the cross-harness rules, and the version-bump checklist.

@@ -2,7 +2,7 @@
 
 This repo is a **plugin marketplace and development sandbox** for Claude Code and Codex. Each subdirectory under `plugins/` is a self-contained plugin you can install via the marketplace catalogs or load directly for fast iteration.
 
-When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin, `crank-wizard` for a skill that ships a compilable code template, `agent-effort` for a Claude Code mod written as function hooks).
+When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin, `crank-wizard` for a skill that ships a compilable code template, `agent-effort` for a Claude Code mod written as function hooks, `crank-mods` for a mod split across imported modules whose state another plugin reads).
 
 ---
 
@@ -41,7 +41,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
         └── scripts/               # arbitrary helper scripts (referenced via ${CLAUDE_PLUGIN_ROOT})
 ```
 
-The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship as cross-harness plugins and contain manifests plus `skills/`. `agent-effort` is Claude-only because Claude Code alone runs function hooks, so it has no `.codex-plugin/` manifest and no Codex index entry. Its `hooks/hooks.json` names one hooks module under `modules` (`hooks/register.tsx`), `types/index.d.ts` declares the `$.state` values it keeps, and `tests/` holds the tests `claude plugin test plugins/agent-effort` runs; `claude plugin validate plugins/agent-effort` checks the module the way the engine loads it. The engine writes `.claude-plugin/types/` and `tsconfig.json` into the plugin folder on each load, and git ignores both. Other component directories shown above are supported by the plugin format when a plugin needs them.
+The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship as cross-harness plugins and contain manifests plus `skills/`. The mods `agent-effort` and `crank-mods` are Claude-only because Claude Code alone runs function hooks, so they have no `.codex-plugin/` manifest and no Codex index entry. Each one's `hooks/hooks.json` names one hooks module under `modules` (`hooks/register.tsx`), `types/index.d.ts` declares the `$.state` values it keeps, and `tests/` holds the tests `claude plugin test plugins/<name>` runs; `claude plugin validate plugins/<name>` checks the module the way the engine loads it. The engine writes `.claude-plugin/types/` and `tsconfig.json` into the plugin folder on each load, and git ignores both. Other component directories shown above are supported by the plugin format when a plugin needs them.
 
 `tools/` holds standalone utilities that no marketplace catalog lists. `tools/claude-effort/claude_effort.py` is a standard-library curses TUI that edits the effort keys in your user settings. It also shows each model's effort precedence and the level a session or subagent on that model starts at. Run it from a project directory with `python3 tools/claude-effort/claude_effort.py`, and test it with `python3 -m unittest discover tools/claude-effort`.
 
@@ -106,8 +106,8 @@ The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship
 
 Cross-harness plugins ship for **both** Claude Code and Codex — they carry a
 `.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`, and both manifests
-read the same `skills/` tree. Every current marketplace plugin except the Claude-only
-`agent-effort` is cross-harness: `crank`, `crank-lite`, `crank-wizard`, and
+read the same `skills/` tree. Every current marketplace plugin except the Claude-only mods
+`agent-effort` and `crank-mods` is cross-harness: `crank`, `crank-lite`, `crank-wizard`, and
 `effective-html`.
 
 **The Codex manifest** mirrors the Claude one for `name`, `version`, `description`,
@@ -265,7 +265,7 @@ A plugin's version is **duplicated across several files that must be kept in syn
 | `.claude-plugin/marketplace.json` → the plugin's entry in `plugins[]` | that entry's `"version"` | every plugin |
 | `plugins/<name>/.codex-plugin/plugin.json` | top-level `"version"` | **cross-harness plugins only** |
 
-So a **Claude-only** plugin such as `agent-effort` has **two** version strings to bump;
+So a **Claude-only** plugin such as `agent-effort` or `crank-mods` has **two** version strings to bump;
 every other current plugin is **cross-harness** and has **three**. Forgetting the
 marketplace-catalog copy is the easy miss — the per-plugin manifest and the catalog entry
 are separate files.

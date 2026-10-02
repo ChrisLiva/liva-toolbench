@@ -46,6 +46,14 @@
       "version": "0.1.0",
       "category": "tools",
       "tags": ["subagent", "effort", "mod", "hooks"]
+    },
+    {
+      "name": "crank-mods",
+      "source": "./plugins/crank-mods",
+      "description": "Offers the next crank or crank-lite command a hand-off printed as the prompt's Tab suggestion after /clear or a restart, and draws a band above the prompt for a running crank-execute or lite-execute: a header with the task position, stage, landed count and bound, and a row per crank agent with its role, task, effort, elapsed time and current tool",
+      "version": "0.1.0",
+      "category": "tools",
+      "tags": ["crank", "resume", "hud", "mod", "hooks"]
     }
   ]
 }
