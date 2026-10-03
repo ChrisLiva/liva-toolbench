@@ -27,17 +27,13 @@ python3 scripts/smoke/lite-execute/score.py $S/batch          # pass rate per ch
 python3 scripts/smoke/lite-execute/score.py --json $S/batch   # one JSON object per run
 ```
 
-`batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> ...` runs every scenario for Sonnet and Haiku orchestrators; `SMOKE_SCENARIOS="fresh stop-if"` and `SMOKE_MODELS=sonnet` narrow it. `run.sh` drives one session and saves its stream (`turns/*.jsonl`), the repo, and `.crank/` before and after. Each session works in a throwaway clone with permission prompts skipped: in auto mode a headless implementer's `Write` calls were denied and the run stalled on Task 1. Set `SMOKE_PERMISSION_MODE=<mode>` to run under a permission mode instead. Set `SMOKE_SETTING_SOURCES=project,local` to leave out the user-level `CLAUDE.md`; implementers then fall back to the skill's harness tiers.
+`batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> ...` runs every scenario for a Sonnet orchestrator under Claude Code and a gpt-6-luna orchestrator under Codex; `SMOKE_SCENARIOS="fresh stop-if"` and `SMOKE_MODELS=sonnet` narrow it. `run.sh` drives one session and saves its stream (`turns/*.jsonl`), the repo, and `.crank/` before and after. Each session works in a throwaway clone with permission prompts skipped: in auto mode a headless implementer's `Write` calls were denied and the run stalled on Task 1. Set `SMOKE_PERMISSION_MODE=<mode>` to run under a permission mode instead. Set `SMOKE_SETTING_SOURCES=project,local` to leave out the user-level `CLAUDE.md`; implementers then fall back to the skill's harness tiers.
 
-Pass 2 reps, on either harness. The 2026-10-02 batch (crank-lite 1.50.0 against 1.51.0, 59 Claude runs and 18 Codex runs at three reps per arm) had six checks where the arms differed by two or more runs, such as Haiku's `decision_options` going from 0/3 to 3/3 in `stop-if`, and the first rep alone showed all six. The third rep changed 17 verdicts, each by a single run, so settle a one-run difference between arms by reading both runs' transcripts.
+Pass 2 reps. The 2026-10-02 batch (crank-lite 1.50.0 against 1.51.0, 59 Claude runs and 18 Codex runs at three reps per arm) had six checks where the arms differed by two or more runs, such as Haiku's `decision_options` going from 0/3 to 3/3 in `stop-if`, and the first rep alone showed all six. The third rep changed 17 verdicts, each by a single run, so settle a one-run difference between arms by reading both runs' transcripts.
 
 The sessions load the user-level `CLAUDE.md`, so its subagent model preference sets the implementer and reviewer models. `--settings` disables the marketplace installs of crank and crank-lite, so only the `--plugin-dir` copy loads.
 
-`SMOKE_HARNESS=codex` runs the same scenarios under `codex exec`, with `SMOKE_MODELS` naming Codex models and `SMOKE_EFFORT` setting `model_reasoning_effort` (default `high`):
-
-```bash
-SMOKE_HARNESS=codex SMOKE_MODELS=gpt-6-luna ./scripts/smoke/lite-execute/batch.sh $S/batch 2 6 base=... fix=...
-```
+`run.sh` runs a `gpt-*` model under `codex exec`, with `SMOKE_EFFORT` setting `model_reasoning_effort` (default `high`), and every other model under `claude -p`.
 
 A Codex session loads the arm's `skills/lite-execute` as a repo skill under the clone's `.agents/skills/`, kept out of `git status` by `.git/info/exclude`, and runs with the installed crank and crank-lite plugins disabled. It runs in Codex's `workspace-write` sandbox with approvals off and the clone's `.git` as an extra writable root, so it writes only inside the clone. The `--json` stream leaves out spawns and some commands, so `run.sh` copies the session's rollout files (the orchestrator thread and every subagent thread under it) from `~/.codex/sessions` into `rollouts/`, and `score.py` reads those. Codex encrypts the message a spawn sends, so the brief checks score `n/a` on Codex; `impl_reads_brief` scores whether each implementer opened `IMPLEMENTER-BRIEF.md` instead. The user-level `~/.codex/AGENTS.md` sets the subagent model, which `impl_model_user` checks against.
 

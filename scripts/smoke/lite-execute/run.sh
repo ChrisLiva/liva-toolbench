@@ -2,7 +2,8 @@
 # run.sh <plugin-dir> <scenario: fresh|stop-if|stop-if-detour|spec-path|prototype|prototype-solo> <model> <seed-dir> <run-dir>
 # Drives one headless lite-execute session against a clone of a seed repo and saves
 # the stream, the git state, and the .crank/ artifacts under <run-dir>.
-# SMOKE_HARNESS=codex drives `codex exec` instead of `claude -p`, at SMOKE_EFFORT (default high).
+# A gpt-* model runs under `codex exec` at SMOKE_EFFORT (default high), and any other model
+# under `claude -p`.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 PD=$(cd "$1" && pwd); scenario=$2; model=$3; seeds=$(cd "$4" && pwd)
@@ -18,11 +19,9 @@ esac
 # SMOKE_SETTING_SOURCES=project,local leaves out the user-level CLAUDE.md, to test whether
 # its instructions override a skill rule.
 if [ -n "${SMOKE_SETTING_SOURCES:-}" ]; then perm+=(--setting-sources "$SMOKE_SETTING_SOURCES"); fi
-harness=${SMOKE_HARNESS:-claude}
-case $harness in
-  claude) inv=/crank-lite:lite-execute ;;
-  codex) inv='$lite-execute' ;;
-  *) echo "unknown harness $harness" >&2; exit 2 ;;
+case $model in
+  gpt-*) harness=codex inv='$lite-execute' ;;
+  *) harness=claude inv=/crank-lite:lite-execute ;;
 esac
 
 case $scenario in

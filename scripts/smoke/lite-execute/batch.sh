@@ -2,8 +2,8 @@
 # batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> [<arm>=<plugin-dir> ...]
 # Runs every scenario x model x rep for each arm, <parallel> sessions at a time, then
 # scores the batch: python3 score.py <batch-dir>
-# SMOKE_SCENARIOS and SMOKE_MODELS narrow the run (default: every scenario, sonnet and haiku).
-# SMOKE_HARNESS=codex runs each session under `codex exec`; name Codex models in SMOKE_MODELS.
+# SMOKE_SCENARIOS and SMOKE_MODELS narrow the run (default: every scenario, sonnet and gpt-6-luna).
+# run.sh picks each session's harness from its model.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 batch=$1 reps=$2 par=$3; shift 3
@@ -12,7 +12,7 @@ mkdir -p "$batch"
 jobs=$batch/jobs.txt; : > "$jobs"
 for scenario in ${SMOKE_SCENARIOS:-fresh stop-if stop-if-detour spec-path prototype prototype-solo}; do
   for rep in $(seq 1 "$reps"); do
-    for model in ${SMOKE_MODELS:-sonnet haiku}; do
+    for model in ${SMOKE_MODELS:-sonnet gpt-6-luna}; do
       for armspec in "$@"; do
         arm=${armspec%%=*} pd=${armspec#*=}
         echo "$pd $scenario $model $batch/seeds $batch/$arm/$scenario-$model-$rep" >> "$jobs"
