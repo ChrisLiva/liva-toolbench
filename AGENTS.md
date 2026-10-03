@@ -245,8 +245,8 @@ non-lookup bucket.
 
 `scripts/smoke/lite-execute/` measures a lite-execute prose change on the Claude Code
 and Codex models that execute it. Read its README before a run, because it lists the
-scenarios and their fixtures' traps, the `batch.sh` and `score.py` commands, the Codex
-setup, and how to read a score.
+scenarios and their fixtures' traps, the `batch.sh` and `score.py` commands, the rep
+count to pass, the Codex setup, and how to read a score.
 
 ---
 
