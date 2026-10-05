@@ -8,7 +8,7 @@ Map what's open as a **decision tree**, each decision branching into the ones th
 - **Ask the whole frontier in one round** — a numbered list in plain chat prose (not a structured-question UI: prose shows your reasoning and leaves room for follow-up), each question in this fixed shape so the user can answer by number:
 
   ```
-  ❓ **Q1 — <title>**: <the question; prose, or discrete options when the choice is genuinely between them>
+  ❓ **Q1: <title>** <the question; prose, or discrete options when the choice is genuinely between them>
 
   ➡️ <your recommended answer and the trade-off it accepts>
   ```
