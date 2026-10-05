@@ -144,5 +144,5 @@ Write the brief so a fresh session can run it without this chat. Once the readba
 Resolve the tier once per run and reuse it. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tier onto it, even when it names a weaker model than the fallback below. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
 
 <subagent-tiers>
-- **standard** fallback (codebase exploration): Claude Code `model: sonnet` · Codex Terra at medium effort · Cursor Composer
+- **standard** fallback (codebase exploration): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
 </subagent-tiers>

@@ -7,7 +7,7 @@ Resolve each tier to a model once per run and reuse the mapping at every dispatc
 Harness fallbacks:
 
 - **Claude Code.** Spawn with the `Agent` tool; standard falls back to `model: sonnet` and heavy to `model: opus`. Inheriting the session model is fine where it already sits at the needed tier; report it by name, never as `inherited`. A typed read-only agent such as `Explore` counts as standard; set `model` explicitly for anything heavy.
-- **Codex.** Standard falls back to Terra at `medium` effort; heavy to Sol at `high` effort.
+- **Codex.** Standard falls back to Luna at `high` effort; heavy to Sol at `high` effort.
 - **Cursor.** Standard falls back to Composer; heavy to Sol at `high` effort.
 
 ## Dispatch or main thread
