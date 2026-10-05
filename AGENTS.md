@@ -228,10 +228,23 @@ Claude-only preprocessing listed under *Cross-harness plugins*. Beyond the sites
 presence-checks the literals an orchestrator skill's own prose promises — the
 `PRESENCE_LITERALS` map — with no vocabulary or preprocessing rule applied. It also
 replaces the hand-run `diff -q` loop over the reference copies: for every reference a
-skill's own markdown links, the copy must exist and match its canonical. Finally it
-compiles `crank-wizard`'s Go template (`go vet`, then `go build` natively and with
+skill's own markdown links, the copy must exist and match its canonical. It resolves
+every prose pointer to a section (`FILE.md → Heading`, the `` `Heading` `` section of
+`FILE.md`, `FILE.md`'s Heading section) against the headings of the file beside the
+pointer, so renaming or splitting a heading fails the gate instead of stranding the
+pointers that name it. Finally it compiles `crank-wizard`'s Go template (`go vet`, then `go build` natively and with
 `GOOS=windows`), so a template edit that breaks either shipped OS fails the gate on
 this darwin machine instead of on a teammate's.
+
+A pinned literal records what the prose promised when it was pinned; it does not
+freeze the wording (per project decision: a gate literal must not block a better
+wording). When a rewrite carries the same behavior in new words, change the literal
+in `FLAG_LITERALS`, `PRESENCE_LITERALS`, or `BATCH_LITERALS` in the same commit. The
+strings running code parses are a different kind of contract and change only with
+that code: the plan's `## Progress` block, task boxes, column-zero `Bound:` and
+`Stopped:` lines, and `## Stages` table (`plugins/crank-mods/hooks/parse.ts`), the
+brief file names and reviewer identity sentences (`plugins/crank-mods/hooks/roster.ts`),
+and the Pre-flight and Progress lines `scripts/smoke/lite-execute/score.py` scores.
 
 `python3 scripts/measure-review-cost.py <transcript.jsonl | directory>` is the
 companion measurement, not a gate. It reports how a review thread spent its turns —

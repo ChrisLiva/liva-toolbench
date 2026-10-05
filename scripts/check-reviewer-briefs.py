@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Gate the adversarial-review sites, the orchestrator skills' promised
-literals, and the hand-synced reference copies.
+literals, the hand-synced reference copies, and the prose pointers to sections.
 
 Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
@@ -129,6 +129,14 @@ CANONICAL = {
 
 SKILL_DIRS = ["plugins/crank/skills", "plugins/crank-lite/skills", "plugins/crank-wizard/skills"]
 
+# Prose that points into another file by heading, resolved against the headings of the
+# file beside the pointer: `FILE.md → Heading`, the `Heading` section(s) of [FILE.md],
+# and FILE.md's Heading section.
+ARROW_POINTER = re.compile(r"`?\b([A-Z][A-Z0-9_-]*\.md)`?\]?(?:\([^)\s]*\))? → (?:\*\*|`)?([^\n]+)")
+SECTION_OF_POINTER = re.compile(r"((?:`[^`\n]+`(?:,| and| or)? ?)+) sections? (?:of|in) \[?`?([A-Z][A-Z0-9_-]*\.md)")
+POSSESSIVE_POINTER = re.compile(r"`?\b([A-Z][A-Z0-9_-]*\.md)`?'s `?([A-Z][^`\n]*?)`? section\b")
+HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*#*\s*$", re.M)
+
 # The crank-wizard skill ships a compilable Go template; a wizard generator
 # whose own template does not compile is the failure this gate exists to catch.
 TEMPLATE_DIR = "plugins/crank-wizard/skills/crank-wizard/template"
@@ -214,6 +222,37 @@ def check_sync(failures):
                     failures.append(f"FAIL sync {copy_rel}: differs from {canonical_dir}/{name}.md")
 
 
+def headings_of(text):
+    """Each heading's text, without markup or a leading step number."""
+    return {re.sub(r"^\d+\.\s+", "", h.replace("**", "").replace("`", "")) for h in HEADING.findall(text)}
+
+
+def check_pointers(failures):
+    """Every prose pointer to a section must name a heading its target file still has."""
+    for skills_dir in SKILL_DIRS:
+        for path in sorted((ROOT / skills_dir).glob("*/*.md")):
+            text = path.read_text(encoding="utf-8")
+            rel = path.relative_to(ROOT)
+            pointers = [(f, t, True) for f, t in ARROW_POINTER.findall(text)]
+            pointers += [(f, n.strip(" ,"), False) for names, f in SECTION_OF_POINTER.findall(text)
+                         for n in re.findall(r"`([^`]+)`", names)]
+            pointers += [(f, t, False) for f, t in POSSESSIVE_POINTER.findall(text)]
+            for target, wanted, is_prefix in pointers:
+                target_text = read(f"{rel.parent}/{target}")
+                if target_text is None:
+                    failures.append(f"FAIL pointer {rel}: points into {target}, which is missing beside it")
+                    continue
+                wanted = wanted.lstrip("#").strip().replace("**", "").replace("`", "")
+                heads = headings_of(target_text)
+                if is_prefix:
+                    found = any(re.match(re.escape(h) + r"(?![\w-])", wanted) for h in heads)
+                else:
+                    found = wanted in heads
+                if not found:
+                    shown = re.split(r"[,.;:()\[]", wanted)[0].strip()
+                    failures.append(f"FAIL pointer {rel}: {target} has no heading matching {shown!r}")
+
+
 def check_template(failures):
     """The wizard template must pass vet and compile for both shipped OSes."""
     tdir = ROOT / TEMPLATE_DIR
@@ -245,6 +284,7 @@ def main():
     check_sites(failures)
     check_presence(failures)
     check_sync(failures)
+    check_pointers(failures)
     check_template(failures)
     for line in failures:
         print(line)
