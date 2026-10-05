@@ -13,46 +13,75 @@ Before the first question, read:
 - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, when one exists, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding. Rewrite a drifted entry in place where it lives, in that section or that `grounding.md`, with the new evidence, phase, and date, then carry the drift into the plan's updates since spec.
 
-Offer a prototype, 3 to 5 variants behind one switcher, once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under the plan's assumptions. When the incoming artifact is a brainstorm brief, copy its `Prototype:` line, with any block copied beneath it, under the plan's assumptions as written. When no offer fires, move to the questions without mentioning a prototype.
+Offer a prototype, 3 to 5 variants behind one switcher, once, when all three hold:
+
+- the change touches a page, screen, component, CLI output, flags, help text, or TUI;
+- the spec carries no `Prototype:` line, or no spec exists;
+- a look or interaction decision is still open.
+
+A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Its `Prototype:` line, or `Prototype: declined` on a no, lands under the plan's assumptions. When the incoming artifact is a brainstorm brief, copy its `Prototype:` line, with any block copied beneath it, under the plan's assumptions as written. When no offer fires, move to the questions without mentioning a prototype.
 
 Risks:
 
 - A risk no check can retire is a decision: put it to the user during the interview, so the plan ships with no open questions.
 - A fact you cannot confirm this session is a risk, paired with the check that would settle it.
 
-Run it, don't recall: any build-tool, CLI-flag, or pinned-dependency behavior the plan leans on gets run once during the interview's fact lookups, and the plan records what the run printed — an exact output, exit code, or API contract stated in prose carries the run just as an embedded block does. When the work keys, transforms, or migrates data that already exists, run the proposed invariant over the full real dataset and record the count checked; canned fixtures can't stand in for it.
+Run it, don't recall:
+
+- During the interview's fact lookups, run once each build-tool, CLI-flag, or pinned-dependency behavior the plan leans on, and record what the run printed: an exact output, exit code, or API contract, stated in prose or as an embedded block.
+- When the work keys, transforms, or migrates existing data, run the proposed invariant over the full real dataset, not a canned fixture, and record the count checked.
 
 ## Vocabulary
 
-Shared design language across the crank pipeline, defined once in [VOCABULARY.md](VOCABULARY.md). Read it before you write the verification checks: this phase leans on the **probe**, its **oracle**, the **seam**, the **dead seam**, the **deletion test**, the **journey test**, the **redundant test**, and the **rewrite test**.
+Read [VOCABULARY.md](VOCABULARY.md) before you write the verification checks: this phase leans on the **probe**, its **oracle**, the **seam**, the **dead seam**, the **deletion test**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
 ## Plan
 
-The plan's file is `plan.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). When a spec exists, the plan carries a `Spec: <absolute path to the spec>` header line above its goal, which lite-execute reads to hand the spec to its reviewer. Its sections: the goal, assumptions, updates since spec (drift found in the spec's grounding and any gap the spec leaves that the plan must resolve, omitted when there is none), ordered tasks, stages for a long plan ([STAGES.md](STAGES.md), read once the task list settles, each cut read back beside the cut it rejected), verification checks, risks (each risk paired with the check that retires it during execution), and a Grounding section holding what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
+The plan's file is `plan.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its parts, in order:
+
+1. `Spec: <absolute path to the spec>`, a header line above the goal when a spec exists; lite-execute reads it to hand the spec to its reviewer.
+2. Goal.
+3. Assumptions.
+4. Updates since spec: drift found in the spec's grounding and any gap the spec leaves that the plan must resolve. Omit it when there is none.
+5. Ordered tasks.
+6. Stages, for a long plan: read [STAGES.md](STAGES.md) once the task list settles, and read each cut back beside the cut it rejected.
+7. Verification checks.
+8. Risks, each paired with the check that retires it during execution.
+9. Grounding: what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
 
 Verification checks:
 
-- Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or — where no committed test fits — a **probe**. The check that retires a risk names one of these instruments.
+- Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or a **probe** where no committed test fits. The check that retires a risk names one of these instruments.
 - A check whose reading is a count or a probe output records what the tree prints now beside what it must print; equal readings are a **dead seam**.
 - Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
-- Writing the plan surfaces facts the interview never asked: a signature, a file a task edits, a count a check pins. Confirm each at its source as you write it and record what you read in Grounding; one you cannot confirm now lands under Risks.
+- As you write, confirm at its source each fact the interview never asked, such as a signature, a file a task edits, or a count a check pins, and record what you read in Grounding. One you cannot confirm now lands under Risks.
 
-Write every task for the weakest executor it may get — one that sees one task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds or reshapes that line's surface, and the commits already landed, and nothing more:
+Write every task for the weakest executor it may get, one that sees only the task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds or reshapes that line's surface, and the commits already landed. Each task carries:
 
-- Each task carries its own paths, contract, and check.
-- Before you write a task that builds or reshapes the surface a `Prototype:` line covers, in the spec or the plan, read the winning variant at the path the line names, or the block copied beneath a line that reads `in chat`. That task names the variant's path, or `in chat`, as its reference, and which part of the verdict it builds.
-- Route reuse by name: a task that needs a helper the repo already has names it.
-- Each task names the existing test or file to model after.
-- A module being reshaped with no test at its seam gets a characterization task first.
-- If no gate command runs, the first task establishes one.
-- A task tightening a shared contract — a field made required, a shared symbol renamed, a validator narrowed — carries every call site the grep found.
-- A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
+- its own paths, contract, and check;
+- the existing test or file to model after;
+- by name, each helper the repo already has that it needs.
+
+A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
+
+By case:
+
+- **The task builds or reshapes the surface a `Prototype:` line covers**, in the spec or the plan: before you write it, read the winning variant at the line's path, or the block copied beneath a line reading `in chat`. The task names that path, or `in chat`, as its reference, and which part of the verdict it builds.
+- **A module being reshaped has no test at its seam**: a characterization task comes first.
+- **No gate command runs**: the first task establishes one.
+- **The task tightens a shared contract** (a field made required, a shared symbol renamed, a validator narrowed): it carries every call site the grep found.
 
 ## Review
 
-Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with pointers only: the brief's absolute path, the plan's absolute path, the spec's absolute path when one exists, and the absolute path to this skill's `VOCABULARY.md`. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
+Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with pointers only, each an absolute path: the brief, the plan, the spec when one exists, and this skill's `VOCABULARY.md`. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
 
-Its return carries each finding as `CONFIRMED` or `REFUTED`, with an exact `old` → `new` edit per `CONFIRMED` finding. Facts are yours; decisions are the user's ([INTERVIEW.md](INTERVIEW.md)): an edit that corrects a fact lands in `plan.md` verbatim, its `old` widened to a span the file holds once when it matches elsewhere; an edit with more than one defensible replacement is a decision, landed as the reviewer wrote it and shown in the readback beside the replacement it beat. A `REFUTED` finding takes no edit. Strike or rewrite any Grounding entry a landed edit contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
+Land each finding the review returns. Facts are yours; decisions are the user's ([INTERVIEW.md](INTERVIEW.md)):
+
+- **`CONFIRMED`, correcting a fact**: land its `old` → `new` edit in `plan.md` verbatim, widening `old` to a span the file holds once when it matches elsewhere.
+- **`CONFIRMED`, with more than one defensible replacement**: a decision. Land it as the reviewer wrote it, and show it in the readback beside the replacement it beat.
+- **`REFUTED`**: no edit.
+
+Then strike or rewrite any Grounding entry a landed edit contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
 
 Completion criterion: every `CONFIRMED` finding is in `plan.md`, and each decision among them is marked for the readback beside the replacement it beat.
 
