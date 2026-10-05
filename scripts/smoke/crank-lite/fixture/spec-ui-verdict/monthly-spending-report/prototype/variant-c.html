@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ledger: September 2026 spending (C: Stacked bar and table)</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --surface: #fcfcfb;
+  --ink-1: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #898781;
+  --grid: #e1e0d9;
+  --rule: #c3c2b7;
+  --wash: rgba(11,11,11,0.045);
+  --other: #898781;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --s4: #eda100;
+  --s5: #e87ba4;
+  --s6: #008300;
+  --s7: #4a3aa7;
+  --s8: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #1a1a19;
+    --ink-1: #ffffff;
+    --ink-2: #c3c2b7;
+    --ink-3: #898781;
+    --grid: #2c2c2a;
+    --rule: #383835;
+    --wash: rgba(255,255,255,0.06);
+    --other: #898781;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --s5: #d55181;
+    --s6: #008300;
+    --s7: #9085e9;
+    --s8: #e66767;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink-1);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.chrome {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 11px 40px;
+  border-bottom: 1px solid var(--grid);
+  font-size: 13px;
+}
+.chrome b { font-weight: 650; letter-spacing: 0.01em; }
+.chrome span { color: var(--ink-2); }
+h1 { margin: 0; font-weight: 650; letter-spacing: -0.015em; line-height: 1.15; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.page { max-width: 920px; margin: 0 auto; padding: 56px 40px 128px; }
+.top { margin-bottom: 64px; }
+h1 { font-size: 34px; }
+.eq { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 18px; margin: 22px 0 0; }
+.term { display: flex; flex-direction: column; }
+.term span { font-size: 13px; color: var(--ink-2); }
+.term b { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+.op { font-size: 22px; line-height: 1.6; color: var(--ink-3); }
+.whole { margin: 0 0 56px; }
+.whole figcaption { margin-bottom: 22px; font-size: 13px; color: var(--ink-2); }
+.callouts { display: grid; column-gap: 2px; align-items: end; }
+.callout {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0 8px 10px 9px;
+  border-left: 1px solid var(--ink-2);
+}
+.callout .who { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
+.callout .amt { font-size: 15px; font-weight: 600; }
+.callout .amt span { font-weight: 400; color: var(--ink-2); }
+.stack { display: flex; gap: 2px; height: 24px; }
+.seg { flex-basis: 0; flex-shrink: 1; min-width: 0; transition: opacity 0.15s; }
+.seg:last-child { border-radius: 0 4px 4px 0; }
+.stack:hover .seg { opacity: 0.45; }
+.stack .seg:hover { opacity: 1; }
+table { width: 100%; border-collapse: collapse; }
+caption { text-align: left; margin-bottom: 8px; font-size: 13px; color: var(--ink-2); }
+th, td { padding: 11px 12px; border-bottom: 1px solid var(--grid); text-align: left; }
+thead th { font-size: 13px; font-weight: 500; color: var(--ink-2); border-bottom-color: var(--rule); }
+th.num, td.num { text-align: right; }
+tbody tr:hover td { background: var(--wash); }
+td.key { width: 22px; padding-right: 0; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
+.count { color: var(--ink-2); font-size: 13px; }
+td.pct { color: var(--ink-2); }
+tfoot th, tfoot td { border-bottom: 0; font-weight: 600; }
+@media (max-width: 640px) {
+  .page { padding: 40px 20px 128px; }
+  .chrome { padding: 11px 20px; }
+}
+</style>
+<!-- Prototype fixture: the 4 rows of data/sample.tsv plus invented 2026-09 outflows.
+     The markup below is pre-rendered from this array; the page runs no JavaScript. -->
+<script type="application/json" id="fixture">
+[
+  {"date": "2026-09-01", "payee": "Café Ñandú", "amount_cents": -450},
+  {"date": "2026-09-01", "payee": "Northgate Properties", "amount_cents": -138000},
+  {"date": "2026-09-01", "payee": "Metro Transit", "amount_cents": -8600},
+  {"date": "2026-09-02", "payee": "Smith, Jones & Co", "amount_cents": -12000},
+  {"date": "2026-09-03", "payee": "The \"Corner\" Shop", "amount_cents": -899},
+  {"date": "2026-09-04", "payee": "Salary", "amount_cents": 350000},
+  {"date": "2026-09-05", "payee": "Café Ñandú", "amount_cents": -520},
+  {"date": "2026-09-06", "payee": "FreshMart Grocery", "amount_cents": -14230},
+  {"date": "2026-09-07", "payee": "Eastside Laundromat", "amount_cents": -500},
+  {"date": "2026-09-08", "payee": "Café Ñandú", "amount_cents": -450},
+  {"date": "2026-09-09", "payee": "The \"Corner\" Shop", "amount_cents": -2347},
+  {"date": "2026-09-10", "payee": "Clearwave Internet", "amount_cents": -6499},
+  {"date": "2026-09-11", "payee": "Riverside Pharmacy", "amount_cents": -1985},
+  {"date": "2026-09-12", "payee": "Café Ñandú", "amount_cents": -975},
+  {"date": "2026-09-13", "payee": "FreshMart Grocery", "amount_cents": -9874},
+  {"date": "2026-09-14", "payee": "Streamly", "amount_cents": -1299},
+  {"date": "2026-09-15", "payee": "City Power & Light", "amount_cents": -11240},
+  {"date": "2026-09-15", "payee": "Café Ñandú", "amount_cents": -450},
+  {"date": "2026-09-16", "payee": "The \"Corner\" Shop", "amount_cents": -1512},
+  {"date": "2026-09-18", "payee": "Metro Transit", "amount_cents": -1250},
+  {"date": "2026-09-19", "payee": "Café Ñandú", "amount_cents": -1240},
+  {"date": "2026-09-20", "payee": "FreshMart Grocery", "amount_cents": -16105},
+  {"date": "2026-09-21", "payee": "Eastside Laundromat", "amount_cents": -475},
+  {"date": "2026-09-22", "payee": "Café Ñandú", "amount_cents": -450},
+  {"date": "2026-09-24", "payee": "The \"Corner\" Shop", "amount_cents": -3180},
+  {"date": "2026-09-25", "payee": "Westbrook Library", "amount_cents": -300},
+  {"date": "2026-09-26", "payee": "Café Ñandú", "amount_cents": -520},
+  {"date": "2026-09-27", "payee": "FreshMart Grocery", "amount_cents": -11342},
+  {"date": "2026-09-29", "payee": "Café Ñandú", "amount_cents": -450}
+]
+</script>
+</head>
+<body>
+<header class="chrome"><b>Ledger</b><span>September 2026</span></header>
+<main class="page">
+<header class="top">
+  <h1>September 2026</h1>
+  <p class="eq">
+    <span class="term"><span>Income</span><b>$3,500.00</b></span>
+    <span class="op" aria-hidden="true">−</span>
+    <span class="term"><span>Spent</span><b>$2,471.42</b></span>
+    <span class="op" aria-hidden="true">=</span>
+    <span class="term"><span>Net</span><b>$1,028.58</b></span>
+  </p>
+</header>
+<figure class="whole">
+  <figcaption>The whole month: every dollar spent, by payee, largest first.</figcaption>
+  <div class="callouts" style="grid-template-columns:55.838fr 20.859fr 4.856fr 4.548fr 3.986fr 3.212fr 2.630fr 2.227fr 1.845fr" aria-hidden="true">
+    <div class="callout" style="grid-column:1"><span class="who">Northgate Properties</span><span class="amt">$1,380.00 <span>55.8%</span></span></div>
+    <div class="callout" style="grid-column:2"><span class="who">FreshMart Grocery</span><span class="amt">$515.51 <span>20.9%</span></span></div>
+    <div class="callout" style="grid-column:3 / -1"><span class="who">Smith, Jones &amp; Co</span><span class="amt">$120.00 <span>4.9%</span></span></div>
+  </div>
+  <div class="stack" aria-hidden="true">
+    <div class="seg" style="flex-grow:55.838;background:var(--s1)" title="Northgate Properties: $1,380.00 (55.8%)"></div>
+    <div class="seg" style="flex-grow:20.859;background:var(--s2)" title="FreshMart Grocery: $515.51 (20.9%)"></div>
+    <div class="seg" style="flex-grow:4.856;background:var(--s3)" title="Smith, Jones &amp; Co: $120.00 (4.9%)"></div>
+    <div class="seg" style="flex-grow:4.548;background:var(--s4)" title="City Power &amp; Light: $112.40 (4.5%)"></div>
+    <div class="seg" style="flex-grow:3.986;background:var(--s5)" title="Metro Transit: $98.50 (4.0%)"></div>
+    <div class="seg" style="flex-grow:3.212;background:var(--s6)" title="The &quot;Corner&quot; Shop: $79.38 (3.2%)"></div>
+    <div class="seg" style="flex-grow:2.630;background:var(--s7)" title="Clearwave Internet: $64.99 (2.6%)"></div>
+    <div class="seg" style="flex-grow:2.227;background:var(--s8)" title="Café Ñandú: $55.05 (2.2%)"></div>
+    <div class="seg" style="flex-grow:1.845;background:var(--other)" title="Other: Riverside Pharmacy $19.85, Streamly $12.99, Eastside Laundromat $9.75, Westbrook Library $3.00 (1.8%)"></div>
+  </div>
+</figure>
+<table>
+  <caption>Spending by payee</caption>
+  <thead><tr><th scope="col"><span hidden>Color</span></th><th scope="col">Payee</th><th scope="col" class="num">Amount</th><th scope="col" class="num">% of spent</th></tr></thead>
+  <tbody>
+    <tr><td class="key"><span class="swatch" style="background:var(--s1)"></span></td><td>Northgate Properties</td><td class="num">$1,380.00</td><td class="num pct">55.8%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s2)"></span></td><td>FreshMart Grocery</td><td class="num">$515.51</td><td class="num pct">20.9%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s3)"></span></td><td>Smith, Jones &amp; Co</td><td class="num">$120.00</td><td class="num pct">4.9%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s4)"></span></td><td>City Power &amp; Light</td><td class="num">$112.40</td><td class="num pct">4.5%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s5)"></span></td><td>Metro Transit</td><td class="num">$98.50</td><td class="num pct">4.0%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s6)"></span></td><td>The &quot;Corner&quot; Shop</td><td class="num">$79.38</td><td class="num pct">3.2%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s7)"></span></td><td>Clearwave Internet</td><td class="num">$64.99</td><td class="num pct">2.6%</td></tr>
+    <tr><td class="key"><span class="swatch" style="background:var(--s8)"></span></td><td>Café Ñandú</td><td class="num">$55.05</td><td class="num pct">2.2%</td></tr>
+    <tr title="Other: Riverside Pharmacy $19.85, Streamly $12.99, Eastside Laundromat $9.75, Westbrook Library $3.00"><td class="key"><span class="swatch" style="background:var(--other)"></span></td><td>Other<span class="count"> (4 payees)</span></td><td class="num">$45.59</td><td class="num pct">1.8%</td></tr>
+  </tbody>
+  <tfoot><tr><td></td><th scope="row">Total spent</th><td class="num">$2,471.42</td><td class="num">100.0%</td></tr></tfoot>
+</table>
+</main>
+</body>
+</html>

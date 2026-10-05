@@ -18,7 +18,8 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 │   ├── check-reviewer-briefs.py  # the repo's gate (see The repo's gate)
 │   ├── measure-review-cost.py    # how a review thread spent its turns
 │   ├── fixtures/                 # the measurement's oracle transcripts
-│   └── smoke/lite-execute/       # headless smoke harness for lite-execute
+│   ├── smoke/lite-execute/       # headless smoke harness for lite-execute
+│   └── smoke/crank-lite/         # headless smoke harness for crank-lite's phases
 ├── tools/
 │   └── claude-effort/            # TUI for the effort keys in ~/.claude/settings.json (not a plugin)
 └── plugins/
@@ -260,6 +261,11 @@ non-lookup bucket.
 and Codex models that execute it. Read its README before a run, because it lists the
 scenarios and their fixtures' traps, the `batch.sh` and `score.py` commands, the rep
 count to pass, the Codex setup, and how to read a score.
+
+`scripts/smoke/crank-lite/` does the same for crank-lite's brainstorm, spec, and plan
+phases, driving each interview with a scripted user that agrees with every round. Its
+README lists the six scenarios and which behaviors its `score.py` counts and which need
+a blind transcript read.
 
 ---
 

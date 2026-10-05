@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype: monthly spending report</title>
+<style>
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  color: #f2f2f2;
+  font: 12.5px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.question {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  justify-content: space-between;
+  padding: 9px 16px;
+  border-bottom: 2px solid #ffd60a;
+}
+.question strong { color: #ffd60a; font-weight: 700; }
+.question span:last-child { color: #a8a8a8; }
+iframe { flex: 1; width: 100%; border: 0; background: #fff; }
+.switcher {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #ffd60a;
+  color: #111;
+  box-shadow: 0 0 0 2px #111, 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.switcher button {
+  font: inherit;
+  font-weight: 700;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #111;
+  color: #ffd60a;
+  cursor: pointer;
+}
+.switcher button:hover { background: #333; }
+.switcher button:focus-visible { outline: 2px solid #111; outline-offset: 2px; }
+#label { min-width: 25ch; text-align: center; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="question">
+  <span><strong>Question:</strong> Which layout best shows a household&#x27;s monthly spending by payee, so the reader sees where the money went at a glance?</span>
+  <span>This mock has no host page; each variant shows only the Ledger app chrome.</span>
+</div>
+<iframe id="frame" title="Variant preview"></iframe>
+<nav class="switcher" aria-label="Prototype variants">
+  <button type="button" id="prev" aria-label="Previous variant">&larr; Prev</button>
+  <span id="label" aria-live="polite"></span>
+  <button type="button" id="next" aria-label="Next variant">Next &rarr;</button>
+</nav>
+<script>
+const VARIANTS = [["a", "Bar list"], ["b", "Donut and legend"], ["c", "Stacked bar and table"], ["d", "Table with inline bars"]];
+const frame = document.getElementById("frame");
+const label = document.getElementById("label");
+const requested = new URLSearchParams(location.search).get("variant");
+let current = Math.max(0, VARIANTS.findIndex(([key]) => key === requested));
+
+function show(index) {
+  current = (index + VARIANTS.length) % VARIANTS.length;
+  const [key, name] = VARIANTS[current];
+  frame.src = `variant-${key}.html`;
+  label.textContent = `${key.toUpperCase()}: ${name}`;
+  const url = new URL(location.href);
+  url.searchParams.set("variant", key);
+  history.replaceState(null, "", url);
+}
+
+document.getElementById("prev").addEventListener("click", () => show(current - 1));
+document.getElementById("next").addEventListener("click", () => show(current + 1));
+show(current);
+</script>
+</body>
+</html>
