@@ -24,7 +24,7 @@ A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses th
 Risks:
 
 - A risk no check can retire is a decision: put it to the user during the interview, so the plan ships with no open questions.
-- A fact you cannot confirm this session is a risk, paired with the check that would settle it.
+- A fact you cannot confirm this session is a risk, paired with the check that would settle it, unless a task's `Stop if:` line carries it (Plan → By case).
 
 Run it, don't recall:
 
@@ -41,20 +41,22 @@ The plan's file is `plan.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTI
 
 1. `Spec: <absolute path to the spec>`, a header line above the goal when a spec exists; lite-execute reads it to hand the spec to its reviewer.
 2. Goal.
-3. Assumptions.
-4. Updates since spec: drift found in the spec's grounding and any gap the spec leaves that the plan must resolve. Omit it when there is none.
-5. Ordered tasks.
-6. Stages, for a long plan: read [STAGES.md](STAGES.md) once the task list settles, and read each cut back beside the cut it rejected.
-7. Verification checks.
-8. Risks, each paired with the check that retires it during execution.
-9. Grounding: what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
+3. Global Constraints: the project-wide rules every task must honor, such as version floors, dependency limits, naming and copy rules, and platform requirements, one line each, with exact values copied verbatim from the spec. lite-execute hands this section to every implementer and its reviewer holds the whole diff to it. Omit it when the spec names no such rule.
+4. Assumptions.
+5. Updates since spec: drift found in the spec's grounding and any gap the spec leaves that the plan must resolve. Omit it when there is none.
+6. Ordered tasks.
+7. Stages, for a long plan: read [STAGES.md](STAGES.md) once the task list settles, and read each cut back beside the cut it rejected.
+8. Verification checks.
+9. Coverage: a table, `criterion | task | verify step that proves it`, with one row per acceptance criterion in the spec, or with no spec, per behavior the goal names. A criterion no machine check can prove reads `human-only: <what a person checks>` in its verify cell. lite-execute walks this table before its review.
+10. Risks, each paired with the check that retires it during execution.
+11. Grounding: what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
 
 Verification checks:
 
 - Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or a **probe** where no committed test fits. The check that retires a risk names one of these instruments.
 - A check whose reading is a count or a probe output records what the tree prints now beside what it must print; equal readings are a **dead seam**.
 - Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
-- As you write, confirm at its source each fact the interview never asked, such as a signature, a file a task edits, or a count a check pins, and record what you read in Grounding. One you cannot confirm now lands under Risks.
+- As you write, confirm at its source each fact the interview never asked, such as a signature, a file a task edits, or a count a check pins, and record what you read in Grounding. One you cannot confirm now lands on a task's `Stop if:` line or under Risks, per the `Stop if:` case below.
 
 Write every task for the weakest executor it may get, one that sees only the task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds or reshapes that line's surface, and the commits already landed. Each task carries:
 
@@ -70,6 +72,7 @@ By case:
 - **A module being reshaped has no test at its seam**: a characterization task comes first.
 - **No gate command runs**: the first task establishes one.
 - **The task tightens a shared contract** (a field made required, a shared symbol renamed, a validator narrowed): it carries every call site the grep found.
+- **The task rests on a fact you could not confirm this session, and the fact being false would change what that task ships**: the task carries a `Stop if: <what the executor would observe if the fact is false>` line, and the fact stays off Risks. lite-execute settles an observed `Stop if:` through a route the code already offers, or stops and puts it to the user. An unconfirmed fact whose check an executor can run without changing what ships goes under Risks with that check.
 
 ## Review
 
