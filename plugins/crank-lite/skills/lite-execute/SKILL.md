@@ -49,7 +49,7 @@ In a plan with a Stages table, every task number in a message to the user carrie
 A task's **check** is the first of these that exists:
 
 1. the check the plan names for that task;
-2. the gate command the plan's grounding records;
+2. a gate command the plan names: in its verification checks, its `Gates:` header, or its grounding;
 3. the repo's typecheck plus the test file covering the touched behavior. A task with no such test gets one at the seam it changes; a task with no testable behavior, such as docs, gets the repo's typecheck or lint.
 
 Read the check's output in the same turn it runs. When a change has no test seam, validate it with a **probe** and treat its passing output as the check.
