@@ -10,7 +10,7 @@ State the question the prototype answers in one line, then take the rung the sur
 
 Default to 3 variants and cap at 5. Variants differ in structure, meaning layout, information hierarchy, or primary affordance, never only in color or copy.
 
-To build a rung that writes files, run `git status --porcelain` and keep the output, then dispatch **one** standard-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with this brief, filled in. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
+To build a rung that writes files, create `.crank/` with its `.gitignore` if it is missing ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)), run `git status --porcelain` and keep the output, then dispatch **one** standard-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with this brief, filled in. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
 
 <brief>
 Build a prototype of `<N>` variants whose code never ships. The question it answers: `<question>`.
