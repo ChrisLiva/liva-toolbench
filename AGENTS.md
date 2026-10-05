@@ -483,8 +483,14 @@ relative string.
 claude --plugin-dir ./plugins/<name>
 ```
 
-Headless runs (`claude -p …`) bill against the Claude subscription, not metered API
-spend — running smoke tests or eval trials is not a cost concern.
+Headless runs (`claude -p …`) bill against the Claude subscription and count toward
+the account's usage limit: on 2026-10-05, after about 65 Sonnet smoke sessions in one
+afternoon, 14 sessions in a five-minute window returned the account's spend-limit
+message instead of running. Keep smoke and eval batches small (per project decision:
+run fewer runs overall): one Sonnet run per scenario the change touches, compared
+against earlier runs of the base, and a second rep, a base arm, or a Codex run only for
+a check that moved or a change aimed at Codex. Check a batch's streams for the
+limit message before scoring it, since a limited run scores as a behavior failure.
 
 Inside the session:
 - `/reload-plugins` — picks up edits to plugin files
