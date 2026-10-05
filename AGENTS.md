@@ -233,9 +233,9 @@ skill's own markdown links, the copy must exist and match its canonical. It reso
 every prose pointer to a section (`FILE.md → Heading`, the `` `Heading` `` section of
 `FILE.md`, `FILE.md`'s Heading section) against the headings of the file beside the
 pointer, so renaming or splitting a heading fails the gate instead of stranding the
-pointers that name it. Finally it compiles `crank-wizard`'s Go template (`go vet`, then `go build` natively and with
-`GOOS=windows`), so a template edit that breaks either shipped OS fails the gate on
-this darwin machine instead of on a teammate's.
+pointers that name it. Finally it compiles `crank-wizard`'s Go template (`go vet`,
+then `go build` natively and with `GOOS=windows`), so a template edit that breaks
+either shipped OS fails the gate on this darwin machine instead of on a teammate's.
 
 A pinned literal records what the prose promised when it was pinned; it does not
 freeze the wording (per project decision: a gate literal must not block a better
