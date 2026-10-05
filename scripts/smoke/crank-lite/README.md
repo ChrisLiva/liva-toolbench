@@ -26,7 +26,7 @@ python3 scripts/smoke/crank-lite/score.py $S/batch          # rates per scenario
 python3 scripts/smoke/crank-lite/score.py --json $S/batch   # one JSON object per run
 ```
 
-Run one Sonnet rep of the scenarios the change touches and compare against an earlier batch's base runs, the same budget as `../lite-execute/README.md` sets. `batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> ...` runs each scenario `SMOKE_SCENARIOS` names for a Sonnet session under Claude Code, adds a gpt-6-luna session under Codex when `SMOKE_MODELS` names it, and exits before starting a batch of more than `SMOKE_MAX_RUNS` sessions (default 6). `run.sh` drives one session the way `../lite-execute/run.sh` does, with the same settings, permission bypass, and Codex repo-skill copy, and writes `transcript.md`, each turn's sent message and assistant text with one line per tool call.
+Run one rep of the scenarios the change touches on both models and compare against an earlier batch's base runs, the same budget as `../lite-execute/README.md` sets. `batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> ...` runs each scenario `SMOKE_SCENARIOS` names for a Sonnet session under Claude Code and a gpt-6-luna session under Codex, narrowed to one model by `SMOKE_MODELS=sonnet`, and exits before starting a batch of more than `SMOKE_MAX_RUNS` sessions (default 6). `run.sh` drives one session the way `../lite-execute/run.sh` does, with the same settings, permission bypass, and Codex repo-skill copy, and writes `transcript.md`, each turn's sent message and assistant text with one line per tool call.
 
 ## Reading the scores
 

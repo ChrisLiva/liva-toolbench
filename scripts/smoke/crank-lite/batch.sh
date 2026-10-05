@@ -2,7 +2,7 @@
 # batch.sh <batch-dir> <reps> <parallel> <arm>=<plugin-dir> [<arm>=<plugin-dir> ...]
 # Runs every scenario x model x rep for each arm, <parallel> sessions at a time, then scores
 # the batch: python3 score.py <batch-dir>
-# SMOKE_SCENARIOS names the scenarios to run (required) and SMOKE_MODELS the models (default: sonnet).
+# SMOKE_SCENARIOS names the scenarios to run (required) and SMOKE_MODELS the models (default: sonnet gpt-6-luna).
 # A batch of more than SMOKE_MAX_RUNS sessions (default 6) exits before it starts any.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -12,7 +12,7 @@ mkdir -p "$batch"
 jobs=$batch/jobs.txt; : > "$jobs"
 for scenario in $SMOKE_SCENARIOS; do
   for rep in $(seq 1 "$reps"); do
-    for model in ${SMOKE_MODELS:-sonnet}; do
+    for model in ${SMOKE_MODELS:-sonnet gpt-6-luna}; do
       for armspec in "$@"; do
         arm=${armspec%%=*} pd=${armspec#*=}
         echo "$pd $scenario $model $batch/seeds $batch/$arm/$scenario-$model-$rep" >> "$jobs"
