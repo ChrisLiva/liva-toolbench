@@ -7,9 +7,10 @@ const IS_RUNNING = { plugin: 'agent-effort', key: 'isRunning' } as const
 const background = atom({ plugin: 'agent-effort', key: 'background' } as const, [])
 const crankRoster = atom({ plugin: 'crank-mods', key: 'hudRoster' } as const, [])
 
-// The engine settles a subagent's effort (its definition's `effort`, else the
-// setting for its model) only when the subagent sends its first request, after
-// `agent.spawn` has resolved, so the effort is read from `turn.step`.
+// The engine settles a subagent's effort (the Agent call's `effort`, else its
+// definition's `effort`, else the setting for its model) only when the subagent
+// sends its first request, after `agent.spawn` has resolved, so the effort is
+// read from `turn.step`.
 async function effortOf($: StateDollar, agentId: string) {
   return (await $.state.get({ ...EFFORT_OF_AGENT, id: agentId })).value
 }
