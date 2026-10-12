@@ -13,9 +13,9 @@ that variable is unset. Every other key keeps its value, and each save copies th
 previous file to settings.json.bak.
 
 Keys: up/down select a row, left/right change it, 1-5 pick low..max, 0 unsets,
-c cycles a model's cap, a cycles its auto-compact window from auto up to 1m in
-100k steps, d makes the selected model the default, Tab switches between the
-scenarios and precedence views, w saves, r reloads from disk, q quits.
+c cycles a model's cap, a cycles its auto-compact window from auto through 100k
+up to 1m in 50k steps, d makes the selected model the default, Tab switches
+between the scenarios and precedence views, w saves, r reloads from disk, q quits.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ ALIASES = {
     "haiku": "claude-haiku-5-5",
 }
 COMPACT_ENV = "CLAUDE_CODE_AUTO_COMPACT_WINDOW"
-WINDOWS = tuple(range(100_000, 1_000_001, 100_000))
+WINDOWS = tuple(range(100_000, 1_000_001, 50_000))
 # The docs list these two as compacting at the 200K boundary without [1m]; every
 # other model in MODELS runs a native 1M window.
 SHORT_CONTEXT = {"claude-opus-4-6", "claude-sonnet-4-6"}

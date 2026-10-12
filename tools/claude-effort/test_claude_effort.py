@@ -428,7 +428,7 @@ class TerminalTest(unittest.TestCase):
             down = b"\x1bOB"  # the down arrow in keypad mode, which curses turns on
             # Seven global rows come first, then Opus 5.5 and Sonnet 5.5. Pressing a
             # four times steps Opus 5.5's window from unset through auto, 100k,
-            # and 200k to 300k.
+            # and 150k to 200k.
             keys = [down] * 7 + [b"4"] + [b"a"] * 4 + [down, b"d", b"w", b"q"]
             self.assertEqual(self.run_tui(config, project, keys), 0)
             with open(path, encoding="utf-8") as f:
@@ -440,7 +440,7 @@ class TerminalTest(unittest.TestCase):
                     "modelSettings": {
                         "claude-opus-5-5": {
                             "effortLevel": "xhigh",
-                            "autoCompactWindow": 300000,
+                            "autoCompactWindow": 200000,
                         }
                     },
                     "model": "sonnet",
