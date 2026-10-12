@@ -22,6 +22,7 @@ from claude_effort import (
     build_rows,
     canonical,
     resolve,
+    resolve_compaction,
 )
 
 SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "claude_effort.py")
@@ -37,7 +38,7 @@ def stack(user=None, project=None, local=None, managed=None):
 
 
 class ResolveTest(unittest.TestCase):
-    """Cases follow the docs and headless Claude Code 2.1.287 runs that printed $CLAUDE_EFFORT."""
+    """Cases follow the docs and headless Claude Code 2.1.287 and 2.1.296 runs that printed $CLAUDE_EFFORT."""
 
     def test_model_entry_beats_top_level_in_the_same_file(self):
         user = {
@@ -49,8 +50,8 @@ class ResolveTest(unittest.TestCase):
             (res.level, res.winner), ("medium", ("layer", "user", "modelSettings"))
         )
 
-    def test_user_top_level_skips_opus_and_sonnet_5_5(self):
-        for model in ("claude-opus-5-5", "claude-sonnet-5-5"):
+    def test_user_top_level_skips_the_5_5_models(self):
+        for model in ("claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"):
             res = resolve(model, stack({"effortLevel": "high"}), {})
             self.assertEqual((res.level, res.winner), ("medium", ("default",)), model)
 
@@ -151,6 +152,7 @@ class ResolveTest(unittest.TestCase):
 
     def test_aliases_and_suffixes_match_the_canonical_entry(self):
         self.assertEqual(canonical("opus[1m]"), "claude-opus-5-5")
+        self.assertEqual(canonical("haiku"), "claude-haiku-5-5")
         self.assertEqual(canonical("claude-sonnet-4-6-20250929"), "claude-sonnet-4-6")
         self.assertEqual(
             resolve(
@@ -159,6 +161,77 @@ class ResolveTest(unittest.TestCase):
                 {},
             ).level,
             "low",
+        )
+
+
+class CompactionTest(unittest.TestCase):
+    """Cases follow what /autocompact printed in headless Claude Code 2.1.296 runs."""
+
+    USER = {
+        "autoCompactWindow": 400000,
+        "modelSettings": {
+            "claude-haiku-5-5": {"autoCompactWindow": 200000},
+            "claude-sonnet-5-5": {"autoCompactWindow": "auto"},
+        },
+    }
+
+    def shown(self, model, layers, environ=None):
+        comp = resolve_compaction(model, layers, environ or {})
+        return comp.text(), comp.source
+
+    def test_model_entry_beats_top_level_in_the_same_file(self):
+        self.assertEqual(
+            self.shown("claude-haiku-5-5", stack(self.USER)),
+            ("200k", "user modelSettings"),
+        )
+        self.assertEqual(
+            self.shown("claude-opus-5-5", stack(self.USER)),
+            ("400k", "user autoCompactWindow"),
+        )
+
+    def test_model_auto_beats_a_top_level_window(self):
+        self.assertEqual(
+            self.shown("claude-sonnet-5-5", stack(self.USER)),
+            ("auto", "user modelSettings"),
+        )
+
+    def test_project_top_level_outranks_a_user_model_entry(self):
+        layers = stack(self.USER, project={"autoCompactWindow": 300000})
+        self.assertEqual(
+            self.shown("claude-haiku-5-5", layers),
+            ("300k", "project autoCompactWindow"),
+        )
+
+    def test_env_var_beats_settings_and_settings_env_beats_the_shell(self):
+        shell = {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "250000"}
+        self.assertEqual(self.shown("claude-haiku-5-5", stack(self.USER), shell)[0], "250k")
+        user = {**self.USER, "env": {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "260000"}}
+        self.assertEqual(self.shown("claude-haiku-5-5", stack(user), shell)[0], "260k")
+
+    def test_env_var_reads_a_k_suffix_as_a_plain_number_raised_to_100k(self):
+        environ = {"CLAUDE_CODE_AUTO_COMPACT_WINDOW": "500k"}
+        self.assertEqual(self.shown("claude-opus-5-5", stack(), environ)[0], "100k")
+
+    def test_window_is_capped_at_the_model_context_window(self):
+        self.assertEqual(self.shown("claude-opus-4-6", stack(self.USER))[0], "200k capped")
+        user = {**self.USER, "env": {"CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"}}
+        self.assertEqual(self.shown("claude-opus-5-5", stack(user))[0], "200k capped")
+        self.assertEqual(self.shown("claude-opus-5-5", stack(self.USER))[0], "400k")
+
+    def test_auto_compact_off_shows_off(self):
+        user = {**self.USER, "autoCompactEnabled": False}
+        self.assertEqual(self.shown("claude-haiku-5-5", stack(user))[0], "off")
+        self.assertEqual(
+            self.shown(
+                "claude-haiku-5-5", stack(self.USER), {"DISABLE_AUTO_COMPACT": "1"}
+            )[0],
+            "off",
+        )
+
+    def test_no_window_anywhere_uses_the_tuned_window(self):
+        self.assertEqual(
+            self.shown("claude-opus-5-5", stack()),
+            ("auto", "the window tuned for the model"),
         )
 
 
@@ -242,19 +315,23 @@ class SaveTest(unittest.TestCase):
 
 
 class ScenarioViewTest(unittest.TestCase):
-    def test_sonnet_rows_under_a_saved_opus_xhigh_setup(self):
+    SETTINGS = {
+        "model": "opus",
+        "effortLevel": "high",
+        "autoCompactWindow": 400000,
+        "modelSettings": {
+            "claude-opus-5-5": {"effortLevel": "xhigh"},
+            "claude-haiku-5-5": {"autoCompactWindow": 200000},
+        },
+    }
+
+    def render(self, model, view):
+        """Return the screen's lines as text with the cursor on `model`'s row."""
         with tempfile.TemporaryDirectory() as config:
             with open(
                 os.path.join(config, "settings.json"), "w", encoding="utf-8"
             ) as f:
-                json.dump(
-                    {
-                        "model": "opus",
-                        "effortLevel": "high",
-                        "modelSettings": {"claude-opus-5-5": {"effortLevel": "xhigh"}},
-                    },
-                    f,
-                )
+                json.dump(self.SETTINGS, f)
             os.makedirs(os.path.join(config, "agents"))
             with open(
                 os.path.join(config, "agents", "reviewer.md"), "w", encoding="utf-8"
@@ -264,17 +341,35 @@ class ScenarioViewTest(unittest.TestCase):
                 )
             ed = Editor(config, config, os.path.join(config, "no-managed"), {})
             rows = build_rows(ed)
-            cursor = next(
-                i for i, row in enumerate(rows) if row.model == "claude-sonnet-5-5"
+            cursor = next(i for i, row in enumerate(rows) if row.model == model)
+            lines, _ = build_lines(ed, rows, cursor, view)
+        return ["".join(segment for segment, _ in line).strip() for line in lines]
+
+    def test_sonnet_rows_under_a_saved_opus_xhigh_setup(self):
+        text = self.render("claude-sonnet-5-5", "scenarios")
+        subagent = next(
+            line for line in text if line.startswith("Subagent, no effort field")
+        )
+        self.assertRegex(subagent, r"\smedium\s")
+        reviewer = next(line for line in text if line.startswith("reviewer"))
+        self.assertRegex(reviewer, r"\shigh\s")
+        self.assertTrue(any("Agent call" in line for line in text))
+
+    def test_haiku_row_shows_its_saved_and_resolved_windows(self):
+        text = self.render("claude-haiku-5-5", "precedence")
+        haiku = next(line for line in text if line.startswith("> Haiku 5.5"))
+        self.assertRegex(haiku, r"\smedium\s+200k\s+200k\s")
+        opus = next(line for line in text if line.startswith("Opus 5.5"))
+        self.assertRegex(opus, r"\sxhigh\s+unset\s+400k\s")
+        self.assertTrue(
+            any(
+                line.startswith("200k") and "from user modelSettings" in line
+                for line in text
             )
-            lines, _ = build_lines(ed, rows, cursor, "scenarios")
-            text = ["".join(segment for segment, _ in line).strip() for line in lines]
-            subagent = next(
-                line for line in text if line.startswith("Subagent, no effort field")
-            )
-            self.assertRegex(subagent, r"\smedium\s")
-            reviewer = next(line for line in text if line.startswith("reviewer"))
-            self.assertRegex(reviewer, r"\shigh\s")
+        )
+        self.assertTrue(
+            any("effortLevel high, ignored: Haiku 5.5 skips it" in line for line in text)
+        )
 
 
 class TerminalTest(unittest.TestCase):
@@ -331,8 +426,9 @@ class TerminalTest(unittest.TestCase):
             with open(path, "w", encoding="utf-8") as f:
                 json.dump({"theme": "dark"}, f)
             down = b"\x1bOB"  # the down arrow in keypad mode, which curses turns on
-            # Five global rows come first, then Opus 5.5 and Sonnet 5.5.
-            keys = [down] * 5 + [b"4", down, b"d", b"w", b"q"]
+            # Seven global rows come first, then Opus 5.5 and Sonnet 5.5. Pressing a
+            # twice steps Opus 5.5's window from unset through auto to 200k.
+            keys = [down] * 7 + [b"4", b"a", b"a", down, b"d", b"w", b"q"]
             self.assertEqual(self.run_tui(config, project, keys), 0)
             with open(path, encoding="utf-8") as f:
                 saved = json.load(f)
@@ -340,7 +436,12 @@ class TerminalTest(unittest.TestCase):
                 saved,
                 {
                     "theme": "dark",
-                    "modelSettings": {"claude-opus-5-5": {"effortLevel": "xhigh"}},
+                    "modelSettings": {
+                        "claude-opus-5-5": {
+                            "effortLevel": "xhigh",
+                            "autoCompactWindow": 200000,
+                        }
+                    },
                     "model": "sonnet",
                 },
             )

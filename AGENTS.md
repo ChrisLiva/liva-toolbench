@@ -21,7 +21,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 │   ├── smoke/lite-execute/       # headless smoke harness for lite-execute
 │   └── smoke/crank-lite/         # headless smoke harness for crank-lite's phases
 ├── tools/
-│   └── claude-effort/            # TUI for the effort keys in ~/.claude/settings.json (not a plugin)
+│   └── claude-effort/            # TUI for the effort and auto-compact keys in ~/.claude/settings.json (not a plugin)
 └── plugins/
     └── <plugin-name>/
         ├── .claude-plugin/
@@ -44,7 +44,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 
 The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship as cross-harness plugins and contain manifests plus `skills/`. The mods `agent-effort` and `crank-mods` are Claude-only because Claude Code alone runs function hooks, so they have no `.codex-plugin/` manifest and no Codex index entry. Each one's `hooks/hooks.json` names one hooks module under `modules` (`hooks/register.tsx`), `types/index.d.ts` declares the `$.state` values it keeps, and `tests/` holds the tests `claude plugin test plugins/<name>` runs; `claude plugin validate plugins/<name>` checks the module the way the engine loads it. The engine writes `.claude-plugin/types/` and `tsconfig.json` into the plugin folder on each load, and git ignores both. Other component directories shown above are supported by the plugin format when a plugin needs them.
 
-`tools/` holds standalone utilities that no marketplace catalog lists. `tools/claude-effort/claude_effort.py` is a standard-library curses TUI that edits the effort keys in your user settings. It also shows each model's effort precedence and the level a session or subagent on that model starts at. Run it from a project directory with `python3 tools/claude-effort/claude_effort.py`, and test it with `python3 -m unittest discover tools/claude-effort`.
+`tools/` holds standalone utilities that no marketplace catalog lists. `tools/claude-effort/claude_effort.py` is a standard-library curses TUI that edits the effort and auto-compact keys in your user settings. It also shows each model's effort precedence, the level a session or subagent on that model starts at, and the window at which that model's sessions compact. Run it from a project directory with `python3 tools/claude-effort/claude_effort.py`, and test it with `python3 -m unittest discover tools/claude-effort`.
 
 > **Common mistake**: only `plugin.json` goes inside `.claude-plugin/` or `.codex-plugin/`. Skills, commands, agents, hooks, scripts, and other runtime files live at the **plugin root**.
 

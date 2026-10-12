@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Show and edit the effort settings in your Claude Code user settings file.
+"""Show and edit the effort and auto-compact settings in your Claude Code user settings file.
 
 Run it from the project you want to inspect, so the precedence view includes
 that project's .claude/settings.json and .claude/settings.local.json:
@@ -7,13 +7,15 @@ that project's .claude/settings.json and .claude/settings.local.json:
     python3 tools/claude-effort/claude_effort.py
 
 It writes only model, effortLevel, maxEffortLevel, ultracode,
-env.CLAUDE_CODE_EFFORT_LEVEL, and modelSettings in $CLAUDE_CONFIG_DIR/settings.json,
-or ~/.claude/settings.json when that variable is unset. Every other key keeps its
-value, and each save copies the previous file to settings.json.bak.
+env.CLAUDE_CODE_EFFORT_LEVEL, autoCompactWindow, autoCompactEnabled, and
+modelSettings in $CLAUDE_CONFIG_DIR/settings.json, or ~/.claude/settings.json when
+that variable is unset. Every other key keeps its value, and each save copies the
+previous file to settings.json.bak.
 
 Keys: up/down select a row, left/right change it, 1-5 pick low..max, 0 unsets,
-c cycles a model's cap, d makes the selected model the default, Tab switches
-between the scenarios and precedence views, w saves, r reloads from disk, q quits.
+c cycles a model's cap, a cycles its auto-compact window, d makes the selected
+model the default, Tab switches between the scenarios and precedence views,
+w saves, r reloads from disk, q quits.
 """
 
 from __future__ import annotations
@@ -39,10 +41,11 @@ FOUR = ("low", "medium", "high", "max")
 RANK = {level: i for i, level in enumerate(FIVE)}
 
 # Label, supported levels, and built-in default per model, from
-# code.claude.com/docs/en/model-config#adjust-effort-level for Claude Code 2.1.287.
+# code.claude.com/docs/en/model-config#adjust-effort-level for Claude Code 2.1.296.
 MODELS = {
     "claude-opus-5-5": ("Opus 5.5", FIVE, "medium"),
     "claude-sonnet-5-5": ("Sonnet 5.5", FIVE, "medium"),
+    "claude-haiku-5-5": ("Haiku 5.5", FIVE, "medium"),
     "claude-fable-5-1": ("Fable 5.1", FIVE, "high"),
     "claude-opus-5": ("Opus 5", FIVE, "high"),
     "claude-sonnet-5": ("Sonnet 5", FIVE, "high"),
@@ -52,17 +55,22 @@ MODELS = {
     "claude-opus-4-6": ("Opus 4.6", FOUR, "high"),
     "claude-sonnet-4-6": ("Sonnet 4.6", FOUR, "high"),
 }
-# The docs say Opus 5.5 ignores a top-level effortLevel in the user file; a
-# headless 2.1.287 run showed Sonnet 5.5 ignores it too.
-SKIPS_USER_EFFORT_LEVEL = {"claude-opus-5-5", "claude-sonnet-5-5"}
+# The docs say Opus 5.5 ignores a top-level effortLevel in the user file; headless
+# runs showed Sonnet 5.5 ignores it on 2.1.287 and Haiku 5.5 on 2.1.296.
+SKIPS_USER_EFFORT_LEVEL = {"claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"}
 # How the Anthropic API resolves each alias.
 ALIASES = {
     "opus": "claude-opus-5-5",
     "sonnet": "claude-sonnet-5-5",
     "fable": "claude-fable-5-1",
     "best": "claude-fable-5-1",
-    "haiku": "claude-haiku-4-5",
+    "haiku": "claude-haiku-5-5",
 }
+COMPACT_ENV = "CLAUDE_CODE_AUTO_COMPACT_WINDOW"
+WINDOWS = (200_000, 400_000, 600_000, 800_000, 1_000_000)
+# The docs list these two as compacting at the 200K boundary without [1m]; every
+# other model in MODELS runs a native 1M window.
+SHORT_CONTEXT = {"claude-opus-4-6", "claude-sonnet-4-6"}
 MANAGED_DIR = (
     "/Library/Application Support/ClaudeCode"
     if sys.platform == "darwin"
@@ -74,8 +82,10 @@ EDITABLE_PATHS = (
     ("maxEffortLevel",),
     ("ultracode",),
     ("env", ENV_KEY),
+    ("autoCompactWindow",),
+    ("autoCompactEnabled",),
 )
-MODEL_FIELDS = ("effortLevel", "maxEffortLevel")
+MODEL_FIELDS = ("effortLevel", "maxEffortLevel", "autoCompactWindow")
 
 
 def canonical(model):
@@ -184,14 +194,14 @@ def top_level_applies(layer, model):
     return not (layer.name == "user" and model in SKIPS_USER_EFFORT_LEVEL)
 
 
-def env_override(layers, environ):
-    """A settings env block beats the shell, as a headless 2.1.287 run showed."""
+def env_override(layers, environ, key=ENV_KEY):
+    """A settings env block beats the shell, as headless 2.1.287 and 2.1.296 runs showed."""
     for layer in layers:
         env = layer.settings.get("env")
-        if isinstance(env, dict) and env.get(ENV_KEY):
-            return env[ENV_KEY], f"{layer.name} settings env"
-    if environ.get(ENV_KEY):
-        return environ[ENV_KEY], "shell"
+        if isinstance(env, dict) and env.get(key):
+            return env[key], f"{layer.name} settings env"
+    if environ.get(key):
+        return environ[key], "shell"
     return None, None
 
 
@@ -268,6 +278,74 @@ def resolve(model, layers, environ, explicit=None):
             default=None,
         )
     return Resolution(level, requested, source, winner, cap, cap_source, capped)
+
+
+def window_value(value):
+    """Return a window in the documented 100K to 1M range, or None."""
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value if 100_000 <= value <= 1_000_000 else None
+    return None
+
+
+@dataclass
+class Compaction:
+    window: int | None
+    source: str
+    limit: int
+    off: str | None
+
+    @property
+    def capped(self):
+        return self.window is not None and self.window > self.limit
+
+    def text(self):
+        if self.off:
+            return "off"
+        if self.window is None:
+            return "auto"
+        return show(min(self.window, self.limit)) + (" capped" if self.capped else "")
+
+
+def resolve_compaction(model, layers, environ):
+    """Resolve the auto-compact window a session on `model` uses.
+
+    It follows what /autocompact reported in headless 2.1.296 runs: the env var
+    beats every file, the highest-precedence file that sets a window for the model
+    or for every model decides, a model's own entry beats the top-level key in the
+    same file, and "auto" there means the window tuned for the model.
+    """
+    window, source = None, "the window tuned for the model"
+    value, where = env_override(layers, environ, COMPACT_ENV)
+    # The env var reads a value like 500k as 500, and Claude Code raises it to 100K.
+    digits = re.match(r"\s*(\d+)", value or "")
+    if digits:
+        window = max(int(digits.group(1)), 100_000)
+        source = f"{COMPACT_ENV} in {where}"
+    else:
+        for layer in layers:
+            per_model = model_entry(layer.settings, model).get("autoCompactWindow")
+            top = window_value(layer.settings.get("autoCompactWindow"))
+            if per_model == "auto" or window_value(per_model):
+                window, source = window_value(per_model), f"{layer.name} modelSettings"
+                break
+            if top:
+                window, source = top, f"{layer.name} autoCompactWindow"
+                break
+    one_m_off = env_override(layers, environ, "CLAUDE_CODE_DISABLE_1M_CONTEXT")[0]
+    limit = 200_000 if model in SHORT_CONTEXT or one_m_off == "1" else 1_000_000
+    off = None
+    for key in ("DISABLE_COMPACT", "DISABLE_AUTO_COMPACT"):
+        value, where = env_override(layers, environ, key)
+        if value == "1":
+            off = f"{key} in {where}"
+            break
+    else:
+        for layer in layers:
+            enabled = layer.settings.get("autoCompactEnabled")
+            if isinstance(enabled, bool):
+                off = None if enabled else f"{layer.name} autoCompactEnabled"
+                break
+    return Compaction(window, source, limit, off)
 
 
 def read_agent(path):
@@ -429,6 +507,9 @@ def build_rows(ed):
     model_choices = (None, "opus", "sonnet", "fable", "haiku")
     if ed.get(("model",)) not in model_choices:
         model_choices += (ed.get(("model",)),)
+    window_choices = (None, *WINDOWS)
+    if ed.get(("autoCompactWindow",)) not in window_choices:
+        window_choices += (ed.get(("autoCompactWindow",)),)
     rows = [
         Row("model", ("model",), model_choices, "the model new sessions start on"),
         Row(
@@ -455,6 +536,18 @@ def build_rows(ed):
             (None, *FIVE, "auto"),
             "beats every source, agent files too",
         ),
+        Row(
+            "autoCompactWindow",
+            ("autoCompactWindow",),
+            window_choices,
+            "auto-compact window for models without their own",
+        ),
+        Row(
+            "autoCompactEnabled",
+            ("autoCompactEnabled",),
+            (None, True, False),
+            "false turns auto-compact off on every model",
+        ),
     ]
     for model in ed.models():
         label, supported, _ = MODELS.get(model, (model, FIVE, None))
@@ -466,7 +559,13 @@ def build_rows(ed):
 
 
 def show(value):
-    return "unset" if value is None else str(value).lower()
+    if value is None:
+        return "unset"
+    if isinstance(value, int) and not isinstance(value, bool):
+        if value % 1_000_000 == 0:
+            return f"{value // 1_000_000}m"
+        return f"{value // 1000}k" if value % 1000 == 0 else str(value)
+    return str(value).lower()
 
 
 def short_path(path, project_dir=None):
@@ -506,7 +605,8 @@ def build_lines(ed, rows, cursor, view=VIEWS[0]):
             lines.append(
                 [
                     (
-                        f"{'modelSettings':<34}{'saved':<10}{'cap':<9}{'runs at':<10}decided by",
+                        f"{'modelSettings':<34}{'saved':<10}{'cap':<9}{'runs at':<10}"
+                        f"{'window':<9}{'compacts at':<13}effort decided by",
                         "head",
                     )
                 ]
@@ -526,6 +626,8 @@ def build_lines(ed, rows, cursor, view=VIEWS[0]):
             continue
         res = resolve(row.model, layers, ed.environ)
         cap = ed.get(ed.model_path(row.model, "maxEffortLevel"))
+        window = ed.get(ed.model_path(row.model, "autoCompactWindow"))
+        compacts = resolve_compaction(row.model, layers, ed.environ).text()
         star = " *" if row.model == default else ""
         decided = res.source
         if res.level and res.level != res.requested:
@@ -540,6 +642,8 @@ def build_lines(ed, rows, cursor, view=VIEWS[0]):
                 (f"{show(value):<10}", "dim" if value is None else "key"),
                 (f"{show(cap):<9}", "dim" if cap is None else "key"),
                 (f"{res.level or 'n/a':<10}", "win"),
+                (f"{show(window):<9}", "dim" if window is None else "key"),
+                (f"{compacts:<13}", "win"),
                 (decided, "dim"),
             ]
         )
@@ -574,22 +678,12 @@ def scenario_lines(ed, layers, model, tabs):
         "the parent's level isn't passed on",
     )
     out.append([])
-    out.append(
-        [
-            (
-                "  An explicit level beats saved levels. It comes from --effort or /effort in the current session,",
-                "",
-            )
-        ]
-    )
-    out.append(
-        [
-            (
-                "  which subagents on any model inherit, or from an agent's or skill's effort field.",
-                "",
-            )
-        ]
-    )
+    for text in (
+        "  An explicit level beats saved levels. It comes from --effort or /effort in the current session,",
+        "  which subagents on any model inherit, from an agent's or skill's effort field, or from an effort",
+        "  Claude passes on the Agent call, which beats the agent's field on Claude Code 2.1.292 or later.",
+    ):
+        out.append([(text, "")])
     out.append([(f"  {'    asked for':<52}", "dim")] + [(f"{v:<8}", "") for v in FIVE])
     out.append(
         [(f"  {'    runs at':<52}", "dim")]
@@ -699,12 +793,7 @@ def precedence_lines(ed, layers, model, tabs):
             )
         elif top:
             parts.append(
-                [
-                    (
-                        f"effortLevel {top}, ignored: Opus 5.5 and Sonnet 5.5 skip it in user settings",
-                        "dim",
-                    )
-                ]
+                [(f"effortLevel {top}, ignored: {label} skips it in user settings", "dim")]
             )
         if cap:
             parts.append([(f"maxEffortLevel {cap}", "key")])
@@ -716,10 +805,24 @@ def precedence_lines(ed, layers, model, tabs):
         "cap",
         [(f"{res.cap} from {res.cap_source}", "key") if res.cap else ("none", "dim")],
     )
+    comp = resolve_compaction(model, layers, ed.environ)
+    why = f"from {comp.source}"
+    if comp.capped:
+        why += f", capped to {show(comp.limit)} by the model's context window"
+    if comp.off:
+        why += f", but {comp.off} turns auto-compact off"
+    out.append([])
+    out.append([(f"Where {label}'s auto-compact window comes from", "head")])
+    out.append([(f"  {comp.text():<13}", "win"), (why, "dim")])
     return out
 
 
-FOOTER = "up/down move  left/right change  1-5 low..max  0 unset  c cap  d default  tab view  w save  r reload  q quit"
+FOOTER = "up/down move  left/right change  1-5 low..max  0 unset  c cap  a window  d default  tab view  w save  r reload  q quit"
+# The model field each cycling key edits, the values it steps through, and what it sets.
+CYCLES = {
+    "c": ("maxEffortLevel", (None, *FIVE), "a cap"),
+    "a": ("autoCompactWindow", (None, "auto", *WINDOWS), "a window"),
+}
 
 
 def init_styles():
@@ -799,7 +902,7 @@ def run(stdscr, ed):
                 curses.KEY_DC,
                 127,
             )
-            or char in "hl012345xcd"
+            or char in "hl012345xcad"
         )
         if editing and ed.error:
             status = "Editing is off until settings.json is valid JSON."
@@ -820,10 +923,10 @@ def run(stdscr, ed):
                 ed.set(row.path, level)
             else:
                 status = f"{row.label} doesn't take {level}."
-        elif char == "c":
+        elif char in CYCLES:
+            field, choices, what = CYCLES[char]
             if row.model:
-                path = ed.model_path(row.model, "maxEffortLevel")
-                choices = (None, *FIVE)
+                path = ed.model_path(row.model, field)
                 current = ed.get(path)
                 ed.set(
                     path,
@@ -834,7 +937,7 @@ def run(stdscr, ed):
                     ],
                 )
             else:
-                status = "c sets a cap on a model row."
+                status = f"{char} sets {what} on a model row."
         elif char == "d":
             if row.model:
                 ed.set(
