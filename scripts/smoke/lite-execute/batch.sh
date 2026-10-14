@@ -8,7 +8,7 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 batch=$1 reps=$2 par=$3; shift 3
-: "${SMOKE_SCENARIOS:?set it to the scenarios the change touches, from: fresh stop-if stop-if-detour spec-path prototype prototype-solo review}"
+: "${SMOKE_SCENARIOS:?set it to the scenarios the change touches, from: fresh stop-if stop-if-detour spec-path prototype prototype-solo review review-large}"
 mkdir -p "$batch"
 jobs=$batch/jobs.txt; : > "$jobs"
 for scenario in $SMOKE_SCENARIOS; do

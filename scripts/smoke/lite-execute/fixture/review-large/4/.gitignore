@@ -1,0 +1,3 @@
+.crank/
+__pycache__/
+*.lock

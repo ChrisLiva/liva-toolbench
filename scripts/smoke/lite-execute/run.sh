@@ -1,5 +1,5 @@
 #!/bin/bash
-# run.sh <plugin-dir> <scenario: fresh|stop-if|stop-if-detour|spec-path|prototype|prototype-solo|review> <model> <seed-dir> <run-dir>
+# run.sh <plugin-dir> <scenario: fresh|stop-if|stop-if-detour|spec-path|prototype|prototype-solo|review|review-large> <model> <seed-dir> <run-dir>
 # Drives one headless lite-execute session against a clone of a seed repo and saves
 # the stream, the git state, and the .crank/ artifacts under <run-dir>.
 # A gpt-* model runs under `codex exec` at SMOKE_EFFORT (default high), and any other model
@@ -37,7 +37,7 @@ fi
 
 case $scenario in
   fresh|spec-path) seed=$seeds/seed-fresh ;;
-  stop-if|stop-if-detour|review) seed=$seeds/seed-$scenario ;;
+  stop-if|stop-if-detour|review|review-large) seed=$seeds/seed-$scenario ;;
   prototype|prototype-solo) seed=$seeds/seed-prototype ;;
   *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
@@ -50,6 +50,10 @@ case $scenario in
     mkdir -p .crank/$slug
     cp -R "$here/fixture/prototype/crank/spec.md" "$here/fixture/prototype/crank/prototype" .crank/$slug/
     cp "$here/fixture/prototype/crank/$plan" .crank/$slug/plan.md ;;
+  review-large)
+    slug=bank-import
+    mkdir -p .crank/$slug
+    cp "$here/fixture/review-large/crank/spec.md" "$here/fixture/review-large/crank/plan.md" .crank/$slug/ ;;
   *)
     slug=csv-export
     mkdir -p .crank/$slug
@@ -64,17 +68,16 @@ if [ "$harness" = codex ]; then
   echo /.agents/ >> .git/info/exclude
 fi
 
-# progress <base> <sha>...: write the plan's Progress block with one checked task per sha.
+# progress <base> <sha>...: write the plan's Progress block, one checked task per sha in task order.
 progress() {
-  python3 - "$@" <<'PY'
-import sys
-p = ".crank/csv-export/plan.md"
+  python3 - ".crank/$slug/plan.md" "$@" <<'PY'
+import re, sys
+p, base, shas = sys.argv[1], sys.argv[2], sys.argv[3:]
 lines = open(p, encoding="utf-8").read().split("\n")
-titles = ["CSV serializer", "Export route", "CLI export command", "Streaming export for large ledgers", "Docs"]
-shas = sys.argv[2:]
+titles = [m.group(1) for m in map(re.compile(r"^### Task \d+: (.+)$").match, lines) if m]
 tasks = [f"- [x] Task {n}: {t} — {shas[n - 1]}" if n <= len(shas) else f"- [ ] Task {n}: {t}"
          for n, t in enumerate(titles, 1)]
-open(p, "w", encoding="utf-8").write("\n".join(lines[:1] + ["", "## Progress", "", f"Base: {sys.argv[1]}"] + tasks + lines[1:]))
+open(p, "w", encoding="utf-8").write("\n".join(lines[:1] + ["", "## Progress", "", f"Base: {base}"] + tasks + lines[1:]))
 PY
 }
 case $scenario in
@@ -92,6 +95,9 @@ case $scenario in
     # Every task is committed and checked, so the run goes straight to Review.
     progress "$(git rev-parse --short HEAD~5)" $(git log --reverse --format=%h -5)
     ASK="$inv .crank/csv-export/plan.md"; cap=2 ;;
+  review-large)
+    progress "$(git rev-parse --short HEAD~12)" $(git log --reverse --format=%h -12)
+    ASK="$inv .crank/bank-import/plan.md"; cap=2 ;;
   prototype|prototype-solo)
     ASK="$inv .crank/ledger-report/plan.md"; cap=4 ;;
 esac
@@ -122,7 +128,7 @@ for n in $(seq 1 "$cap"); do
       "${perm[@]}" --strict-mcp-config --settings "$SETTINGS" --plugin-dir "$PD" \
       "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
   fi
-  case $scenario in fresh|prototype|prototype-solo|review) if [ -f .crank/$slug/retro.md ]; then break; fi ;; esac
+  case $scenario in fresh|prototype|prototype-solo|review|review-large) if [ -f .crank/$slug/retro.md ]; then break; fi ;; esac
   if [ "$scenario" = stop-if-detour ] && grep -q '^- \[x\] Task 2' .crank/csv-export/plan.md; then break; fi
 done
 echo $(( $(date +%s) - start )) > "$run/seconds"

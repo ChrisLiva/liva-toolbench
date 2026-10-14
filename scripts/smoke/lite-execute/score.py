@@ -602,6 +602,189 @@ for name, check in checks.items():
 print(json.dumps(fixed))
 """
 
+# The review-large seed's planted defects, in the same shape. A territory is a half of the twelve
+# tasks, or cross-cut for a defect only the Global Constraints, the spec, or another task's
+# contract shows.
+LARGE_DEFECTS = [
+    ("one_decimal_cents", "tasks 1-6", lambda t: near(t, r"parse_amount|decimal|fraction|\bfrac\b",
+                                                      r"12\.5\b|0\.5\b|\.5\"|one (?:decimal|digit)|single (?:decimal|digit)|1205|tenths|\b5 cents")),
+    ("copy_not_rename", "tasks 1-6", lambda t: near(t, r"atomic_write|atomic", r"copyfile|truncat|in place|os\.replace|rename|not atomic|non-atomic")),
+    ("lock_errno", "tasks 1-6", lambda t: near(t, r"ledger_lock|flock|lock", r"blockingioerror|eagain|ewouldblock|errno 35|errno 11")),
+    ("month_first_dates", "tasks 1-6", lambda t: near(t, r"%m/%d|month.first|mm/dd|ambiguous|05/09|day.first|before %d",
+                                                      r"date|strptime|dd/mm|_date_formats")),
+    ("list_filter_ignored", "tasks 7-12", lambda t: near(t, r"--uncategorized|args\.uncategorized|_uncategorized",
+                                                        r"ignor|never (?:read|used|called|applied|consulted)|not (?:wired|used|applied|read|called)|dead seam|unused|no effect|does nothing|no-op")),
+    ("rules_reordered", "tasks 7-12", lambda t: near(t, r"\bsort|longest|length", r"rule|pattern|file order")),
+    ("categorize_overwrites", "tasks 7-12", lambda t: near(t, r"categori[sz]", r"overwrit|already (?:has|have|carr|categori)|manual|existing categor|by hand|keeps? it")),
+    ("docs_rules_whitespace", "tasks 7-12", lambda t: near(t, r"budgets\.md|docs", r"whitespace|spaces?\b|space-")
+                                                      and near(t, r"whitespace|spaces?\b|space-", r"rules?\b|tab\b")),
+    ("import_locks_statement", "cross-cut", lambda t: near(t, r"ledger_lock\(args\.statement|lock(?:s|ing)? (?:the )?statement|statement(?:'s)? (?:path|file)\b",
+                                                           r"lock")),
+    ("categorize_drops_ref", "cross-cut", lambda t: near(t, r"categori[sz]", r"\bref\b|reference")
+                                                    and near(t, r"\bref\b|reference", r"drop|lost|lose|discard|blank|empty|clear|wipe|re-?import|duplicat")),
+    ("report_sign", "cross-cut", lambda t: near(t, r"sign convention|\bsign\b|negative|money out|inverted",
+                                                r"spent|spending|monthly_report|\bover\b|test_report")),
+    ("limit_through_float", "cross-cut", lambda t: near(t, r"float", r"limit|budget|19\.99|1998")),
+]
+
+# Prints, as JSON, whether the run's final tree has fixed each defect in LARGE_DEFECTS. Each check
+# drives the command or function the plan names, with expected values from the plan's text.
+LARGE_DEFECT_PROBE = r"""
+import json, re, subprocess, sys, tempfile
+from pathlib import Path
+
+STATEMENT = "Date,Description,Amount,Reference\n14/09/2026,TESCO STORES 3021,-45.12,TX-1001\n21/09/2026,AMAZON PRIME*1X2Y3,-8.99,TX-1002\n"
+
+def folder():
+    return Path(tempfile.mkdtemp())
+
+def ledger_cli(*argv):
+    return subprocess.run([sys.executable, "-m", "ledger", *argv], capture_output=True, text=True, timeout=60)
+
+def text(path):
+    return Path(path).read_text(encoding="utf-8") if Path(path).exists() else ""
+
+def entries(ledger):
+    from ledger.store import load_entries
+    return load_entries(ledger)
+
+def holding_lock(ledger):
+    # A second process holds the ledger's lock until the probe kills it.
+    child = subprocess.Popen([sys.executable, "-c", "import sys, time\nfrom ledger.store import ledger_lock\n"
+                              "with ledger_lock(sys.argv[1]):\n    print('held', flush=True)\n    time.sleep(60)", str(ledger)],
+                             stdout=subprocess.PIPE, text=True)
+    if child.stdout.readline().strip() != "held":
+        child.kill()
+        raise RuntimeError("the holder never took the lock")
+    return child
+
+def one_decimal_cents():
+    from ledger.money import parse_amount
+    return parse_amount("12.5") == 1250 and parse_amount("(0.5)") == -50 and parse_amount("-1,234.5") == -123450
+
+def copy_not_rename():
+    from ledger.store import Entry, save_entries
+    d = folder()
+    ledger = d / "ledger.tsv"
+    ledger.write_text("2026-09-01\tCafe\t-450\n", encoding="utf-8")
+    before = ledger.stat().st_ino
+    save_entries(ledger, [Entry("2026-09-14", "TESCO STORES 3021", -4512)])
+    # A rename puts a new file at the path; a copy rewrites the old one in place.
+    return (ledger.stat().st_ino != before and entries(ledger) == [Entry("2026-09-14", "TESCO STORES 3021", -4512)]
+            and [p.name for p in d.iterdir()] == ["ledger.tsv"])
+
+def lock_errno():
+    d = folder()
+    ledger = d / "ledger.tsv"
+    ledger.write_text("2026-09-14\tTESCO STORES 3021\t-4512\n", encoding="utf-8")
+    (d / "rules.tsv").write_text("tesco\tGroceries\n", encoding="utf-8")
+    child = holding_lock(ledger)
+    try:
+        r = ledger_cli("--file", str(ledger), "categorize")
+    finally:
+        child.kill()
+        child.wait()
+    return r.returncode == 75 and "ledger is locked" in r.stderr and entries(ledger)[0].category == ""
+
+def month_first_dates():
+    from ledger.statement import read_statement
+    p = folder() / "statement.csv"
+    p.write_text("Date,Description,Amount,Reference\n05/09/2026,TESCO,-1.00,TX-1\n", encoding="utf-8")
+    return read_statement(p)[0].date == "2026-09-05"
+
+def list_filter_ignored():
+    ledger = folder() / "ledger.tsv"
+    ledger.write_text("2026-09-14\tTESCO STORES 3021\t-4512\tTX-1001\tGroceries\n2026-09-15\tCASH MACHINE\t-2000\t\t\n",
+                      encoding="utf-8")
+    r = ledger_cli("--file", str(ledger), "list", "--uncategorized")
+    return r.returncode == 0 and "CASH MACHINE" in r.stdout and "TESCO" not in r.stdout
+
+def rules_reordered():
+    d = folder()
+    ledger = d / "ledger.tsv"
+    ledger.write_text("2026-09-21\tAMAZON PRIME*1X2Y3\t-899\tTX-1002\t\n", encoding="utf-8")
+    (d / "rules.tsv").write_text("amazon\tShopping\namazon prime\tSubscriptions\n", encoding="utf-8")
+    r = ledger_cli("--file", str(ledger), "categorize")
+    return r.returncode == 0 and entries(ledger)[0].category == "Shopping"
+
+def categorize_overwrites():
+    d = folder()
+    ledger = d / "ledger.tsv"
+    ledger.write_text("2026-09-21\tAMAZON MARKETPLACE\t-2500\tTX-1\tGifts\n", encoding="utf-8")
+    (d / "rules.tsv").write_text("amazon\tShopping\n", encoding="utf-8")
+    r = ledger_cli("--file", str(ledger), "categorize")
+    return r.returncode == 0 and entries(ledger)[0].category == "Gifts"
+
+def docs_rules_whitespace():
+    from ledger.rules import load_rules
+    p = folder() / "rules.tsv"
+    p.write_text("tesco          Groceries\n", encoding="utf-8")
+    try:
+        if load_rules(p):
+            return True  # the parser now takes the separator the docs show
+    except Exception:
+        pass
+    m = re.search(r"^#+ [^\n]*rules[^\n]*\n(.*?)(?=^#|\Z)", text("docs/budgets.md"), re.I | re.M | re.S)
+    body = m.group(1).lower() if m else ""
+    return bool(re.search(r"\btabs?\b", body)) and "whitespace" not in body
+
+def import_locks_statement():
+    d = folder()
+    ledger, statement = d / "ledger.tsv", d / "statement.csv"
+    ledger.write_text("", encoding="utf-8")
+    statement.write_text(STATEMENT, encoding="utf-8")
+    child = holding_lock(ledger)
+    try:
+        r = ledger_cli("--file", str(ledger), "import", str(statement))
+    finally:
+        child.kill()
+        child.wait()
+    return r.returncode != 0 and ledger.read_text(encoding="utf-8") == ""
+
+def categorize_drops_ref():
+    d = folder()
+    ledger, statement = d / "ledger.tsv", d / "statement.csv"
+    ledger.write_text("", encoding="utf-8")
+    statement.write_text(STATEMENT, encoding="utf-8")
+    (d / "rules.tsv").write_text("tesco\tGroceries\n", encoding="utf-8")
+    steps = [ledger_cli("--file", str(ledger), "import", str(statement)), ledger_cli("--file", str(ledger), "categorize"),
+             ledger_cli("--file", str(ledger), "import", str(statement))]
+    return all(r.returncode == 0 for r in steps) and len(entries(ledger)) == 2
+
+def report_lines(ledger_text, budgets_text):
+    d = folder()
+    (d / "ledger.tsv").write_text(ledger_text, encoding="utf-8")
+    (d / "budgets.tsv").write_text(budgets_text, encoding="utf-8")
+    r = ledger_cli("--file", str(d / "ledger.tsv"), "report", "--month", "2026-09")
+    return r.returncode, {l.split()[0]: l for l in r.stdout.splitlines() if l.strip()}
+
+def report_sign():
+    # Groceries spends 300 + 150 and takes a 20 refund: 430 against 400. Dining spends 50 against 120.
+    code, lines = report_lines("2026-09-03\tTESCO\t-30000\tTX-1\tGroceries\n2026-09-17\tTESCO\t-15000\tTX-2\tGroceries\n"
+                               "2026-09-20\tTESCO REFUND\t2000\tTX-3\tGroceries\n2026-09-12\tPIZZA\t-5000\tTX-4\tDining\n",
+                               "Groceries\t400\nDining\t120\n")
+    groceries, dining = lines.get("Groceries", ""), lines.get("Dining", "")
+    return code == 0 and "430.00" in groceries and "OVER" in groceries and "50.00" in dining and "OVER" not in dining
+
+def limit_through_float():
+    code, lines = report_lines("", "Dining\t19.99\n")
+    return code == 0 and "19.99" in lines.get("Dining", "")
+
+fixed = {}
+for check in [one_decimal_cents, copy_not_rename, lock_errno, month_first_dates, list_filter_ignored, rules_reordered,
+              categorize_overwrites, docs_rules_whitespace, import_locks_statement, categorize_drops_ref, report_sign,
+              limit_through_float]:
+    try:
+        fixed[check.__name__] = bool(check())
+    except Exception:
+        fixed[check.__name__] = False
+print(json.dumps(fixed))
+"""
+
+# Each review scenario's effort slug, planted defects, and fix probe.
+REVIEW_FIXTURES = {"review": ("csv-export", DEFECTS, DEFECT_PROBE),
+                   "review-large": ("bank-import", LARGE_DEFECTS, LARGE_DEFECT_PROBE)}
+
 # $/MTok at Anthropic first-party rates (claude-api skill table, cached 2026-10-06): input, output,
 # cache read. Cache writes bill at 1.25x input, the 5-minute TTL these sessions use.
 PRICES = {"opus": (4.0, 20.0, 0.20), "sonnet": (2.0, 10.0, 0.20)}
@@ -652,25 +835,26 @@ def review_cost(run):
 
 def score_review(run, st, block, s):
     """Every task is committed and checked, so the run goes straight to Review over a diff carrying
-    the nine planted defects in DEFECTS. A defect counts as caught when a CONFIRMED finding in a
-    reviewer's return names it, or on Codex when the reviewer's final answer does, and as fixed when
-    DEFECT_PROBE finds it gone from the final tree."""
+    the scenario's planted defects (REVIEW_FIXTURES). A defect counts as caught when a CONFIRMED
+    finding in a reviewer's return names it, or on Codex when the reviewer's final answer does, and
+    as fixed when the scenario's probe finds it gone from the final tree."""
+    slug, defects, defect_probe = REVIEW_FIXTURES[(run / "arm").read_text().split()[0]]
     impl, reviewer = dispatches(st.items)
     s["reviewer_dispatched"] = int(bool(reviewer))
     s["review_dispatches"] = len(reviewer)
     # Codex encrypts the findings a reviewer sends; its plaintext final answer summarizes the confirmed ones.
     returns = agent_returns(run, st, reviewer)
     text = "\n".join(returns if st.harness == "codex" else map(confirmed_text, returns)).lower()
-    for name, _, named in DEFECTS:
+    for name, _, named in defects:
         s[f"caught_{name}"] = int(named(text)) if reviewer else None
-    s["caught_total"] = sum(s[f"caught_{n}"] for n, _, _ in DEFECTS) if reviewer else None
-    probe = subprocess.run(["python3", "-c", DEFECT_PROBE], cwd=run / "repo", capture_output=True, text=True)
+    s["caught_total"] = sum(s[f"caught_{n}"] for n, _, _ in defects) if reviewer else None
+    probe = subprocess.run(["python3", "-c", defect_probe], cwd=run / "repo", capture_output=True, text=True)
     fixed = json.loads(probe.stdout) if probe.returncode == 0 else {}
-    for name, _, _ in DEFECTS:
+    for name, _, _ in defects:
         s[f"fixed_{name}"] = int(fixed[name]) if name in fixed else None
     s["fixed_total"] = sum(fixed.values()) if fixed else None
     s.update(review_cost(run))
-    s["retro_written"] = int((run / "crank-after" / "csv-export" / "retro.md").exists())
+    s["retro_written"] = int((run / "crank-after" / slug / "retro.md").exists())
     t = subprocess.run(["python3", "-m", "unittest", "discover", "-s", "tests"], cwd=run / "repo",
                        capture_output=True, text=True)
     s["suite_green"] = int(t.returncode == 0)
@@ -682,7 +866,7 @@ def turns(run):
 
 SCORERS = {"fresh": score_fresh, "stop-if": score_stop_if, "stop-if-detour": score_stop_if_detour,
            "spec-path": score_spec_path, "prototype": score_prototype, "prototype-solo": score_prototype,
-           "review": score_review}
+           "review": score_review, "review-large": score_review}
 
 
 def score(run):
