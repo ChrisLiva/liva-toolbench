@@ -33,7 +33,7 @@ The high-level design brief. Include the sections that apply; this is a brief, n
 
 Before asking the user anything, read recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads with the **Explore the codebase** brief at References → Subagents.
 
-Completion criterion: every surface the idea touches is named with the `file:line` you read it at, or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm that wrote no mock leaves no directory behind.
+Completion criterion: every surface the idea touches is named with the anchor you read it at (`` `<path>` → `<symbol>` ``), or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm that wrote no mock leaves no directory behind.
 
 ### 2. Name the destination
 
@@ -92,11 +92,11 @@ Work your lookups in **rounds**: a round's **frontier** is every read or grep wh
 
 Report:
 
-- whether the surface or pattern in question exists, and the `file:line` where it lives (or "not found");
-- one or two existing features that do something analogous, and the convention each follows (`file:line`);
-- any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (`file:line`).
+- whether the surface or pattern in question exists, and the anchor where it lives, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it (or "not found");
+- one or two existing features that do something analogous, and the convention each follows (its anchor);
+- any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (its anchor).
 
-Report each item — one surface, one analogous feature, one helper — in a few sentences. Cite `file:line` instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
+Report each item — one surface, one analogous feature, one helper — in a few sentences. Cite an anchor, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it (`` `<path>:<line>` (no symbol) `` only where no symbol can be named), instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design; surface what exists and what's true. If the claim I'm checking is wrong, say so plainly.
 </brief>

@@ -14,9 +14,9 @@ A point entry makes the dispatch a delta check at the citation; a survey entry (
 >
 > Report:
 >
-> - whether the surface or pattern in question exists, and the `file:line` where it lives (or "not found");
-> - one or two existing features that do something analogous, and the convention each follows (`file:line`);
-> - any canonical helper, module, or pattern an implementer would be expected to reuse for this (`file:line`).
+> - whether the surface or pattern in question exists, and the anchor where it lives, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it (or "not found");
+> - one or two existing features that do something analogous, and the convention each follows (its anchor);
+> - any canonical helper, module, or pattern an implementer would be expected to reuse for this (its anchor).
 >
 > Don't propose a design — surface what exists and what's true. If a claim I'm checking is wrong, say so plainly.
 
