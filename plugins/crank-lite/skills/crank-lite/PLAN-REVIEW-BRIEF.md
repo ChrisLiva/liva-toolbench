@@ -28,10 +28,19 @@ Flag every instance of:
 
 Take the spec's decisions as settled.
 
+A dispatch carrying a `Shard:` line makes you one of three reviewers over this plan. Read the whole plan and the spec first, so you know the contracts your shard relies on, then report only your shard, since a defect outside it belongs to another reviewer:
+
+- **Shard A** and **Shard B** each own the task range the dispatch names. Read each task in the range as its implementer receives it, against **unverifiable check**, **uncited claim**, a **stale anchor** between tasks in the range, **placeholder**, **bespoke duplication**, **unreferenced prototype**, **unmodeled task**, **implementation-detail or redundant test**, and a **dropped safeguard** within one task's text.
+- **Shard X** owns what spans tasks: **unproved criterion**, **hollow stage gate**, **unretired risk**, a **stale anchor** one task moves that a task in another range relies on, a **dropped safeguard** across the plan, the verification checks as tests that span tasks, and every interface or value one task defines and another task uses, checked for agreement in name, signature, coordinate frame, and meaning.
+
+A dispatch with no `Shard:` line gives you every flag above.
+
 Return each finding with:
 
 1. its verdict, `CONFIRMED` or `REFUTED`, defaulting to `REFUTED` when the evidence is thin;
 2. its evidence: the path, enclosing symbol, and line or command output that proves it;
 3. for a `CONFIRMED` finding, its exact edit: the task or section, the plan text copied verbatim as `old`, and its replacement as `new`.
+
+When your dispatch carries a `Findings:` path, write your numbered findings there in the form above, and reply with one line: the counts of `CONFIRMED` and `REFUTED` findings.
 
 Completion criterion: every task, check, and risk in the plan has been read against the flags above, and each finding carries its verdict, evidence, and edit.

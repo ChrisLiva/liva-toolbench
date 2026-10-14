@@ -30,6 +30,7 @@ SITES = [
     "plugins/crank-lite/skills/lite-execute/MERGE-BRIEF.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md",
+    "plugins/crank-lite/skills/crank-lite/PLAN-MERGE-BRIEF.md",
 ]
 
 # Every site sends its whole frontier as one batch per turn.
@@ -69,6 +70,7 @@ FLAG_LITERALS = {
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md": ["made untrue", "fragile"],
     "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md": ["dead seam", "implementation-detail test", "redundant test"],
     "plugins/crank-lite/skills/lite-execute/MERGE-BRIEF.md": ["Plan decision:", "style preference"],
+    "plugins/crank-lite/skills/crank-lite/PLAN-MERGE-BRIEF.md": ["Spec decision:", "style preference"],
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md": [
         "unverifiable check",
         "unretired risk",
