@@ -23,6 +23,17 @@ case $model in
   gpt-*) harness=codex inv='$lite-execute' ;;
   *) harness=claude inv=/crank-lite:lite-execute ;;
 esac
+if [ "$harness" = claude ]; then
+  # Smoke sessions bill the claude.ai subscription. An API key in the environment would switch them
+  # to API billing, so drop it, and refuse to start (status 255 stops batch.sh's xargs) unless the
+  # CLI still reports the subscription login.
+  unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
+  auth=$(claude auth status 2>/dev/null | python3 -c 'import json, sys; print(json.load(sys.stdin).get("authMethod", ""))' 2>/dev/null)
+  if [ "$auth" != claude.ai ]; then
+    echo "run.sh: claude auth method is '$auth', not claude.ai; run claude auth login" >&2
+    exit 255
+  fi
+fi
 
 case $scenario in
   fresh|spec-path) seed=$seeds/seed-fresh ;;
