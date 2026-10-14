@@ -30,6 +30,6 @@ Resolve the tiers once per run and reuse the mapping at every dispatch:
 2. Otherwise, use this fallback:
 
 <subagent-tiers>
-- **standard** fallback (exploration and codebase lookups): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
-- **heavy** fallback (adversarial review): Claude Code `model: opus` · Codex Sol at high effort · Cursor Sol at high effort
+- **standard** fallback (exploration, codebase lookups, and plan review shards): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
+- **heavy** fallback (adversarial review, its cross-cut shard, and its merge): Claude Code `model: opus` · Codex Sol at high effort · Cursor Sol at high effort
 </subagent-tiers>

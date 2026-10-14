@@ -76,16 +76,22 @@ By case:
 
 ## Review
 
-Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with pointers only, each an absolute path: the brief, the plan, the spec when one exists, and this skill's `VOCABULARY.md`. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
+Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch the review ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers). Every dispatch carries pointers only, each an absolute path, and each is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch:
 
-Land each finding the review returns. Facts are yours; decisions are the user's ([INTERVIEW.md](INTERVIEW.md)):
+- **A plan with one stage or no Stages table**: one heavy-tier reviewer, handed the brief, the plan, the spec when one exists, and this skill's `VOCABULARY.md`.
+- **A plan with two or more stages**: three reviewers in one wave, each handed those pointers plus a `Shard: <A | B | X>` line and a `Findings: <absolute path to .crank/<slug>/plan-review-<a | b | x>.md>` line.
+  - Shard A and Shard B run at the standard tier, and each is also handed a `Tasks: <first>-<last>` line naming its task range. Shard A takes Task 1 through the last task of the stage whose cut leaves the two ranges closest in task count, the earlier cut on a tie, and Shard B takes the rest.
+  - Shard X runs at the heavy tier.
+  - Once all three return, dispatch one heavy-tier merger handed [PLAN-MERGE-BRIEF.md](PLAN-MERGE-BRIEF.md), the review brief, the plan, the spec when one exists, `VOCABULARY.md`, and the three findings paths.
+
+Land each finding the reviewer returns, or each row the merger returns. Facts are yours; decisions are the user's ([INTERVIEW.md](INTERVIEW.md)):
 
 - **`CONFIRMED`, correcting a fact**: land its `old` → `new` edit in `plan.md` verbatim, widening `old` to a span the file holds once when it matches elsewhere.
-- **`CONFIRMED`, with more than one defensible replacement**: a decision. Land it as the reviewer wrote it, and show it in the readback beside the replacement it beat.
+- **`CONFIRMED`, with more than one defensible replacement, or a merged row carrying a `Spec decision:` line**: a decision. Land it as the review wrote it, and show it in the readback beside the replacement it beat.
 - **`REFUTED`**: no edit.
 
 Then strike or rewrite any Grounding entry a landed edit contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
 
-Completion criterion: every `CONFIRMED` finding is in `plan.md`, and each decision among them is marked for the readback beside the replacement it beat.
+Completion criterion: every `CONFIRMED` finding or merged row is in `plan.md`, and each decision among them is marked for the readback beside the replacement it beat.
 
 Next step: `/lite-execute .crank/<slug>/plan.md` — in this session or a fresh one; one run carries the plan through its last task. For a staged plan, add one sentence: the user may bound a run at any stage gate (`stop after Task <N>`, the gate's last task), and a gate short of the last task ends a short run, reviewed when the last stage lands.

@@ -100,7 +100,7 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/PLAN.md": ["long plan", "A requirement is a Behavior line", "](PROTOTYPE.md)"],
     "plugins/crank/skills/crank/PLAN-TEMPLATE.md": ["\nPrototype: <"],
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
-    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)"],
+    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "](PLAN-MERGE-BRIEF.md)", "two or more stages"],
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/SPEC.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)"],
