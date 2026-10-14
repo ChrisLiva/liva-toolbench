@@ -30,7 +30,7 @@ Read [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and [VOCABULARY.md](VOCABULARY.md) t
 
 ### Subagents
 
-This phase dispatches **standard** subagents for what the codebase can answer: whether a surface exists, its exact signature, whether a claim you're about to write is true. The adversarial review is its only **heavy** dispatch. Resolve each tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread: a loaded instruction file's preference first, its harness models only as the fallback.
+This phase dispatches **standard** subagents for what the codebase can answer: whether a surface exists, its exact signature, whether a claim you're about to write is true. The review's merge is its only **heavy** dispatch. Resolve each tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread: a loaded instruction file's preference first, its harness models only as the fallback.
 
 ### Vocabulary
 
@@ -113,7 +113,7 @@ Completion criterion: every settled behavior has a numbered criterion, every Del
 
 ### 4. Adversarially review
 
-Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path.
+Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, passing the spec's absolute path. The three reviewers run at the standard tier, one per lens (`truth`, `contract`, and `design`), each with its findings path `spec-review-findings-<lens>.md` beside the spec. The merger's findings file is `spec-review-findings.md`, and its edit script is `spec-review-edits.py`.
 
 ### 5. Read back the spec
 

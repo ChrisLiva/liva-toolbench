@@ -38,7 +38,7 @@ Read [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) and [VOCABULARY.md](VOCABULARY.md) t
 
 ### Subagents
 
-This phase dispatches **standard** subagents for what the codebase can answer — an exact signature, prior art for a pattern, whether a spec claim still holds. The adversarial review is its only **heavy** dispatch. Resolve each tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread: a loaded instruction file's preference first, its harness models only as the fallback.
+This phase dispatches **standard** subagents for what the codebase can answer — an exact signature, prior art for a pattern, whether a spec claim still holds. Its review's cross-cut shard and merge, or the single reviewer of a plan with one stage or no Stages table, are its only **heavy** dispatches. Resolve each tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) → Dispatch or main thread: a loaded instruction file's preference first, its harness models only as the fallback.
 
 Dispatch each grounding read with this brief, filled in:
 
@@ -150,6 +150,12 @@ Route reuse by name: if grounding (or the spec) surfaced an existing utility, th
 ### 5. Adversarially review
 
 Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch it per [SKILL.md](SKILL.md) → Phase gates, substituting the plan's absolute path and the spec's path into it. If the spec exists only in the conversation, drop the spec-path sentence from the brief and paste the spec's behavior list (or acceptance criteria) into it instead.
+
+A plan with two or more stages fans out per [SKILL.md](SKILL.md) → Phase gates, and each reviewer gets its findings path `plan-review-findings-<a | b | x>.md` beside the plan:
+- `Shard A` and `Shard B` run at the standard tier, each with its `<task-range>`. Shard A takes Task 1 through the last task of the stage whose cut leaves the two ranges closest in task count, the earlier cut on a tie, and Shard B takes the rest.
+- `Shard X` runs at the heavy tier.
+
+The merger's findings file is `plan-review-findings.md`, and its edit script is `plan-review-edits.py`. A plan with one stage or no Stages table goes to one heavy reviewer with the brief's **Shard.** paragraph dropped.
 
 ### 6. Read back the plan
 
