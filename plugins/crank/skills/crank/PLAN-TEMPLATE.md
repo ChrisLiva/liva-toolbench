@@ -11,7 +11,7 @@ Goal: <one sentence>
 Architecture: <2-3 sentences>
 Tech stack: <pinned versions>
 Gates: <exact test / lint / typecheck / build commands, each proven to run>
-Base: <the HEAD SHA grounding read, so every anchor's line number has a tree>
+Base: <the HEAD SHA grounding read, the tree any line-number fallback reads against>
 
 ## Global Constraints
 
