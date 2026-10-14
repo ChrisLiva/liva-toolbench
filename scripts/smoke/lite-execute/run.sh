@@ -138,8 +138,9 @@ git status --porcelain > "$run/status.txt"
 git diff HEAD > "$run/diff.txt"
 cp -R .crank "$run/crank-after"
 if [ "$harness" = claude ]; then
-  # A subagent's turns live in the session's transcript directory, keyed on the clone's path.
-  proj=$(printf '%s' "$run/repo" | tr -c 'A-Za-z0-9' '-')
+  # A subagent's turns live in the session's transcript directory, keyed on the clone's resolved
+  # path: on macOS a mktemp dir under /var/folders resolves to /private/var/folders.
+  proj=$(cd "$run/repo" && pwd -P | tr -d '\n' | tr -c 'A-Za-z0-9' '-')
   subs=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/$proj/$sid/subagents
   if [ -d "$subs" ]; then cp -R "$subs" "$run/subagents"; fi
 fi
