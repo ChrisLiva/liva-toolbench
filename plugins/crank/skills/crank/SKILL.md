@@ -36,7 +36,7 @@ The first rule that applies wins:
 - **Load one phase at a time.** Read a phase file only when routing into it; the reference docs and templates beside it load when that phase file says, never at triage, except the artifact-home read in triage rule 2.
 - **The adversarial review fans out, then merges.** Where a phase's flow has a review, the phase names its reviewers' lenses or shards and their tiers, resolved per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md).
   - Spawn the three reviewers in one wave, each passed the phase's review brief verbatim with the step's artifact paths, its lens or shard, and its findings path substituted in.
-  - Once all three return, spawn one heavy subagent passed [MERGE-BRIEF.md](MERGE-BRIEF.md) verbatim, with the same paths, the phase's review brief's absolute path as `<brief-path>`, the three findings paths as `<findings-paths>`, and the phase's findings file and edit script as `<findings-file>` and `<edits-script>`.
+  - Once all three return, spawn one heavy subagent passed [MERGE-BRIEF.md](MERGE-BRIEF.md) verbatim, with the same paths, the artifact's absolute path as `<artifact-path>`, the phase's review brief's absolute path as `<brief-path>`, the three findings paths as `<findings-paths>`, and the phase's findings file and edit script as `<findings-file>` and `<edits-script>`.
   - A plan review of a plan with one stage or no Stages table instead spawns one heavy subagent with the plan brief alone, its **Shard.** paragraph dropped. That reviewer lands its own edits.
 
   Completion criterion: the merger's or the single reviewer's edits are in the artifact file, and every finding the merger marked `decision` is in the readback as a decision.

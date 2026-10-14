@@ -1,6 +1,6 @@
 # Readback protocol
 
-1. **Open the readback** once the artifact is written and, where the phase runs an adversarial review, the review's edits are in the file. The interview settled every decision, so the user reads finished items and strikes or amends them.
+1. **Open the readback** once the artifact is written and, where the phase runs an adversarial review, the review's edits are in the file. The interview settled every decision except those the review leaves to the user, so the user reads finished items and strikes or amends them.
 2. **Send the readback message** below.
 3. **Fold in feedback** below until the user approves the artifact.
 
@@ -11,7 +11,7 @@ Send the whole artifact as one message, compressed:
 - **Open with what the artifact commits to and what it cuts**, in two or three lines.
 - **Walk every section in the artifact's order** as its items, one line each: the decisions, criteria, cuts, tasks, and rows themselves. A section copied unchanged from the previous phase's artifact, and the Grounding section, each get one line naming the section and its item count.
 - **Show each judgment call beside the option it beat**, so a veto is a real choice.
-- **Mark the review's work**, where a review ran: tag each item it added or rewrote `(review)`, and after the last section state how many findings it landed and how many it refuted.
+- **Mark the review's work**, where a review ran: tag each item it added or rewrote `(review)`, and after the last section state how many findings it landed and how many it refuted. List each finding the review left as a decision, such as a merged finding marked `decision` or `Spec decision:`, with the text it would change, read from the review's findings file, and your recommendation.
 - **Draw what reads better as a picture**: an interface, flow, or logic as pseudo-code, a call graph, or a small ASCII diagram (chat renders mermaid as raw text).
 - **Close on one line:** reply with changes, or say **done** to finish.
 
