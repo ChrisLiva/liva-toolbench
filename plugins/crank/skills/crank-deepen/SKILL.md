@@ -65,20 +65,20 @@ Return **at most 4** candidates, strongest first. For each:
 - **files** — the files or modules involved
 - **friction pattern** — which of the four
 - **deletion-test verdict** — one line: what happens to the complexity if this module goes
-- **evidence** — `file:line` references a reader can check
+- **evidence** — anchors a reader can check, each `` `<path>` → `<symbol>` `` with every name spelled as the source spells it, or `` `<path>:<line>` (no symbol) `` where no symbol can be named
 - **problem** — one sentence on the friction it causes today
 - **solution** — one sentence on what would change
 
 Report fewer than four rather than padding the list, and say so plainly if the territory is already deep.
 </brief>
 
-Completion criterion: every dispatched explorer has returned, and each returned candidate carries a `file:line` you could open.
+Completion criterion: every dispatched explorer has returned, and each returned candidate carries an anchor you could open.
 
 ### 3. Report
 
 Synthesis happens **here, on this thread** — each explorer saw one territory; only you see all of them.
 
-Dedupe and rank the returns yourself: merge overlapping candidates into the strongest version of the same idea, drop anything you can't back with a `file:line`, and keep the **3–6** the evidence actually supports, strongest first. Then pick the one you'd tackle first and say why in a sentence — that's the report's top recommendation.
+Dedupe and rank the returns yourself: merge overlapping candidates into the strongest version of the same idea, drop anything you can't back with an anchor, and keep the **3–6** the evidence actually supports, strongest first. Then pick the one you'd tackle first and say why in a sentence — that's the report's top recommendation.
 
 Read [VOCABULARY.md](VOCABULARY.md) before you write a card: architecture nouns from the glossary, domain nouns from the target repo's `CONTEXT.md` (the never-substitute table is at References → Vocabulary).
 
@@ -118,7 +118,7 @@ Once the grill's frontier is empty and the user has approved the shape, write th
 Sections, omitting any that didn't earn its place:
 
 - **Header** — title, then `Grounding:` (absolute path to `.crank/<slug>/grounding.md`, written once the facts below are banked there — ARTIFACT-HOME.md → Grounding; the spec phase and any reader handed only the brief reach the banked facts from here).
-- **Idea / Problem** — the friction in the user's words, with the evidence `file:line`.
+- **Idea / Problem** — the friction in the user's words, with the evidence anchor.
 - **Approach** — the chosen deepening and why it won, in **leverage** and **locality** terms.
 - **Shape** — the before/after as an ASCII diagram (see below), amended for whatever the grill changed, alongside the settled interface pseudo-code.
 - **Key decisions** — the consequential calls, one line of why each, including where the seam lands and which tests survive.
@@ -142,7 +142,7 @@ before                                after
 
 **No acceptance criteria** — those belong to the spec phase.
 
-With the brief written, bank the chosen candidate's facts to `.crank/<slug>/grounding.md` beside it ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding): the explorer's `file:line` evidence, the dependency crossings the grill mapped, and the surviving-tests inventory — each a citation the spec phase confirms instead of re-exploring covered ground.
+With the brief written, bank the chosen candidate's facts to `.crank/<slug>/grounding.md` beside it ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding): the explorer's anchor evidence, the dependency crossings the grill mapped, and the surviving-tests inventory — each a citation the spec phase confirms instead of re-exploring covered ground.
 
 End by recommending the next step: `/crank spec .crank/<slug>/deepen-brief.md`.
 
