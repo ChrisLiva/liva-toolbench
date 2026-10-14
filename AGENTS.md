@@ -220,8 +220,8 @@ The adversarial-review briefs (`crank`'s spec and plan phases, `crank-lite`'s pl
 after editing any skill, brief, or reference file, and before every commit; it
 prints one line per failed check and exits non-zero when any fails.
 
-It holds the twelve adversarial-reviewer dispatch sites to the rules their prose
-carries — each sends its whole lookup frontier as one batch, names what it reads,
+It holds every adversarial-reviewer and review-merge dispatch site to the rules their
+prose carries — each sends its whole lookup frontier as one batch, names what it reads,
 (for crank's plan and spec briefs) lands findings through one uniqueness-asserting
 edit script, and carries the flag phrases its own `FLAG_LITERALS` entry names — and
 holds every site to prose free of cost justification and of the

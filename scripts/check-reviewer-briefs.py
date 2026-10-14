@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The twelve adversarial-reviewer dispatch sites: eleven brief files, plus the
+# The adversarial-reviewer and review-merge dispatch sites: brief files, plus the
 # crank-lite review skill that carries its reviewer instruction as dispatch prose.
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
@@ -27,6 +27,7 @@ SITES = [
     "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md",
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md",
     "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md",
+    "plugins/crank-lite/skills/lite-execute/MERGE-BRIEF.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md",
 ]
@@ -67,6 +68,7 @@ FLAG_LITERALS = {
     "plugins/crank/skills/crank-deslop/STRUCTURE-BRIEF.md": ["code-judo", "spaghetti growth", "deletion test"],
     "plugins/crank/skills/crank-deslop/PROSE-BRIEF.md": ["made untrue", "fragile"],
     "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md": ["dead seam", "implementation-detail test", "redundant test"],
+    "plugins/crank-lite/skills/lite-execute/MERGE-BRIEF.md": ["Plan decision:", "style preference"],
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md": [
         "unverifiable check",
         "unretired risk",
