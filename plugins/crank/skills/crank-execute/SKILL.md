@@ -29,7 +29,7 @@ These hold at every step; a rule that binds one step lives with that step.
 
 ### Subagents
 
-This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = exploration, implementation, per-task review; **heavy** = the final cross-task review (and a one-time escalation for a `BLOCKED` task). That file's **Dispatch or main thread** default governs off-plan investigation; the execution shape (Flow step 1) governs implementation and review.
+This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = exploration, implementation, per-task review, the final review's lenses; **heavy** = the final cross-task review of a plan with one stage or no Stages table, the final review's merge and its fix-round re-review (and a one-time escalation for a `BLOCKED` task). That file's **Dispatch or main thread** default governs off-plan investigation; the execution shape (Flow step 1) governs implementation and review.
 
 ### Vocabulary
 
@@ -41,6 +41,7 @@ Both review gates, per task (Flow step 3) and final (Flow step 5), resolve a ver
 
 - Dismiss only what you can disprove, and record the reasoning that disproved it. You hold the cross-task context, the spec, and the Coverage table the reviewer doesn't, so a false positive is yours to disprove rather than the reviewer's to widen its search for: correct reuse read as duplication, a cohesive single-seam test read as a horizontal slice, an acceptance criterion called missing that a file outside the reviewer's read already satisfies. A dismissal is recorded with its reasoning — appended under a `## Dismissed` heading in `task-<N>-review.md` for a per-task review, in the retro's Final review section for the final one.
 - A confirmed gap is a failed review.
+- A fix-list entry carrying a `Plan decision:` quote flags what the plan or a recorded user decision prescribed, and its claim held at the merger's check. Fix it, or, where the fix would reverse a recorded user decision, write it to the retro as an Open item with your recommendation.
 - An `APPROVED` carrying non-blocking **Notes** is still done: the Notes are the deferred findings — read from `task-<N>-review.md` for a per-task review, recorded in the retro's Final review section for the final one — so move on, never into a fix round. A re-review's Out-of-scope observations route the same way.
 
 ## Deliverables
@@ -111,7 +112,7 @@ Open the progress ledger (Deliverables → Progress ledger); one that already ex
 Pre-flight: branch <current branch>
 Grounding: <.crank/<slug>/grounding.md — N entries | none>
 Shape: <solo | sequential | parallel>
-Subagents: standard = <model> (implement, per-task review) · heavy = <model> (final review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
+Subagents: standard = <model> (implement, per-task review, final review lenses) · heavy = <model> (final review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 Tasks: <N> (<M> remaining)
 Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
 ```
@@ -146,6 +147,7 @@ Whatever the shape, create this run's **brief directory** — where briefs, repo
 | `orientation.md` | the template in [IMPLEMENTER-BRIEF.md](IMPLEMENTER-BRIEF.md), filled per the sweep below | write | skip |
 | `review-rubric.md` | [PER-TASK-REVIEW-BRIEF.md](PER-TASK-REVIEW-BRIEF.md) | copy | copy — the final rubric's **Quality of the whole diff** axis reads its per-diff checks here |
 | `final-review-rubric.md` | [FINAL-REVIEW-BRIEF.md](FINAL-REVIEW-BRIEF.md) | copy | copy |
+| `final-merge-rubric.md` | [FINAL-MERGE-BRIEF.md](FINAL-MERGE-BRIEF.md) | copy | copy |
 | `re-review-rubric.md` | [RE-REVIEW-BRIEF.md](RE-REVIEW-BRIEF.md) | copy | skip |
 
 The orientation sweep: write the template into the brief dir, seed its unfilled slots from `.crank/<slug>/grounding.md` entries where that file exists ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), then dispatch a standard-tier subagent to fill the rest from a repo sweep — except the Commands block, which copies the plan's `Gates:` line. The sweep verifies each seeded line at its citation instead of skipping filled slots, so `orientation.md` carries only facts verified this run.
@@ -196,9 +198,11 @@ Every plan task is `[x]` on the ledger by now — a run that stopped earlier lef
 
 1. **Plan walk.** Re-tick every task in the plan against an actual commit. Run the plan's gate commands — its `Gates:` header line, or suite / lint / typecheck / build if the plan predates one — fresh this turn and read the output.
 2. **Coverage walk.** Walk the plan's Coverage table row by row; for each row, confirm its verify step ran green *this session* — re-run any that are stale or that earlier tasks may have broken. Rows marked human-only go in the retro's Open items. If the plan has no Coverage table, walk the spec's acceptance criteria (or, with no spec, the plan's stated goal) and check each against the diff yourself.
-3. **Final review (fresh eyes).** Dispatch one heavy reviewer, cold (Hard Rules → Reviewers judge independently), handing it: the **spec path** (or the plan path if no spec exists) and the **plan path**, including its Coverage table and, when present, its **Global Constraints**; the **ledger path**, whose task lines record each detour taken; the **BASE SHA** the ledger recorded at the start of the run, whose diff range is `<BASE>..HEAD`; `final-review-rubric.md` in the brief dir for its review axes and return format; and the **review path** `final-review.md` in the brief dir, where its full review goes.
+3. **Final review (fresh eyes).** Every final reviewer is cold (Hard Rules → Reviewers judge independently) and receives the **spec path** (or the plan path if no spec exists), the **plan path**, including its Coverage table and, when present, its **Global Constraints**; the **ledger path**, whose task lines record each detour taken; the **BASE SHA** the ledger recorded at the start of the run, whose diff range is `<BASE>..HEAD`; and `final-review-rubric.md` in the brief dir for its review axes and return format.
+   - **A plan with one stage or no Stages table**: dispatch one heavy reviewer with those pointers and the **review path** `final-review.md` in the brief dir, where its full review goes.
+   - **A plan with two or more stages**: dispatch three standard-tier lens reviewers in one wave, each with those pointers, its lens (`contract`, `coherence`, or `quality`), and its lens review path `final-review-<lens>.md` in the brief dir. Once all three return, dispatch one heavy merger with those pointers, `final-merge-rubric.md` in the brief dir, the three lens review paths, and the review path `final-review.md`. The merger's return is the final review's return.
 
-On `CHANGES_REQUESTED`, vet each finding before you touch code, per References → Review verdicts. Apply the surviving fixes and nothing else — failing test first for behavioral fixes, separate commits. A horizontal-slice finding is settled by demonstrating each sliced test still fails without its implementation; the demonstrated slice is then recorded in the retro's Final review section. Then re-review once: the same dispatch shape, re-using `final-review-rubric.md` and appending to `final-review.md` under a `## Round <R>` heading, plus the **FIX_BASE** (the HEAD the reviewer judged) and the surviving findings, which route it into the rubric's **Fix round** branch. A finding you can't fix becomes a retro Open item, stated plainly. A surviving finding that would reverse a change an earlier per-task review required is oscillation — stop and surface per Hard Rules.
+On `CHANGES_REQUESTED`, vet each finding before you touch code, per References → Review verdicts. Apply the surviving fixes and nothing else — failing test first for behavioral fixes, separate commits. A horizontal-slice finding is settled by demonstrating each sliced test still fails without its implementation; the demonstrated slice is then recorded in the retro's Final review section. Then re-review once with one heavy reviewer, cold, handed the pointers above, re-using `final-review-rubric.md` and appending to `final-review.md` under a `## Round <R>` heading, plus the **FIX_BASE** (the HEAD the reviewer judged) and the surviving findings, which route it into the rubric's **Fix round** branch. A finding you can't fix becomes a retro Open item, stated plainly. A surviving finding that would reverse a change an earlier per-task review required is oscillation — stop and surface per Hard Rules.
 
 Completion criterion: the gate commands ran green this session, every Coverage row ran green this session or is human-only and in the retro's Open items, `final-review.md` holds its latest round's verdict, and every finding that round left open is fixed in its own commit, dismissed with its reasoning recorded, or written to the retro as an Open item.
 

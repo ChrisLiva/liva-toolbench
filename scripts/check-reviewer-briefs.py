@@ -95,6 +95,8 @@ PRESENCE_LITERALS = {
         "**Stage gate.**",
         "plan-walk-<stage>.md",
         "\nBound: <Task <N>, the plan's last",
+        "final-merge-rubric.md",
+        "two or more stages",
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "The list bounds your tests"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort", "\nBound: <Task <N>, the plan's last", "`Prototype:` slot", "MERGE-BRIEF.md", "two or more stages"],
