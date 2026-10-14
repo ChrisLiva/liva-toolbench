@@ -65,17 +65,18 @@ reviewers never receive either form.
 - <claim> | <evidence> | <phase>, <date>
 ```
 
-where evidence is one of: `path:line`, `` `command` exited N: <output tail> ``, or
+where evidence is one of: an anchor (`` `<path>` → `<symbol>` ``, defined in the crank skills'
+`VOCABULARY.md` → `Verification language`), `` `command` exited N: <output tail> ``, or
 `searched <scope>, none found`. Facts only, never decisions: artifacts and ADRs own
 decisions, and an entry may cite an ADR path but never restate it. Volatile state (branch,
 task checkboxes) stays out; that is ledger territory.
 
 **Point facts vs survey facts.** A point fact is verifiable at one location: a signature at
-path:line, a command's output, a file's existence. A survey fact is a claim about a
+its anchor, a command's output, a file's existence. A survey fact is a claim about a
 population of files: canonical helper, convention winner, analogous features, any absence.
 The distinction governs what an entry may buy:
 
-- A covered **point fact** downgrades re-derivation to one read at the cited line or one
+- A covered **point fact** downgrades re-derivation to one read at the cited anchor or one
   re-run of the recorded command.
 - A covered **survey fact** never suppresses a search. It narrows the re-search to the
   recorded scope, which is why absence entries must record the scope searched.
@@ -262,12 +263,12 @@ crank, `.crank/bulk-export-csv/grounding.md`:
 ```
 # Grounding: bulk-export-csv
 
-- row export goes through serializeRow() | src/lib/export/serialize.ts:31 | brainstorm, 2026-08-30
-- exemplar wiring for a new export action | src/components/ExportButton.tsx:18 | brainstorm, 2026-08-30
+- row export goes through serializeRow() | `src/lib/export/serialize.ts` → `serializeRow` | brainstorm, 2026-08-30
+- exemplar wiring for a new export action | `src/components/ExportButton.tsx` → `ExportButton` | brainstorm, 2026-08-30
 - no retry helper in scope | searched src/lib and src/utils, none found | brainstorm, 2026-08-30
-- code drifts from docs/adr/0007: the cleanup job bypasses the repository layer | src/jobs/cleanup.ts:9 | spec, 2026-08-30
+- code drifts from docs/adr/0007: the cleanup job bypasses the repository layer | `src/jobs/cleanup.ts` → `runCleanup` | spec, 2026-08-30
 - single test file | `pnpm vitest run <path>` exited 0: 1 file, 6 tests passed | plan, 2026-08-30
-- getUser() renamed to fetchUser() | src/lib/session.ts:22 | execute, 2026-08-31
+- getUser() renamed to fetchUser() | `src/lib/session.ts` → `fetchUser` | execute, 2026-08-31
 ```
 
 crank-lite, where each phase's section lives in its own artifact:
@@ -275,7 +276,7 @@ crank-lite, where each phase's section lives in its own artifact:
 ```
 ## Grounding            (in spec.md)
 
-- settings endpoints follow defineRoute + zod body schema | src/server/routes/profile.ts:22 | spec, 2026-08-28
+- settings endpoints follow defineRoute + zod body schema | `src/server/routes/profile.ts` → `updateProfile` | spec, 2026-08-28
 - no analogous bulk-edit view | searched src/app/admin, none found | spec, 2026-08-28
 
 ## Grounding            (in plan.md)
