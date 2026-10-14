@@ -222,9 +222,9 @@ prints one line per failed check and exits non-zero when any fails.
 
 It holds every adversarial-reviewer and review-merge dispatch site to the rules their
 prose carries — each sends its whole lookup frontier as one batch, names what it reads,
-(for crank's plan and spec briefs) lands findings through one uniqueness-asserting
-edit script, and carries the flag phrases its own `FLAG_LITERALS` entry names — and
-holds every site to prose free of cost justification and of the
+(for crank's plan brief and its review merge brief) lands findings through one
+uniqueness-asserting edit script, and carries the flag phrases its own `FLAG_LITERALS`
+entry names — and holds every site to prose free of cost justification and of the
 Claude-only preprocessing listed under *Cross-harness plugins*. Beyond the sites, it
 presence-checks the literals an orchestrator skill's own prose promises — the
 `PRESENCE_LITERALS` map — with no vocabulary or preprocessing rule applied. It also

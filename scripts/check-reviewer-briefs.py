@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md",
+    "plugins/crank/skills/crank/MERGE-BRIEF.md",
     "plugins/crank/skills/crank-execute/PER-TASK-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-execute/FINAL-MERGE-BRIEF.md",
@@ -45,11 +46,10 @@ READ_LITERALS = {
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md": ["Read the plan in full"],
 }
 
-# The two sites whose reviewer edits the artifact under review land their
-# findings through one uniqueness-asserting edit script.
+# The sites whose agent edits the artifact under review land its findings through one uniqueness-asserting edit script.
 APPLY_LITERALS = {
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md": ["plan-review-edits.py", "MISS", "refuted"],
-    "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["spec-review-edits.py", "MISS", "refuted"],
+    "plugins/crank/skills/crank/MERGE-BRIEF.md": ["spec-review-edits.py", "plan-review-edits.py", "MISS", "refuted"],
 }
 
 # Flags a site's reviewer must carry, each named in that site's own words.
@@ -63,6 +63,7 @@ FLAG_LITERALS = {
         "unreferenced prototype",
     ],
     "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md": ["internal contradiction"],
+    "plugins/crank/skills/crank/MERGE-BRIEF.md": ["style preference", "decision:"],
     "plugins/crank/skills/crank-execute/PER-TASK-REVIEW-BRIEF.md": ["unpinned"],
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md": ["prose the diff falsified"],
     "plugins/crank/skills/crank-execute/FINAL-MERGE-BRIEF.md": ["Plan decision:", "style preference"],

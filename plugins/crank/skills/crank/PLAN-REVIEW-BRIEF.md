@@ -36,6 +36,13 @@ First, walk the spec yourself and list every acceptance criterion and every beha
 
 None of the flags above licenses cutting a trust-boundary validation, data-loss or error path, security check, or accessibility affordance — those are required behavior, not surface or duplication; never recommend folding one away, and where the plan drops one the spec relies on, flag the hole.
 
+**Shard.** Your shard is `<shard>`, one of three over this plan, and the other two reviewers own the rest, so report only yours. You still read the plan's whole frame and the spec.
+
+- **Shard A** and **Shard B** own the task blocks in `<task-range>`, each read against underspecified steps, unsurveyed embedded code, unprobed oracle, unpinned requirement, unreferenced prototype, name / type / path inconsistencies against the codebase, placeholder language, dead-seam verify steps, unverifiable verify steps, horizontal slicing, implementation-detail tests, spaghetti growth, bespoke duplication, needless dependency, boundary smells, layering, and unpinned refactor.
+- **Shard X** owns what spans tasks: the walk of the spec above, coverage holes, unclaimed file, hollow stage gate, name / type / path inconsistencies across tasks, redundant tests, scattered guards, interface drift, Global Constraints violations, order problems, self-invalidating citation, and the dropped safeguard above.
+
+Write your findings to `<findings-path>` in the Collect pass's form, each carrying its `(block, old, new)` triple. This paragraph replaces the fix instruction, the Apply pass, and the Done-when line below: the merger lands the edits, `<findings-path>` is the only file you write, and you are done when your lookup frontier is empty and every finding in your shard is in `<findings-path>`, `refuted` or carrying its triple. End your reply with a one-line summary: the counts of findings and refuted findings.
+
 Take the spec's decisions as settled. Then fix every flagged item in **the plan file at `<plan-path>`** — that plan file, the finding list below, and the edit script are the only files you write to. Read the spec and grep the codebase to inform those edits. A flagged duplication, inconsistency, or dead seam gets rewritten *in the plan step that describes it*.
 
 Fix in **two passes**:

@@ -21,12 +21,13 @@ Flag every instance of the following. Take as settled any decision the spec reco
 - **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved; resolve it or move it to **Out of scope**.
 - **missing technical detail** — a decision with no chosen option, an interface with no signature, a data shape with no fields, or a touched layer with no `file:line` prior art.
 
-Then fix every flagged item in **the spec file at `<path>`**. That file, the finding list, and the edit script below are the only artifacts you may modify; you verify against the codebase **only to inform your spec edits**, never editing a production, test, or source file.
+Your lens is `<lens>`, one of three over this spec, and the other two reviewers own the other flags, so report only yours:
 
-Fix in **two passes**:
+- **truth**: inaccuracy, off-pattern, ADR drift, bespoke duplication;
+- **contract**: ambiguity, internal contradiction, criteria gaps, placeholder language, missing technical detail;
+- **design**: shallow module, missed simplification, boundary smells, implementation-detail testing approach.
 
-1. **Collect.** Flag the whole spec before editing anything, and write the findings to `spec-review-findings.md` beside the spec, one line each: the section it lands in, the flag it trips, the edit, and the read or run that confirmed every fact the edit introduces. A count, line number, value, or name is **confirmed** at its source, by a read or a run, before its finding lands; arithmetic over the spec's own prose confirms nothing. A finding its check refutes stays listed as `refuted: <what the check printed>` and takes no edit.
-2. **Apply.** Write `spec-review-edits.py` beside the spec, holding each finding's edit as an exact `(section, old, new)` triple where `old` is text copied verbatim from the spec. Run it once. For each triple it counts `old` in the file: on exactly one match it replaces and prints `OK <section>`; on any other count it prints `MISS <section>: matched <n> times`, leaves the file unchanged for that triple, and the script exits non-zero. Widen each MISS's `old` to a span that appears once and rerun until it exits zero.
+Flag the whole spec through your lens and write the findings to `<findings-path>`, one block each: the section it lands in, the flag it trips, its edit as an exact `(section, old, new)` triple with `old` copied verbatim from the spec, and the read or run that confirmed every fact the edit introduces. A count, line number, value, or name is **confirmed** at its source, by a read or a run, before its finding is written; arithmetic over the spec's own prose confirms nothing. A finding its check refutes stays listed as `refuted: <what the check printed>` and takes no edit. You verify against the codebase only to inform your findings, and `<findings-path>` is the only file you write.
 
-Done when your lookup frontier is empty and every finding is `refuted` or landed in the spec through a `spec-review-edits.py` run that exited zero. End your reply with a one-line summary of what changed.
+Done when your lookup frontier is empty and every finding in your lens is in `<findings-path>`, refuted or carrying its edit. End your reply with a one-line summary: the counts of findings and refuted findings.
 </brief>
