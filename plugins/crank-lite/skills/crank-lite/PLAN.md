@@ -33,7 +33,7 @@ Run it, don't recall:
 
 ## Vocabulary
 
-Read [VOCABULARY.md](VOCABULARY.md) before you write the verification checks: this phase leans on the **probe**, its **oracle**, the **seam**, the **dead seam**, the **deletion test**, the **journey test**, the **redundant test**, and the **rewrite test**.
+Read [VOCABULARY.md](VOCABULARY.md) before you write the verification checks: this phase leans on the **anchor**, the **probe**, its **oracle**, the **seam**, the **dead seam**, the **deletion test**, the **journey test**, the **redundant test**, and the **rewrite test**.
 
 ## Plan
 
@@ -64,7 +64,7 @@ Write every task for the weakest executor it may get, one that sees only the tas
 - the existing test or file to model after;
 - by name, each helper the repo already has that it needs.
 
-A claim about the code as it stands cites its **anchor**, `path:line` plus the enclosing symbol, or the command and what it printed.
+A claim about the code as it stands cites its **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), or the command and what it printed.
 
 By case:
 
