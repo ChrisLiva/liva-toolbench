@@ -7,7 +7,7 @@
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 batch=$1 reps=$2 par=$3; shift 3
-: "${SMOKE_SCENARIOS:?set it to the scenarios the change touches, from: brainstorm-ui brainstorm-backend spec-ui spec-ui-verdict spec-backend plan}"
+: "${SMOKE_SCENARIOS:?set it to the scenarios the change touches, from: brainstorm-ui brainstorm-backend spec-ui spec-ui-verdict spec-backend plan plan-large}"
 mkdir -p "$batch"
 jobs=$batch/jobs.txt; : > "$jobs"
 for scenario in $SMOKE_SCENARIOS; do

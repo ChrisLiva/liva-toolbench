@@ -27,9 +27,10 @@ def turns_of(run):
     return out
 
 
-def reviewer_dispatched(run):
-    """Whether a Claude stream holds an Agent or Task call whose input names the plan review brief."""
-    for t in run.glob("turns/*.jsonl"):
+def plan_review_dispatches(run):
+    """The inputs of a Claude stream's orchestrator Agent or Task calls naming the plan review or merge brief, in stream order."""
+    out = []
+    for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
         for line in t.read_text(encoding="utf-8", errors="replace").splitlines():
             try:
                 ev = json.loads(line)
@@ -38,9 +39,32 @@ def reviewer_dispatched(run):
             if ev.get("type") != "assistant" or ev.get("parent_tool_use_id"):
                 continue
             for part in ev.get("message", {}).get("content", []):
-                if part.get("type") == "tool_use" and part.get("name") in ("Agent", "Task") and "PLAN-REVIEW-BRIEF" in json.dumps(part.get("input")):
-                    return 1
-    return 0
+                if part.get("type") == "tool_use" and part.get("name") in ("Agent", "Task"):
+                    inp = part.get("input") or {}
+                    if re.search(r"PLAN-(REVIEW|MERGE)-BRIEF", json.dumps(inp)):
+                        out.append(inp)
+    return out
+
+
+def reviewer_dispatched(dispatches):
+    """Whether any plan review dispatch names the plan review brief."""
+    return int(any("PLAN-REVIEW-BRIEF" in json.dumps(d) for d in dispatches))
+
+
+def plan_stages(body):
+    """The rows of the plan's Stages table whose first cell is a number, or 0 with no Stages table."""
+    m = re.search(r"^## Stages\b.*?(?=^## |\Z)", body, re.M | re.S)
+    return len(re.findall(r"^\|\s*\d+\s*\|", m.group(0), re.M)) if m else 0
+
+
+def review_shape(dispatches, stages):
+    """1 when the dispatches match the review shape the plan's stage count calls for, else 0."""
+    prompts = [str(d.get("prompt", "")) for d in dispatches]
+    shards = [(i, m.group(1)) for i, p in enumerate(prompts) for m in [re.search(r"^\s*Shard:\s*([ABX])\b", p, re.M)] if m]
+    if stages < 2:
+        return int(sum("PLAN-REVIEW-BRIEF" in p for p in prompts) == 1 and not any("Shard:" in p for p in prompts))
+    merges = [i for i, p in enumerate(prompts) if "PLAN-MERGE-BRIEF" in p]
+    return int(sorted(s for _, s in shards) == ["A", "B", "X"] and len(merges) == 1 and merges[0] > max(i for i, _ in shards))
 
 
 def score(run):
@@ -73,8 +97,16 @@ def score(run):
         "source_untouched": int(not status),
         "vocabulary_read": int(any("VOCABULARY.md" in tl for tl in tools)) if phase in ("spec", "plan") else None,
         "failure_catalogue": sum(bool(re.search(p, body, re.I)) for p in CATALOGUE) if phase == "spec" else None,
-        "review_dispatched": (None if is_codex else reviewer_dispatched(run)) if phase == "plan" else None,
     }
+    if phase == "plan":
+        dispatches = [] if is_codex else plan_review_dispatches(run)
+        stages = plan_stages(body)
+        s["review_dispatched"] = None if is_codex else reviewer_dispatched(dispatches)
+        s["plan_stages"] = stages
+        s["review_shape"] = None if is_codex else review_shape(dispatches, stages)
+        s["review_tiers"] = None if is_codex else [f"{d.get('model')}/{d.get('effort')}" for d in dispatches]
+    else:
+        s["review_dispatched"] = None
     return s
 
 
@@ -99,10 +131,12 @@ def main(args):
         for k in keys:
             row = f"  {k}".ljust(26)
             for runs in arms.values():
-                vals = [r[k] for r in runs if r[k] is not None]
-                if not vals:
+                vals = [r.get(k) for r in runs if r.get(k) is not None]
+                if any(isinstance(v, list) for v in vals):
+                    row += "--json".rjust(14)
+                elif not vals:
                     row += "n/a".rjust(14)
-                elif set(vals) <= {0, 1} and k not in ("turns", "question_rounds", "questions_asked", "recommend_lines", "lookup_dispatches", "prototype_mentions", "artifact_sections", "failure_catalogue"):
+                elif set(vals) <= {0, 1} and k not in ("turns", "question_rounds", "questions_asked", "recommend_lines", "lookup_dispatches", "prototype_mentions", "artifact_sections", "failure_catalogue", "plan_stages"):
                     row += f"{sum(vals)}/{len(vals)}".rjust(14)
                 else:
                     row += f"{sum(vals) / len(vals):.1f}".rjust(14)

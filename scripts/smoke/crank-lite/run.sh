@@ -2,7 +2,8 @@
 # run.sh <plugin-dir> <scenario> <model> <seed-dir> <run-dir>
 # Drives one headless crank-lite phase session against a clone of the ledger seed and saves
 # each turn's stream, the git state, and the .crank/ artifacts under <run-dir>.
-# Scenarios: brainstorm-ui, brainstorm-backend, spec-ui, spec-ui-verdict, spec-backend, plan.
+# Scenarios: brainstorm-ui, brainstorm-backend, spec-ui, spec-ui-verdict, spec-backend, plan,
+# plan-large.
 # The scripted user agrees with each round, says "done" once the phase's artifact exists,
 # and the run ends one turn later, so a phase that loads the next one on its own shows there.
 # A gpt-* model runs under `codex exec` at SMOKE_EFFORT (default high), any other under `claude -p`.
@@ -34,6 +35,10 @@ case $scenario in
     mkdir -p .crank/csv-export && printf '*\n' > .crank/.gitignore
     cp "$here/../lite-execute/fixture/crank/spec.md" .crank/csv-export/
     artifact=plan.md ASK="$inv plan .crank/csv-export/spec.md" ;;
+  plan-large)
+    mkdir -p .crank/bank-import && printf '*\n' > .crank/.gitignore
+    cp "$here/../lite-execute/fixture/review-large/crank/spec.md" .crank/bank-import/
+    artifact=plan.md ASK="$inv plan .crank/bank-import/spec.md, cut into stages" ;;
   *) echo "unknown scenario $scenario" >&2; exit 2 ;;
 esac
 if [ "$harness" = codex ]; then
