@@ -526,10 +526,13 @@ def agent_returns(run, st, agents):
 
 def confirmed_text(text):
     """The lines of a review return under a CONFIRMED verdict, up to the next REFUTED one."""
-    keep, confirmed = [], False
+    keep, confirmed, discarded = [], False, False
     for line in text.splitlines():
         heading = line.lstrip().startswith("#")
-        if re.search(r"\bREFUTED\b", line) or heading and re.search(r"refuted|discard", line, re.I):
+        if heading:
+            # A merger's Discarded section names findings their lens confirmed, so nothing under it counts.
+            discarded = bool(re.search(r"discard", line, re.I))
+        if discarded or re.search(r"\bREFUTED\b", line) or heading and re.search(r"refuted", line, re.I):
             confirmed = False
         elif re.search(r"\bCONFIRMED\b", line) or heading and re.search(r"confirmed", line, re.I):
             confirmed = True
