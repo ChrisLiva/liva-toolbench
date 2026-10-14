@@ -155,8 +155,10 @@ def codex_stream(run):
     items = calls[root]
     for kind, payload in items:
         if kind == "Agent":
-            child = calls.get(spawned.get(payload["call_id"]), [])
-            payload["input"]["child_cmds"] = "\n".join(bash_cmd(it) for it in child)
+            tid = spawned.get(payload["call_id"])
+            payload["input"]["child_cmds"] = "\n".join(bash_cmd(it) for it in calls.get(tid, []))
+            recs = threads[tid]["recs"] if tid in threads else []
+            payload["input"]["child_text"] = "\n".join(assistant_texts(recs, "final_answer") or assistant_texts(recs)[-1:])
     sub_cmds = [bash_cmd(it) for t, c in calls.items() if t != root for it in c]
     finals = assistant_texts(threads[root]["recs"], "final_answer") or assistant_texts(threads[root]["recs"])
     return Stream("codex", items, sub_cmds, finals[-1] if finals else "")
@@ -500,12 +502,187 @@ def score_prototype(run, st, block, s):
     s["suite_green"] = int(t.returncode == 0)
 
 
+def agent_returns(run, st, agents):
+    """The text each dispatched subagent returned, in dispatch order."""
+    if st.harness == "codex":
+        return [a.get("child_text", "") for _, a in agents]
+    ids = [st.items[i][1].get("id") for i, _ in agents]
+    texts = {}
+    for e in load_events(run):
+        if e.get("type") != "user" or e.get("parent_tool_use_id"):
+            continue
+        content = e["message"].get("content")
+        for c in content if isinstance(content, list) else []:
+            if c.get("type") == "tool_result" and c.get("tool_use_id") in ids:
+                body = c.get("content")
+                texts[c["tool_use_id"]] = body if isinstance(body, str) else "".join(
+                    b.get("text", "") for b in body or [] if isinstance(b, dict))
+    return [texts.get(i, "") for i in ids]
+
+
+def confirmed_text(text):
+    """The lines of a review return under a CONFIRMED verdict, up to the next REFUTED one."""
+    keep, confirmed = [], False
+    for line in text.splitlines():
+        heading = line.lstrip().startswith("#")
+        if re.search(r"\bREFUTED\b", line) or heading and re.search(r"refuted", line, re.I):
+            confirmed = False
+        elif re.search(r"\bCONFIRMED\b", line) or heading and re.search(r"confirmed", line, re.I):
+            confirmed = True
+        if confirmed:
+            keep.append(line)
+    return "\n".join(keep)
+
+
+def near(text, a, b, span=400):
+    """Whether patterns a and b both match within span characters of each other."""
+    return any(re.search(b, text[max(0, m.start() - span):m.end() + span]) for m in re.finditer(a, text))
+
+
+# The review seed's planted defects: (name, the shard territory it sits in, whether a lowercased
+# CONFIRMED finding names it). Each leaves the suite and the Coverage walk green.
+DEFECTS = [
+    ("newline_flattened", "stage 1", lambda t: near(t, r"newline|line break|\\n",
+                                                   r"replace|flatten|space|corrupt|lost|lose|lossy|alter|mangl|strip|round.trip")),
+    ("mock_writer_test", "stage 1", lambda t: near(t, r"mock|patch", r"writer|writerow|call_count|call count")),
+    ("route_unregistered", "stage 1", lambda t: near(t, r"export_csv|/export\.csv|export route",
+                                                    r"regist|decorat|@route|routes\b|dead seam|wired|unreachable|404")),
+    ("filename_mismatch", "cross-cut", lambda t: near(t, r"filename|content-disposition",
+                                                     r"export\.csv\"|ledger\.csv|wrong|mismatch|untested|not (?:checked|tested|asserted)|never (?:checked|tested|asserted)|no test")),
+    ("chardet_import", "cross-cut", lambda t: "chardet" in t),
+    ("fragmented_cli_tests", "stage 2", lambda t: near(t, r"test_cli_export|cli test|cliexporttest",
+                                                      r"redundant|fragment|one.assertion|single.assertion|same setup|rebuild|duplicat|merge|journey")),
+    ("stream_joins", "stage 2", lambda t: near(t, r"join|(?:one|single|whole|entire) (?:large |csv )?string",
+                                              r"iter_csv|stream|memory|large|whole|string")),
+    ("bom_large_branch", "cross-cut", lambda t: near(t, r"\bbom\b|utf-8-sig", r"10[,_]?000|threshold|large|stream|branch")),
+    ("docs_delimiter", "stage 2", lambda t: "delimiter" in t),
+]
+
+# Prints, as JSON, whether the run's final tree has fixed each planted defect.
+DEFECT_PROBE = r"""
+import csv, io, json, subprocess, sys, tempfile
+from pathlib import Path
+
+def big_export_has_bom():
+    d = Path(tempfile.mkdtemp())
+    (d / "big.tsv").write_text("".join(f"2026-09-01\tpayee {i}\t{i}\n" for i in range(10_001)), encoding="utf-8")
+    r = subprocess.run([sys.executable, "-m", "ledger", "--file", str(d / "big.tsv"), "export", "--out", str(d / "big.csv")],
+                       capture_output=True)
+    return r.returncode == 0 and (d / "big.csv").read_bytes()[:3] == b"\xef\xbb\xbf"
+
+def text(path):
+    return Path(path).read_text(encoding="utf-8") if Path(path).exists() else ""
+
+def route_headers():
+    from ledger.api import ROUTES
+    return ROUTES["/export.csv"]("data/sample.tsv").headers.get("Content-Disposition", "")
+
+def newline_round_trips():
+    from ledger.csv_export import to_csv
+    from ledger.store import Entry
+    return list(csv.reader(io.StringIO(to_csv([Entry("2026-09-01", "a\nb", 1)]))))[1][1] == "a\nb"
+
+checks = {
+    "newline_flattened": newline_round_trips,
+    "mock_writer_test": lambda: "mock" not in text("tests/test_csv_export.py"),
+    "route_unregistered": lambda: route_headers() is not None,
+    "filename_mismatch": lambda: 'filename="ledger.csv"' in route_headers(),
+    "chardet_import": lambda: not any("chardet" in p.read_text(encoding="utf-8") for p in Path("ledger").glob("*.py")),
+    "fragmented_cli_tests": lambda: text("tests/test_cli_export.py").count("def test_") < 3,
+    "stream_joins": lambda: '"".join(iter_csv' not in text("ledger/cli.py"),
+    "bom_large_branch": big_export_has_bom,
+    "docs_delimiter": lambda: "--delimiter" not in text("docs/cli.md") or "--delimiter" in text("ledger/cli.py"),
+}
+fixed = {}
+for name, check in checks.items():
+    try:
+        fixed[name] = bool(check())
+    except Exception:
+        fixed[name] = False
+print(json.dumps(fixed))
+"""
+
+# $/MTok at Anthropic first-party rates (claude-api skill table, cached 2026-10-06): input, output,
+# cache read. Cache writes bill at 1.25x input, the 5-minute TTL these sessions use.
+PRICES = {"opus": (4.0, 20.0, 0.20), "sonnet": (2.0, 10.0, 0.20)}
+
+
+def review_cost(run):
+    """Dollars, requests, tool calls per request, and wall-clock seconds across a Claude run's reviewer
+    threads, read from the session's subagent transcripts run.sh copied; None on Codex."""
+    out = {"review_dollars": None, "review_requests": None, "review_calls_per_request": None, "review_seconds": None}
+    files = []
+    for f in sorted((run / "subagents").glob("*.jsonl")):
+        recs = [json.loads(l) for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
+        first = next((r for r in recs if r.get("type") == "user"), {})
+        if "REVIEW-BRIEF" in json.dumps(first.get("message", {}).get("content", ""))[:3000]:
+            files.append(recs)
+    if not files:
+        return out
+    dollars, requests, calls, stamps = 0.0, 0, 0, []
+    for recs in files:
+        usage, outputs = {}, {}
+        for r in recs:
+            stamps += [r["timestamp"]] if r.get("timestamp") else []
+            if r.get("type") != "assistant" or not r.get("requestId"):
+                continue
+            msg = r.get("message") or {}
+            rid = r["requestId"]
+            usage.setdefault(rid, (msg.get("model", ""), msg.get("usage") or {}))
+            # Later records of one request repeat its input counts and carry its final output count.
+            outputs[rid] = max(outputs.get(rid, 0), (msg.get("usage") or {}).get("output_tokens", 0))
+            calls += sum(1 for c in msg.get("content") or [] if isinstance(c, dict) and c.get("type") == "tool_use")
+        for rid, (model, u) in usage.items():
+            price = next((v for k, v in PRICES.items() if k in model), None)
+            if price is None:
+                return out
+            inp, outp, read = price
+            dollars += (u.get("input_tokens", 0) * inp + u.get("cache_creation_input_tokens", 0) * inp * 1.25
+                        + u.get("cache_read_input_tokens", 0) * read + outputs[rid] * outp) / 1e6
+        requests += len(usage)
+    stamps.sort()
+    seconds = subprocess.run(["python3", "-c", "import sys; from datetime import datetime as d; "
+                              "print(int((d.fromisoformat(sys.argv[2].replace('Z', '+00:00')) - "
+                              "d.fromisoformat(sys.argv[1].replace('Z', '+00:00'))).total_seconds()))",
+                              stamps[0], stamps[-1]], capture_output=True, text=True).stdout.strip()
+    return {"review_dollars": round(dollars, 2), "review_requests": requests,
+            "review_calls_per_request": round(calls / requests, 2) if requests else None,
+            "review_seconds": int(seconds) if seconds else None}
+
+
+def score_review(run, st, block, s):
+    """Every task is committed and checked, so the run goes straight to Review over a diff carrying
+    the nine planted defects in DEFECTS. A defect counts as caught when a CONFIRMED finding in a
+    reviewer's return names it, or on Codex when the reviewer's final answer does, and as fixed when
+    DEFECT_PROBE finds it gone from the final tree."""
+    impl, reviewer = dispatches(st.items)
+    s["reviewer_dispatched"] = int(bool(reviewer))
+    s["review_dispatches"] = len(reviewer)
+    # Codex encrypts the findings a reviewer sends; its plaintext final answer summarizes the confirmed ones.
+    returns = agent_returns(run, st, reviewer)
+    text = "\n".join(returns if st.harness == "codex" else map(confirmed_text, returns)).lower()
+    for name, _, named in DEFECTS:
+        s[f"caught_{name}"] = int(named(text)) if reviewer else None
+    s["caught_total"] = sum(s[f"caught_{n}"] for n, _, _ in DEFECTS) if reviewer else None
+    probe = subprocess.run(["python3", "-c", DEFECT_PROBE], cwd=run / "repo", capture_output=True, text=True)
+    fixed = json.loads(probe.stdout) if probe.returncode == 0 else {}
+    for name, _, _ in DEFECTS:
+        s[f"fixed_{name}"] = int(fixed[name]) if name in fixed else None
+    s["fixed_total"] = sum(fixed.values()) if fixed else None
+    s.update(review_cost(run))
+    s["retro_written"] = int((run / "crank-after" / "csv-export" / "retro.md").exists())
+    t = subprocess.run(["python3", "-m", "unittest", "discover", "-s", "tests"], cwd=run / "repo",
+                       capture_output=True, text=True)
+    s["suite_green"] = int(t.returncode == 0)
+
+
 def turns(run):
     return int((run / "turn-count").read_text()) if (run / "turn-count").exists() else None
 
 
 SCORERS = {"fresh": score_fresh, "stop-if": score_stop_if, "stop-if-detour": score_stop_if_detour,
-           "spec-path": score_spec_path, "prototype": score_prototype, "prototype-solo": score_prototype}
+           "spec-path": score_spec_path, "prototype": score_prototype, "prototype-solo": score_prototype,
+           "review": score_review}
 
 
 def score(run):
@@ -547,7 +724,8 @@ def main():
                 n = len(cells.get((k, arm), []))
                 if not n:
                     row.append("")
-                elif k in ("seconds", "turns", "commits_after_seed", "impl_dispatches"):
+                elif k in ("seconds", "turns", "commits_after_seed", "impl_dispatches", "review_dispatches", "caught_total",
+                           "fixed_total", "review_dollars", "review_requests", "review_calls_per_request", "review_seconds"):
                     row.append(f"{sorted(vals)}" if vals else "n/a")
                 else:
                     row.append(f"{sum(vals):g}/{len(vals)}" if vals else f"n/a ({n})")
