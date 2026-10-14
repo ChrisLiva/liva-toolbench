@@ -66,8 +66,8 @@ Resolve the tiers once per run and reuse the mapping at every dispatch:
 2. Otherwise, use this fallback:
 
 <subagent-tiers>
-- **standard** fallback (implementers): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
-- **heavy** fallback (adversarial review): Claude Code `model: opus` · Codex Sol at high effort · Cursor Sol at high effort
+- **standard** fallback (implementers and review lenses): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
+- **heavy** fallback (adversarial review and its merge): Claude Code `model: opus` · Codex Sol at high effort · Cursor Sol at high effort
 </subagent-tiers>
 
 ## Shape
@@ -115,7 +115,7 @@ Every invocation, resumed runs included, write these lines with every line fille
 
 Pre-flight: branch <current branch>
 Shape: <sequential | parallel | solo>
-Subagents: standard = <model> (implementers) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
+Subagents: standard = <model> (implementers, review lenses) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 Tasks: <N> (<M> remaining, <R> this run)
 Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
 Base: <HEAD before the first task>
@@ -172,7 +172,7 @@ The plan's destination is frozen; the road is not. Settle every surprise that le
 
 ## Short run
 
-A **short run** skips Review, Close the loop, and Retro, since the reviewer reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
+A **short run** skips Review, Close the loop, and Retro, since the review reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
 
 1. Read each unchecked task's text against this run's diff. On its line, append `— open: <a question this run raised about it>` or `— note: <an interface, path, or contract its task text no longer matches>`, as many as apply. A task this run did not affect gets `— note: unaffected`, unless its line already carries one.
 2. On each task that landed this run, append `— note: <one line>` per observation the retro would otherwise have carried.
@@ -200,19 +200,32 @@ Once every box is checked:
 
 1. Run the full suite once. Fix what this run broke and commit each fix, staged as in Task loop step 3. A failure counts as pre-existing only when the same test fails the same way at `Base`: check it in a temporary `git worktree` at `Base` with the repo's dependencies installed, then remove the worktree. A pre-existing failure is a retro note.
 2. Walk the plan's **Coverage** table, when it carries one, row by row. Re-run a row's verify step unless it ran green this session after the last commit that touched a file it exercises. A row marked human-only goes to Close the loop as an action only a human can perform.
-3. Dispatch one heavy-tier reviewer with this message, filled, and nothing else; the reviewer gathers its own facts:
+3. Dispatch the review. Each dispatch is a blocking call carrying only its filled message, and each reviewer gathers its own facts:
+   - **A plan with one stage or no Stages table**: one heavy-tier reviewer with this message:
 
-   ```
-   Read <absolute path to this skill's REVIEW-BRIEF.md> and follow it.
-   Plan: <plan path>
-   Spec: <the path the plan's Spec: header names, or none>
-   Base: <the Progress block's Base SHA>
-   Diff: git diff <Base>..HEAD
-   Vocabulary: <absolute path to this skill's VOCABULARY.md>
-   ```
-4. Fix every `CONFIRMED` finding and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. Commit the fixes as in step 1.
+     ```
+     Read <absolute path to this skill's REVIEW-BRIEF.md> and follow it.
+     Plan: <plan path>
+     Spec: <the path the plan's Spec: header names, or none>
+     Base: <the Progress block's Base SHA>
+     Diff: git diff <Base>..HEAD
+     Vocabulary: <absolute path to this skill's VOCABULARY.md>
+     ```
+   - **A plan with two or more stages**: three standard-tier lens reviewers in one wave. Each gets the message above plus two lines: `Lens: <Contract | Coherence | Tests>` and `Findings: <absolute path to .crank/<slug>/review-<contract | coherence | tests>.md>`. Once all three have returned, dispatch one heavy-tier merger with this message:
 
-Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, or recorded in the retro's deviations with the reason it stands.
+     ```
+     Read <absolute path to this skill's MERGE-BRIEF.md> and follow it.
+     Review brief: <absolute path to this skill's REVIEW-BRIEF.md>
+     Plan: <plan path>
+     Spec: <the path the plan's Spec: header names, or none>
+     Base: <the Progress block's Base SHA>
+     Diff: git diff <Base>..HEAD
+     Vocabulary: <absolute path to this skill's VOCABULARY.md>
+     Findings: <the three Findings paths>
+     ```
+4. Fix every `CONFIRMED` finding, whether it comes from the reviewer or the merger's list, and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. A merged row whose `Plan decision:` line quotes a recorded user decision goes to Close the loop as a decision for the user, with your recommendation. Commit the fixes as in step 1.
+
+Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision.
 
 ## Close the loop
 
