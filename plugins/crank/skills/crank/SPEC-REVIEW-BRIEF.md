@@ -19,7 +19,7 @@ Flag every instance of the following. Take as settled any decision the spec reco
 - **boundary smells** — a specified interface relies on optionality, casts, `any`, or silent fallbacks where the invariant could be explicit.
 - **implementation-detail testing approach** — the Testing approach prescribes a test coupled to internals (mocking an internal collaborator, asserting on call counts or order, a private method, or a back-channel DB read) instead of driving the production seam a real caller reaches.
 - **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved; resolve it or move it to **Out of scope**.
-- **missing technical detail** — a decision with no chosen option, an interface with no signature, a data shape with no fields, or a touched layer with no `file:line` prior art.
+- **missing technical detail** — a decision with no chosen option, an interface with no signature, a data shape with no fields, or a touched layer with no prior-art anchor, a `` `<path>` → `<symbol>` `` citation of the existing surface the change goes through, with each name spelled as the source spells it.
 
 Your lens is `<lens>`, one of three over this spec, and the other two reviewers own the other flags, so report only yours:
 

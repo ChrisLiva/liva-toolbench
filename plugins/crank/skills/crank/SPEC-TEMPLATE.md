@@ -25,8 +25,8 @@ Grounding: <absolute path to .crank/<slug>/grounding.md, when that file holds en
 
 ## Technical decisions
 
-- **<Decision>** — <chosen option>. Why: <one sentence>. Gives up: <trade-off, when relevant>. Prior art: `<path>:<line>`.
-- **Surfaces** — <layer>: `<path>:<line>` — one line per layer touched, or "no analogous surface" where grounding found none.
+- **<Decision>** — <chosen option>. Why: <one sentence>. Gives up: <trade-off, when relevant>. Prior art: `<path>` → `<symbol>`.
+- **Surfaces** — <layer>: `<path>` → `<symbol>` — one line per layer touched, or "no analogous surface" where grounding found none.
 - **Prototype:** <winner, what the user took from the other variants, what the user left out of the winner, `<winning variant's path>` or `in chat` with the winning block copied beneath the line, the surface the mock stood in for>, or `declined`, or `no verdict`. Copy here as written, with any block copied beneath it, a `Prototype:` line the brainstorm brief's **Key decisions** recorded. Put any other brainstorm mock's path in the bullet of the decision it settled. Omit when no offer fired and the brief recorded no `Prototype:` line.
 
 ## Testing approach
