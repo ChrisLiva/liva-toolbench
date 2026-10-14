@@ -58,7 +58,7 @@ Return **at most 4** candidates, strongest first. For each:
 - **files** — the files or modules involved
 - **friction pattern** — which of the four
 - **deletion-test verdict** — one line: what happens to the complexity if this module goes
-- **evidence** — `file:line` references a reader can check
+- **evidence** — anchors a reader can check, each `` `<path>` → `<symbol>` `` with every name spelled as the source spells it, or `` `<path>:<line>` (no symbol) `` where no symbol can be named
 - **problem** — one sentence on the friction it causes today
 - **solution** — one sentence on what would change
 
@@ -67,7 +67,7 @@ Report fewer than four rather than padding the list, and say so plainly if the s
 
 ## Cards
 
-Dedupe and rank what comes back: fold overlaps into the strongest version of the same idea, drop anything you can't back with a `file:line`, and keep the **2–4** the evidence supports.
+Dedupe and rank what comes back: fold overlaps into the strongest version of the same idea, drop anything you can't back with an anchor, and keep the **2–4** the evidence supports.
 
 Present each survivor as one card in chat:
 
@@ -127,7 +127,7 @@ When the grill's frontier is empty, write the brief to `.crank/<slug>/deepen-bri
 
 Sections, omitting any that didn't earn its place:
 
-- **Idea / Problem** — the friction in the user's words, with the evidence `file:line`.
+- **Idea / Problem** — the friction in the user's words, with the evidence anchor.
 - **Approach** — the chosen deepening and why it won, in **leverage** and **locality** terms.
 - **Shape** — the before/after ASCII diagram as amended during the grill, alongside the settled interface pseudo-code.
 - **Key decisions** — the consequential calls, one line of why each, including where the seam lands and which tests survive.
