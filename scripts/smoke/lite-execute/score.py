@@ -507,8 +507,12 @@ def agent_returns(run, st, agents):
     if st.harness == "codex":
         return [a.get("child_text", "") for _, a in agents]
     ids = [st.items[i][1].get("id") for i, _ in agents]
-    texts = {}
+    texts, notified = {}, {}
     for e in load_events(run):
+        # A dispatch Claude Code runs in the background returns a launch notice; its findings arrive later
+        # in a task_notification event's summary.
+        if e.get("subtype") == "task_notification" and e.get("tool_use_id") in ids and e.get("summary"):
+            notified[e["tool_use_id"]] = e["summary"]
         if e.get("type") != "user" or e.get("parent_tool_use_id"):
             continue
         content = e["message"].get("content")
@@ -517,7 +521,7 @@ def agent_returns(run, st, agents):
                 body = c.get("content")
                 texts[c["tool_use_id"]] = body if isinstance(body, str) else "".join(
                     b.get("text", "") for b in body or [] if isinstance(b, dict))
-    return [texts.get(i, "") for i in ids]
+    return [notified.get(i) or texts.get(i, "") for i in ids]
 
 
 def confirmed_text(text):
@@ -525,7 +529,7 @@ def confirmed_text(text):
     keep, confirmed = [], False
     for line in text.splitlines():
         heading = line.lstrip().startswith("#")
-        if re.search(r"\bREFUTED\b", line) or heading and re.search(r"refuted", line, re.I):
+        if re.search(r"\bREFUTED\b", line) or heading and re.search(r"refuted|discard", line, re.I):
             confirmed = False
         elif re.search(r"\bCONFIRMED\b", line) or heading and re.search(r"confirmed", line, re.I):
             confirmed = True
@@ -842,6 +846,20 @@ def score_review(run, st, block, s):
     impl, reviewer = dispatches(st.items)
     s["reviewer_dispatched"] = int(bool(reviewer))
     s["review_dispatches"] = len(reviewer)
+    stages = re.search(r"^## Stages\n(.*?)(?=^## |\Z)", plan_text(run, "crank-before"), re.M | re.S)
+    s["review_plan_stages"] = len(re.findall(r"^\|\s*\d+\s*\|", stages.group(1), re.M)) if stages else 0
+    if st.harness == "codex":
+        s["review_shape"] = s["review_tiers"] = None
+    else:
+        lenses = [(i, m.group(1)) for i, a in reviewer
+                  if (m := re.search(r"^Lens: (Contract|Coherence|Tests)\s*$", a.get("prompt", ""), re.M))]
+        merges = [i for i, a in reviewer if "MERGE-BRIEF.md" in a.get("prompt", "")]
+        if s["review_plan_stages"] >= 2:
+            s["review_shape"] = int(len(reviewer) == 4 and sorted(n for _, n in lenses) == ["Coherence", "Contract", "Tests"]
+                                    and len(merges) == 1 and all(merges[0] > i for i, _ in lenses))
+        else:
+            s["review_shape"] = int(len(reviewer) == 1 and not re.search(r"^Lens:", reviewer[0][1].get("prompt", ""), re.M))
+        s["review_tiers"] = [f"{a.get('model')}/{a.get('effort')}" for _, a in reviewer]
     # Codex encrypts the findings a reviewer sends; its plaintext final answer summarizes the confirmed ones.
     returns = agent_returns(run, st, reviewer)
     text = "\n".join(returns if st.harness == "codex" else map(confirmed_text, returns)).lower()
@@ -908,9 +926,11 @@ def main():
                 n = len(cells.get((k, arm), []))
                 if not n:
                     row.append("")
-                elif k in ("seconds", "turns", "commits_after_seed", "impl_dispatches", "review_dispatches", "caught_total",
+                elif k in ("seconds", "turns", "commits_after_seed", "impl_dispatches", "review_dispatches", "review_plan_stages", "caught_total",
                            "fixed_total", "review_dollars", "review_requests", "review_calls_per_request", "review_seconds"):
                     row.append(f"{sorted(vals)}" if vals else "n/a")
+                elif k == "review_tiers":
+                    row.append(f"{vals}" if vals else "n/a")
                 else:
                     row.append(f"{sum(vals):g}/{len(vals)}" if vals else f"n/a ({n})")
             print(f"| {k} | " + " | ".join(row) + " |")
