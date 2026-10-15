@@ -134,7 +134,7 @@ already curates: an ADR, CONTEXT.md, or CLAUDE.md, with a pointer line left behi
 No new file, no slug-timing change, and the sections ride user readback for free.
 
 - **Capture.** INTERVIEW.md's lookup rule gains one sentence: a lookup finding that carries
-  a file:line or a command output lands as one grounding line in the phase's artifact, not
+  an anchor or a command output lands as one grounding line in the phase's artifact, not
   only folded into the recommendation. The trigger is mechanical (has evidence), not a
   forecast of downstream reliance. This one edit (canonical in crank-lite/, synced copy in
   lite-deepen/) instruments brainstorm, spec, plan, and lite-deepen's grill at once.
