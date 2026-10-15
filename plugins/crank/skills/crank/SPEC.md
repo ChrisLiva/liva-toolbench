@@ -68,7 +68,7 @@ Work your lookups in **rounds**: a round's **frontier** is every read or grep wh
 Find one or two existing features that do something analogous and report:
 
 - the exact surface they use;
-- that surface's anchor, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it;
+- that surface's anchor;
 - one sentence on the convention you observed;
 - any canonical helper an implementer should reuse for this work (its anchor), if one exists.
 

@@ -10,7 +10,7 @@ Turn the spec into tasks the **executor** builds with no further design conversa
 - **Write the plan to `.crank/<slug>/plan.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing the file.
 - **Oracles, not placeholders.** A step may omit code, never proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place — prose is welcome, unverifiable prose is not.
 - **A requirement is a Behavior line.** A task ships its `- [ ] Behavior N:` lines and honors Global Constraints; every other sentence in its block orients. A rule, an ordering, a gesture, a fallback stated in prose is **unpinned** until a Behavior line carries it with its oracle: write that line, lift a project-wide rule to Global Constraints, or delete the sentence. The implementer tests the Behavior lines and nothing else, so an unpinned requirement ships untested or not at all.
-- **Cite what you assert.** Every claim about the code as it stands carries its evidence in the step that states it: an **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language, so the citation survives a task above it moving the file), the command and the exact output it printed, or `searched <scope>, none found`. The rule reaches claims riding in prose, which escape the embedded-code evidence check: a count, a sole caller or sole use, a uniqueness, a snippet quoted from a file, the output a gate is expected to print, and a third-party tool's exact output, exit code, or API contract. Grounding proves them (Flow → Ground first); a claim it could not settle becomes a `Stop if:` line on the task that rests on it, never an assertion. Execute confirms a cited claim with one read; an uncited one sends it grepping.
+- **Cite what you assert.** Every claim about the code as it stands carries its evidence in the step that states it: an **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), which survives a task above it moving the file, the command and the exact output it printed, or `searched <scope>, none found`. The rule reaches claims riding in prose, which escape the embedded-code evidence check: a count, a sole caller or sole use, a uniqueness, a snippet quoted from a file, the output a gate is expected to print, and a third-party tool's exact output, exit code, or API contract. Grounding proves them (Flow → Ground first); a claim it could not settle becomes a `Stop if:` line on the task that rests on it, never an assertion. Execute confirms a cited claim with one read; an uncited one sends it grepping.
 
 ## Guidelines
 
@@ -49,7 +49,7 @@ Work your lookups in **rounds**: a round's **frontier** is every read or grep wh
 
 Report:
 
-- the exact signature and import path of each named symbol, as its anchor, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it;
+- the exact signature and import path of each named symbol, as its anchor;
 - the exemplar test at each seam the change will drive (its anchor), and one sentence on the convention it follows;
 - any drift from what the spec claims about these files — what the spec says, what the code says;
 - the exact output of each gate command you were asked to run, verbatim, and whether it exited 0.

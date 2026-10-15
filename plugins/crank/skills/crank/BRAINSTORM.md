@@ -92,7 +92,7 @@ Work your lookups in **rounds**: a round's **frontier** is every read or grep wh
 
 Report:
 
-- whether the surface or pattern in question exists, and the anchor where it lives, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it (or "not found");
+- whether the surface or pattern in question exists, and the anchor where it lives (or "not found");
 - one or two existing features that do something analogous, and the convention each follows (its anchor);
 - any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (its anchor).
 
