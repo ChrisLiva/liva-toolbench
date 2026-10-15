@@ -87,7 +87,7 @@ FLAG_LITERALS = {
 # Files outside SITES that must carry a literal their own prose promises.
 # Presence only: these are orchestrator skills, not reviewer dispatch sites, so
 # the site vocabulary and preprocessing rules below do not reach them.
-# A leading newline pins a literal to column zero, where crank-mods parses `Bound:`.
+# A leading newline pins a literal to column zero.
 PRESENCE_LITERALS = {
     "plugins/crank/skills/crank-execute/SKILL.md": [
         "**Promote it.**",

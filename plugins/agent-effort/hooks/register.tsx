@@ -5,7 +5,6 @@ const AGENT_OF_CALL = { plugin: 'agent-effort', key: 'agentOfCall' } as const
 const EFFORT_OF_AGENT = { plugin: 'agent-effort', key: 'effortOfAgent' } as const
 const IS_RUNNING = { plugin: 'agent-effort', key: 'isRunning' } as const
 const background = atom({ plugin: 'agent-effort', key: 'background' } as const, [])
-const crankRoster = atom({ plugin: 'crank-mods', key: 'hudRoster' } as const, [])
 
 // The engine settles a subagent's effort (the Agent call's `effort`, else its
 // definition's `effort`, else the setting for its model) only when the subagent
@@ -113,8 +112,7 @@ export const register: Register = on => {
   // Claude Code's own tasks list has no render hook and draws the label fixed
   // at spawn, before the engine picks the effort, so the measured effort goes
   // in this band (per project decision: no guessed effort stamped into the
-  // spawn's description). Its rows sit above the bands beneath it, and it skips
-  // the agents in crank-mods' roster, whose rows crank-mods' hud draws.
+  // spawn's description). Its rows sit above the bands beneath it.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const below = await next(e)
     const ids = await read($, background)
@@ -123,10 +121,9 @@ export const register: Register = on => {
       return below
     }
 
-    const crank = await read($, crankRoster)
     const flags = await Promise.all(ids.map(id => isRunning($, id)))
     const listed = await $.agent.list()
-    const running = ids.filter((id, i) => flags[i] && !crank.includes(id)).flatMap(id => listed.filter(agent => agent.id === id))
+    const running = ids.filter((id, i) => flags[i]).flatMap(id => listed.filter(agent => agent.id === id))
 
     if (running.length === 0) {
       return below
