@@ -57,7 +57,6 @@ function engine(on: On) {
     value: [{ id: AGENT, description: 'probe bg', type: 'Explore', status: 'running' }],
   }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
-  on('session.end', (_$, e) => ({ sessionId: e.sessionId }))
 }
 
 const BAND = {
