@@ -88,15 +88,17 @@ A user-summoned skill that nudges the coding agent to answer with a **single sel
 |---|---|---|
 | `effective-html:effective-html` | `/effective-html <what to make>` | Produces one offline-safe HTML artifact for the thing you describe. User-invoked only. |
 
-### `agent-effort` shows each subagent's effort level in Claude Code
+### `agent-effort` shows each subagent's model and effort level in Claude Code
 
-This Claude Code mod shows the effort each spawned subagent actually runs at. It reads the effort from the subagent's own model requests, so an agent definition's `effort:` or a per-model effort setting shows as applied. It has no skills or commands. Once installed, it draws in three places:
+This Claude Code mod shows the model and effort each spawned subagent actually runs at. It reads both from the subagent's own model requests, so an agent definition's `effort:` or a per-model effort setting shows as applied. It has no skills or commands. Once installed, it draws in three places:
 
 | Where | What it shows |
 |---|---|
-| The Agent call's row | `Explore(probe bg · effort high)` |
-| A background agent's completion notice | `Agent "probe bg" finished · effort high · 49s` |
-| A band above the prompt | One row per running background agent: `probe bg · Explore · effort high` |
+| The Agent call's row | `Explore(probe bg · Opus 5.5 · effort high)` |
+| A background agent's completion notice | `Agent "probe bg" finished · Opus 5.5 · effort high · 49s` |
+| A band above the prompt | One row per running background agent: `probe bg · Explore · Opus 5.5 · effort high` |
+
+A model id outside the `claude-<family>-<major>-<minor>` form shows as the engine sent it, and a model sent without an effort shows its name alone.
 
 ---
 

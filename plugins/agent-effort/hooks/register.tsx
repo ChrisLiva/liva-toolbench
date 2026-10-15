@@ -3,7 +3,9 @@ import type { AgentInfo, Register, StateDollar } from 'claude-code'
 
 const AGENT_OF_CALL = { plugin: 'agent-effort', key: 'agentOfCall' } as const
 const EFFORT_OF_AGENT = { plugin: 'agent-effort', key: 'effortOfAgent' } as const
+const MODEL_OF_AGENT = { plugin: 'agent-effort', key: 'modelOfAgent' } as const
 const IS_RUNNING = { plugin: 'agent-effort', key: 'isRunning' } as const
+const MODEL_ID = /^claude-([a-z]+)-(\d+)-(\d{1,2})(?:-\d{8})?$/
 const background = atom({ plugin: 'agent-effort', key: 'background' } as const, [])
 
 // The engine settles a subagent's effort (the Agent call's `effort`, else its
@@ -14,10 +16,31 @@ async function effortOf($: StateDollar, agentId: string) {
   return (await $.state.get({ ...EFFORT_OF_AGENT, id: agentId })).value
 }
 
-async function effortOfCall($: StateDollar, toolUseId: string) {
+// Ids outside the claude-<family>-<major>-<minor> form show as written (per
+// project decision: no model table to keep in sync with the Python one in
+// tools/claude-effort/claude_effort.py).
+function modelName(model: string) {
+  const [, family, major, minor] = MODEL_ID.exec(model) ?? []
+
+  return family === undefined ? model : `${family.charAt(0).toUpperCase()}${family.slice(1)} ${major}.${minor}`
+}
+
+async function labelOf($: StateDollar, agentId: string) {
+  const { value: model } = await $.state.get({ ...MODEL_OF_AGENT, id: agentId })
+
+  if (model === undefined) {
+    return undefined
+  }
+
+  const effort = await effortOf($, agentId)
+
+  return effort === undefined ? modelName(model) : `${modelName(model)} · effort ${effort}`
+}
+
+async function labelOfCall($: StateDollar, toolUseId: string) {
   const { value: agentId } = await $.state.get({ ...AGENT_OF_CALL, id: toolUseId })
 
-  return agentId === undefined ? undefined : effortOf($, agentId)
+  return agentId === undefined ? undefined : labelOf($, agentId)
 }
 
 async function isRunning($: StateDollar, agentId: string) {
@@ -25,9 +48,7 @@ async function isRunning($: StateDollar, agentId: string) {
 }
 
 async function bandRow($: StateDollar, agent: AgentInfo) {
-  const effort = await effortOf($, agent.id)
-
-  return [agent.description, agent.type, effort === undefined ? undefined : `effort ${effort}`].filter(Boolean).join(' · ')
+  return [agent.description, agent.type, await labelOf($, agent.id)].filter(Boolean).join(' · ')
 }
 
 function hasDescription(input: unknown): input is { description: string } {
@@ -54,6 +75,10 @@ export const register: Register = on => {
       await $.state.set({ ...IS_RUNNING, id: agentId }, true)
     }
 
+    if (agentId !== undefined && (await $.state.get({ ...MODEL_OF_AGENT, id: agentId })).value !== e.model) {
+      await $.state.set({ ...MODEL_OF_AGENT, id: agentId }, e.model)
+    }
+
     if (agentId !== undefined && e.effort !== undefined) {
       const effort = String(e.effort)
 
@@ -66,26 +91,26 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'ToolUse', props: { tool: 'Agent' } }, async ($, e, next) => {
-    const effort = await effortOfCall($, e.requestId)
+    const label = await labelOfCall($, e.requestId)
 
-    if (effort === undefined || !hasDescription(e.props.input)) {
+    if (label === undefined || !hasDescription(e.props.input)) {
       return next(e)
     }
 
-    const input = { ...e.props.input, description: `${e.props.input.description} · effort ${effort}` }
+    const input = { ...e.props.input, description: `${e.props.input.description} · ${label}` }
 
     return next({ ...e, props: { ...e.props, input } })
   })
 
   on('ui.render', { component: 'UserMessage', props: { origin: { kind: 'task-notification' } } }, async ($, e, next) => {
     const agentId = e.props.task?.id
-    const effort = agentId === undefined ? undefined : await effortOf($, agentId)
+    const label = agentId === undefined ? undefined : await labelOf($, agentId)
 
-    if (effort === undefined || e.props.isExpanded) {
+    if (label === undefined || e.props.isExpanded) {
       return next(e)
     }
 
-    return next({ ...e, props: { ...e.props, text: `${e.props.text} · effort ${effort}` } })
+    return next({ ...e, props: { ...e.props, text: `${e.props.text} · ${label}` } })
   })
 
   // `async_launched` is the Agent result both for a call made with

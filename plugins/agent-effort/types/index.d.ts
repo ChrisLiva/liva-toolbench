@@ -5,6 +5,8 @@ declare module 'claude-code' {
       agentOfCall: StateFamily<string>
       /** The effort an agent's latest model request carried, keyed by its agentId. */
       effortOfAgent: StateFamily<string>
+      /** The model an agent's latest model request named, as the engine resolved it, keyed by its agentId. */
+      modelOfAgent: StateFamily<string>
       /** The agents launched in or moved to the background, by agentId, in launch order. */
       background: string[]
       /** Whether an agent's turn is running: true from its first request until its turn completes. */
