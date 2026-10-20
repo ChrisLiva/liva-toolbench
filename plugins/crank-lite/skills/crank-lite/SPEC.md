@@ -9,12 +9,12 @@ Resolve the key technical decisions: data structures, interfaces/seams, test met
 1. **Before the first question, read:**
    - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
    - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
-2. **Before the design and test-methodology questions, read [VOCABULARY.md](VOCABULARY.md)**: this phase leans on **depth**, **leverage / locality**, the **deletion test**, the **seam**, the **rewrite test**, the **journey test**, and **spaghetti growth**.
+2. **Before the design and test-methodology questions, read [VOCABULARY.md](VOCABULARY.md)**: this phase leans on **depth**, **leverage / locality**, **deletion test**, **seam**, **rewrite test**, **journey test**, and **spaghetti growth**.
 3. **Walk the frontier in rounds:**
    - Apply the design rules below as each module comes up.
-   - Settle the test methodology as a minimalist: every test the spec calls for pins a distinct observable behavior through a **seam** and passes the **rewrite test**; acceptance criteria that fall along one workflow share one **journey test** rather than a test per criterion.
-   - When a round would ask a layout, hierarchy, or interaction question that has more than one defensible answer, about a page, screen, component, CLI output, flags, help text, or TUI the change adds or reshapes, lead that round with a prototype offer, 3 to 5 variants behind one switcher, in place of the question, once per effort. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it, and its verdict replaces those questions. On a no, record `Prototype: declined` among the key technical decisions.
-4. **Before closing the interview, walk the failure catalogue**, each item settled by a fact lookup, asked as a policy question, or landed as an acceptance criterion:
+   - Settle the test methodology as a minimalist: every test the spec calls for pins a distinct observable behavior through a **seam** and passes the **rewrite test**; acceptance criteria along one workflow share one **journey test**.
+   - When a round would ask a layout, hierarchy, or interaction question with more than one defensible answer about a page, screen, component, CLI output, flags, help text, or TUI the change adds or reshapes, lead that round with a prototype offer, 3 to 5 variants behind one switcher, in place of the question, once per effort. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it, and its verdict replaces those questions. On a no, record `Prototype: declined` among the key technical decisions.
+4. **Before closing the interview, walk the failure catalogue**, settling each item by a fact lookup, a policy question, or an acceptance criterion:
    - absence;
    - permission family (which sibling failures get the same treatment — EPERM beside EACCES);
    - staleness;
@@ -25,7 +25,7 @@ Resolve the key technical decisions: data structures, interfaces/seams, test met
 
 ## Design rules
 
-- **Deletion test** on every new or reshaped module: one whose complexity just vanishes folds into its caller.
+- **Deletion test** on every new or reshaped module: one whose complexity vanishes folds into its caller.
 - Sketch the module two ways under different constraints (smallest interface vs. most flexible) and take the **deeper** shape; when they tie, the one a test at its seam proves with fewer stand-ins.
 - Where the analogous features disagree on convention, follow the one the repo converged on most recently.
 - **Spaghetti growth** is a spec bug: reframe it here.
@@ -33,7 +33,7 @@ Resolve the key technical decisions: data structures, interfaces/seams, test met
 
 ## Spec
 
-The spec's file is `spec.md`, in the effort's directory (see [ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections:
+The spec's file is `spec.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its sections:
 
 - the problem;
 - proposed solution;
@@ -45,6 +45,6 @@ The spec's file is `spec.md`, in the effort's directory (see [ARTIFACT-HOME.md](
 
 Every claim about the code as it stands carries its **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), or a command and what it printed.
 
-Copy a `Prototype:` line the brainstorm brief recorded into the key technical decisions as written, and copy any other mock path the brief recorded beside the decision it settled, so the plan opens each one and lite-execute forwards the line to each task that builds or reshapes its surface. Every decision in it carries its answer: one the interview left unanswered is settled now by a targeted question or a lookup, or moves to out of scope with a sentence on why.
+Copy a `Prototype:` line the brainstorm brief recorded into the key technical decisions as written, and any other mock path the brief recorded beside the decision it settled. Every decision in the spec carries its answer: one the interview left unanswered is settled now by a targeted question or a lookup, or moves to out of scope with a sentence on why.
 
 Next step: continue to the plan phase ([PLAN.md](PLAN.md)) in this session, or in a fresh one: `/crank-lite plan .crank/<slug>/spec.md`.

@@ -1,16 +1,16 @@
 # Prototype
 
-Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/`. No mock code ships, and every file stays on disk until the plan's execution finishes. No phase before then deletes or moves a prototype file, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records.
+Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/`. No mock code ships, and no phase deletes or moves a file until the plan's execution finishes, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records.
 
-Read this once the user accepts a phase's offer. On a reopen, start at step 3, Hand over, with the files already there.
+On a reopen, start at step 3, Hand over, with the files already there.
 
 ## 1. Pick the rung
 
 State the question the prototype answers in one line, then take the rung the surface names:
 
-- **Browser, native app, or desktop app.** An HTML mock: one `variant-<key>.html` per variant inside the host page's static chrome, behind one `index.html` switcher.
+- **Browser, native app, or desktop app.** An HTML mock: one `variant-<key>.html` per variant behind one `index.html` switcher.
 - **Interactive TUI.** A scratch program under the prototype directory that cycles variants on one key.
-- **CLI output, help text, or flags.** Fenced blocks in chat, one per variant, over one shared sample input. Compose them yourself and write no file, since a subagent cannot print to the conversation, then skip to step 4, Verdict. On the user's request, build a scratch script that prints the same variants in step 2, Build.
+- **CLI output, help text, or flags.** Fenced blocks in chat, one per variant, over one shared sample input. Compose them yourself and write no file, since a subagent cannot print to the conversation, then skip to step 4, Verdict. On request, build a scratch script that prints the same variants in step 2, Build.
 
 Default to 3 variants and cap at 5. Variants differ in **structure**, meaning layout, information hierarchy, or primary affordance, never only in color or copy.
 
@@ -22,7 +22,7 @@ For a rung that writes files:
 
 1. Create `.crank/` with its `.gitignore` if it is missing ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)).
 2. Run `git status --porcelain` and keep the output.
-3. Dispatch **one** standard-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with this brief, filled in. The dispatch is a blocking call, so wait on it the way INTERVIEW.md says to wait on a lookup batch.
+3. Dispatch **one** standard-tier subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with this brief, filled in. It is a blocking call, so wait on it as INTERVIEW.md says to wait on a lookup batch.
 
 <brief>
 Build `<N>` prototype variants, whose code never ships, to answer `<question>`.
@@ -31,14 +31,14 @@ Write only under `<absolute path to .crank/<slug>/prototype/>`: no other file, n
 
 - **Purpose of the surface:** `<what the page or screen is for, and who uses it>`
 - **Data to show:** `<fixture or seed file paths>`. Copy sample values from these. Read no live database and no env file, and put no secret in any file.
-- **Design tokens:** `<token file paths>`. Use these values for color, type, and spacing.
+- **Design tokens:** `<token file paths>`. Use their color, type, and spacing values.
 - **Host chrome:** `<paths of the page or layout this surface sits in>`. Reproduce its header, sidebar, spacing, and density as static markup around each variant, or the app's global chrome only when no host page exists.
 - **Variants:** `<key: name, then its layout, information hierarchy, and primary affordance>`, one line each. They share no layout component.
 
 For an HTML mock, write:
 
 - one self-contained `variant-<key>.html` per variant that opens by double-click, with no build and no server;
-- `index.html`: the question in one line at the top, plus a note when the mock carries only the app's global chrome; one iframe filling the page; and a floating bar fixed at bottom-center, visually distinct from the design, with previous, a label reading `B: Sidebar layout`, and next, wrapping around. The bar reads and sets `?variant=<key>`, so a reload keeps the variant.
+- `index.html`: the question in one line at the top, plus a note when the mock carries only the app's global chrome; one iframe filling the page; and a floating bar fixed at bottom-center, visually distinct from the design, with previous, a label reading `B: Sidebar layout`, and next, wrapping around. The bar reads and sets `?variant=<key>`.
 
 For a TUI or a script, write one scratch program that imports the project's library, runs by `<one command>`, and cycles variants on `<key>`.
 
@@ -57,10 +57,10 @@ Give the user the path and the run command: double-click `index.html`, `go run .
 
 Ask which variant wins, what to take from the others, and what in the winner to leave out.
 
-- **On a revision request**, apply the change and ask again: re-run step 2, Build, for a rung that writes files. For the CLI rung, recompose the fenced blocks, and re-run step 2 too when a scratch script exists.
+- **On a revision request**, apply it and ask again: re-run step 2, Build, for a rung that writes files; for the CLI rung, recompose the fenced blocks, and re-run step 2 too when a scratch script exists.
 - **On a hedge**, ask the open look and interaction decisions in prose and record `no verdict`.
 
-Completion criterion: the user has named a winner and answered what to take from the others and what to leave out, where `nothing` is an answer to those two; or, after a hedge, each open look and interaction decision has a prose answer.
+Completion criterion: the user has named a winner and answered the other two questions, where `nothing` is an answer; or, after a hedge, each open look and interaction decision has a prose answer.
 
 ## 5. Record
 

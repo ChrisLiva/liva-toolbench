@@ -5,18 +5,18 @@ argument-hint: "[path to plan.md, or a .crank/ plan slug]"
 disable-model-invocation: true
 ---
 
-You are the orchestrator of one plan's execution. Every effort's artifacts live in one directory, `.crank/<slug>/`, per [ARTIFACT-HOME.md](ARTIFACT-HOME.md); read it before resolving or writing any artifact.
+You orchestrate one plan's execution. Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md), which keeps every effort's artifacts in `.crank/<slug>/`, before you resolve or write any artifact.
 
 ## Steps
 
 1. Resolve the plan.
 2. Confirm each done task (Plan state).
-3. Resolve the subagent tiers (Subagent tiers).
+3. Resolve the subagent tiers.
 4. Set the Bound and pick the shape (Shape).
-5. Write the Pre-flight lines (Pre-flight).
+5. Write the Pre-flight lines.
 6. Run the task loop through the Bound (Implement).
 7. End the run on the first case that matches:
-   - boxes still unchecked: finish as a short run (Short run);
+   - boxes still unchecked: finish as a short run;
    - `.crank/<slug>/retro.md` already exists: report the plan done and stop;
    - every box checked: run Review, Close the loop, and Retro.
 
@@ -26,14 +26,14 @@ Take the first case that matches:
 
 1. **Explicit path**: the slug is the plan's parent directory name. A file with no task list, such as a spec, PRD, or brainstorm, is not a plan: say so, recommend the plan phase (`/crank-lite plan …`), and stop.
 2. **Bare slug**: resolves to `.crank/<slug>/plan.md`.
-3. **No argument, plan in the conversation**: derive a slug from the plan's title, write the plan to `.crank/<slug>/plan.md`, and use that file.
+3. **No argument, plan in the conversation**: derive a slug from the plan's title and write the plan to `.crank/<slug>/plan.md`.
 4. **No argument, exactly one plan on disk**: use it without asking.
 5. **No argument, several plans**: ask via a structured question listing each plan with its status (Plan state). An effort directory without a `plan.md` shows as "no plan yet" and is not executable.
-6. **No argument, no plans anywhere**: say so and recommend the plan phase (`/crank-lite plan …`).
+6. **No argument, no plans anywhere**: say so and recommend the plan phase.
 
 ## Plan state
 
-On invocation, read the plan's `## Progress` block first. An `[x]` line is done: confirm it in `git log` by its SHA, or after a squash or rebase merge by its commit subject (`git log --grep`), and never redo it. A done task that neither search finds stops the run; tell the user.
+Read the plan's `## Progress` block first. An `[x]` line is done: confirm it in `git log` by its SHA, or after a squash or rebase merge by its commit subject (`git log --grep`), and never redo it. A done task that neither search finds stops the run; tell the user.
 
 The block sits directly under the plan's title:
 
@@ -46,7 +46,7 @@ Base: 9f8e7d6
 ```
 
 - **Status** reads off the block: *not started* (no block), *in progress* (unchecked boxes remain), *done* (all `[x]`).
-- **Grounding** is the file the plan's `Grounding:` header names, or else its `## Grounding` section, one `- <claim> | <evidence> | <phase>, <date>` line per fact ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding). Confirm an entry at its evidence before you build on it.
+- **Grounding** is the file the plan's `Grounding:` header names, or else its `## Grounding` section, one `- <claim> | <evidence> | <phase>, <date>` line per fact ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
 
 In a plan with a Stages table, every task number in a message to the user carries its stage, as in `Task 14 (stage 2 of 3)`. The task that closes a stage also names its gate and that stage row's exit state, as in `Task 18 (stage 2 of 3, gate): <exit state>`. Progress lines, commit messages, and the Pre-flight lines keep the bare task number.
 
@@ -56,11 +56,11 @@ A task's **check** is the first of these that exists:
 2. a gate command the plan names: in its verification checks, its `Gates:` header, or its grounding;
 3. the repo's typecheck plus the test file covering the touched behavior. A task with no such test gets one at the seam it changes; a task with no testable behavior, such as docs, gets the repo's typecheck or lint.
 
-Read the check's output in the same turn it runs. When a change has no test seam, validate it with a **probe** and treat its passing output as the check.
+Read the check's output in the same turn it runs. A change with no test seam gets a **probe**, whose passing output is the check.
 
 ## Subagent tiers
 
-Resolve the tiers once per run and reuse the mapping at every dispatch:
+Resolve the tiers once per run:
 
 1. A subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`) is binding: map the tiers onto it, even when it names a weaker model than a fallback below. A preference that covers all subagent work covers implementers too.
 2. Otherwise, use this fallback:
@@ -77,7 +77,7 @@ Resolve the tiers once per run and reuse the mapping at every dispatch:
 
 Take the first shape that matches the run's tasks:
 
-1. **Solo**: the run has three tasks or fewer. Count only the run's tasks: a twelve-task plan resumed at Task 10, or bounded at Task 2 with Task 1 done, is solo.
+1. **Solo**: the run has three tasks or fewer, so a twelve-task plan resumed at Task 10, or bounded at Task 2 with Task 1 done, is solo.
 2. **Parallel**: the tasks touch disjoint file sets and their checks can run concurrently.
 3. **Sequential**: every other run, including tasks that build on an earlier task's output.
 
@@ -91,7 +91,7 @@ Every dispatch, implementer or reviewer, is a **blocking call**:
 - When the harness instead resumes you with a completion notification, end your turn at the spawn and let the notification resume you.
 - When the result comes back in the same call, read it there.
 
-Ending your turn while a dispatch is out is safe only under that notification; under any other harness it ends the run. A wait that comes back before the subagent does, such as a timeout, is not a return, so wait again. Either way, read the return before anything else moves, and leave the dispatched work to the dispatch: no sleeping, polling, or doing its task yourself while it is out.
+Ending your turn while a dispatch is out is safe only under that notification; under any other harness it ends the run. A wait that comes back before the subagent does, such as a timeout, is not a return, so wait again. Read the return before anything else moves, and leave the dispatched work to the dispatch: no sleeping, polling, or doing its task yourself while it is out.
 
 ### Stall loop
 
@@ -100,11 +100,11 @@ Ending your turn while a dispatch is out is safe only under that notification; u
   1. Run `git status` and `git diff` on its task's files once.
   2. Resume it when the harness can still reach that subagent; otherwise dispatch the task again with the files it already changed on its `Settled:` line.
 - **Ends when:** the dispatch returns.
-- **Escalate when:** the same task stalls a second time. That is a decision under Detours and stops.
+- **Escalate when:** the same task stalls a second time: a decision under Detours and stops.
 
 ## Pre-flight
 
-Every invocation, resumed runs included, write these lines with every line filled. This edit is the run's first file change, ahead of every other edit, commit, and dispatch, and its diff is the user's one look at the models, shape, and bound before a long run.
+Every invocation, resumed runs included, write these lines with every line filled. This edit is the run's first file change, and its diff is the user's one look at the models, shape, and bound before a long run.
 
 1. Put the lines at the top of the plan's `## Progress` block, between the heading and `Base:`, replacing the lines an earlier run left there.
 2. When the plan has no Progress block yet, this same edit adds it, with `Base:` and one unchecked line per task.
@@ -121,9 +121,7 @@ Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the st
 Base: <HEAD before the first task>
 ```
 
-Fill rules:
-
-- `Subagents`: the resolved model names, never bare tier labels. `resolved from` names the instruction file whose subagent preference you mapped the tiers onto, or `harness fallback` when no loaded instruction file states one. A solo run's line reads `Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`.
+On the `Subagents` line, write the resolved model names, never bare tier labels; `resolved from` names the instruction file you mapped the tiers onto, or `harness fallback`. A solo run's line reads `Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`.
 
 Completion criterion: the plan's Progress block opens with this run's filled Pre-flight lines, written before any other edit, commit, or dispatch.
 
@@ -200,7 +198,7 @@ Once every box is checked:
 
 1. Run the full suite once. Fix what this run broke and commit each fix, staged as in Task loop step 3. A failure counts as pre-existing only when the same test fails the same way at `Base`: check it in a temporary `git worktree` at `Base` with the repo's dependencies installed, then remove the worktree. A pre-existing failure is a retro note.
 2. Walk the plan's **Coverage** table, when it carries one, row by row. Re-run a row's verify step unless it ran green this session after the last commit that touched a file it exercises. A row marked human-only goes to Close the loop as an action only a human can perform.
-3. Dispatch the review. Each dispatch is a blocking call carrying only its filled message, and each reviewer gathers its own facts:
+3. Dispatch the review, each dispatch carrying only its filled message:
    - **A plan with one stage or no Stages table**: one heavy-tier reviewer with this message:
 
      ```
@@ -211,19 +209,8 @@ Once every box is checked:
      Diff: git diff <Base>..HEAD
      Vocabulary: <absolute path to this skill's VOCABULARY.md>
      ```
-   - **A plan with two or more stages**: three standard-tier lens reviewers in one wave. Each gets the message above plus two lines: `Lens: <Contract | Coherence | Tests>` and `Findings: <absolute path to .crank/<slug>/review-<contract | coherence | tests>.md>`. Once all three have returned, dispatch one heavy-tier merger with this message:
-
-     ```
-     Read <absolute path to this skill's MERGE-BRIEF.md> and follow it.
-     Review brief: <absolute path to this skill's REVIEW-BRIEF.md>
-     Plan: <plan path>
-     Spec: <the path the plan's Spec: header names, or none>
-     Base: <the Progress block's Base SHA>
-     Diff: git diff <Base>..HEAD
-     Vocabulary: <absolute path to this skill's VOCABULARY.md>
-     Findings: <the three Findings paths>
-     ```
-4. Fix every `CONFIRMED` finding, whether it comes from the reviewer or the merger's list, and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. A merged row whose `Plan decision:` line quotes a recorded user decision goes to Close the loop as a decision for the user, with your recommendation. Commit the fixes as in step 1.
+   - **A plan with two or more stages**: three standard-tier lens reviewers in one wave. Each gets the message above plus two lines: `Lens: <Contract | Coherence | Tests>` and `Findings: <absolute path to .crank/<slug>/review-<contract | coherence | tests>.md>`. Once all three have returned, dispatch one heavy-tier merger with the single reviewer's message, its first line replaced by `Read <absolute path to this skill's MERGE-BRIEF.md> and follow it.`, plus two lines: `Review brief: <absolute path to this skill's REVIEW-BRIEF.md>` and `Findings: <the three Findings paths>`.
+4. Fix every `CONFIRMED` finding the reviewer or the merger returns and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. A merged row whose `Plan decision:` line quotes a recorded user decision goes to Close the loop as a decision. Commit the fixes as in step 1.
 
 Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision.
 

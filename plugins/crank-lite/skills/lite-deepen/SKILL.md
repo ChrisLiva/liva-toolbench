@@ -12,13 +12,13 @@ disable-model-invocation: true
 
 Surface architectural friction and propose **deepening opportunities** — changes that turn shallow modules into deep ones. Aim at testability and navigability, not tidiness.
 
-The whole run happens in chat: scope → explore → cards → grill → brief. The only thing written is the brief, plus the two target-repo side effects the user approves during the grill.
+The run happens in chat: scope → explore → cards → grill → brief. It writes only the brief and the two target-repo side effects the user approves during the grill.
 
 ## Tone
 
 Read [VOCABULARY.md](VOCABULARY.md) before you write a card. Use these words, with these meanings, exactly: **module**, **interface**, **implementation**, **depth**, **deep**, **shallow**, **seam**, **adapter**, **leverage**, **locality**.
 
-Near-synonyms blur the distinction each word carries. Never substitute:
+Never substitute a near-synonym:
 
 | Use | Never |
 | --- | --- |
@@ -26,29 +26,29 @@ Near-synonyms blur the distinction each word carries. Never substitute:
 | interface | API, signature |
 | seam | boundary |
 
-That is the *architecture* vocabulary. The *domain* vocabulary comes from the target repo's own glossary: if its `CONTEXT.md` defines "Order", say "the Order intake module" — not "the FooBarHandler", and not "the Order service".
+Domain nouns come from the target repo's own glossary: if its `CONTEXT.md` defines "Order", say "the Order intake module", not "the FooBarHandler" or "the Order service".
 
 ## Scope
 
-Scope before you scan. Deepening pays off on code that keeps changing, so weight churn.
+Scope before you scan; deepening pays off on code that keeps changing.
 
-- **The user's direction wins.** If they named a module, a subsystem, or a pain point, take it and skip the inference below.
-- **Otherwise infer from churn.** Rank paths by how often they appear in a good stretch of `git log --name-only` history, and scan the top of that list first. If churn is scattered with no clear hot spot, widen the net.
+- **The user's direction wins.** If they named a module, subsystem, or pain point, take it.
+- **Otherwise infer from churn.** Rank paths by how often they appear in a good stretch of `git log --name-only` history and scan the top of the list first; if churn is scattered with no clear hot spot, widen the net.
 
-Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you're about to scan — commonly `docs/adr/`. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate. So is the Grounding section of any crank-lite artifact the run was handed: a covered lookup becomes a confirm at its cited evidence, and an absence entry re-runs its recorded search.
+Before exploring, read, where they exist, the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you'll scan (commonly `docs/adr/`), whose decisions this run does not re-litigate. Read too the Grounding section of any crank-lite artifact the run was handed, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 
 ## Explore
 
-Dispatch **one** standard-tier read-only explorer subagent (see Subagent tiers) with this brief, filled in. One dispatch, not a fan-out — ranking is the coordinator's job, on this thread.
+Dispatch **one** standard-tier read-only explorer subagent ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers) with this brief, filled in.
 
 <brief>
 Explore `<scope>` in this codebase and report **deepening opportunities** — places where a shallow module could become a deep one. Read only: change nothing, and do not propose interfaces.
 
 Hunt four friction patterns:
 
-- **Shallow module** — the interface exposes nearly as much as the implementation hides. Apply the **deletion test**: imagine the module gone. Does its complexity *concentrate* into a deeper neighbor (report it), or merely spread across every caller (drop it, the boundary earned its place)? Needing to bounce between many small modules to understand one concept is the same smell at scale.
-- **Seam leakage** — tightly-coupled modules leak across their seam: callers reach past the interface into internals, depend on call ordering the interface never states, or hold knowledge the module should own.
-- **Extracted for testability without locality** — pure functions pulled out so they could be tested in isolation, while the real bugs live in how they are called. The extraction bought coverage but no **locality**.
+- **Shallow module** — the interface exposes nearly as much as the implementation hides. Apply the **deletion test**: imagine the module gone. Does its complexity *concentrate* into a deeper neighbor (report it), or merely spread across every caller (drop it, the boundary earned its place)? Bouncing between many small modules to understand one concept is the same smell at scale.
+- **Seam leakage** — callers reach past a module's interface into its internals, depend on call ordering the interface never states, or hold knowledge the module should own.
+- **Extracted for testability without locality** — pure functions pulled out to be tested in isolation, while the real bugs live in how they are called.
 - **Untestable through the interface** — code that is untested, or that cannot be driven through its current interface without a synthetic stand-in.
 
 Note where *you* hit friction reading the code, then classify it.
@@ -67,7 +67,7 @@ Report fewer than four rather than padding the list, and say so plainly if the s
 
 ## Cards
 
-Dedupe and rank what comes back: fold overlaps into the strongest version of the same idea, drop anything you can't back with an anchor, and keep the **2–4** the evidence supports.
+Dedupe and rank what comes back: fold overlaps into the strongest version, drop anything you can't back with an anchor, and keep the **2–4** the evidence supports.
 
 Present each survivor as one card in chat:
 
@@ -77,7 +77,7 @@ Present each survivor as one card in chat:
 - **Problem** — one sentence.
 - **Solution** — one sentence.
 - **Wins** — a few short bullets, stated as **leverage** or **locality**.
-- **Before / after** — a small ASCII diagram of the shallowness and the deepening. Chat renders mermaid as raw text, so draw in plain characters:
+- **Before / after** — a small ASCII diagram of the shallowness and the deepening; chat renders mermaid as raw text:
 
   ```
   before                                  after
@@ -91,7 +91,7 @@ Present each survivor as one card in chat:
   call order known only to callers        1 interface; ordering held inside
   ```
 
-- **Structural pseudo-code** (optional) — when the shape is hard to see from the diagram alone. **Structural only**: what the module exposes and what it hides, in a few lines, and no committed signatures — no parameter lists, no return types, no names anyone will be held to.
+- **Structural pseudo-code** (optional) — when the diagram alone doesn't show the shape: what the module exposes and what it hides, in a few lines, with no signatures — no parameter lists, return types, or names anyone will be held to.
 
   ```
   module: Order intake
@@ -100,7 +100,7 @@ Present each survivor as one card in chat:
     seam     the store it writes through
   ```
 
-- **ADR callout** (optional) — only when the friction is real enough to warrant reopening a recorded decision. Mark it in the card: *"contradicts ADR-0007 — worth reopening because…"*. Don't list every refactor an ADR theoretically forbids.
+- **ADR callout** (optional) — only when the friction justifies reopening a recorded decision, marked in the card: *"contradicts ADR-0007 — worth reopening because…"*. Don't list every refactor an ADR theoretically forbids.
 
 Then ask, plainly, which candidate the user wants to pursue. **One candidate per grill loop.** The cards stay in chat, so picking another when this loop ends costs no rescan.
 
@@ -112,14 +112,14 @@ Run the grilling per [INTERVIEW.md](INTERVIEW.md) — read it before your first 
 - **Dependencies** — what the module leans on and who leans on it; which of those crossings deserves a port (two adapters justify a port; one is indirection).
 - **The deepened module's shape** — what it owns, what its one entry point is for, what stays out.
 - **What sits behind the seam** — what moves inside, what the seam hides, and exactly where it lands.
-- **Which tests survive** — which existing tests keep testing behavior through the new interface, which were implementation-detail tests that die with the change, and what the new seam makes testable that wasn't.
+- **Which tests survive** — which existing tests keep testing behavior through the new interface, which implementation-detail tests die with the change, and what the new seam makes testable that wasn't.
 
-Pseudo-code earns signatures here. As the shape firms up, sketch the interface at signature level so the user can veto a parameter or a return value rather than a paragraph. Keep it small and keep it in chat.
+Pseudo-code earns signatures here: as the shape firms up, sketch the interface at signature level, small and in chat, so the user can veto a parameter or a return value rather than a paragraph.
 
-Two side effects land on the target repo during the grill. Offer each inline as the decision crystallizes — offer, never perform silently:
+Offer each of the grill's two target-repo side effects inline as its decision crystallizes; never perform one silently:
 
-- **New or sharpened terms go to `CONTEXT.md`.** When the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term, offer to write it into the target's `CONTEXT.md` right then. Create the file lazily if it doesn't exist.
-- **A rejected recommendation earns an ADR** — only when the user rejects a load-bearing recommendation for a reason a future scan would need in order not to re-suggest it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
+- **New or sharpened terms go to `CONTEXT.md`** — when the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term. Create the file if it doesn't exist.
+- **A rejected recommendation earns an ADR** — only when the user rejects a load-bearing recommendation for a reason a future scan needs to avoid re-suggesting it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 
 ## Brief
 
@@ -131,18 +131,10 @@ Sections, omitting any that didn't earn its place:
 - **Approach** — the chosen deepening and why it won, in **leverage** and **locality** terms.
 - **Shape** — the before/after ASCII diagram as amended during the grill, alongside the settled interface pseudo-code.
 - **Key decisions** — the consequential calls, one line of why each, including where the seam lands and which tests survive.
-- **Open questions** — questions for the spec to answer, admitted only when you can state each one precisely now. Anything you can't phrase that sharply is a design hole — resolve it in the grill instead.
+- **Open questions** — only those you can state precisely now, for the spec to answer; one you can't phrase that sharply is a design hole to resolve in the grill.
 - **Grounding** — the grill's banked entries, one line each ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).
-- **Out of scope** — the candidates that lost and one line each on why, plus pointers to any ADR this run wrote or left standing.
+- **Out of scope** — the losing candidates, one line each on why, plus pointers to any ADR this run wrote or left standing.
 
 **No acceptance criteria** — those belong to the spec phase.
 
-Write the brief so a fresh session can run it without this chat. Once the readback is done, end by recommending the next step: `/crank-lite spec .crank/<slug>/deepen-brief.md`.
-
-## Subagent tiers
-
-Resolve the tier once per run and reuse it. The source of truth is a subagent model preference stated in the user instructions already loaded this session (user- and project-level `CLAUDE.md` / `AGENTS.md`); it is binding: map the tier onto it, even when it names a weaker model than the fallback below. The block below is a fallback only, for a session whose loaded instruction files state no such preference:
-
-<subagent-tiers>
-- **standard** fallback (codebase exploration): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
-</subagent-tiers>
+Write the brief so a fresh session can run it without this chat. Once the readback is done, end by recommending `/crank-lite spec .crank/<slug>/deepen-brief.md`.

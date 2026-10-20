@@ -4,10 +4,10 @@ A **stage** is a contiguous range of the plan's ordered tasks that ends on a **s
 
 ## Stage gate
 
-The last task of a stage leaves all of:
+A stage's last task leaves all of:
 
 - every gate command the plan names green;
-- the acceptance criteria the stage closes proved by the checks the plan names for them. A first stage may close none when it builds what later stages stand on: the gate command, the characterization test, the expand half of an expand–contract;
+- the acceptance criteria the stage closes, proved by the checks the plan names. A first stage may close none when it builds what later stages stand on: the gate command, the characterization test, the expand half of an expand–contract;
 - an **exit state**: one line naming what works at the gate and what the next stage adds.
 
 ## Where to cut
