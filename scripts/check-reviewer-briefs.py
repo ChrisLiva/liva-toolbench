@@ -203,7 +203,9 @@ def check_sync(failures):
 
     A skill owes a copy of every reference any of its own markdown files links.
     Expectation comes from the link, not from the file being there, so deleting a
-    copy fails the gate instead of silently dropping its check.
+    copy fails the gate instead of silently dropping its check. A link inside a
+    reference file does not count: a skill whose own prose drops its link to a
+    reference fails even while another reference still links it.
     """
     for skills_dir in SKILL_DIRS:
         for skill in sorted((ROOT / skills_dir).iterdir()):
@@ -212,6 +214,7 @@ def check_sync(failures):
             body = "".join(
                 f.read_text(encoding="utf-8", errors="replace")
                 for f in sorted(skill.glob("*.md"))
+                if f.stem not in CANONICAL
             )
             for name, canonical_dir in CANONICAL.items():
                 copy_rel = f"{skills_dir}/{skill.name}/{name}.md"

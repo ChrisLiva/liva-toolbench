@@ -33,7 +33,7 @@ A dispatch carrying a `Shard:` line makes you one of three reviewers over this p
 - **Shard A** and **Shard B** each own the task range the dispatch names, each task in it read against **unverifiable check**, **uncited claim**, a **stale anchor** between tasks in the range, **placeholder**, **bespoke duplication**, **unreferenced prototype**, **unmodeled task**, **implementation-detail or redundant test**, and a **dropped safeguard** within one task's text.
 - **Shard X** owns what spans tasks: **unproved criterion**, **hollow stage gate**, **unretired risk**, a **stale anchor** one task moves that a task in another range relies on, a **dropped safeguard** across the plan, the verification checks as tests that span tasks, and every interface or value one task defines and another task uses, checked for agreement in name, signature, coordinate frame, and meaning.
 
-A dispatch with no `Shard:` line gives you every flag above.
+A dispatch with no `Shard:` line gives you every flag and check above.
 
 Return each finding with:
 

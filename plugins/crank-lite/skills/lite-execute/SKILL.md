@@ -121,7 +121,7 @@ Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the st
 Base: <HEAD before the first task>
 ```
 
-On the `Subagents` line, write the resolved model names, never bare tier labels; `resolved from` names the instruction file you mapped the tiers onto, or `harness fallback`. A solo run's line reads `Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`.
+On the `Subagents` line, write the resolved model names, never bare tier labels; `resolved from` names the instruction file you mapped the tiers onto, or `harness fallback`. A solo run's line reads `Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`; when it reviews a plan of two or more stages, it opens with `standard = <model> (review lenses) · `.
 
 Completion criterion: the plan's Progress block opens with this run's filled Pre-flight lines, written before any other edit, commit, or dispatch.
 
