@@ -1,6 +1,6 @@
 # Prototype
 
-Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). No mock code ships, and every file stays on disk until the plan's execution finishes: no phase deletes or moves one before then, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records. On a reopen, skip to step 3 with the files already there. (per project decision: standalone mocks only, never mounted in a real route or held on a branch or worktree, so a native-screen mock shows layout and hierarchy, not platform feel.)
+Several structurally different variants of one user-facing surface, one switcher, one command to run, and a recorded verdict. Every file lives under `.crank/<slug>/prototype/` ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). No mock code ships, and no phase deletes or moves a file until the plan's execution finishes, because the spec, the plan, and execution read the winner at the path the `Prototype:` line records. On a reopen, skip to step 3 with the files already there. (per project decision: standalone mocks only, never mounted in a real route or held on a branch or worktree, so a native-screen mock shows layout and hierarchy, not platform feel.)
 
 ## Flow
 
@@ -9,7 +9,7 @@ Several structurally different variants of one user-facing surface, one switcher
 State the question the prototype answers in one line, then take the rung the surface names:
 
 - **Browser, native app, or desktop app.** An HTML mock inside a static reproduction of the host page's chrome, using the project's design tokens and fixture data.
-- **CLI output, help text, or flags.** Fenced blocks in chat, one per variant, over one shared sample input. You compose this rung yourself and write no file, since a subagent cannot print to the conversation. Skip to step 4. On the user's request, a scratch script under the prototype directory prints the same variants.
+- **CLI output, help text, or flags.** Fenced blocks in chat, one per variant, over one shared sample input. You compose this rung yourself and write no file. Skip to step 4. On the user's request, a scratch script under the prototype directory prints the same variants.
 - **Interactive TUI.** A scratch program under the prototype directory that imports the project's TUI library, runs by one command, and cycles variants on one key.
 
 Default to 3 variants and cap at 5. Give each a key (`A`, `B`, `C`), a name, and a structural direction. Variants differ in structure, meaning layout, information hierarchy, or primary affordance, never only in color or copy. (per project decision: the cap is 5 because past it variants stop differing in structure.)
@@ -36,7 +36,7 @@ The file is self-contained HTML, CSS, and JavaScript that opens by double-click,
 Return the path you wrote and one sentence on the structure you built.
 </brief>
 
-The TUI program and a requested CLI script go to one builder instead, because the variants share one entry file: send the same brief with every variant's direction listed, the output path set to the prototype directory, and the file paragraph replaced by the program's contract: import the project's TUI library, run by one command, and cycle variants on one key.
+The TUI program and a requested CLI script go to one builder instead, because the variants share one entry file: send the same brief with every variant's direction listed, the output path set to the prototype directory, and the file paragraph replaced by step 1's TUI contract.
 
 When every builder has returned, rerun `git status --porcelain`. If the output differs from the first, name the differing paths to the user, revert nothing, and stop before handing over.
 
@@ -61,8 +61,8 @@ Completion criterion: the user has named a winner and answered what to take from
 
 ### 5. Record
 
-Write one `Prototype:` line: the winner, what the user took from the other variants, what the user left out of the winner, the winning variant's path (`.crank/<slug>/prototype/variant-<key>.html`, or the scratch program's path and the variant's key), and the surface the mock stood in for, or `no verdict`. A CLI rung that wrote no file reads `in chat` in place of the path, with the winning block copied beneath the line. From the spec phase the line lands in Technical decisions, and every behavior the user chose lands as a numbered acceptance criterion. From the plan phase the line and the chosen behaviors land under **Updates since spec**. From the brainstorm, the line lands in the brief's **Key decisions** beside the decision it settled.
+Write one `Prototype:` line: the winner, what the user took from the other variants, what the user left out of the winner, the winning variant's path (`.crank/<slug>/prototype/variant-<key>.html`, or the scratch program's path and the variant's key), and the surface the mock stood in for, or `no verdict`. A CLI rung that wrote no file reads `in chat` in place of the path, with the winning block copied beneath the line. From the spec phase the line lands in Technical decisions and every chosen behavior as a numbered acceptance criterion; from the plan phase both land under **Updates since spec**; from the brainstorm the line lands in the brief's **Key decisions** beside the decision it settled.
 
-The winning variant is the reference every later phase opens for that surface, and the verdict bounds it. The verdict's committed parts are the winner's structure, what the user took from the other variants, and the absence of each part the user left out, and the real UI keeps all three. The rest of the mock guides details the spec and the task leave open, and its fixture values and static host chrome are stand-ins the real UI replaces. Where the spec's or a task's text disagrees with the mock, the text wins.
+The winning variant is the reference every later phase opens for that surface, and the verdict bounds it. The real UI keeps the verdict's three committed parts: the winner's structure, what the user took from the other variants, and the absence of each part the user left out. The rest of the mock guides details the spec and the task leave open, and its fixture values and static host chrome are stand-ins the real UI replaces. Where the spec's or a task's text disagrees with the mock, the text wins.
 
 Completion criterion: the artifact carries the line, and every chosen behavior is a numbered criterion or an **Updates since spec** entry.

@@ -1,6 +1,6 @@
 # Plan markdown skeleton
 
-Use this as the starting shape for the plan at its `.crank/` path (see ARTIFACT-HOME.md). Keep only sections that earn their place for the change, replace every angle-bracket placeholder before review, and obey the Deliverables rules in `PLAN.md`.
+Replace every angle-bracket placeholder before review.
 
 ```markdown
 # <Plan title>
@@ -11,7 +11,7 @@ Goal: <one sentence>
 Architecture: <2-3 sentences>
 Tech stack: <pinned versions>
 Gates: <exact test / lint / typecheck / build commands, each proven to run>
-Base: <the HEAD SHA grounding read, the tree any line-number fallback reads against>
+Base: <the HEAD SHA grounding read>
 
 ## Global Constraints
 
@@ -47,7 +47,7 @@ Stop if: <the assumption this task rests on that grounding could not prove, or o
 Prototype: <the winning variant's path, or `in chat` with the winning block beneath, and what the user left out of the winner, or omit>
 
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
-      <pseudo-code or embedded code, only where PLAN.md's ladder calls for it; embedded code names its evidence>
+      <pseudo-code or embedded code, only where PLAN.md's ladder calls for it>
 - [ ] Behavior 2: <next behavior in tracer-bullet order — or a directive line for a mechanical change>
 - [ ] Verify: `<exact command>` → <exact success reading; for a count, grep, or probe: base: <what it prints now> → target: <what it must print>>
 

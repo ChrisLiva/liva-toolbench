@@ -1,7 +1,7 @@
 # Review merge brief
 
 <brief>
-You are the merger for a crank adversarial review. Three reviewers read `<artifact-path>` in parallel, each through one lens or shard of `<brief-path>`, and none saw another's findings. You validate, fold, and land them. Read the brief, the artifact, the spec at `<spec-path>` when one exists, and the three findings files: `<findings-paths>`.
+You are the merger for a crank adversarial review. Three reviewers read `<artifact-path>`, each through one lens or shard of `<brief-path>`, and none saw another's findings. You validate, fold, and land them. Read the brief, the artifact, the spec at `<spec-path>` when one exists, and the three findings files: `<findings-paths>`.
 
 Work your lookups in **rounds**. A round's **frontier** is every lookup whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
 

@@ -16,7 +16,7 @@ The crank and crank-lite skills use these terms with these meanings.
 
 ## Verification language
 
-- **Dead seam** — a verify step that drives a node, handler, or endpoint the production code never wires up. It passes with the feature absent — worse than no check, because it hides the gap.
+- **Dead seam** — a verify step that drives a node, handler, or endpoint the production code never wires up. It passes with the feature absent, so it hides the gap.
 - **Implementation-detail test** — a test coupled to *how* the code works instead of *what* it does: it mocks an internal collaborator, asserts on call counts or order, reaches a private method, or verifies through a back channel (reading the database directly) instead of the interface. It breaks on a behavior-preserving refactor and passes while behavior is broken. The opposite is a behavior test through the **seam**: input a real caller gives, output a real caller reads.
 - **Rewrite test** — imagine the code under test rewritten in another language, behavior intact: a test earns its place only if it would still pass, and still fail on the same regression. What survives pins observable behavior through the **seam**; what dies was pinning the code's shape.
 - **Journey test** — one test that walks a meaningful workflow end-to-end through a seam, carrying as many assertions as the journey needs. The unit of a minimal suite: a behavior met along the workflow is an assertion on its journey test, not a sibling one-assertion test rebuilding the same setup.

@@ -6,25 +6,25 @@ Turn a raw idea into a **high-level design brief** at **design altitude**: the i
 
 ## Hard Rules
 
-- **Stay at design altitude.** Settle *what* you're building and *which shape* it takes — not exact signatures, schemas, field names, or file-by-file breakdowns. Drill into a detail only when it's *load-bearing for a key decision* (if approach A vs. B hinges on whether the database supports X, resolve X; otherwise record it as an **Open question** for the spec).
+- **Stay at design altitude.** Settle *what* you're building and *which shape* it takes, not exact signatures, schemas, field names, or file-by-file breakdowns. Resolve a detail only when a key decision hinges on it (approach A vs. B turns on whether the database supports X); record any other as an **Open question** for the spec.
 - **Write the brief to `.crank/<slug>/brainstorm.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) — read it before writing the file.
 
 ## Guidelines
 
-**Design for isolation.** Give each piece of the Shape a **module**'s shape: one purpose, and an **interface** you can state without its internals. A piece you can't describe that way is a boundary that needs another pass. Name the boundaries here; designing the interfaces across them is the spec's job.
+**Design for isolation.** Make each piece of the Shape a **module** with one purpose and an **interface** you can state without its internals; a piece that fails this needs its boundary redrawn. Name the boundaries here and leave the interfaces across them to the spec.
 
-**Working in an existing codebase.** Follow the patterns you explored rather than inventing parallel ones. Where existing code genuinely gets in the way of the idea (a file that's grown too large, a tangled responsibility the work has to touch), fold a targeted improvement into the Approach. Propose no refactoring that doesn't serve the idea.
+**Working in an existing codebase.** Follow the patterns you explored rather than inventing parallel ones. Where existing code gets in the way of the idea (a file grown too large, a tangled responsibility the work must touch), fold a targeted improvement into the Approach, and propose no refactoring that doesn't serve the idea.
 
 ## Deliverables
 
-The high-level design brief. Include the sections that apply; this is a brief, not a spec:
+The brief, with the sections that apply:
 
 - **Header** — title, then `Grounding:` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 - **Idea / Problem** — what the user wants and why, in their words.
 - **Approach** — the chosen direction in a few sentences, plus the main alternatives considered and one line on why this one won (leverage / locality).
-- **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them. A rough sketch or short list, not a file map.
-- **Key decisions** — the consequential choices settled during brainstorming, each with one line on why; the spec inherits and details them.
-- **Open questions** — technical decisions left for the spec to ground and settle; this list becomes the spec's grilling agenda. The admission test: the question is spec-level and you can state it precisely *now*. One you can't yet phrase that sharply is a design hole, not an open question — resolve it with the user before handing off.
+- **Shape** — the major pieces and how they relate: one line of responsibility each, and the data or control flow between them.
+- **Key decisions** — the consequential choices settled here, each with one line on why.
+- **Open questions** — spec-level technical decisions you can state precisely *now*, left for the spec to ground and settle as its grilling agenda. One you can't yet phrase that sharply is a design hole, not an open question: resolve it with the user before handing off.
 - **Out of scope** — what was discussed and explicitly cut.
 
 ## Flow
@@ -33,11 +33,11 @@ The high-level design brief. Include the sections that apply; this is a brief, n
 
 Before asking the user anything, read recent commits, relevant docs, and the surfaces the idea would touch. Dispatch the wide reads with the **Explore the codebase** brief at References → Subagents.
 
-Completion criterion: every surface the idea touches is named with the anchor you read it at (`` `<path>` → `<symbol>` ``), or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm that wrote no mock leaves no directory behind.
+Completion criterion: every surface the idea touches is named with the anchor you read it at, or "not found"; every established pattern the idea should follow is named with the existing feature that demonstrates it — none from assumption, each banked in-thread as a grounding entry ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding) until the step-6 flush, so an abandoned brainstorm that wrote no mock leaves no directory behind.
 
 ### 2. Name the destination
 
-Settle the problem being solved and what "done" means for the user, in one or two lines. The destination fixes scope: every later question, approach, and cut orients to it. If the user's opening message already states it, read your version back for confirmation instead of re-asking; if not, this is your first question.
+Settle the problem being solved and what "done" means for the user, in one or two lines. The destination fixes scope for every later question, approach, and cut. If the user's opening message states it, read your version back for confirmation; if not, ask it first.
 
 Completion criterion: the user has explicitly confirmed the destination; it anchors the brief's **Idea / Problem** section.
 
@@ -49,7 +49,7 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 ### 4. Grill the open questions
 
-Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here); the agenda it opens with is this phase's decision tree. If that fan-out shows the way from idea to spec is already clear, say so and offer to skip to the spec phase rather than manufacture a brainstorm.
+Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here). If its opening agenda shows the way from idea to spec is already clear, say so and offer to skip to the spec phase rather than manufacture a brainstorm.
 
 - **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a mock in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. Write the mock under `.crank/<slug>/` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing it, and keep it on disk until the plan's execution finishes. The brief records the mock's path beside the decision it settled.
 
@@ -57,7 +57,7 @@ Completion criterion: the frontier is empty — every consequential design quest
 
 ### 5. Propose approaches
 
-Propose **2–3 approaches, each optimizing for a different thing**, conversationally, naming the axis each wins on and its trade-offs (e.g. fewest moving parts, most flexible for the likely next ask, closest to the existing idiom). Two approaches that optimize for the same thing are one approach; drop one. If two genuinely combine, recommend the hybrid rather than leaving the user to merge them. Lead with your recommendation and why. Prefer the approach whose central piece is **deeper**, and name the **leverage** and **locality** it buys over the alternatives. If an approach's key piece fails the **deletion test**, say so; that's a reason to drop it.
+Propose **2–3 approaches, each optimizing for a different thing**, conversationally, naming the axis each wins on and its trade-offs (e.g. fewest moving parts, most flexible for the likely next ask, closest to the existing idiom); two that optimize for the same thing are one approach. If two combine, recommend the hybrid. Lead with your recommendation and why. Prefer the approach whose central piece is **deeper**, and name the **leverage** and **locality** it buys over the alternatives. If an approach's key piece fails the **deletion test**, say so; that's a reason to drop it.
 
 Completion criterion: the user has explicitly picked an approach (or your recommended hybrid) — having heard the options isn't a pick.
 
@@ -69,7 +69,7 @@ Completion criterion: every applicable Deliverables section is in the brief file
 
 ### 7. Read back the brief
 
-Read back the brief per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the Approach beside the alternatives it beat, the Shape's diagram, and each Open question as the sharp question it hands the spec.
+Read back the brief per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the Shape's diagram and each Open question as the sharp question it hands the spec.
 
 ### 8. Hand off
 
@@ -81,7 +81,7 @@ Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 ### Subagents
 
-**Facts are yours; decisions are the user's** — two jobs to dispatch: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make true) and **research a topic** (compare libraries or approaches, find prior art — web search in scope). Both run at the **standard** tier; resolve the tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. Dispatch each job with its brief below, filled in.
+Two jobs to dispatch: **explore the codebase** (does this surface exist, what pattern do analogous features follow, is a claim you're about to make true) and **research a topic** (compare libraries or approaches, find prior art). Both run at the **standard** tier; resolve the tier, and the dispatch-or-main-thread call, per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. Dispatch each job with its brief below, filled in.
 
 **Explore the codebase:**
 
@@ -96,7 +96,7 @@ Report:
 - one or two existing features that do something analogous, and the convention each follows (its anchor);
 - any canonical helper, module, or pattern an implementer would be expected to reuse or extend for this idea (its anchor).
 
-Report each item — one surface, one analogous feature, one helper — in a few sentences. Cite an anchor, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it (`` `<path>:<line>` (no symbol) `` only where no symbol can be named), instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
+Report each item in a few sentences. Cite an anchor, `` `<path>` → `<symbol>` `` with each name spelled as the source spells it (`` `<path>:<line>` (no symbol) `` only where no symbol can be named), instead of pasting the code around it, and quote source only where the exact text is the answer. An exact signature is the answer: reproduce it in full, however long. An item that outgrows a few sentences goes to a file in the OS temp dir, returned as its path plus a one-line summary.
 
 Don't propose a design; surface what exists and what's true. If the claim I'm checking is wrong, say so plainly.
 </brief>
@@ -104,7 +104,7 @@ Don't propose a design; surface what exists and what's true. If the claim I'm ch
 **Research a topic** (web search in scope):
 
 <brief>
-Research `<question>` to inform a design decision. We're weighing `<the options on the table>`. Read-only: you may fetch and read, but do not install, uninstall, run vendor install scripts, or delete anything outside your own temp dir — anything that would require installing something is reported as an open question instead.
+Research `<question>` to inform a design decision. We're weighing `<the options on the table>`. Read-only: fetch and read, but install, uninstall, and run no vendor install script, and delete nothing outside your own temp dir; report anything that needs an install as an open question.
 
 Report:
 

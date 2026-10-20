@@ -12,7 +12,7 @@ Flag every instance of the following. Take as settled any decision the spec reco
 - **internal contradiction** — two spec statements that cannot both hold: an interface that cannot produce a shape the spec requires elsewhere, a criterion whose gate makes another criterion's fixture unreachable, an oracle produced by a different construction than the one the spec mandates. Name both lines and which governs.
 - **criteria gaps** — a behavior the spec body describes (interaction, keybinding, edge case, state transition, validation) with no matching numbered acceptance criterion, or a criterion too vague to falsify.
 - **off-pattern** — a touched layer that doesn't name the existing surface (repository function, renderer hook, query key, IPC shape) analogous features in the codebase use for it; grep one or two analogous files to confirm.
-- **shallow module** — a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test (removing it would not scatter complexity: a pass-through that should fold into its caller). Don't flag existing modules outside the Refactor scope; their boundaries are settled.
+- **shallow module** — a module that is *new* or named in the spec's **Refactor scope**, whose interface is nearly as complex as its implementation, or that fails the deletion test (removing it would not scatter complexity: a pass-through that should fold into its caller). Don't flag existing modules outside the Refactor scope.
 - **missed simplification** — complexity the spec itself introduces (a new mode, flag, wrapper, or special-case branch in an existing flow) where a reframing would let an existing module absorb the behavior; flag only when you can name the simpler shape.
 - **ADR drift** — the spec relies on code that contradicts an ADR, or contradicts one itself without saying so; name the ADR and make the spec state which governs.
 - **bespoke duplication** — the spec designs a helper or utility the codebase already provides; grep to confirm, and name the canonical one.
@@ -21,13 +21,13 @@ Flag every instance of the following. Take as settled any decision the spec reco
 - **placeholder language** — `TODO` / `TBD` / `for later` / `v2` / anything punting a decision the spec should have resolved; resolve it or move it to **Out of scope**.
 - **missing technical detail** — a decision with no chosen option, an interface with no signature, a data shape with no fields, or a touched layer with no prior-art anchor, a `` `<path>` → `<symbol>` `` citation of the existing surface the change goes through, with each name spelled as the source spells it.
 
-Your lens is `<lens>`, one of three over this spec, and the other two reviewers own the other flags, so report only yours:
+Your lens is `<lens>`, one of three over this spec; report only its flags:
 
 - **truth**: inaccuracy, off-pattern, ADR drift, bespoke duplication;
 - **contract**: ambiguity, internal contradiction, criteria gaps, placeholder language, missing technical detail;
 - **design**: shallow module, missed simplification, boundary smells, implementation-detail testing approach.
 
-Flag the whole spec through your lens and write the findings to `<findings-path>`, one block each: the section it lands in, the flag it trips, its edit as an exact `(section, old, new)` triple with `old` copied verbatim from the spec, and the read or run that confirmed every fact the edit introduces. A count, line number, value, or name is **confirmed** at its source, by a read or a run, before its finding is written; arithmetic over the spec's own prose confirms nothing. A finding its check refutes stays listed as `refuted: <what the check printed>` and takes no edit. You verify against the codebase only to inform your findings, and `<findings-path>` is the only file you write.
+Flag the whole spec through your lens and write the findings to `<findings-path>`, one block each: the section it lands in, the flag it trips, its edit as an exact `(section, old, new)` triple with `old` copied verbatim from the spec, and the read or run that confirmed every fact the edit introduces. A count, line number, value, or name is **confirmed** at its source, by a read or a run, before its finding is written; arithmetic over the spec's own prose confirms nothing. A finding its check refutes stays listed as `refuted: <what the check printed>` and takes no edit. `<findings-path>` is the only file you write.
 
 Done when your lookup frontier is empty and every finding in your lens is in `<findings-path>`, refuted or carrying its edit. End your reply with a one-line summary: the counts of findings and refuted findings.
 </brief>

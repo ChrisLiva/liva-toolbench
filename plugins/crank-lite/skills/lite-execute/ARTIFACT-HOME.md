@@ -1,7 +1,5 @@
 # Artifact home
 
-Where every pipeline artifact lives.
-
 - **One directory per effort** — `.crank/<slug>/<artifact>.md` at the repository root (`git rev-parse --show-toplevel`). Create `.crank/` if missing, with a `.crank/.gitignore` containing `*`.
 - **One slug per effort** — `<slug>` is two to four kebab-case words naming the effort (`dark-mode-toggle`), derived once, at the effort's first file, artifact or mock. Handed an earlier phase's artifact, or continuing in this session, write into the effort's existing directory.
 - If `.crank/<slug>/` already holds a *different* effort — its `plan.md`, `spec.md`, or `brainstorm.md` describes other work — use `<slug>-2`, `<slug>-3`, …; the existing directory keeps its name and contents.
