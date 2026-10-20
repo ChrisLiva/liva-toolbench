@@ -255,10 +255,10 @@ is visible in a number. Handed a directory it recurses, which reaches
 `apply-shapes.jsonl` pins every apply tool, every shell-write form, and the
 non-lookup bucket.
 
-`scripts/smoke/lite-execute/` measures a lite-execute prose change on the Claude Code
-and Codex models that execute it. Read its README before a run, because it lists the
-scenarios and their fixtures' traps, the `batch.sh` and `score.py` commands, the rep
-count to pass, the Codex setup, and how to read a score.
+`scripts/smoke/lite-execute/` measures a lite-execute prose change on the models that
+execute it. Read its README before a run, because it lists the scenarios and their
+fixtures' traps, the `batch.sh` and `score.py` commands, the run budget, and how to read
+a score.
 
 `scripts/smoke/crank-lite/` does the same for crank-lite's brainstorm, spec, and plan
 phases, driving each interview with a scripted user that agrees with every round. Its
@@ -484,12 +484,15 @@ claude --plugin-dir ./plugins/<name>
 Headless runs (`claude -p …`) bill against the Claude subscription and count toward
 the account's usage limit: on 2026-10-05, after about 65 Sonnet smoke sessions in one
 afternoon, 14 sessions in a five-minute window returned the account's spend-limit
-message instead of running. Keep smoke and eval batches small (per project decision:
-run fewer runs overall): one Sonnet run and one gpt-6-luna run per scenario the change
-touches, compared against earlier runs of the base, and a second rep or a base arm only
-for a check that moved. Both `batch.sh` scripts hold this budget: they require
-`SMOKE_SCENARIOS`, run both models unless `SMOKE_MODELS` narrows them, and exit before starting more than `SMOKE_MAX_RUNS` sessions (default 6). Check a batch's streams for the
-limit message before scoring it, since a limited run scores as a behavior failure.
+message instead of running. A change to a skill gets at most three smoke or eval runs
+in all, counting every rep and base arm (per project decision: at most three runs per
+skill change): one Sonnet run per scenario the change touches, compared against earlier
+runs of the base, with a moved check settled by reading transcripts rather than by
+another rep. Both `batch.sh` scripts hold this budget: they require `SMOKE_SCENARIOS`,
+run Sonnet unless `SMOKE_MODELS` names other models, and exit before starting more than
+`SMOKE_MAX_RUNS` sessions (default 3). The harnesses drive Claude Code; the skills they
+measure stay harness-agnostic (see *Cross-harness plugins*). Check a batch's streams for
+the limit message before scoring it, since a limited run scores as a behavior failure.
 
 Inside the session:
 - `/reload-plugins` — picks up edits to plugin files

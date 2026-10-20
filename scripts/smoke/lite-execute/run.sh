@@ -2,8 +2,6 @@
 # run.sh <plugin-dir> <scenario: fresh|stop-if|stop-if-detour|spec-path|prototype|prototype-solo|review|review-large> <model> <seed-dir> <run-dir>
 # Drives one headless lite-execute session against a clone of a seed repo and saves
 # the stream, the git state, and the .crank/ artifacts under <run-dir>.
-# A gpt-* model runs under `codex exec` at SMOKE_EFFORT (default high), and any other model
-# under `claude -p`.
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 PD=$(cd "$1" && pwd); scenario=$2; model=$3; seeds=$(cd "$4" && pwd)
@@ -19,20 +17,15 @@ esac
 # SMOKE_SETTING_SOURCES=project,local leaves out the user-level CLAUDE.md, to test whether
 # its instructions override a skill rule.
 if [ -n "${SMOKE_SETTING_SOURCES:-}" ]; then perm+=(--setting-sources "$SMOKE_SETTING_SOURCES"); fi
-case $model in
-  gpt-*) harness=codex inv='$lite-execute' ;;
-  *) harness=claude inv=/crank-lite:lite-execute ;;
-esac
-if [ "$harness" = claude ]; then
-  # Smoke sessions bill the claude.ai subscription. An API key in the environment would switch them
-  # to API billing, so drop it, and refuse to start (status 255 stops batch.sh's xargs) unless the
-  # CLI still reports the subscription login.
-  unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
-  auth=$(claude auth status 2>/dev/null | python3 -c 'import json, sys; print(json.load(sys.stdin).get("authMethod", ""))' 2>/dev/null)
-  if [ "$auth" != claude.ai ]; then
-    echo "run.sh: claude auth method is '$auth', not claude.ai; run claude auth login" >&2
-    exit 255
-  fi
+inv=/crank-lite:lite-execute
+# Smoke sessions bill the claude.ai subscription. An API key in the environment would switch them
+# to API billing, so drop it, and refuse to start (status 255 stops batch.sh's xargs) unless the
+# CLI still reports the subscription login.
+unset ANTHROPIC_API_KEY ANTHROPIC_AUTH_TOKEN
+auth=$(claude auth status 2>/dev/null | python3 -c 'import json, sys; print(json.load(sys.stdin).get("authMethod", ""))' 2>/dev/null)
+if [ "$auth" != claude.ai ]; then
+  echo "run.sh: claude auth method is '$auth', not claude.ai; run claude auth login" >&2
+  exit 255
 fi
 
 case $scenario in
@@ -60,13 +53,6 @@ case $scenario in
     cp "$here/fixture/crank/spec.md" .crank/$slug/spec.md
     cp "$here/fixture/crank/plan.md" .crank/$slug/plan.md ;;
 esac
-if [ "$harness" = codex ]; then
-  # Codex loads the arm's copy as a repo skill. The exclude keeps it out of every git status
-  # the session and the scorer read.
-  mkdir -p .agents/skills
-  cp -R "$PD/skills/lite-execute" .agents/skills/
-  echo /.agents/ >> .git/info/exclude
-fi
 
 # progress <base> <sha>...: write the plan's Progress block, one checked task per sha in task order.
 progress() {
@@ -106,28 +92,13 @@ git rev-parse HEAD > "$run/seed-head"
 echo "$scenario $model" > "$run/arm"
 
 sid=$(uuidgen | tr 'A-Z' 'a-z'); echo "$sid" > "$run/session-id"
-# Codex runs in its workspace-write sandbox with approvals off, so it writes only inside this
-# clone and its .git. The installed crank plugins stay off so only the arm's copy loads.
-cx=(--json -m "$model" -c "model_reasoning_effort=\"${SMOKE_EFFORT:-high}\"" -c 'approval_policy="never"'
-    -c 'sandbox_mode="workspace-write"' -c "sandbox_workspace_write.writable_roots=[\"$run/repo/.git\"]"
-    -c 'notify=[]' -c 'plugins."crank@liva-toolbench".enabled=false'
-    -c 'plugins."crank-lite@liva-toolbench".enabled=false')
 start=$(date +%s)
 for n in $(seq 1 "$cap"); do
   if [ "$n" = 1 ]; then msg=$ASK; else msg=$REPLY; fi
-  if [ "$harness" = codex ]; then
-    if [ "$n" = 1 ]; then codex exec "${cx[@]}" "$msg"; else codex exec resume "${cx[@]}" "$sid" "$msg"; fi \
-      < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
-    if [ "$n" = 1 ]; then
-      sid=$(python3 -c 'import json,sys; print(json.loads(open(sys.argv[1]).readline())["thread_id"])' "$run/turns/1.jsonl")
-      echo "$sid" > "$run/session-id"
-    fi
-  else
-    if [ "$n" = 1 ]; then first=(--session-id "$sid"); else first=(--resume "$sid"); fi
-    claude -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
-      "${perm[@]}" --strict-mcp-config --settings "$SETTINGS" --plugin-dir "$PD" \
-      "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
-  fi
+  if [ "$n" = 1 ]; then first=(--session-id "$sid"); else first=(--resume "$sid"); fi
+  claude -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
+    "${perm[@]}" --strict-mcp-config --settings "$SETTINGS" --plugin-dir "$PD" \
+    "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
   case $scenario in fresh|prototype|prototype-solo|review|review-large) if [ -f .crank/$slug/retro.md ]; then break; fi ;; esac
   if [ "$scenario" = stop-if-detour ] && grep -q '^- \[x\] Task 2' .crank/csv-export/plan.md; then break; fi
 done
@@ -137,38 +108,8 @@ git log --format='%h %s' > "$run/gitlog.txt"
 git status --porcelain > "$run/status.txt"
 git diff HEAD > "$run/diff.txt"
 cp -R .crank "$run/crank-after"
-if [ "$harness" = claude ]; then
-  # A subagent's turns live in the session's transcript directory, keyed on the clone's resolved
-  # path: on macOS a mktemp dir under /var/folders resolves to /private/var/folders.
-  proj=$(cd "$run/repo" && pwd -P | tr -d '\n' | tr -c 'A-Za-z0-9' '-')
-  subs=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/$proj/$sid/subagents
-  if [ -d "$subs" ]; then cp -R "$subs" "$run/subagents"; fi
-fi
-if [ "$harness" = codex ]; then
-  # The --json stream leaves out spawns and some commands, so the scorer reads the session's
-  # rollout files: the orchestrator's thread and every subagent thread under it.
-  mkdir -p "$run/rollouts"
-  python3 - "$sid" "${CODEX_HOME:-$HOME/.codex}/sessions" "$run/rollouts" "$run/arm" <<'PY'
-import json, shutil, sys
-from pathlib import Path
-root, sessions, out, marker = sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4])
-since = marker.stat().st_mtime
-parents = {}
-for f in sessions.rglob("rollout-*.jsonl"):
-    if f.stat().st_mtime < since:
-        continue
-    with f.open(encoding="utf-8") as fh:
-        meta = json.loads(fh.readline()).get("payload", {})
-    src = meta.get("source")
-    spawn = src.get("subagent", {}).get("thread_spawn", {}) if isinstance(src, dict) else {}
-    parents[meta.get("id")] = (f, spawn.get("parent_thread_id"))
-keep = {root}
-while True:
-    more = {t for t, (_, parent) in parents.items() if parent in keep} - keep
-    if not more:
-        break
-    keep |= more
-for t in keep & parents.keys():
-    shutil.copy(parents[t][0], out / parents[t][0].name)
-PY
-fi
+# A subagent's turns live in the session's transcript directory, keyed on the clone's resolved
+# path: on macOS a mktemp dir under /var/folders resolves to /private/var/folders.
+proj=$(cd "$run/repo" && pwd -P | tr -d '\n' | tr -c 'A-Za-z0-9' '-')
+subs=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects/$proj/$sid/subagents
+if [ -d "$subs" ]; then cp -R "$subs" "$run/subagents"; fi

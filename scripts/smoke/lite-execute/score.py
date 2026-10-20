@@ -5,9 +5,8 @@
     python3 score.py --json <batch-dir>   # one JSON object per run instead of the table
 
 Each check reads a run's orchestrator stream, its subagents' streams, and the repo and
-.crank/ state run.sh saved. A Claude run's stream is its stream-json turns (orchestrator
-events carry no parent_tool_use_id); a Codex run's is the rollout files under rollouts/,
-one per thread. A check scores 1 when the run did what lite-execute's rules ask, 0 when it
+.crank/ state run.sh saved. A run's stream is its stream-json turns (orchestrator
+events carry no parent_tool_use_id). A check scores 1 when the run did what lite-execute's rules ask, 0 when it
 did not, and None when the run never reached the point the check judges. The table prints
 each check's pass rate per arm.
 """
@@ -21,9 +20,9 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SHA = re.compile(r"\b[0-9a-f]{7,40}\b")
-# The model each harness's user-level instruction file names for all subagent work.
-USER_SUBAGENT_MODEL = {"claude": "opus", "codex": "sol"}
-Stream = namedtuple("Stream", "harness items sub_cmds final")
+# The model the user-level CLAUDE.md names for all subagent work.
+USER_SUBAGENT_MODEL = "opus"
+Stream = namedtuple("Stream", "items sub_cmds final")
 
 
 def load_events(run):
@@ -68,100 +67,7 @@ def final_text(events):
 
 def claude_stream(run):
     events = load_events(run)
-    return Stream("claude", orchestrator_items(events), subagent_bash(events), final_text(events))
-
-
-PATCH_PATH = re.compile(r"\*\*\* (?:Add|Update|Delete) File: ([^\n\\\"]+)")
-JS_CMD = re.compile(r"""["']?cmd["']?\s*:\s*("(?:[^"\\]|\\.)*")""")
-
-
-def codex_threads(run):
-    """Each Codex rollout's records, working directory, and parent thread, keyed by thread id."""
-    threads = {}
-    for f in (run / "rollouts").glob("*.jsonl"):
-        recs = [json.loads(l) for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
-        meta = recs[0]["payload"]
-        src = meta.get("source")
-        spawn = src.get("subagent", {}).get("thread_spawn", {}) if isinstance(src, dict) else {}
-        threads[meta["id"]] = {"parent": spawn.get("parent_thread_id"), "cwd": meta.get("cwd", ""), "recs": recs}
-    return threads
-
-
-def assistant_texts(recs, phase=None):
-    return ["".join(c.get("text", "") for c in p.get("content", []) if c.get("type") == "output_text")
-            for r in recs for p in [r.get("payload", {})]
-            if r.get("type") == "response_item" and p.get("type") == "message" and p.get("role") == "assistant"
-            and (phase is None or p.get("phase") == phase)]
-
-
-def codex_calls(thread):
-    """Ordered (kind, payload) items from one Codex thread, in the shapes a Claude stream gives.
-
-    A Codex `exec` tool call is a script; each tools.exec_command cmd in it becomes a Bash
-    item, and each file an apply_patch names becomes an Edit item."""
-    items = []
-    for r in thread["recs"]:
-        p = r.get("payload", {})
-        if r.get("type") != "response_item":
-            continue
-        if p.get("type") == "message" and p.get("role") == "assistant":
-            text = "".join(c.get("text", "") for c in p.get("content", []) if c.get("type") == "output_text")
-            if text:
-                items.append(("text", text))
-            continue
-        if p.get("type") not in ("custom_tool_call", "function_call"):
-            continue
-        name, raw = p.get("name"), p.get("input") or p.get("arguments") or ""
-        if name == "spawn_agent":
-            args = json.loads(raw or "{}")
-            items.append(("Agent", {"call_id": p.get("call_id"), "input": {
-                "model": args.get("model", ""), "task_name": args.get("task_name", ""), "prompt": ""}}))
-            continue
-        cmds = []
-        if p.get("type") == "function_call" and name in ("exec_command", "shell", "shell_command"):
-            cmd = json.loads(raw or "{}")
-            cmd = cmd.get("cmd") or cmd.get("command") or ""
-            cmds = [" ".join(cmd) if isinstance(cmd, list) else cmd]
-        elif name == "exec":
-            for m in JS_CMD.finditer(raw):
-                try:
-                    cmds.append(json.loads(m.group(1)))
-                except ValueError:
-                    cmds.append(m.group(1))
-            if not cmds and "apply_patch" not in raw:
-                cmds = [raw]
-        items += [("Bash", {"input": {"command": c}}) for c in cmds]
-        for path in (x.strip() for x in PATCH_PATH.findall(raw)):
-            items.append(("Edit", {"input": {"file_path": path if path.startswith("/") else f"{thread['cwd']}/{path}",
-                                             "patch": raw}}))
-    return items
-
-
-def codex_stream(run):
-    """The orchestrator's items, every subagent's shell commands, and the final reply of a Codex run.
-
-    Codex encrypts the message a spawn sends, so a dispatch's prompt stays empty; its
-    child_cmds field carries the commands the spawned thread ran instead."""
-    threads = codex_threads(run)
-    root = (run / "session-id").read_text().strip()
-    if root not in threads:
-        return Stream("codex", [], [], "")
-    spawned = {}
-    for r in threads[root]["recs"]:
-        it = r.get("payload", {}).get("item", {})
-        if it.get("type") == "SubAgentActivity" and it.get("kind") == "started":
-            spawned[it["id"]] = it["agent_thread_id"]
-    calls = {t: codex_calls(th) for t, th in threads.items()}
-    items = calls[root]
-    for kind, payload in items:
-        if kind == "Agent":
-            tid = spawned.get(payload["call_id"])
-            payload["input"]["child_cmds"] = "\n".join(bash_cmd(it) for it in calls.get(tid, []))
-            recs = threads[tid]["recs"] if tid in threads else []
-            payload["input"]["child_text"] = "\n".join(assistant_texts(recs, "final_answer") or assistant_texts(recs)[-1:])
-    sub_cmds = [bash_cmd(it) for t, c in calls.items() if t != root for it in c]
-    finals = assistant_texts(threads[root]["recs"], "final_answer") or assistant_texts(threads[root]["recs"])
-    return Stream("codex", items, sub_cmds, finals[-1] if finals else "")
+    return Stream(orchestrator_items(events), subagent_bash(events), final_text(events))
 
 
 def first_index(items, pred):
@@ -228,8 +134,7 @@ def dispatches(items):
     agents = [(i, it[1]["input"]) for i, it in enumerate(items) if it[0] == "Agent"]
     def is_review(a):
         p = a.get("prompt", "")
-        return ("REVIEW-BRIEF" in p + a.get("child_cmds", "") or "review" in a.get("task_name", "").lower()
-                or bool(re.search(r"\breview", p, re.I) and re.search(r"\bdiff\b", p)))
+        return "REVIEW-BRIEF" in p or bool(re.search(r"\breview", p, re.I) and re.search(r"\bdiff\b", p))
     reviewer = [(i, a) for i, a in agents if is_review(a)]
     impl = [(i, a) for i, a in agents if not is_review(a)]
     return impl, reviewer
@@ -271,17 +176,15 @@ def score_fresh(run, st, block, s):
     subagents = preflight_line(block, "Subagents") or ""
     std = re.search(r"standard = ([^(,·]+)", subagents)
     s["shape_sequential"] = None if block is None else int("sequential" in shape)
-    s["standard_tier_user_model"] = None if not std else int(USER_SUBAGENT_MODEL[st.harness] in std.group(1).lower())
+    s["standard_tier_user_model"] = None if not std else int(USER_SUBAGENT_MODEL in std.group(1).lower())
     s["impl_dispatches"] = len(impl)
     s["impl_dispatch_per_task"] = int(len(impl) == 5)
     s["impl_model_user"] = rate(
-        sum(USER_SUBAGENT_MODEL[st.harness] in str(a.get("model", "")).lower() for _, a in impl), len(impl))
+        sum(USER_SUBAGENT_MODEL in str(a.get("model", "")).lower() for _, a in impl), len(impl))
     briefs = [a["prompt"] for _, a in impl if a.get("prompt")]
     s["brief_carries_constraints"] = rate(sum(bool(re.search(r"BOM|utf-8-sig", b)) for b in briefs), len(briefs))
     s["brief_carries_defect_rules"] = rate(
         sum(bool(re.search(r"round-trip|mutation|IMPLEMENTER-BRIEF", b, re.I)) for b in briefs), len(briefs))
-    if st.harness == "codex":
-        s["impl_reads_brief"] = rate(sum("IMPLEMENTER-BRIEF" in a.get("child_cmds", "") for _, a in impl), len(impl))
     s["implementers_never_commit"] = int(not any("git commit" in c for c in st.sub_cmds))
     inline = [it for it in items[:rev_idx]
               if (it[0] in ("Edit", "Write") and re.search(r"/repo/(ledger|tests|docs)/", it[1]["input"].get("file_path", "")))
@@ -422,9 +325,7 @@ def touches_variant(it):
 
 
 def subagent_variant_readers(run, st):
-    """The orchestrator tool_use ids whose subagent read the winning variant (Claude streams only)."""
-    if st.harness != "claude":
-        return set()
+    """The orchestrator tool_use ids whose subagent read the winning variant."""
     readers = set()
     for e in load_events(run):
         if e.get("type") == "assistant" and e.get("parent_tool_use_id"):
@@ -471,10 +372,6 @@ def score_prototype(run, st, block, s):
     if solo:
         s["page_dispatch_carries_variant"] = None
         s["page_builder_reads_variant"] = s["orch_reads_variant"]
-    elif st.harness == "codex":
-        s["page_dispatch_carries_variant"] = None
-        s["page_builder_reads_variant"] = None if not impl else int(
-            any(VARIANT in a.get("child_cmds", "") for _, a in impl))
     else:
         readers = subagent_variant_readers(run, st)
         s["page_dispatch_carries_variant"] = None if not page else int(any(f"{VARIANT}.html" in a["prompt"] for _, a in page))
@@ -504,8 +401,6 @@ def score_prototype(run, st, block, s):
 
 def agent_returns(run, st, agents):
     """The text each dispatched subagent returned, in dispatch order."""
-    if st.harness == "codex":
-        return [a.get("child_text", "") for _, a in agents]
     ids = [st.items[i][1].get("id") for i, _ in agents]
     texts, notified = {}, {}
     for e in load_events(run):
@@ -798,8 +693,8 @@ PRICES = {"opus": (4.0, 20.0, 0.20), "sonnet": (2.0, 10.0, 0.20)}
 
 
 def review_cost(run):
-    """Dollars, requests, tool calls per request, and wall-clock seconds across a Claude run's reviewer
-    threads, read from the session's subagent transcripts run.sh copied; None on Codex."""
+    """Dollars, requests, tool calls per request, and wall-clock seconds across a run's reviewer
+    threads, read from the session's subagent transcripts run.sh copied."""
     out = {"review_dollars": None, "review_requests": None, "review_calls_per_request": None, "review_seconds": None}
     files = []
     for f in sorted((run / "subagents").glob("*.jsonl")):
@@ -843,29 +738,25 @@ def review_cost(run):
 def score_review(run, st, block, s):
     """Every task is committed and checked, so the run goes straight to Review over a diff carrying
     the scenario's planted defects (REVIEW_FIXTURES). A defect counts as caught when a CONFIRMED
-    finding in a reviewer's return names it, or on Codex when the reviewer's final answer does, and
-    as fixed when the scenario's probe finds it gone from the final tree."""
+    finding in a reviewer's return names it, and as fixed when the scenario's probe finds it gone
+    from the final tree."""
     slug, defects, defect_probe = REVIEW_FIXTURES[(run / "arm").read_text().split()[0]]
     impl, reviewer = dispatches(st.items)
     s["reviewer_dispatched"] = int(bool(reviewer))
     s["review_dispatches"] = len(reviewer)
     stages = re.search(r"^## Stages\n(.*?)(?=^## |\Z)", plan_text(run, "crank-before"), re.M | re.S)
     s["review_plan_stages"] = len(re.findall(r"^\|\s*\d+\s*\|", stages.group(1), re.M)) if stages else 0
-    if st.harness == "codex":
-        s["review_shape"] = s["review_tiers"] = None
+    lenses = [(i, m.group(1)) for i, a in reviewer
+              if (m := re.search(r"^Lens: (Contract|Coherence|Tests)\s*$", a.get("prompt", ""), re.M))]
+    merges = [i for i, a in reviewer if "MERGE-BRIEF.md" in a.get("prompt", "")]
+    if s["review_plan_stages"] >= 2:
+        s["review_shape"] = int(len(reviewer) == 4 and sorted(n for _, n in lenses) == ["Coherence", "Contract", "Tests"]
+                                and len(merges) == 1 and all(merges[0] > i for i, _ in lenses))
     else:
-        lenses = [(i, m.group(1)) for i, a in reviewer
-                  if (m := re.search(r"^Lens: (Contract|Coherence|Tests)\s*$", a.get("prompt", ""), re.M))]
-        merges = [i for i, a in reviewer if "MERGE-BRIEF.md" in a.get("prompt", "")]
-        if s["review_plan_stages"] >= 2:
-            s["review_shape"] = int(len(reviewer) == 4 and sorted(n for _, n in lenses) == ["Coherence", "Contract", "Tests"]
-                                    and len(merges) == 1 and all(merges[0] > i for i, _ in lenses))
-        else:
-            s["review_shape"] = int(len(reviewer) == 1 and not re.search(r"^Lens:", reviewer[0][1].get("prompt", ""), re.M))
-        s["review_tiers"] = [f"{a.get('model')}/{a.get('effort')}" for _, a in reviewer]
-    # Codex encrypts the findings a reviewer sends; its plaintext final answer summarizes the confirmed ones.
+        s["review_shape"] = int(len(reviewer) == 1 and not re.search(r"^Lens:", reviewer[0][1].get("prompt", ""), re.M))
+    s["review_tiers"] = [f"{a.get('model')}/{a.get('effort')}" for _, a in reviewer]
     returns = agent_returns(run, st, reviewer)
-    text = "\n".join(returns if st.harness == "codex" else map(confirmed_text, returns)).lower()
+    text = "\n".join(map(confirmed_text, returns)).lower()
     for name, _, named in defects:
         s[f"caught_{name}"] = int(named(text)) if reviewer else None
     s["caught_total"] = sum(s[f"caught_{n}"] for n, _, _ in defects) if reviewer else None
@@ -892,7 +783,7 @@ SCORERS = {"fresh": score_fresh, "stop-if": score_stop_if, "stop-if-detour": sco
 
 def score(run):
     scenario, model = (run / "arm").read_text().split()
-    st = codex_stream(run) if (run / "rollouts").is_dir() else claude_stream(run)
+    st = claude_stream(run)
     block, s = common(run, st.items)
     SCORERS[scenario](run, st, block, s)
     s["seconds"] = int((run / "seconds").read_text()) if (run / "seconds").exists() else None

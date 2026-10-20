@@ -22,13 +22,12 @@ def turns_of(run):
     out = []
     for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
         lines = t.read_text(encoding="utf-8", errors="replace").splitlines()
-        is_codex = any('"thread_id"' in l or '"item.completed"' in l for l in lines[:5])
-        out.append((is_codex, list((extract.codex_events if is_codex else extract.claude_events)(lines))))
+        out.append(list(extract.claude_events(lines)))
     return out
 
 
 def plan_review_dispatches(run):
-    """The inputs of a Claude stream's orchestrator Agent or Task calls naming the plan review or merge brief, in stream order."""
+    """The inputs of the orchestrator's Agent or Task calls naming the plan review or merge brief, in stream order."""
     out = []
     for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
         for line in t.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -72,13 +71,12 @@ def score(run):
     phase = scenario.split("-")[0]
     artifact_name = (run / "artifact").read_text().strip()
     turns = turns_of(run)
-    is_codex = any(c for c, _ in turns)
-    texts = ["\n".join(b for k, b in ev if k == "text") for _, ev in turns]
-    tools = ["\n".join(b for k, b in ev if k == "tool") for _, ev in turns]
+    texts = ["\n".join(b for k, b in ev if k == "text") for ev in turns]
+    tools = ["\n".join(b for k, b in ev if k == "tool") for ev in turns]
     after = run / "crank-after"
     artifact = next(iter(after.glob(f"*/{artifact_name}")), None) if after.exists() else None
     body = artifact.read_text() if artifact else ""
-    written_at = next((i for i, tl in enumerate(tools) if artifact_name in tl and re.search(r"\[(Write|Edit)\]|file_change|cat >|tee |apply_patch", tl)), len(turns))
+    written_at = next((i for i, tl in enumerate(tools) if artifact_name in tl and re.search(r"\[(Write|Edit)\]|cat >|tee ", tl)), len(turns))
     before = range(min(written_at + 1, len(turns)))
     pre_text = "\n".join(texts[i] for i in before)
     status = [l for l in (run / "status.txt").read_text().splitlines() if l.strip()]
@@ -90,7 +88,7 @@ def score(run):
         "question_rounds": sum(1 for i in before if "❓" in texts[i]),
         "questions_asked": len(re.findall("❓", pre_text)),
         "recommend_lines": len(re.findall("➡️", pre_text)),
-        "lookup_dispatches": sum(len(re.findall(r"\[(Agent|Task)\]|spawn_agent", tools[i])) for i in before),
+        "lookup_dispatches": sum(len(re.findall(r"\[(Agent|Task)\]", tools[i])) for i in before),
         "prototype_mentions": len(re.findall(r"\b(prototype|mock|variants?)\b", pre_text, re.I)),
         "prototype_built": int(any(after.glob("*/prototype/*"))) if after.exists() else 0,
         "next_phase_loaded": int(any(NEXT_PHASE[phase] in tl for tl in tools)),
@@ -99,12 +97,12 @@ def score(run):
         "failure_catalogue": sum(bool(re.search(p, body, re.I)) for p in CATALOGUE) if phase == "spec" else None,
     }
     if phase == "plan":
-        dispatches = [] if is_codex else plan_review_dispatches(run)
+        dispatches = plan_review_dispatches(run)
         stages = plan_stages(body)
-        s["review_dispatched"] = None if is_codex else reviewer_dispatched(dispatches)
+        s["review_dispatched"] = reviewer_dispatched(dispatches)
         s["plan_stages"] = stages
-        s["review_shape"] = None if is_codex else review_shape(dispatches, stages)
-        s["review_tiers"] = None if is_codex else [f"{d.get('model')}/{d.get('effort')}" for d in dispatches]
+        s["review_shape"] = review_shape(dispatches, stages)
+        s["review_tiers"] = [f"{d.get('model')}/{d.get('effort')}" for d in dispatches]
     else:
         s["review_dispatched"] = None
     return s

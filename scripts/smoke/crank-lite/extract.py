@@ -2,7 +2,7 @@
 """extract.py <run-dir>: write <run-dir>/transcript.md, the session's turns as readable text.
 
 Each turn lists what the driver sent, then the assistant's messages and a one-line summary
-of each tool call, from a Claude stream-json or a Codex --json stream.
+of each tool call, from a Claude stream-json stream.
 """
 import json
 import sys
@@ -40,24 +40,6 @@ def claude_events(lines):
                 yield "tool", tool_line(part["name"], part.get("input"))
 
 
-def codex_events(lines):
-    for line in lines:
-        try:
-            ev = json.loads(line)
-        except ValueError:
-            continue
-        item = ev.get("item") or {}
-        if ev.get("type") != "item.completed":
-            continue
-        kind = item.get("type")
-        if kind == "agent_message" and item.get("text", "").strip():
-            yield "text", item["text"].strip()
-        elif kind == "command_execution":
-            yield "tool", f"[shell] {short(item.get('command', ''), 200)}"
-        elif kind:
-            yield "tool", f"[{kind}] {short({k: v for k, v in item.items() if k not in ('id', 'type')}, 200)}"
-
-
 def main(run):
     run = Path(run)
     out = [f"# {run.name}", ""]
@@ -66,8 +48,7 @@ def main(run):
         sent = (run / "turns" / f"{t.stem}.sent")
         out += [f"## Turn {t.stem}", "", f"> SENT: {sent.read_text().strip() if sent.exists() else '?'}", ""]
         lines = t.read_text(encoding="utf-8", errors="replace").splitlines()
-        is_codex = any('"thread_id"' in l or '"item.completed"' in l for l in lines[:5])
-        for kind, body in (codex_events if is_codex else claude_events)(lines):
+        for kind, body in claude_events(lines):
             out += [body, ""] if kind == "text" else [f"    {body}"]
         out.append("")
     (run / "transcript.md").write_text("\n".join(out), encoding="utf-8")
