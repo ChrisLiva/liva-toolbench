@@ -21,7 +21,7 @@ Precision over coverage: three real problems beat thirty nits. The run is read-o
 
 From the argument, settle exactly what "the changes" are. Three target shapes:
 
-- **PR** — `gh pr diff <n>`; on a forge `gh` does not serve, the CLI or API the project's instructions name for it, else the branch diff below against the PR's base branch. BASE = the merge-base with the PR's base branch. When local HEAD carries commits the PR's head branch on the remote lacks (`git log <remote>/<head>..HEAD`), say so and ask which one to review. Don't re-raise what the PR's existing review threads settled.
+- **PR** — `gh pr diff <n>`; on a forge `gh` does not serve, the forge tool the project names, else the branch diff against the PR's base. BASE = the merge-base with the PR's base branch. Ask before reviewing local commits the PR's head lacks. Don't re-raise what the PR's existing review threads settled.
 - **Commit range / branch vs main** — `git diff main...HEAD` (three-dot, so unrelated `main` commits stay out of the diff). A given range like `A..B` works too.
 - **Uncommitted** — `git diff HEAD`, plus untracked files from `git status --short` read in full — `git diff` never shows them.
 

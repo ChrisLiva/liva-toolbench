@@ -99,7 +99,7 @@ PRESENCE_LITERALS = {
         "final-merge-rubric.md",
         "two or more stages",
     ],
-    "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "The list bounds your tests"],
+    "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "reported under Observations as `pinned:"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort", "\nBound: <Task <N>, the plan's last", "`Prototype:` slot", "MERGE-BRIEF.md", "two or more stages"],
     "plugins/crank-lite/skills/lite-execute/DISPATCH.md": ["\nPrototype: <"],
     "plugins/crank/skills/crank/PLAN.md": ["long plan", "A requirement is a Behavior line", "](PROTOTYPE.md)", "two or more stages"],

@@ -63,7 +63,7 @@ Copy this block into the brief directory once per run; every task brief and fix 
 - Run RED→GREEN→REFACTOR where the task changes behavior: RED for the expected reason, minimal GREEN, REFACTOR as a behavior-preserving tidy of what GREEN touched with the test kept green, then the task verify command; for a multi-behavior task, one cycle per behavior as tracer bullets: test A -> impl A -> test B -> impl B.
 - A new test file is for a new seam: when a test already walks this seam, RED is a failing assertion extended onto that test.
 - A test not born RED gets one deliberate mutation of the code under test to watch it fail before you trust its pass — the same rule probes follow. A test born green and failed by its mutation, or one cycle serving two behaviors because one is the other's implementation, is evidence: record it in that behavior's RED→GREEN evidence block.
-- The `- [ ] Behavior N:` lines in your brief's **Behaviors** list are the test list — one RED→GREEN→REFACTOR cycle per numbered behavior. The list bounds your tests, not what ships: a requirement your plan section states that no Behavior line pins still ships, gets its own RED→GREEN→REFACTOR cycle, and lands under the report's Pinned as `<the sentence> — pinned by <file:line>`. No other test lands outside the list. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
+- The `- [ ] Behavior N:` lines in your brief's **Behaviors** list are the test list — one RED→GREEN→REFACTOR cycle per numbered behavior, plus one per requirement your plan section states that no Behavior line pins, reported under Observations as `pinned: <the sentence> — <file:line>`. No other test. Every committed test pins an observable behavior no other test already pins, and would survive a rewrite of the implementation in another language.
 ```
 
 ## `task-<N>-brief.md`
@@ -116,8 +116,7 @@ Put the full detail in the report path above. Return only this thin summary, fil
     Commits:
     - <sha> <subject>
     Tests: <one-line summary>
-    RED→GREEN: <evidence summary; one pair per behavior and per Pinned line, or "skipped: <the plan line, quoted>">
-    Pinned: <none, or one line per requirement outside the Behaviors list: <the sentence> — pinned by <file:line>>
+    RED→GREEN: <evidence summary; one pair per behavior, or "skipped: <the plan line, quoted>">
     Detours: <none | settled only | open: <one line>>
     Concerns: <none, or one line>
     Observations: <none, or one line per item a later task or the retro must carry>
@@ -173,17 +172,11 @@ Commits:
 
 ## RED→GREEN evidence
 
-Behavior <N>: <name> — one block per behavior line in the brief's Behaviors list, then one per Pinned line
+Behavior <N>: <name> — one block per behavior line in the brief's Behaviors list
 - RED: `<command>` -> <output proving the expected failure>
 - GREEN: `<command>` -> <passing output>
 
 Skipped because: <the plan's `Check:` line or task text that skips the cycle, quoted, or "not skipped">
-
-## Pinned
-
-A requirement your plan section states that no Behavior line in your brief pins, with the test you wrote for it.
-
-- <the sentence, quoted> — pinned by <file:line>, or "none"
 
 ## Verification
 

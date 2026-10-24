@@ -9,7 +9,7 @@ Turn the spec into tasks the **executor** builds with no further design conversa
 - Read the spec from the path triage handed you, else from the conversation. With no spec at all — a settled change routed straight to plan — write the acceptance criteria yourself from the user's ask before grounding, show them first in step 6's readback, and treat that list as the spec everywhere below.
 - **Write the plan to `.crank/<slug>/plan.md`** per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing the file.
 - **Oracles, not placeholders.** A step may omit code, never proof: each behavior names its oracle (or the exact check that proves it) and each verify its exact command and success reading. `TODO`, `TBD`, `implement later`, "add appropriate error handling", "similar to Task N", and references to symbols no task defines have no place.
-- **A requirement is a Behavior line.** A task ships its `- [ ] Behavior N:` lines and honors Global Constraints; every other sentence in its block orients. A rule, an ordering, a gesture, a fallback stated in prose is **unpinned** until a Behavior line carries it with its oracle: write that line, lift a project-wide rule to Global Constraints, or delete the sentence. The implementer tests the Behavior lines and pins only the unpinned requirements it catches, with an oracle it chose rather than the plan's; one it misses ships untested or not at all.
+- **A requirement is a Behavior line.** A task ships its `- [ ] Behavior N:` lines and honors Global Constraints; every other sentence in its block orients. A rule, an ordering, a gesture, a fallback stated in prose is **unpinned** until a Behavior line carries it with its oracle: write that line, lift a project-wide rule to Global Constraints, or delete the sentence. The implementer tests the Behavior lines and only the prose requirements it notices, so an unpinned requirement can ship untested.
 - **Cite what you assert.** Every claim about the code as it stands carries its evidence in the step that states it: an **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), the command and the exact output it printed, or `searched <scope>, none found`. It reaches claims in prose too: a count, a sole caller or sole use, a uniqueness, a snippet quoted from a file, the output a gate is expected to print, and a third-party tool's exact output, exit code, or API contract. Grounding proves them (Flow → Ground first); a claim it could not settle becomes a `Stop if:` line on the task that rests on it, never an assertion.
 
 ## Guidelines
@@ -149,7 +149,7 @@ Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch it per [SKILL.md]
 
 In a plan with two or more stages, each reviewer gets its findings path `plan-review-findings-<a | b | x>.md` beside the plan:
 - `Shard A` and `Shard B` run at the standard tier, each with its `<task-range>`. Shard A takes Task 1 through the last task of the stage whose cut leaves the two ranges closest in task count, the earlier cut on a tie, and Shard B takes the rest.
-- `Shard X` runs at the heavy tier, its `<task-range>` filled `none`.
+- `Shard X` runs at the heavy tier.
 
 The merger's findings file is `plan-review-findings.md`, and its edit script is `plan-review-edits.py`.
 
