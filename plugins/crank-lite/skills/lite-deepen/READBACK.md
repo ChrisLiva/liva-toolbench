@@ -13,7 +13,7 @@ Send the whole artifact as one message, compressed:
 - **Show each judgment call beside the option it beat.**
 - **Mark the review's work**, where a review ran: tag each item it added or rewrote `(review)`, and after the last section state how many findings it landed and refuted. List each finding the review left as a decision, such as one marked `decision` or `Spec decision:` in its findings file, with your recommendation and the text it would change, or, where the phase landed it, the replacement it beat.
 - **Draw what reads better as a picture**: an interface, flow, or logic as pseudo-code, a call graph, or a small ASCII diagram (chat renders mermaid as raw text).
-- **Close on one line:** reply with changes, or say **done** to finish.
+- **Close on one line:** reply with changes, or say **done** to finish. Where the message lists a review decision, the line names each one and says **done** accepts its recommendation.
 
 Before sending, check the message: could the user strike or amend a specific item from it? A message that invites only "sounds good" describes the artifact; rewrite it as items.
 
@@ -21,7 +21,7 @@ Before sending, check the message: could the user strike or amend a specific ite
 
 Sort each reply:
 
-- **Approval**, such as "done" or "looks good", ends the readback.
+- **Approval**, such as "done" or "looks good", accepts the recommendation on each review decision the message listed: land each one's text in the artifact, as a change the user stated outright, then the readback ends.
 - **A question** about an item gets an answer in chat, then the same closing line.
 - **A change the user states outright**, such as strike this, reword that, or add this criterion, goes to one standard-tier subagent, resolved like this skill's other standard-tier dispatches, with the brief below.
 - **A change with more than one defensible landing** is a decision: ask it as one interview round, then dispatch the answer.
