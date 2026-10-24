@@ -31,7 +31,7 @@ High conviction over coverage: a plan of the moves worth making beats an invento
 
 The user's invocation names the scope as one of four shapes. If it names none, ask which before anything else.
 
-- **PR**: `gh pr view <n> --json headRefName,baseRefName` then `gh pr diff <n>`; the target is the changed files at their current state, judged where the diff touched them.
+- **PR**: `gh pr view <n> --json headRefName,baseRefName` then `gh pr diff <n>`; on a forge `gh` does not serve, the CLI or API the project's instructions name for it, else the branch diff below against the PR's base branch. When local HEAD carries commits the PR's head branch on the remote lacks (`git log <remote>/<head>..HEAD`), say so and ask which one to judge; the target is the changed files at their current state, judged where the diff touched them.
 - **Branch diff**: `git diff <default-branch>...HEAD`, whose three dots keep unrelated default-branch commits out, plus `git diff HEAD` and untracked files from `git status --short` when uncommitted work is present.
 - **Logical area**: a directory, module, or named slice, read whole; inventory its files with `git ls-files <path>`.
 - **Entire codebase**: every tracked source file; inventory with `git ls-files`.
