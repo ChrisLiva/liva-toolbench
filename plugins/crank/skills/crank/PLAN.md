@@ -149,7 +149,7 @@ Read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch it per [SKILL.md]
 
 In a plan with two or more stages, each reviewer gets its findings path `plan-review-findings-<a | b | x>.md` beside the plan:
 - `Shard A` and `Shard B` run at the standard tier, each with its `<task-range>`. Shard A takes Task 1 through the last task of the stage whose cut leaves the two ranges closest in task count, the earlier cut on a tie, and Shard B takes the rest.
-- `Shard X` runs at the heavy tier.
+- `Shard X` runs at the heavy tier, its `<task-range>` filled `none`.
 
 The merger's findings file is `plan-review-findings.md`, and its edit script is `plan-review-edits.py`.
 

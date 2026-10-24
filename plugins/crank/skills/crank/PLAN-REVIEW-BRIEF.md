@@ -39,7 +39,7 @@ No flag above licenses cutting or folding away a trust-boundary validation, data
 **Shard.** Your shard is `<shard>`, one of three over this plan: report only yours, though you still read the plan's whole frame and the spec.
 
 - **Shard X** owns what spans tasks: the walk of the spec above, coverage holes, unclaimed file, hollow stage gate, name / type / path inconsistencies across tasks, redundant tests, scattered guards, interface drift, Global Constraints violations, order problems, self-invalidating citation, and the dropped safeguard above.
-- **Shard A** and **Shard B** own the task blocks in `<task-range>`, each read against every other flag above, with name / type / path inconsistencies against the codebase only.
+- **Shard A** and **Shard B** each own one task range: when your shard is A or B, yours is `<task-range>` and the other shard owns the rest. Read each block in your range against every other flag above, with name / type / path inconsistencies against the codebase only.
 
 Write your findings to `<findings-path>` in the Collect pass's form, each carrying its `(block, old, new)` triple. This paragraph replaces the fix instruction, the Apply pass, and the Done-when line below: the merger lands the edits, `<findings-path>` is the only file you write, and you are done when your lookup frontier is empty and every finding in your shard is in `<findings-path>`, `refuted` or carrying its triple. End your reply with a one-line summary: the counts of findings and refuted findings.
 
