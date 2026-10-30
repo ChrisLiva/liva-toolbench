@@ -110,7 +110,9 @@ When one concept forces `modify` rows across several files in lockstep, that is 
 
 When two tasks need the same helper, constant, rule, or test fixture, its File structure row names one home: the first task that needs it lists it under `Produces:`, each later task lists it under `Consumes:` by name and names the home file `modify` in its Files block when it may extend it, and no task body restates another task's code.
 
-Completion criterion: every file the plan touches has a path / action / responsibility row, every `create` passes the deletion test, and every `modify` traces to a spec-named surface.
+**Search before you design.** Before the plan defines a schema, helper, store, query, constant, or condition, grep the repo for its shape — the expression, SQL, or literal it would hold — not only its name, and cite the result per Hard Rules → Cite what you assert. Reuse a hit by name, export or extract a module-private one rather than copy it, and move a check or follow-up call that another caller wraps around a function the task consumes into that function rather than repeat it.
+
+Completion criterion: every file the plan touches has a path / action / responsibility row, every `create` passes the deletion test, every definition the plan introduces cites its shape search, and every `modify` traces to a spec-named surface.
 
 ### 3. Decompose
 
@@ -138,12 +140,15 @@ Every `Verify:` step names exact success (`1 passed`, exit 0, status 200) and a 
 
 Route reuse by name: if grounding (or the spec) surfaced an existing utility, the task names it and the contract goes through it — a bespoke near-duplicate is architectural drift. When no in-repo helper fits, reach in order — the stdlib, then a native platform feature (a DB constraint over app code, `<input type="date">` over a date-picker lib), then a dependency already in the manifest — before adding a new one; never add a dependency for what a few lines do. A new dependency the spec's **Tech stack** didn't pin, and a contract that only types with a cast, `any`, or a new optional parameter, are each an **Updates since spec** item to resolve, not a quiet import or an inline patch.
 
+**Pin the overlaps.** For a module that holds state across an await — a lifecycle such as start and stop, a queue or lock, a cache, a window opened around a callback — write a Behavior line for each pair of operations that can overlap, the same one twice included: what the second call does while the first is pending, with an oracle that leaves the first unawaited. A guard for one pair leaves the others open. An invariant the design rests on but the code does not enforce — a callback with no await, a branch called unreachable — gets a guard that fails loudly and a Behavior line that breaks it on purpose.
+
 **Completion criterion**, all of:
 
 - every behavior the spec lists lands in a task's behavior line or verify, proved by walking the spec to build the **Coverage table**;
 - every `Verify:` names an exact command and exact success reading, each count, grep, or probe reading pinned as base → target, the two unequal, the base read on the tree the task starts from or named as read at task start or as an earlier task's recorded reading;
 - every test-driven behavior names the seam the spec's Testing approach named;
 - every reuse grounding surfaced is named in its task;
+- every module that holds state across an await pins each overlapping pair of its operations, and every unenforced invariant it rests on carries a guard and a Behavior line that breaks it;
 - every claim about the current code cited or on a `Stop if:` line per Hard Rules → Cite what you assert, each citation opened this phase;
 - every requirement in every task block is a Behavior line (Hard Rules → A requirement is a Behavior line), and no task leaves a decision for execute to settle — a file with two possible homes, an id or ordering rule the behaviors assume but no line states;
 - every task that builds or reshapes the surface a `Prototype:` verdict covers carries a `Prototype:` line whose path opens the winning variant, or that reads `in chat` with the winning block beneath it, and a Behavior line for each committed part of the verdict;
