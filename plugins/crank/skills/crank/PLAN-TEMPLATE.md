@@ -49,7 +49,7 @@ Prototype: <the winning variant's path, or `in chat` with the winning block bene
 - [ ] Behavior 1: <what the code must do>. Oracle: `<exact input>` → `<exact expected output>`. Seam: <production seam the test drives>
       <pseudo-code or embedded code, only where PLAN.md's ladder calls for it>
 - [ ] Behavior 2: <next behavior in tracer-bullet order — or a directive line for a mechanical change>
-- [ ] Verify: `<exact command>` → <exact success reading; for a count, grep, or probe: base: <what it prints now> → target: <what it must print>>
+- [ ] Verify: `<exact command>` → <exact success reading; for a count, grep, or probe: base: <what it prints on the tree this task starts from, `read at task start`, or `Task <N>'s recorded reading`> → target: <what it must print>>
 
 ### Task 2 — <independently committable outcome>
 
@@ -63,9 +63,9 @@ Prototype: <the winning variant's path, or `in chat` with the winning block bene
 
 ## Coverage
 
-| criterion | task # | verify step that proves it |
-|---|---|---|
-| <acceptance criterion> | Task 1 | <behavior or verify line that proves it> |
+| criterion | task # | verify step that proves it | fails when |
+|---|---|---|---|
+| <acceptance criterion> | Task 1 | <behavior or verify line that proves it> | <the production line whose deletion or reversion turns that check red, one per site> |
 
 ## Smoke tests for the user
 

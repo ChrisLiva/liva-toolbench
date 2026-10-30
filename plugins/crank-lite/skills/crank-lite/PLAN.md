@@ -12,6 +12,7 @@ Before the first question, read:
 - The winning variant the incoming artifact's `Prototype:` line names, and any other mock it records, read at its path.
 - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, when one exists, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding. Rewrite a drifted entry in place where it lives, in that section or that `grounding.md`, with the new evidence, phase, and date, then carry the drift into the plan's updates since spec.
+- Each earlier effort's `grounding.md` and `retro.md` under `.crank/` that names a file the incoming artifact names (one grep of `.crank/` for those paths), for its banked facts, open items, and deferred findings, verify-then-trusted the same way; carry each that bears on this plan into the plan's updates since spec, in scope or out with its reason.
 
 Offer a prototype, 3 to 5 variants behind one switcher, once, when all three hold:
 
@@ -25,7 +26,7 @@ A risk no check can retire is a decision: put it to the user during the intervie
 
 Run it, don't recall:
 
-- During the interview's fact lookups, run each build-tool, CLI-flag, or pinned-dependency behavior the plan leans on once, and record what it printed: an exact output, exit code, or API contract, in prose or as an embedded block.
+- During the interview's fact lookups, run each behavior of code the repo does not own that the plan leans on (a build tool, CLI flag, pinned dependency, library call, or OS or shell behavior) once in the form the task uses it, with the same command, flags, shell, platform, and target, and record what it printed: an exact output, exit code, or API contract, in prose or as an embedded block. A neighbor's run (`node` for `tsc`) settles nothing, and an external API's response shape cites the provider's documented example or a recorded call.
 - When the work keys, transforms, or migrates existing data, run the proposed invariant over the full real dataset, not a canned fixture, and record the count checked.
 
 ## Vocabulary
@@ -44,22 +45,24 @@ The plan's file is `plan.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTI
 6. Ordered tasks.
 7. Stages, for a long plan: read [STAGES.md](STAGES.md) once the task list settles, and read each cut back beside the cut it rejected.
 8. Verification checks.
-9. Coverage: a table, `criterion | task | verify step that proves it`, with one row per acceptance criterion in the spec, or with no spec, per behavior the goal names. A criterion no machine check can prove reads `human-only: <what a person checks>` in its verify cell.
+9. Coverage: a table, `criterion | task | verify step that proves it | fails when`, with one row per acceptance criterion in the spec, or with no spec, per behavior the goal names. The `fails when` cell names the production line whose deletion or reversion turns that check red, one per site when the change lands at two, and the row covering the plan's riskiest behavior change names a committed test, not a probe, or says why a probe suffices. A criterion no machine check can prove reads `human-only: <what a person checks>` in its verify cell.
 10. Risks, each paired with the check that retires it during execution.
 11. Grounding: what the interview's runs printed and its banked entries (ARTIFACT-HOME.md → Grounding).
 
 Verification checks:
 
 - Prefer checks a machine can judge: the repo's exact gate commands (typecheck, lint, test, build), or a **probe** where no committed test fits. The check that retires a risk names one of these instruments.
-- A check whose reading is a count or a probe output records what the tree prints now beside what it must print; equal readings are a **dead seam**.
-- Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan.
+- A check whose reading is a count or a probe output records what the tree the task starts from prints beside what it must print: the tree now, or, when an earlier task changes what the check reads, `read at task start` or the reading that task's check records; equal readings are a **dead seam**. The target comes from a run on a scratch copy with the change applied when the change is mechanical (a formatter, a codemod, a retype), or reads as measured at task time with the `Stop if:` band it must land in.
+- A check reads named tests or a gate passing, never a full-suite total, and a task scoped by a linter's or type checker's report scopes to what that tool reports at task start under a named path.
+- Tests follow the spec's methodology, or with no spec, one **journey test** per workflow that passes the **rewrite test**; a **redundant test** stays out of the plan. An oracle's expected value comes from a source independent of the change (the spec, a hand-verified literal, a naive reference), never from the code under test or the code it replaces, and no planned test pins a schema's, migration's, or config's shape or incidental prose.
+- A step the executor may not or cannot take (a push or merge, a write to production data, a destructive git command, a gesture in a GUI no tool in the session drives) is the user's: the task prints the exact command for the user, and its check reads the result the user reports.
 - As you write, confirm at its source each fact the interview never asked, such as a signature, a file a task edits, or a count a check pins, and record what you read in Grounding. Any fact you cannot confirm this session follows the `Stop if:` case below.
 
 Write every task for the weakest executor it may get, one that sees only the task's text with its `Stop if:` line, its file paths, its check, the plan's Global Constraints, the grounding lines for those files, the `Prototype:` line when the task builds or reshapes that line's surface, and the commits already landed. Each task carries:
 
 - its own paths, contract, and check;
 - the existing test or file to model after;
-- by name, each helper the repo already has that it needs.
+- by name, each helper the repo already has, or an earlier task in this plan builds, that it needs. A helper two tasks need is built by the first and named by the second, whose paths list its home file when it may extend it.
 
 A claim about the code as it stands cites its **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), or the command and what it printed.
 
@@ -68,7 +71,7 @@ By case:
 - **The task builds or reshapes the surface a `Prototype:` line covers**, in the spec or the plan: before you write it, read the winning variant at the line's path, or the block beneath a line reading `in chat`. The task names that path, or `in chat`, as its reference, and which part of the verdict it builds.
 - **A module being reshaped has no test at its seam**: a characterization task comes first.
 - **No gate command runs**: the first task establishes one.
-- **The task tightens a shared contract** (a field made required, a shared symbol renamed, a validator narrowed): it carries every call site the grep found.
+- **The task renames, moves, deletes, retypes, or changes the meaning of a symbol, file, value, or documented behavior** (a tightened contract included: a field made required, a validator narrowed): it carries every hit of one whole-repo grep for the name, and for the old value where that value is distinctive (a hash, a count prose repeats, a unique string), tests, fixtures, docs, and agent instruction files included, or names a hit it leaves alone with the reason.
 - **The task rests on a fact you could not confirm this session, and the fact being false would change what that task ships**: the task carries a `Stop if: <what the executor would observe if the fact is false>` line, and the fact stays off Risks. An unconfirmed fact whose check an executor can run without changing what ships goes under Risks with that check.
 
 ## Review

@@ -13,17 +13,18 @@ Work your lookups in **rounds**: a round's **frontier** is every lookup whose an
 
 Flag every instance of:
 
-- **unverifiable check** — a task or risk check with no exact command and success reading, or a count or probe reading with no base reading beside its target; equal readings are a **dead seam**.
+- **unverifiable check** — a task or risk check with no exact command and success reading, or a count or probe reading with no base reading beside its target, or a target no named run produced and no `Stop if:` band bounds; equal readings are a **dead seam**.
 - **unretired risk** — a risk paired with no check, or with a check that cannot settle it; name the check that would.
-- **uncited claim** — a statement about the code as it stands, or about a build tool, CLI flag, or pinned dependency, with no **anchor** (or the command and what it printed) behind it, or cited by a line number where a symbol could be named; cite it by its **anchor** or correct it.
+- **uncited claim** — a statement about the code as it stands, or about code the repo does not own (a build tool, CLI flag, pinned dependency, library call, or OS or shell behavior), with no **anchor** (or the command, run in the form the task uses, and what it printed) behind it, or cited by a line number where a symbol could be named; cite it by its **anchor** or correct it.
 - **stale anchor** — an **anchor** or count an earlier task in the same plan moves, renames, or destroys; re-key it on the symbol's name after that task, or on the command that re-derives it at task time.
-- **unproved criterion** — a spec acceptance criterion no task's check proves.
+- **unproved criterion** — a spec acceptance criterion no task's check proves, or whose Coverage `fails when` cell names no production line, or names a revert that would leave its check green.
+- **unclaimed hit** — a hit of a whole-repo grep for a name, or a distinctive old value, that a task renames, moves, deletes, or changes the meaning of, which no task carries or names as left alone.
 - **hollow stage gate** — in a staged plan, a stage whose last task leaves a gate command unrun or a claimed criterion unproved, or a task number in no stage row or in two.
 - **placeholder** — `similar to Task N`, "add appropriate handling", a symbol no task defines.
-- **bespoke duplication** — a task builds a helper the repo already has; grep to confirm and name the canonical one.
+- **bespoke duplication** — a task builds a helper the repo already has, or one another task in this plan builds; grep to confirm and name the canonical one, or the task that builds it.
 - **unreferenced prototype** — a task that builds or reshapes the surface a `Prototype:` line in the spec or the plan covers, whose text omits the winning variant's path or the part of the verdict it builds, or names a path no file holds; where that line reads `in chat`, the task names `in chat` in place of the path.
 - **unmodeled task** — a task naming no existing test or file to model after, or a reshape with no characterization task before it.
-- **implementation-detail or redundant test** — a planned test that reads its oracle through a back channel, or re-pins a behavior the journey test at that seam already proves; name the seam it drives or the journey test it folds into.
+- **implementation-detail or redundant test** — a planned test that reads its oracle through a back channel, or re-pins a behavior the journey test at that seam already proves; name the seam it drives or the journey test it folds into. Also a planned test whose expected value is computed by the code under test or the code it replaces, or that pins a schema's, migration's, or config's shape or incidental prose; give it an independent oracle, or cut it.
 - **dropped safeguard** — a trust-boundary validation, data-loss or error path, security check, or accessibility affordance that the spec relies on and the plan drops.
 
 Take the spec's decisions as settled.
@@ -31,7 +32,7 @@ Take the spec's decisions as settled.
 A dispatch carrying a `Shard:` line makes you one of three reviewers over this plan: read the whole plan and the spec for the contracts your shard relies on, but report only your shard, since a defect outside it belongs to another reviewer:
 
 - **Shard A** and **Shard B** each own the task range the dispatch names, each task in it read against **unverifiable check**, **uncited claim**, a **stale anchor** between tasks in the range, **placeholder**, **bespoke duplication**, **unreferenced prototype**, **unmodeled task**, **implementation-detail or redundant test**, and a **dropped safeguard** within one task's text.
-- **Shard X** owns what spans tasks: **unproved criterion**, **hollow stage gate**, **unretired risk**, a **stale anchor** one task moves that a task in another range relies on, a **dropped safeguard** across the plan, the verification checks as tests that span tasks, and every interface or value one task defines and another task uses, checked for agreement in name, signature, coordinate frame, and meaning.
+- **Shard X** owns what spans tasks: **unproved criterion**, **unclaimed hit**, **hollow stage gate**, **unretired risk**, a **bespoke duplication** between two tasks, a **stale anchor** one task moves that a task in another range relies on, a **dropped safeguard** across the plan, the verification checks as tests that span tasks, and every interface or value one task defines and another task uses, checked for agreement in name, signature, coordinate frame, and meaning.
 
 A dispatch with no `Shard:` line gives you every flag and check above.
 
