@@ -22,7 +22,7 @@ Offer a prototype, 3 to 5 variants behind one switcher, once, when all three hol
 
 When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it; on a no, record `Prototype: declined` under the plan's assumptions. When the incoming artifact is a brainstorm brief, copy its `Prototype:` line, with any block beneath it, under the plan's assumptions as written. When no offer fires, move to the questions without mentioning a prototype.
 
-A risk no check can retire is a decision: put it to the user during the interview, so the plan ships with no open questions.
+A risk no check can retire is a decision, and so are a spec clause the code contradicts, a threshold no run measured, and a spec decision whose stated reason the interview's lookups overturned: put each to the user during the interview, so the plan ships with no open questions.
 
 Run it, don't recall:
 
@@ -72,6 +72,7 @@ By case:
 - **A module being reshaped has no test at its seam**: a characterization task comes first.
 - **No gate command runs**: the first task establishes one.
 - **The task renames, moves, deletes, retypes, or changes the meaning of a symbol, file, value, or documented behavior** (a tightened contract included: a field made required, a validator narrowed): it carries every hit of one whole-repo grep for the name, and for the old value where that value is distinctive (a hash, a count prose repeats, a unique string), tests, fixtures, docs, and agent instruction files included, or names a hit it leaves alone with the reason.
+- **A criterion is read on an environment the tests stand in for** (a live model or service, the real corpus or the user's data, a build target the suite does not build, a person using the UI): the first task that wires that path end to end takes one reading there, its `Stop if:` carrying the criterion's caps, before any task that tunes, extends, or presents the path. A reading that needs the user's data, credentials, or hands is the user's step at that task.
 - **The task rests on a fact you could not confirm this session, and the fact being false would change what that task ships**: the task carries a `Stop if: <what the executor would observe if the fact is false>` line, and the fact stays off Risks. An unconfirmed fact whose check an executor can run without changing what ships goes under Risks with that check.
 
 ## Review

@@ -65,7 +65,7 @@ One self-contained implementation plan at the `.crank/` path (see Hard Rules), w
 
 - **Header** — title, `Spec:` (absolute path to the spec, when one exists — execute's final review needs it), `Grounding:` (per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding), `Goal:` (one sentence), `Architecture:` (2–3 sentences), `Tech stack:` (pinned versions), `Gates:` (the repo's test / lint / typecheck / build commands, each proven to run during grounding — execute's final walk and every implementer inherit them from here), `Base:` (the HEAD SHA grounding read — the tree any line-number fallback reads against).
 - **Global Constraints** — project-wide rules every task must honor: version floors, dependency limits, naming and copy rules, platform requirements — one line each, exact values copied verbatim from the spec. Omit only if the spec names no such rule.
-- **Updates since spec** — what the plan must resolve that the spec doesn't settle: drift found while grounding, a spec gap a `modify` or a missing seam exposed, a dependency or contract the spec never pinned, a safety behavior the spec only implies. Omit if none.
+- **Updates since spec** — what the plan must resolve that the spec doesn't settle: drift found while grounding, a spec gap a `modify` or a missing seam exposed, a dependency or contract the spec never pinned, a safety behavior the spec only implies, and each `user decision:` the plan's question round landed. Omit if none.
 - **Refactor scope** — the spec's explicit allowlist of existing modules open to reshaping, copied over. Omit if the spec had none.
 - **File structure** — the table from Map the files.
 - **Tasks** — each with a `Files:` block; an **Interfaces** block (`Consumes:` / `Produces:` — the exact signatures this task depends on and exposes; drop an empty side); a `Check:` line naming the per-task call (test-first / lightest-check / probe) and the exemplar to model after; a `Stop if:` line per Hard Rules → Cite what you assert, so the executor returns `BLOCKED` instead of improvising (omit when grounding proved every assumption); a `Prototype:` line on each task that builds or reshapes the surface a `Prototype:` verdict covers, naming the winning variant's path, or `in chat` with the winning block copied beneath the line, and what the user left out of the winner, with the verdict's committed parts (the winner's layout, information hierarchy, and primary affordance, what the user took from the other variants, and the absence of each part the user left out) pinned as that task's Behavior lines, each absence line's oracle asserting that the surface renders and that the left-out part does not; then one checkbox per behavior — each carrying its oracle and, where a test drives it, its seam — ending on the task's `Verify:` step.
@@ -82,17 +82,20 @@ Learn what you'll touch before writing tasks. Dispatch the wide reads per [SUBAG
 
 **Offer a prototype when the spec left the frontend open.** Offer a prototype, 3 to 5 variants behind one switcher, once when all three hold: the change touches a page, screen, component, CLI output, flags, help text, or TUI; the spec carries no `Prototype:` line, or no spec exists; and a look or interaction decision is still open. A `Prototype:` line reading a verdict, `declined`, or `no verdict` suppresses the offer. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. `Prototype: declined` on a no lands under **Updates since spec**. When no offer fires, move to the questions without mentioning a prototype.
 
+**Ask the plan's decisions.** When grounding leaves a choice with more than one defensible answer that the spec does not settle — a spec clause the code contradicts, two criteria that collide on a case grounding found, a threshold or cap no run measured, a spec decision whose stated reason this phase's grounding overturned, the home of a new shared module — ask those choices as one round per [GRILLING.md](GRILLING.md) before Map the files, and land each answer under **Updates since spec** as `user decision: <answer>`.
+
 Completion criterion, all of:
 
 - `.crank/<slug>/grounding.md` read where it exists and its entries verify-then-trusted ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding);
+- each earlier effort's `grounding.md` and `retro.md` under `.crank/` that names a file the spec names (one grep of `.crank/` for those paths) read for its banked facts, open items, and deferred findings, verify-then-trusted the same way, and each one that bears on this plan landed under **Updates since spec**, in scope or out with its reason;
 - every spec-named file and symbol read (or its read delegated and returned), with exact signatures and import paths in hand, and drift since the spec noted for **Updates since spec**;
 - every `Gates:` command — test, lint, typecheck, build, exactly as this project runs them — captured and run once; where none runs, the first task establishes one (a typecheck script, or a characterization test at the seam the work touches) before any task that changes behavior;
-- each earlier effort's `grounding.md` and `retro.md` under `.crank/` that names a file the spec names (one grep of `.crank/` for those paths) read for its banked facts, open items, and deferred findings, verify-then-trusted the same way, and each one that bears on this plan landed under **Updates since spec**, in scope or out with its reason;
 - every artifact the plan will embed **surveyed**, its evidence in hand (Guidelines → Prose, pseudo-code, or embedded code);
 - every behavior of code the repo does not own that the plan leans on — a build tool, bundler, CLI flag, pinned dependency, library call, or OS or shell behavior — run once in the form the task uses it (the same command, flags, shell, platform, and build target), or named on a `Stop if:` line with the check that would settle it; a neighbor's run (`node` for `tsc`, one OS for a test two CI arms run) settles nothing, and an external API's response shape cites the provider's documented example or a recorded call;
 - every claim about the current code you can already name checked at its source per Hard Rules → Cite what you assert, its citation in hand; a population claim (the only caller, no other use, the canonical helper, an absence) records the scope searched;
 - for every symbol, file, value, or documented behavior a task renames, moves, deletes, retypes, or changes the meaning of (a tightened contract included: a field made required, a validator narrowed), one whole-repo grep for its name, and for its old value where that value is distinctive (a hash, a count prose repeats, a unique string), across code, tests, fixtures, docs, ADRs, agent instruction files, and comments, plus one grep for line citations into each file a task inserts lines into; that **blast radius** decides which files the tasks name, and a hit no task claims is named in the nearest task as left alone, with its reason;
 - where the work keys, transforms, or migrates data that already exists (a DB, corpus, file tree), the proposed invariant run over the full real dataset and the count checked recorded;
+- each choice grounding left open asked per **Ask the plan's decisions**, its answer under **Updates since spec**;
 - the step's proven facts banked to the grounding file.
 
 ### 2. Map the files
@@ -105,11 +108,11 @@ Every `modify` should trace to a surface the spec named; one that doesn't is **s
 
 When one concept forces `modify` rows across several files in lockstep, that is a missing seam, not a wide change: record it in **Updates since spec** as a Refactor scope candidate naming the module that should own the concept, rather than planning N synchronized edits.
 
+When two tasks need the same helper, constant, rule, or test fixture, its File structure row names one home: the first task that needs it lists it under `Produces:`, each later task lists it under `Consumes:` by name and names the home file `modify` in its Files block when it may extend it, and no task body restates another task's code.
+
 Completion criterion: every file the plan touches has a path / action / responsibility row, every `create` passes the deletion test, and every `modify` traces to a spec-named surface.
 
 ### 3. Decompose
-When two tasks need the same helper, constant, rule, or test fixture, its File structure row names one home: the first task that needs it lists it under `Produces:`, each later task lists it under `Consumes:` by name and names the home file `modify` in its Files block when it may extend it, and no task body restates another task's code.
-
 
 A **task** is independently committable (green tree at end) and implements one cohesive thing. Execute supplies the working rhythm — failing test → minimal impl → verify → commit — so size tasks to that cycle rather than scripting it. A multi-behavior task's steps slice **vertically**, one **tracer bullet** at a time, never a **horizontal slice**. **Split trigger** — if a task would yield two changes that each leave a green tree and each prove a distinct spec behavior (two unrelated acceptance criteria, or a refactor plus the feature that rides on it), make them two tasks; fold setup, config, and doc edits into the task that needs them rather than giving them their own.
 
@@ -119,11 +122,13 @@ A Refactor scope module with no test at its seam gets a **characterization** tas
 
 **Wide refactors are the exception to the one-task green tree.** A **wide refactor** is one mechanical change — rename a shared symbol, retype a column — whose blast radius breaks call sites across the codebase at once. Sequence it as **expand–contract**: an *expand* task adds the new form beside the old so nothing breaks, *migrate* tasks move call sites over in batches sized by blast radius (per package, per directory) — each batch still ends on a green tree because the old form stands — and one *contract* task deletes the old form once no caller remains. If even the batches can't stay green alone, keep the sequence but say so in the plan: green is promised only at a final integrate-and-verify task.
 
+**Real reading first.** When a criterion is read on an environment the tests stand in for — a live model or service, the real corpus or the user's data, a build target the suite does not build, a person using the UI — the first task that wires that path end to end takes one reading there, with the criterion's caps on its `Stop if:` line, and comes before every task that tunes, extends, or presents the path. A reading that needs the user's data, credentials, or hands is that task's user step (Deliverables → Smoke tests for the user).
+
 **Stages.** A long plan is cut into stages per [STAGES.md](STAGES.md), read here.
 
 Make each task's **test-first** or **lightest-check** call here, per Guidelines → Test-first or lightest-check.
 
-Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree; a staged plan's rows meet STAGES.md's completion criterion.
+Completion criterion: every task is independently committable, right-sized per the split trigger, and ordered so each builds on the prior green tree and each real-environment reading precedes the tasks that tune or present its path; a staged plan's rows meet STAGES.md's completion criterion.
 
 ### 4. Write the tasks
 

@@ -9,7 +9,7 @@ Build the finding list:
 
 1. A finding its reviewer marked `refuted` takes no edit. When one reviewer refutes what another confirms, read the source and decide.
 2. Validate every other finding yourself: open the lines it cites and check its claim at its source, since a finding's own evidence is a claim, not proof. Discard a finding only when its claim is false at its source or it states a style preference, and mark it `refuted: <what your check printed>`.
-3. A finding whose claim holds, but whose edit would change a decision the spec records with its tradeoff or a repo ADR records, stays listed. Mark it `decision: <the text that records it>`; it takes no edit, and the coordinator puts it to the user in the readback.
+3. A finding whose claim holds, but whose edit would change a decision the spec records with its tradeoff, a repo ADR records, or a `user decision:` line in the plan records, or would make a choice the user would see that none of them settles (a new module, a renamed surface, added scope), stays listed. Mark it `decision: <the text that records it, or the choice it makes>`; it takes no edit, and the coordinator puts it to the user in the readback.
 4. Fold findings that name the same defect into one finding that lists every source and carries one edit. Two findings name the same defect when fixing either one fixes the other.
 5. A reviewer's note about another lens or shard is a lead, not a finding, until you ground it at its source yourself.
 6. Add no finding of your own.

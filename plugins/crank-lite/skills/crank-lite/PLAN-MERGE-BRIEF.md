@@ -8,7 +8,7 @@ Read the review brief, the plan, the spec when one is named, and VOCABULARY.md's
 
 1. A finding its reviewer marked `REFUTED` is not a row. When one reviewer refutes what another confirms, read the code or the plan and decide.
 2. Validate every `CONFIRMED` finding yourself: open the lines it cites and check its claim at its source, since a finding's own evidence is a claim, not proof. Discard it only when its claim is false at its source or it states a style preference.
-3. A finding whose claim holds stays a row even when its edit would change a decision the spec records or a user decision the plan records. Give that row a `Spec decision:` line quoting that text, since the coordinator puts it to the user.
+3. A finding whose claim holds stays a row even when its edit would change a decision the spec records or a user decision the plan records, or would make a choice the user would see that neither settles (a new module, a renamed surface, added scope). Give that row a `Spec decision:` line quoting that text, or naming the choice it makes, since the coordinator puts it to the user.
 4. Fold findings that name the same defect into one row that lists every source. Two findings name the same defect when fixing either one fixes the other.
 5. A reviewer's note about another shard is a lead, not a row, until you ground it in the plan or the code yourself.
 6. Add no finding of your own.

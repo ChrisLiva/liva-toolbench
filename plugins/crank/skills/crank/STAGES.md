@@ -12,7 +12,7 @@ A stage's last task leaves all of:
 
 ## Where to cut
 
-Cut where the decomposition already turns: after the task that establishes the gate; after a characterization-and-reshape pair, before the feature that rides on it; between the criteria groups one journey test proves; at a milestone the spec names.
+Cut where the decomposition already turns: after the task that establishes the gate; after a characterization-and-reshape pair, before the feature that rides on it; after the first task that reads a criterion on the real environment the tests stand in for, before the tasks that tune or present that path; between the criteria groups one journey test proves; at a milestone the spec names.
 
 ## Shape
 
