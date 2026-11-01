@@ -28,7 +28,8 @@ Stream = namedtuple("Stream", "items sub_cmds final")
 def load_events(run):
     events = []
     for f in sorted((run / "turns").glob("*.jsonl"), key=lambda p: int(p.stem)):
-        for line in f.read_text(encoding="utf-8").splitlines():
+        # not splitlines(): JSON leaves U+2028 unescaped, and splitlines() cuts a record there
+        for line in f.read_text(encoding="utf-8").split("\n"):
             try:
                 events.append(json.loads(line))
             except ValueError:
@@ -698,7 +699,7 @@ def review_cost(run):
     out = {"review_dollars": None, "review_requests": None, "review_calls_per_request": None, "review_seconds": None}
     files = []
     for f in sorted((run / "subagents").glob("*.jsonl")):
-        recs = [json.loads(l) for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
+        recs = [json.loads(l) for l in f.read_text(encoding="utf-8").split("\n") if l.strip()]
         first = next((r for r in recs if r.get("type") == "user"), {})
         if "REVIEW-BRIEF" in json.dumps(first.get("message", {}).get("content", ""))[:3000]:
             files.append(recs)
@@ -745,7 +746,7 @@ def score_review(run, st, block, s):
     s["reviewer_dispatched"] = int(bool(reviewer))
     s["review_dispatches"] = len(reviewer)
     stages = re.search(r"^## Stages\n(.*?)(?=^## |\Z)", plan_text(run, "crank-before"), re.M | re.S)
-    s["review_plan_stages"] = len(re.findall(r"^\|\s*\d+\s*\|", stages.group(1), re.M)) if stages else 0
+    s["review_plan_stages"] = len(re.findall(r"^\|\s*\d+\b", stages.group(1), re.M)) if stages else 0
     lenses = [(i, m.group(1)) for i, a in reviewer
               if (m := re.search(r"^Lens: (Contract|Coherence|Tests)\s*$", a.get("prompt", ""), re.M))]
     merges = [i for i, a in reviewer if "MERGE-BRIEF.md" in a.get("prompt", "")]

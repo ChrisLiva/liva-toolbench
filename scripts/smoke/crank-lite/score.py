@@ -23,7 +23,8 @@ REVIEW_BRIEF_RE = re.compile(r"(?:^|[\s`\"'(=:])/[^\s`\"')]*PLAN-(?:REVIEW|MERGE
 def turns_of(run):
     out = []
     for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
-        lines = t.read_text(encoding="utf-8", errors="replace").splitlines()
+        # not splitlines(): JSON leaves U+2028 unescaped, and splitlines() cuts a record there
+        lines = t.read_text(encoding="utf-8", errors="replace").split("\n")
         out.append(list(extract.claude_events(lines)))
     return out
 
@@ -32,7 +33,7 @@ def plan_review_dispatches(run):
     """The inputs of the orchestrator's Agent or Task calls handing over the plan review or merge brief, in stream order."""
     out = []
     for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
-        for line in t.read_text(encoding="utf-8", errors="replace").splitlines():
+        for line in t.read_text(encoding="utf-8", errors="replace").split("\n"):
             try:
                 ev = json.loads(line)
             except ValueError:
@@ -53,9 +54,9 @@ def reviewer_dispatched(dispatches):
 
 
 def plan_stages(body):
-    """The rows of the plan's Stages table whose first cell is a number, or 0 with no Stages table."""
+    """The rows of the plan's Stages table whose first cell opens with a number, or 0 with no Stages table."""
     m = re.search(r"^## Stages\b.*?(?=^## |\Z)", body, re.M | re.S)
-    return len(re.findall(r"^\|\s*\d+\s*\|", m.group(0), re.M)) if m else 0
+    return len(re.findall(r"^\|\s*\d+\b", m.group(0), re.M)) if m else 0
 
 
 def review_shape(dispatches, stages):

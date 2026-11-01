@@ -51,7 +51,8 @@ def bucket(calls):
 def read_thread(path):
     """Fold a transcript's assistant records into one entry per requestId."""
     requests = {}
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+    # not splitlines(): JSON leaves U+2028 unescaped, and splitlines() cuts a record there
+    for line in path.read_text(encoding="utf-8", errors="replace").split("\n"):
         line = line.strip()
         if not line:
             continue

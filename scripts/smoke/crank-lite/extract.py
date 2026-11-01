@@ -47,7 +47,8 @@ def main(run):
     for t in turns:
         sent = (run / "turns" / f"{t.stem}.sent")
         out += [f"## Turn {t.stem}", "", f"> SENT: {sent.read_text().strip() if sent.exists() else '?'}", ""]
-        lines = t.read_text(encoding="utf-8", errors="replace").splitlines()
+        # not splitlines(): JSON leaves U+2028 unescaped, and splitlines() cuts a record there
+        lines = t.read_text(encoding="utf-8", errors="replace").split("\n")
         for kind, body in claude_events(lines):
             out += [body, ""] if kind == "text" else [f"    {body}"]
         out.append("")
