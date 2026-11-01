@@ -18,6 +18,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 │   ├── check-reviewer-briefs.py  # the repo's gate (see The repo's gate)
 │   ├── measure-review-cost.py    # how a review thread spent its turns
 │   ├── fixtures/                 # the measurement's oracle transcripts
+│   ├── smoke/sandboxed_claude.py # starts every headless session inside the OS sandbox
 │   ├── smoke/lite-execute/       # headless smoke harness for lite-execute
 │   └── smoke/crank-lite/         # headless smoke harness for crank-lite's phases
 ├── tools/
@@ -493,6 +494,15 @@ run Sonnet unless `SMOKE_MODELS` names other models, and exit before starting mo
 `SMOKE_MAX_RUNS` sessions (default 3). The harnesses drive Claude Code; the skills they
 measure stay harness-agnostic (see *Cross-harness plugins*). Check a batch's streams for
 the limit message before scoring it, since a limited run scores as a behavior failure.
+
+A headless session skips permission prompts on your machine, so every harness starts it
+through `scripts/smoke/sandboxed_claude.py` or its `settings()` and `session_env()`: on
+2026-10-31 an eval session authenticated to a real Gitea server with the user's SSH key
+and pulled later commits into its workspace. The file holds the OS sandbox settings, the
+environment allowlist, and the tool allowlist (per project decision: shell commands reach
+only package registries, and a session gets only the tools the skills use). The sandbox
+covers shell commands only, so `Read`, `Edit`, `Write`, and `WebFetch` stay outside it;
+a harness that needs those bounded adds a `PreToolUse` hook, as `crank-lite-slim` does.
 
 Inside the session:
 - `/reload-plugins` — picks up edits to plugin files

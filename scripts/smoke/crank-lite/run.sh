@@ -10,7 +10,6 @@ set -u
 here=$(cd "$(dirname "$0")" && pwd)
 PD=$(cd "$1" && pwd); scenario=$2; model=$3; seeds=$(cd "$4" && pwd)
 rm -rf "$5"; mkdir -p "$5/turns"; run=$(cd "$5" && pwd)
-SETTINGS='{"enabledPlugins":{"crank@liva-toolbench":false,"crank-lite@liva-toolbench":false}}'
 REPLY="Agreed with your recommendations on these questions."
 inv=/crank-lite:crank-lite
 git clone -q "$seeds/seed-fresh" "$run/repo"
@@ -47,8 +46,8 @@ for n in $(seq 1 "$cap"); do
   if [ "$n" = 1 ]; then msg=$ASK; elif [ "$written" = 1 ]; then msg=done; else msg=$REPLY; fi
   echo "$msg" > "$run/turns/$n.sent"
   if [ "$n" = 1 ]; then first=(--session-id "$sid"); else first=(--resume "$sid"); fi
-  claude -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
-    --dangerously-skip-permissions --strict-mcp-config --settings "$SETTINGS" --plugin-dir "$PD" \
+  python3 "$here/../sandboxed_claude.py" "$run" "$PD" -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
+    --dangerously-skip-permissions --strict-mcp-config --plugin-dir "$PD" \
     "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
   if [ "$written" = 1 ]; then break; fi
   if ls .crank/*/"$artifact" > /dev/null 2>&1; then written=1; fi

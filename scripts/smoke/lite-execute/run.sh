@@ -6,7 +6,6 @@ set -u
 here=$(cd "$(dirname "$0")" && pwd)
 PD=$(cd "$1" && pwd); scenario=$2; model=$3; seeds=$(cd "$4" && pwd)
 rm -rf "$5"; mkdir -p "$5/turns"; run=$(cd "$5" && pwd)
-SETTINGS='{"enabledPlugins":{"crank@liva-toolbench":false,"crank-lite@liva-toolbench":false}}'
 REPLY="Go with your recommendation on anything open, and continue."
 # The session works in a throwaway clone, so the default skips permission prompts: in auto
 # mode a headless implementer's Write calls were denied and the run stalled on Task 1.
@@ -96,8 +95,8 @@ start=$(date +%s)
 for n in $(seq 1 "$cap"); do
   if [ "$n" = 1 ]; then msg=$ASK; else msg=$REPLY; fi
   if [ "$n" = 1 ]; then first=(--session-id "$sid"); else first=(--resume "$sid"); fi
-  claude -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
-    "${perm[@]}" --strict-mcp-config --settings "$SETTINGS" --plugin-dir "$PD" \
+  python3 "$here/../sandboxed_claude.py" "$run" "$PD" -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
+    "${perm[@]}" --strict-mcp-config --plugin-dir "$PD" \
     "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
   case $scenario in fresh|prototype|prototype-solo|review|review-large) if [ -f .crank/$slug/retro.md ]; then break; fi ;; esac
   if [ "$scenario" = stop-if-detour ] && grep -q '^- \[x\] Task 2' .crank/csv-export/plan.md; then break; fi
