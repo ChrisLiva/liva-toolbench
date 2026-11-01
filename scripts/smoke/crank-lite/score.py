@@ -63,7 +63,7 @@ def review_shape(dispatches, stages):
     prompts = [str(d.get("prompt", "")) for d in dispatches]
     shards = [(i, m.group(1)) for i, p in enumerate(prompts) for m in [re.search(r"^\s*Shard:\s*([ABX])\b", p, re.M)] if m]
     if stages < 2:
-        return int(sum("PLAN-REVIEW-BRIEF" in p for p in prompts) == 1 and not any("Shard:" in p for p in prompts))
+        return int(sum("PLAN-REVIEW-BRIEF" in p for p in prompts) == 1 and not shards)
     merges = [i for i, p in enumerate(prompts) if "PLAN-MERGE-BRIEF" in p]
     return int(sorted(s for _, s in shards) == ["A", "B", "X"] and len(merges) == 1 and merges[0] > max(i for i, _ in shards))
 
