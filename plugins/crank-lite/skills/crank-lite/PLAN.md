@@ -22,22 +22,23 @@ Offer a prototype, 3 to 5 variants behind one switcher, once, when all three hol
 
 When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it; on a no, record `Prototype: declined` under the plan's assumptions. When the incoming artifact is a brainstorm brief, copy its `Prototype:` line, with any block beneath it, under the plan's assumptions as written. When no offer fires, move to the questions without mentioning a prototype.
 
-A risk no check can retire is a decision, and so are a spec clause the code contradicts, a threshold no run measured, and a spec decision whose stated reason the interview's lookups overturned: put each to the user during the interview, so the plan ships with no open questions.
+A risk no check can retire is a decision, and so are a spec clause the code contradicts, a threshold no run measured, a spec decision whose stated reason the interview's lookups overturned, a value the spec fixes that the person running what ships might set (a window, limit, or count: fixed, or an argument with that default?), and a spec-wide rule the site count below does not support: put each to the user during the interview.
 
 Run it, don't recall:
 
 - During the interview's fact lookups, run each behavior of code the repo does not own that the plan leans on (a build tool, CLI flag, pinned dependency, library call, or OS or shell behavior) once in the form the task uses it, with the same command, flags, shell, platform, and target, and record what it printed: an exact output, exit code, or API contract, in prose or as an embedded block. A neighbor's run (`node` for `tsc`) settles nothing, and an external API's response shape cites the provider's documented example or a recorded call.
 - When the work keys, transforms, or migrates existing data, run the proposed invariant over the full real dataset, not a canned fixture, and record the count checked.
+- When the spec applies a rule at every site (any phase, all callers), count where its case can really arise, from real artifacts or usage, and recommend the sites that count supports.
 
 ## Vocabulary
 
-Read [VOCABULARY.md](VOCABULARY.md) before you write the verification checks: this phase leans on **anchor**, **probe**, **oracle**, **seam**, **dead seam**, **deletion test**, **journey test**, **redundant test**, and **rewrite test**.
+Read [VOCABULARY.md](VOCABULARY.md) before you write the verification checks.
 
 ## Plan
 
 The plan's file is `plan.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTIFACT-HOME.md)). Its parts, in order:
 
-1. `Spec: <absolute path to the spec>`, a header line above the goal when a spec exists; lite-execute hands that spec to its reviewer.
+1. `Spec: <absolute path to the spec>`, a header line above the goal when a spec exists.
 2. Goal.
 3. Global Constraints: the project-wide rules every task must honor, such as version floors, dependency limits, naming and copy rules, and platform requirements, one line each, with values copied verbatim from the spec. Omit it when the spec names no such rule.
 4. Assumptions.
