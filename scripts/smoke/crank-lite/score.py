@@ -16,6 +16,8 @@ import extract  # noqa: E402
 
 NEXT_PHASE = {"brainstorm": "SPEC.md", "spec": "PLAN.md", "plan": "lite-execute/SKILL.md"}
 CATALOGUE = [r"absen", r"permission|EACCES|EPERM", r"stale", r"destr|delet", r"limit|large|size", r"interrupt|concurren|partial|crash", r"trust|valid|ownership"]
+# PLAN.md hands a reviewer each pointer as an absolute path, so a lookup that names the brief in prose is no review
+REVIEW_BRIEF_RE = re.compile(r"(?:^|[\s`\"'(=:])/[^\s`\"')]*PLAN-(?:REVIEW|MERGE)-BRIEF\.md")
 
 
 def turns_of(run):
@@ -27,7 +29,7 @@ def turns_of(run):
 
 
 def plan_review_dispatches(run):
-    """The inputs of the orchestrator's Agent or Task calls naming the plan review or merge brief, in stream order."""
+    """The inputs of the orchestrator's Agent or Task calls handing over the plan review or merge brief, in stream order."""
     out = []
     for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
         for line in t.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -40,7 +42,7 @@ def plan_review_dispatches(run):
             for part in ev.get("message", {}).get("content", []):
                 if part.get("type") == "tool_use" and part.get("name") in ("Agent", "Task"):
                     inp = part.get("input") or {}
-                    if re.search(r"PLAN-(REVIEW|MERGE)-BRIEF", json.dumps(inp)):
+                    if REVIEW_BRIEF_RE.search(str(inp.get("prompt", ""))):
                         out.append(inp)
     return out
 
