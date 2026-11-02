@@ -55,6 +55,6 @@ done
 echo $(( $(date +%s) - start )) > "$run/seconds"
 echo "$n" > "$run/turn-count"
 echo "$sid" > "$run/session-id"
-git status --porcelain > "$run/status.txt"
+git status --porcelain --untracked-files=all > "$run/status.txt"
 cp -R .crank "$run/crank-after" 2> /dev/null || true
 python3 "$here/extract.py" "$run"

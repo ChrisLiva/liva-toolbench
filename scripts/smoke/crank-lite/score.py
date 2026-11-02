@@ -82,7 +82,8 @@ def score(run):
     written_at = next((i for i, tl in enumerate(tools) if artifact_name in tl and re.search(r"\[(Write|Edit)\]|cat >|tee ", tl)), len(turns))
     before = range(min(written_at + 1, len(turns)))
     pre_text = "\n".join(texts[i] for i in before)
-    status = [l for l in (run / "status.txt").read_text().splitlines() if l.strip()]
+    # per project decision: SPEC.md offers an ADR when the user rejects a recommendation, so a file under docs/adr/ is no source change
+    status = [l for l in (run / "status.txt").read_text().splitlines() if l.strip() and not l[3:].startswith("docs/adr/")]
     s = {
         "turns": len(turns),
         "artifact_written": int(artifact is not None),
