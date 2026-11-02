@@ -108,7 +108,18 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "](PLAN-MERGE-BRIEF.md)", "two or more stages"],
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
-    "plugins/crank-lite/skills/crank-lite/SPEC.md": ["](PROTOTYPE.md)"],
+    "plugins/crank-lite/skills/crank-lite/SPEC.md": [
+        "](PROTOTYPE.md)",
+        # per project decision: crank-lite-slim's eval would pass this step's removal, so the gate holds it byte for byte
+        "4. **Before closing the interview, walk the failure catalogue**, settling each item by a fact lookup, a policy question, or an acceptance criterion:\n"
+        "   - absence;\n"
+        "   - permission family (which sibling failures get the same treatment — EPERM beside EACCES);\n"
+        "   - staleness;\n"
+        "   - destruction;\n"
+        "   - limits;\n"
+        "   - interruption (concurrent callers, retry after partial failure, crash midway);\n"
+        "   - trust boundary (who may call, what is validated, which access checks ownership).\n",
+    ],
     "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)"],
     "plugins/crank/skills/crank/PROTOTYPE.md": ["until the plan's execution finishes"],
     "plugins/crank-lite/skills/crank-lite/PROTOTYPE.md": ["until the plan's execution finishes"],
