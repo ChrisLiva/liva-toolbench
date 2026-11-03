@@ -54,9 +54,10 @@ def reviewer_dispatched(dispatches):
 
 
 def plan_stages(body):
-    """The rows of the plan's Stages table whose first cell opens with a number, or 0 with no Stages table."""
+    """The body rows of the plan's Stages table, or 0 with no Stages table. STAGES.md fixes the columns, not how the stage cell is labeled."""
     m = re.search(r"^## Stages\b.*?(?=^## |\Z)", body, re.M | re.S)
-    return len(re.findall(r"^\|\s*\d+\b", m.group(0), re.M)) if m else 0
+    rows = [r for r in re.findall(r"^\|.*", m.group(0), re.M) if not re.fullmatch(r"\|[\s:|-]*", r.strip())] if m else []
+    return max(len(rows) - 1, 0)
 
 
 def review_shape(dispatches, stages):
