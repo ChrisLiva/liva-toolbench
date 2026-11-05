@@ -5,13 +5,13 @@ Run from the repo root unless a row says otherwise. Ephemeral form is `npx --yes
 Three file lists, each the project's tracked files of those extensions from the inventory, batched at ~200 per invocation:
 
 - `<files>` is `.ts .tsx .mts .cts .js .jsx .mjs .cjs`. Every row takes it but the two named below.
-- `<format-files>` is `<files>` plus `.css .scss .less .json .jsonc .graphql .gql .md .mdx .yaml .yml .html .vue`, minus lockfiles, minus what the repo's own `.prettierignore` or Biome `files.includes` `!`-entries exclude: a file its formatter is configured to skip belongs in neither half of the ratio. The two format rows take it, and the format letter is a ratio over files rather than over KLOC, so widening it moves no density band.
+- `<format-files>` is `<files>` plus `.css .scss .less .json .jsonc .graphql .gql .md .mdx .yaml .yml .html .vue`, minus lockfiles, minus what the repo's own `.prettierignore`, Biome `files.includes` `!`-entries or oxfmt `ignorePatterns` exclude: a file its formatter is configured to skip belongs in neither half of the ratio. The format rows take it, and the format letter is a ratio over files rather than over KLOC, so widening it moves no density band.
 - `<lint-files>` is `<files>` plus `.css .graphql .gql`, and only the `biome lint` row takes it. Biome lints `.json` as well, but the largest JSON in a repo is usually its lockfile and generated data earns no lint task, so JSON stays out of the list and out of the count.
 
 | category | default | repo-owned only (never imposed) |
 | --- | --- | --- |
 | lint | oxlint | eslint, biome lint, react-doctor (when `react` is a dependency) |
-| format | prettier | biome format |
+| format | prettier | biome format, oxfmt |
 | types | tsc (needs a `tsconfig.json` in the project itself) | |
 | dead code | knip | fallow dead-code |
 | complexity | fallow health | |
@@ -50,6 +50,12 @@ prettier --list-different --ignore-unknown <format-files>
 --no-config --no-editorconfig
 ```
 Format grades even on the default config (the measure is "formatted at all"). Prettier parses every extension in `<format-files>` but `.svelte`, which needs a plugin it does not ship; `--ignore-unknown` drops that one without a word, so leave it out of the denominator.
+
+**oxfmt** (format, owned only). cwd = the project dir, file paths relative to it: oxfmt refuses a path containing `..`, and reads `.prettierignore` from cwd alone. It finds `.oxfmtrc.json`, `.oxfmtrc.jsonc` or `oxfmt.config.ts` in cwd or an ancestor (0.76.0 skips `oxfmt.config.js` and `.mjs`), and that config's `ignorePatterns` drop files even when you name them. A `.gitignore`d path you name is formatted. `--write` is its default mode, so never run it without `--list-different`, which writes nothing.
+```sh
+oxfmt --list-different --no-error-on-unmatched-pattern <format-files>
+```
+Prints one path per line for each file that would change. Exit 1 = some would change, 0 = clean, 2 = a file failed to parse: stderr names it, the files it did read still print on stdout, and the unparsed file leaves the denominator. Without `--no-error-on-unmatched-pattern`, a batch whose every file its ignores drop exits 2 as well. It formats every extension in `<format-files>` but `.svelte`, which it drops without a word, so leave that out of the denominator; `oxfmt --check <same files>` ends with `Finished in <t> on <n> files`, and `<n>` is the denominator whenever no file failed to parse.
 
 **tsc** (types). Always name the project explicitly, or a monorepo grabs another package's tsconfig. `--incremental false` stops `.tsbuildinfo` being written.
 ```sh
