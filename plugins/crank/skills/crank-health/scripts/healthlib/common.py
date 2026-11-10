@@ -39,7 +39,6 @@ def plan(run: Run) -> list[Row]:
 
 
 def row(categories, tool: str, project: str = "repo", **kw) -> Row:
-    categories = (categories,) if isinstance(categories, str) else tuple(categories)
     return Row(project=project, language=LANGUAGE, categories=categories, tool=tool, scope="selected project dirs", **kw)
 
 

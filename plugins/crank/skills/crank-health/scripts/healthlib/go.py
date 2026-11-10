@@ -55,10 +55,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
     rows = {tool: ctx.row(categories, tool) for categories, tool in names}
     if "golangci-lint" not in project.owned:
         rows["golangci-lint"].skip("not owned (never imposed)")
-    if "gremlins" not in project.owned:
-        rows["gremlins"].skip("not owned (never imposed)")
-    else:
-        rows["gremlins"].skip("deep tool: run it from references/go.md" if run.deep else "needs --deep")
+    rows["gremlins"].skip_deep("go.md", owned="gremlins" in project.owned, deep=run.deep)
     _wire(ctx, rows)
     if not (run.repo / project.dir / "go.mod").is_file():
         for tool in ("staticcheck", "go vet", "golangci-lint", "gocognit", "gosec", "govulncheck"):
@@ -82,8 +79,7 @@ def _wire(ctx: _Context, rows: dict[str, Row]) -> None:
     if rows["golangci-lint"].job is not None:
         rows["golangci-lint"].provenance = f"repo config ({ctx.project.owned['golangci-lint']}), ephemeral"
         if rows["staticcheck"].job is not None:
-            rows["staticcheck"].standby_behind = "golangci-lint"
-            rows["staticcheck"].provenance += ", lint standby behind golangci-lint"
+            rows["staticcheck"].stand_by("golangci-lint")
 
 
 class _Context:
@@ -94,7 +90,6 @@ class _Context:
         self.env = {"GOFLAGS": "-mod=readonly", "GOMODCACHE": os.path.expanduser("~/go/pkg/mod")}
 
     def row(self, categories, tool: str) -> Row:
-        categories = (categories,) if isinstance(categories, str) else tuple(categories)
         return Row(project=self.project.dir, language=LANGUAGE, categories=categories, tool=tool)
 
     def gate(self) -> str:

@@ -89,7 +89,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
         ctx.vulture(),
         ctx.complexipy(),
         ctx.bandit(),
-        ctx.deep("test quality", "cosmic-ray", owned_only=True),
+        ctx.row("test quality", "cosmic-ray").skip_deep("python.md", owned="cosmic-ray" in project.owned, deep=run.deep),
     ]
 
 
@@ -98,8 +98,7 @@ class _Context:
         self.run, self.project, self.files, self.venv = run, project, files, venv
         self.cwd = run.repo / project.dir
 
-    def row(self, category: str, tool: str, **kw) -> Row:
-        categories = (category,) if isinstance(category, str) else tuple(category)
+    def row(self, categories, tool: str, **kw) -> Row:
         return Row(project=self.project.dir, language=LANGUAGE, categories=categories, tool=tool, **kw)
 
     def binary(self, row: Row, tool: str, dist: str | None = None, *, config: str | None) -> list[str]:
@@ -210,8 +209,7 @@ class _Context:
         mypy = self.mypy()
         default = self.pyright() if self.venv else self.ty()
         if mypy.job is not None and default.job is not None:
-            default.standby_behind = "mypy"
-            default.provenance += ", standby behind mypy"
+            default.stand_by("mypy")
         return [default, mypy]
 
     def ty(self) -> Row:
@@ -441,14 +439,6 @@ class _Context:
             reason="" if graded else "default config: below HIGH severity and HIGH confidence",
         )
         finding.data.update(severity=severity, confidence=confidence)
-
-    def deep(self, category: str, tool: str, *, owned_only: bool) -> Row:
-        row = self.row(category, tool)
-        if owned_only and tool not in self.project.owned:
-            return row.skip("not owned (never imposed)")
-        if not self.run.deep:
-            return row.skip("needs --deep")
-        return row.skip("deep tool: run it from references/python.md")
 
 
 def _setup_cfg_section(repo: Path, project: inv.Project, section: str) -> str | None:

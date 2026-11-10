@@ -120,8 +120,7 @@ def _standby(rows: list[Row]) -> None:
     owner = next((r for r in rows[:-1] if r.job is not None), None)
     if default.job is None or owner is None or not default.provenance.startswith("default config"):
         return
-    default.standby_behind = owner.tool
-    default.provenance += f", standby behind {owner.tool}"
+    default.stand_by(owner.tool)
 
 
 class _Context:
@@ -138,7 +137,6 @@ class _Context:
         self.modules = next((self.repo / d / "node_modules" for d in inv.ancestry(project.dir) if (self.repo / d / "node_modules").is_dir()), None)
 
     def row(self, categories, tool: str, **kw) -> Row:
-        categories = (categories,) if isinstance(categories, str) else tuple(categories)
         return Row(project=self.project.dir, language=LANGUAGE, categories=categories, tool=tool, **kw)
 
     # --- resolving a binary ------------------------------------------------------------
@@ -689,9 +687,7 @@ class _Context:
 
     def stryker(self) -> Row:
         row = self.row("test quality", "stryker")
-        if "stryker" not in self.project.owned:
-            return row.skip("not owned (never imposed)")
-        return row.skip("deep tool: run it from references/jsts.md" if self.run.deep else "needs --deep")
+        return row.skip_deep("jsts.md", owned="stryker" in self.project.owned, deep=self.run.deep)
 
 
 def _knip_symbols(value):

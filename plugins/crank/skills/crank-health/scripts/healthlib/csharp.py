@@ -64,10 +64,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
     deep = "deep tool: run it from references/csharp.md"
     build.skip(deep if run.deep else "needs --deep: MSBuild executes project build logic")
     dead.skip(deep if run.deep else "needs --deep: MSBuild executes project build logic")
-    if "stryker.net" not in project.owned:
-        mutation.skip("not owned (never imposed)")
-    else:
-        mutation.skip(deep if run.deep else "needs --deep")
+    mutation.skip_deep("csharp.md", owned="stryker.net" in project.owned, deep=run.deep)
     rows = [fmt, build, dead, mutation]
 
     version, refused = _dotnet(run, cwd)
@@ -83,7 +80,6 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
 
 
 def _row(project: inv.Project, categories, tool: str) -> Row:
-    categories = (categories,) if isinstance(categories, str) else tuple(categories)
     return Row(project=project.dir, language=LANGUAGE, categories=categories, tool=tool)
 
 

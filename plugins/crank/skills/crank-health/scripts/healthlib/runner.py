@@ -182,6 +182,9 @@ class Row:
     seconds: float = 0.0
     job: Callable[[Row], None] | None = None
 
+    def __post_init__(self) -> None:
+        self.categories = (self.categories,) if isinstance(self.categories, str) else tuple(self.categories)
+
     @property
     def category(self) -> str:
         return ", ".join(self.categories)
@@ -201,6 +204,15 @@ class Row:
     def skip(self, reason: str) -> Row:
         self.state, self.detail, self.provenance, self.job = "skipped", reason, f"skipped: {reason}", None
         return self
+
+    def skip_deep(self, reference: str, *, owned: bool, deep: bool) -> Row:
+        if not owned:
+            return self.skip("not owned (never imposed)")
+        return self.skip(f"deep tool: run it from references/{reference}" if deep else "needs --deep")
+
+    def stand_by(self, owner: str) -> None:
+        self.standby_behind = owner
+        self.provenance += f", standby behind {owner}"
 
     def unavailable(self, reason: str) -> Row:
         self.state, self.detail, self.provenance, self.job = "not-available", reason, f"not available: {reason}", None

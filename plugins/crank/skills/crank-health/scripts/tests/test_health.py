@@ -284,6 +284,40 @@ class PlanTest(RepoCase):
         self.assertTrue(rows["p:dotnet build + NetAnalyzers"].detail.startswith("needs --deep"))
         self.assertEqual(rows[".:clang-format"].detail, "not owned (never imposed)")
 
+    def test_owned_deep_tools_skip_until_deep(self):
+        owned = [
+            ({"package.json": "{}", "i.ts": "1\n", "stryker.config.json": "{}"}, ".:stryker", "jsts.md"),
+            ({"go.mod": "module x\n", "a.go": "package a\n", ".gremlins.yaml": ""}, ".:gremlins", "go.md"),
+            ({"pyproject.toml": "", "a.py": "x = 1\n", "cosmic-ray.toml": ""}, ".:cosmic-ray", "python.md"),
+            ({"CMakeLists.txt": "project(x)\n", "a.cpp": "int a;\n", "mull.yml": ""}, ".:mull", "cpp.md"),
+            (
+                {"p/p.csproj": "<Project/>", "p/a.cs": "class A {}\n", "p/.config/dotnet-tools.json": json.dumps({"tools": {"dotnet-stryker": {}}})},
+                "p:stryker.net",
+                "csharp.md",
+            ),
+        ]
+        for files, key, reference in owned:
+            self.assertEqual(self.rows(files)[key].detail, "needs --deep", key)
+            self.assertEqual(self.rows(files, deep=True)[key].detail, f"deep tool: run it from references/{reference}", key)
+        never_imposed = [
+            ({"pyproject.toml": "", "a.py": "x = 1\n"}, ".:cosmic-ray"),
+            ({"CMakeLists.txt": "project(x)\n", "a.cpp": "int a;\n"}, ".:mull"),
+            ({"p/p.csproj": "<Project/>", "p/a.cs": "class A {}\n"}, "p:stryker.net"),
+        ]
+        for files, key in never_imposed:
+            for deep in (False, True):
+                self.assertEqual(self.rows(files, deep=deep)[key].detail, "not owned (never imposed)", key)
+
+    def test_every_standby_is_named_in_the_provenance(self):
+        go_rows = self.rows({"go.mod": "module x\n", "a.go": "package a\n", ".golangci.yml": ""})
+        self.assertEqual(go_rows[".:staticcheck"].standby_behind, "golangci-lint")
+        self.assertEqual(go_rows[".:staticcheck"].provenance, "default config, ephemeral, standby behind golangci-lint")
+        py_rows = self.rows(
+            {"pyproject.toml": "[tool.mypy]\n[tool.pyright]\n", "requirements-dev.txt": "mypy\n", "a.py": "x = 1\n", ".venv/bin/python": ""}
+        )
+        self.assertEqual(py_rows[".:pyright"].standby_behind, "mypy")
+        self.assertEqual(py_rows[".:pyright"].provenance, "repo config (pyproject.toml [tool.pyright]), system binary, standby behind mypy")
+
     def test_only_keeps_the_rows_of_the_selected_categories(self):
         rows = self.rows({"pyproject.toml": "", "a.py": "x = 1\n"}, only=["format"])
         self.assertEqual(sorted(r.tool for r in rows.values()), ["ruff format"])
@@ -395,6 +429,16 @@ class SilentFailureTest(RepoCase):
         run, _ = self.context({"package.json": "{}", "a.ts": "1\n"})
         (run.run_dir / "overrides.json").write_text(json.dumps({"knip@.": [], "prettier@apps/web": ["--config", "x"]}))
         self.assertEqual(run.unread_overrides(), ["prettier@apps/web"])
+
+
+class RowTest(unittest.TestCase):
+    def test_categories_are_a_tuple(self):
+        def categories(value):
+            return Row(project=".", language="x", categories=value, tool="t").categories
+
+        self.assertEqual(categories("lint"), ("lint",))
+        self.assertEqual(categories(["lint", "security"]), ("lint", "security"))
+        self.assertEqual(categories(("types",)), ("types",))
 
 
 class FindingTest(unittest.TestCase):

@@ -51,10 +51,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
         tidy.skip("deep tool: run it from references/cpp.md")
     else:
         tidy.skip("needs --deep: a compile database comes from the repo's build configure")
-    if "mull" not in project.owned:
-        mull.skip("not owned (never imposed)")
-    else:
-        mull.skip("deep tool: run it from references/cpp.md" if run.deep else "needs --deep")
+    mull.skip_deep("cpp.md", owned="mull" in project.owned, deep=run.deep)
     return [cppcheck, lizard, fmt, tidy, mull]
 
 
@@ -90,7 +87,6 @@ class _Context:
         self.headers = [f for f in files if inv.ext_of(f) in inv.C_HEADERS]
 
     def row(self, categories, tool: str, **kw) -> Row:
-        categories = (categories,) if isinstance(categories, str) else tuple(categories)
         return Row(project=self.project.dir, language=LANGUAGE, categories=categories, tool=tool, **kw)
 
     def listing(self, name: str, files: list[str]) -> Path:
