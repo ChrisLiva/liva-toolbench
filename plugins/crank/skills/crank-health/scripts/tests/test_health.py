@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -895,6 +896,24 @@ class RunDirTest(RepoCase):
         bandit = next(r for r in rows if r.tool == "bandit")
         self.assertEqual(sorted(f.status for f in bandit.findings), ["dropped", "graded"])
         self.assertIn("1 dropped", (run_dir / "summary" / "python--root.md").read_text())
+
+    def test_scan_prints_the_grades_of_the_tree_it_ran(self):
+        repo = self.repo({"pyproject.toml": "", "src/a.py": "x = 1\n"})
+        holder = tempfile.TemporaryDirectory()
+        self.addCleanup(holder.cleanup)
+
+        def run_rows(run, rows, jobs):
+            bandit = next(r for r in rows if r.tool == "bandit")
+            bandit.state = "ok"
+            bandit.add("src/a.py", 1, "security", "B602", "error", "shell=True")
+
+        with mock.patch.object(cli, "run_rows", run_rows):
+            code, out = self.call("scan", str(repo.path), "--run-dir", holder.name)
+        self.assertEqual(code, 0)
+        meta, projects, rows = report.read_results(Path(holder.name))
+        grades = grade.grade(projects, rows, set(meta["only"]), False)
+        self.assertIn("security D", grade.line(grades, grade.headline(grades)))
+        self.assertIn(f"grades (mechanical, before triage): {grade.line(grades, grade.headline(grades))}\n", out)
 
     def test_results_reload_as_project_records(self):
         _, run_dir = self.scanned()
