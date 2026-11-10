@@ -47,8 +47,8 @@ def owner_of(path: str, project_dirs: list[str]) -> str:
 def _why_not(rows: list[Row], category: str, profile_note: str) -> str:
     reasons = []
     for row in rows:
-        if category in row.categories and row.state != "ok":
-            reasons.append(f"{row.tool}: {row.detail or row.state}")
+        if category in row.categories and (row.state != "ok" or row.unmeasured):
+            reasons.append(f"{row.tool}: {row.unmeasured or row.detail or row.state}")
     reasons = list(dict.fromkeys(reasons))
     shown = "; ".join(reasons[:4]) + (f"; … {len(reasons) - 4} more" if len(reasons) > 4 else "")
     return shown or profile_note
@@ -137,7 +137,7 @@ def _graders(rows, project_dir: str, language: str, category: str) -> list[Row]:
     return [
         r
         for r in rows
-        if r.project == project_dir and r.language == language and category in r.categories and r.state == "ok" and not r.stood_down
+        if r.project == project_dir and r.language == language and category in r.categories and r.state == "ok" and not r.stood_down and not r.unmeasured
     ]
 
 
@@ -176,7 +176,7 @@ def _kloc(kloc: float) -> str:
 
 
 def _ratio(unit, category, rows, found) -> Grade:
-    graders = [r for r in rows if r.state == "ok" and category in r.metrics and not r.stood_down]
+    graders = [r for r in rows if r.state == "ok" and category in r.metrics and not r.stood_down and not r.unmeasured]
     if not graders:
         return Grade(unit, category, "", _why_not(rows, category, "no tool measures it here"))
     keys = {r.key for r in graders}

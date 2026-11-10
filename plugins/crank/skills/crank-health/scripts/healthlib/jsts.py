@@ -29,6 +29,10 @@ SCRATCH_TSCONFIG = {
 TSC_LINE = re.compile(r"^(?:(.+?)\((\d+),\d+\): )?(error|warning) (TS\d+): (.*)$")
 TSC_NEEDS_INSTALL = {"TS2307", "TS2503", "TS2580", "TS2591", "TS2593", "TS2688", "TS2792", "TS7016"}
 NO_CACHE = {"JITI_CACHE": "false", "JITI_FS_CACHE": "false"}
+KNIP_ENTRIES = (
+    'name the entries in <run-dir>/knip.json, add {"knip": ["--config", "<run-dir>/knip.json"]} '
+    "to <run-dir>/overrides.json and rerun --tool knip"
+)
 KNIP_GRADED = {
     "files": "unused-file",
     "exports": "unused-export",
@@ -407,7 +411,7 @@ class _Context:
         listed, errors = self._prettier_listed(row, [*prefix, *flags], targets, cwd)
         if errors and not listed:
             raise Failed(errors[0])
-        row.notes += [f"prettier exit 2 on a batch: {e}" for e in errors[:3]]
+        row.notes += [f"check: prettier failed on a batch, whose files count as clean: {e}" for e in errors[:3]]
         failing = sorted({self.run.rel(path, cwd) for path in listed})
         for path in failing:
             row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
@@ -421,7 +425,8 @@ class _Context:
         listed, errors = [], []
         for batch in batches([self.run.abs(f) for f in targets]):
             done = self.run.exec(row, [*command, *batch], cwd=cwd)
-            if done.code not in (0, 1):
+            # exit 1 means it listed a file; exit 1 with nothing listed is a crash, a missing plugin
+            if done.code not in (0, 1) or (done.code == 1 and not done.stdout.strip()):
                 errors.append(done.first_error)
             listed += [line.strip() for line in done.stdout.splitlines() if line.strip()]
         return listed, errors
@@ -452,7 +457,7 @@ class _Context:
         # oxfmt refuses a path containing `..` and reads .prettierignore from cwd alone
         for batch in batches([self.project.rel(f) for f in self.format_files]):
             done = self.run.exec(row, [*prefix, "--list-different", "--no-error-on-unmatched-pattern", *batch], cwd=self.dir)
-            if done.code not in (0, 1, 2):
+            if done.code not in (0, 1, 2) or (done.code == 1 and not done.stdout.strip()):
                 raise Failed(done.first_error)
             if done.code == 2:
                 unparsed.append(done.first_error)
@@ -583,19 +588,29 @@ class _Context:
             path = self.run.rel(issue.get("file", ""), self.repo / cwd)
             if path in self.mine:
                 dead_files += _knip_issue(row, path, issue)
-        if dead_files >= max(5, len(self.files) // 5) and not extra:
+        if extra:
+            pass  # the agent named the entry points
+        elif self.modules is None:
+            self._knip_unmeasured(row, "no node_modules: knip cannot load the configs that name entry points")
+        elif dead_files >= max(5, len(self.files) // 5):
             self._knip_unreached(row, dead_files)
         self.run.save(row, "knip.json", json.dumps(doc, indent=1))
 
+    def _knip_unmeasured(self, row: Row, why: str) -> None:
+        """knip ran and its rows cannot be believed: dead code reads not assessed, not A."""
+        row.unmeasured = why
+        for finding in row.findings:
+            if finding.graded:
+                finding.demote(why.split(":")[0])
+        row.notes.append(f"check: {why}, so dead code is not assessed here; {KNIP_ENTRIES}")
+
     def _knip_unreached(self, row: Row, dead_files: int) -> None:
         # half the project unreached is no entry point at all; a fifth is worth a look
-        missing = dead_files >= max(5, len(self.files) // 2)
-        for finding in row.findings if missing else []:
-            if finding.graded:
-                finding.demote("no entry point reaches this project")
+        if dead_files >= max(5, len(self.files) // 2):
+            self._knip_unmeasured(row, f"no entry point reaches this project: knip calls {dead_files} of {len(self.files)} files unused")
+            return
         row.notes.append(
-            f"check: knip calls {dead_files} of {len(self.files)} files unused, so {'it found no entry point' if missing else 'an entry point is probably missing'}; "
-            'name the entries in <run-dir>/knip.json, add {"knip": ["--config", "<run-dir>/knip.json"]} to <run-dir>/overrides.json and rerun --tool knip'
+            f"check: knip calls {dead_files} of {len(self.files)} files unused, so an entry point is probably missing; {KNIP_ENTRIES}"
         )
 
     def fallow(self, row: Row, config: str | None):

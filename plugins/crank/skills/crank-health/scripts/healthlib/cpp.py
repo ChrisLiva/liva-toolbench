@@ -188,7 +188,7 @@ class _Context:
             )
             output.append(done.stderr)
             matched = [m.group(1) for line in done.stderr.splitlines() if (m := FORMAT_LINE.match(line))]
-            if done.code not in (0, 1) and not matched:
+            if done.code != 0 and not matched:  # exit 1 names a file; without one it crashed
                 raise Failed(done.first_error)
             failing.update(self.run.rel(path, self.dir) for path in matched)
         for path in sorted(failing):

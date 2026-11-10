@@ -160,10 +160,12 @@ def digest(run_dir: Path, rows: list[Row], grades: list[grading.Grade], stage: s
     for row in rows:
         if row.state in ("error", "timeout", "not-available"):
             print(f"  {row.state}: {row.tool} ({row.project}): {row.detail}")
+    checks: dict[str, list[str]] = {}
     for row in rows:
-        for note in row.notes:
-            if note.startswith("check:"):
-                print(f"  {note} [{row.tool} ({row.project})]")
+        for note in (n for n in row.notes if n.startswith("check:")):
+            checks.setdefault(note, []).append(f"{row.tool} ({row.project})")
+    for note, where in checks.items():
+        print(f"  {note} [{', '.join(where)}]")
     print("read next: grades.md, inventory.md, tools.md, summary/*.md, findings/<project>/<tool>.tsv")
 
 
@@ -382,6 +384,8 @@ def cmd_rerun(opts) -> int:
     inventory = inv.build(repo, meta["selected"])
     read_ownership(repo, inventory, list_unowned=False)
     run = Run(inventory, run_dir, deep=meta["profile"] == "deep", only=meta["only"], pins=meta["pins"], budget_scale=opts.budget_scale)
+    for key in run.unread_overrides():
+        say(f"overrides.json: no tool reads the key `{key}`; only {' and '.join(Run.OVERRIDABLE)} take overrides")
     try:
         fresh = [r for r in plan_rows(run) if rerun_wanted(r, opts)]
         if not fresh:

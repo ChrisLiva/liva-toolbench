@@ -170,6 +170,8 @@ def _counts(findings: list[Finding], status: str) -> str:
 def _metric(row: Row) -> str:
     if row.state != "ok":
         return row.detail
+    if row.unmeasured:
+        return "unmeasured: " + row.unmeasured
     parts = [f"{category}: {metric.text()}" if len(row.metrics) > 1 else metric.text() for category, metric in row.metrics.items()]
     return "; ".join(parts)
 
@@ -293,6 +295,7 @@ def row_record(row: Row) -> dict:
         "raw": row.raw,
         "standby_behind": row.standby_behind,
         "stood_down": row.stood_down,
+        "unmeasured": row.unmeasured,
         "reads_assets": row.reads_assets,
     }
 
@@ -307,6 +310,7 @@ def row_from(record: dict) -> Row:
     for name in ("version", "provenance", "scope", "state", "detail", "budget", "seconds", "commands", "notes", "raw"):
         setattr(row, name, record[name])
     row.standby_behind, row.stood_down, row.reads_assets = record["standby_behind"], record["stood_down"], record["reads_assets"]
+    row.unmeasured = record.get("unmeasured", "")
     row.metrics = {c: Metric(*m) for c, m in record["metrics"].items()}
     return row
 

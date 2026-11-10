@@ -42,6 +42,10 @@ INSTALL_HINTS = {
 }
 
 
+# stderr lines that say nothing about why a tool failed
+NOISE = ("go: downloading", "go: extracting", "go: finding", "npm warn", "Oops! Something went wrong", "ESLint: ")
+
+
 class Unavailable(Exception):
     """The tool cannot run here; the message is the reason and the install hint."""
 
@@ -140,7 +144,7 @@ class Done:
     @property
     def first_error(self) -> str:
         for line in self.stderr.splitlines():
-            if line.strip() and not line.startswith(("go: downloading", "go: extracting", "go: finding", "npm warn")):
+            if line.strip() and not line.startswith(NOISE):
                 return one_line(line)[:300]
         return f"exit {self.code}, nothing on stderr"
 
@@ -166,6 +170,7 @@ class Row:
     raw: list[str] = field(default_factory=list)
     standby_behind: str = ""
     stood_down: bool = False
+    unmeasured: str = ""  # why an `ok` run grades nothing: its category reads not assessed
     reads_assets: bool = False
     seconds: float = 0.0
     job: Callable[[Row], None] | None = None
@@ -316,6 +321,13 @@ class Run:
             raise value
         return value
 
+    OVERRIDABLE = ("knip", "cppcheck")
+
+    def unread_overrides(self) -> list[str]:
+        """Keys of `overrides.json` no tool reads."""
+        doc = parse_json(_read_text(self.run_dir / "overrides.json")) or {}
+        return [key for key in doc if key.split("@", 1)[0] not in self.OVERRIDABLE] if isinstance(doc, dict) else []
+
     def extra(self, tool: str, project: str = "") -> list[str]:
         """Arguments the agent added for one tool in `<run-dir>/overrides.json`, a map of
         tool name to argument list: a knip `--config`, a cppcheck `--library=`. A
@@ -392,6 +404,8 @@ class Run:
         row.commands.append({"cwd": cwd, "command": command, "exit": code, "seconds": round(seconds, 1)})
 
     def _command_line(self, row: Row, argv: list[str], cwd: str, env) -> str:
+        # a mirror is gone when the scan ends, so the record names the repo it copied
+        argv = [str(self.repo) if self.temp and os.path.dirname(a) == str(self.temp) else a for a in argv]
         head = list(argv)
         files = []
         while head and os.path.isfile(os.path.join(cwd, head[-1])):

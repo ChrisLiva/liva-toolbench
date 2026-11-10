@@ -51,7 +51,13 @@ file.
 
 A Notes line that starts `check:` names a run that finished `ok` and measured less than it
 looks: cppcheck aborting on an unknown macro, knip finding no entry point. Resolve each one or
-say in the plan what it left unmeasured.
+say in the plan what it left unmeasured. When nothing the run said can be believed, its metric
+column reads `unmeasured: <why>` and its category reads `not assessed`.
+
+The exit code beside a command is the tool's, and non-zero beside an `ok` row is how most of
+them say "found something": tsc 1 or 2, oxlint, prettier, fallow, osv-scanner, aislop, bandit
+and complexipy 1, vulture 3, anything under `go run` 1. The scan reads the output, not the
+code, and a run that printed nothing it could read is `error`.
 
 ## Findings
 
@@ -92,9 +98,10 @@ findings file by hand works too; run `health.py grade <run-dir>` afterwards.
 run's pinned versions, keeps the verdict of every finding that is still there, and re-grades.
 Use it after a fix, after a `timeout` (add `--budget-scale 3`), and after an override.
 
-`<run-dir>/overrides.json` adds arguments to one tool, `{"<tool>": ["<arg>", …]}`, or to one
-tool in one project with the key `<tool>@<project dir>`. `<run-dir>` inside an argument expands.
-The two that come up:
+`<run-dir>/overrides.json` adds arguments to knip or cppcheck, the two tools whose first run
+routinely needs one: `{"<tool>": ["<arg>", …]}`, or for one project the key
+`<tool>@<project dir>` (knip's project is its workspace root). `<run-dir>` inside an argument
+expands, and `rerun` names any key no tool reads.
 
 ```json
 {"knip": ["--config", "<run-dir>/knip.json"], "cppcheck@src/core": ["--library=boost"]}

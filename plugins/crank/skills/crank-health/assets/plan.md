@@ -37,5 +37,5 @@ Verify: `<the exact tool command that reports zero for this task>`
 ---
 
 Tasks are themed (one rule across files is one task), ordered by the letters they move, most
-first, then by category order. At most 20; the rest are in `<run-dir>/findings.md`.
+first, then by category order. At most 20; any beyond that are in `<run-dir>/findings.md`.
 Raw tool output: `<run-dir>/raw/`.

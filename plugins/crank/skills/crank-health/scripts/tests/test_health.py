@@ -355,6 +355,47 @@ class RunnerTest(RepoCase):
         self.assertEqual(run.extra("oxlint"), [])
 
 
+class SilentFailureTest(RepoCase):
+    """A tool that exits as if it found something and printed nothing has crashed."""
+
+    def context(self, files: dict[str, str]):
+        run = self.run_for(self.repo(files))
+        project = run.inv.projects[0]
+        return run, jsts._Context(run, project, project.files["js-ts"])
+
+    def test_prettier_exiting_1_with_nothing_listed_is_an_error_not_a_clean_tree(self):
+        run, ctx = self.context({"package.json": "{}", "a.ts": "1\n"})
+        probe = Row(project=".", language="js-ts", categories=("format",), tool="prettier")
+        crash = [sys.executable, "-c", "import sys; sys.stderr.write('[error] Cannot find package prettier-plugin-x\\n'); sys.exit(1)"]
+        listed, errors = ctx._prettier_listed(probe, crash, ["a.ts"], run.repo)
+        self.assertEqual((listed, errors), ([], ["[error] Cannot find package prettier-plugin-x"]))
+        differs = [sys.executable, "-c", "import sys; print(sys.argv[-1]); sys.exit(1)"]
+        listed, errors = ctx._prettier_listed(probe, differs, ["a.ts"], run.repo)
+        self.assertEqual((listed, errors), ([str(run.repo / "a.ts")], []))
+
+    def test_knip_without_node_modules_grades_nothing(self):
+        run, ctx = self.context({"package.json": "{}", "a.ts": "1\n"})
+        knip = Row(project=".", language="js-ts", categories=("dead code",), tool="knip", state="ok")
+        knip.add("a.ts", 1, "dead code", "unused-export", "warning", "unused export: f")
+        ctx._knip_unmeasured(knip, "no node_modules: knip cannot load the configs that name entry points")
+        self.assertEqual([f.status for f in knip.findings], ["advisory"])
+        self.assertTrue(knip.notes[0].startswith("check: no node_modules"))
+        got = {g.category: g for g in grade.grade([{"dir": ".", "lines": {"js-ts": 1}, "files": {"js-ts": 1}, "asset_lines": {}}], [knip], set(CATEGORIES), False)}
+        self.assertEqual(got["dead code"].letter, "")
+
+    def test_a_recorded_mirror_command_names_the_repo(self):
+        run, _ = self.context({"package.json": "{}", "a.ts": "1\n"})
+        probe = Row(project="repo", language="repo-wide", categories=("security",), tool="gitleaks")
+        mirror = run.temp_dir("gitleaks")
+        run.exec(probe, [sys.executable, "-c", "pass", str(mirror)])
+        self.assertTrue(probe.commands[0]["command"].endswith(str(run.repo)))
+
+    def test_an_override_key_no_tool_reads_is_named(self):
+        run, _ = self.context({"package.json": "{}", "a.ts": "1\n"})
+        (run.run_dir / "overrides.json").write_text(json.dumps({"knip@.": [], "prettier@apps/web": ["--config", "x"]}))
+        self.assertEqual(run.unread_overrides(), ["prettier@apps/web"])
+
+
 class FindingTest(unittest.TestCase):
     def test_a_row_round_trips_through_the_findings_file(self):
         row = Row(project=".", language="python", categories=("dead code",), tool="vulture")
@@ -440,6 +481,11 @@ class GradeTest(unittest.TestCase):
         fallow.findings[0].demote("fixture", "dropped")
         self.assertEqual(self.letters([fallow])["complexity"].basis, "2 / 200 functions over 15 = 1.00%")
 
+    def test_a_run_that_cannot_be_believed_leaves_its_category_unassessed(self):
+        knip = row("knip", ["dead code"], unmeasured="no node_modules: knip cannot load the configs that name entry points")
+        got = self.letters([knip])["dead code"]
+        self.assertEqual((got.letter, got.basis), ("", "knip: no node_modules: knip cannot load the configs that name entry points"))
+
     def test_unselected_categories_read_not_selected(self):
         got = self.letters([row("tsc", ["types"])], only=["types"])
         self.assertEqual(got["lint"].basis, "not selected")
@@ -488,7 +534,7 @@ class SettleTest(RepoCase):
         standby.add("src/a.ts", 1, "lint", "x", "error", "m")
         settle.settle(self.inventory(), [owner, standby])
         self.assertEqual(len(standby.findings), 1)
-        self.assertEqual(standby.notes, ["oxlint graded lint on its default config because eslint reported error"])
+        self.assertEqual(standby.notes, ["oxlint graded lint on its default config because eslint reported error (1 graded, 0 advisory)"])
 
     def test_an_owner_whose_config_excludes_every_file_leaves_the_category_unassessed(self):
         owner = row("biome format", ["format"], state="skipped", detail="nothing to scan (the Biome config includes none of this project's 4 files)")

@@ -49,6 +49,8 @@ code the repo chose not to lint.
 
 **prettier** (format). Format grades even on the default config (the measure is "formatted at
 all"). Files a `.prettierignore` excludes leave the denominator, and the Notes line counts them.
+A repo config that names a plugin (`prettier-plugin-tailwindcss`) needs the repo's install: without
+`node_modules` the row reads `error`, and format is not assessed rather than clean.
 A standby prettier behind Biome or oxfmt measures a style the repo never adopted: once the owner
 graded format its rows are gone, and when it graded because the owner failed, say in the plan
 whose style the number reflects.
@@ -75,13 +77,26 @@ its examples are the usual false positives, and they are advisory. A `check:` li
 called a fifth or more of the project's files unused, which is a missing entry point rather
 than dead code (a CLI, a bundler plugin's entries, a test setup file): write the entries to
 `<run-dir>/knip.json`, point knip at it through `overrides.json`, and rerun
-([run-dir.md](run-dir.md)). At half or more, the scan has already marked the rows
-`advisory: no entry point reaches this project`.
+([run-dir.md](run-dir.md)). At half or more the scan marks the rows advisory and dead code
+reads `not assessed` for the project, never A. One file serves the whole workspace:
+
+```json
+{"workspaces": {
+  ".": {"entry": ["src/cli.ts"]},
+  "packages/core": {"entry": ["src/index.ts", "test/**/*.test.ts"], "project": ["src/**/*.ts", "test/**/*.ts"]}
+}}
+```
+
+Without `node_modules` knip cannot load the configs that name entry points (a vitest config, a
+bundler plugin), so test files and everything only tests reach read unused. The scan marks
+those rows advisory too and dead code reads `not assessed` until you name the entries and
+rerun.
 
 **fallow** (dead code when owned; complexity by default). Dead code runs once over the repo and
 is filtered per project. The complexity metric is functions whose *cognitive* complexity is over
 15 / functions counted, both filtered to the project's files. CRAP, cyclomatic and unit-size
-rows are advisory.
+rows are advisory. Its exit 1 is its own gate, not a failure, and its JSON prints paths relative
+to `--root`: a Verify filter is `jq '[.findings[] | select(.cognitive > 15)] | length'`.
 
 **react-doctor** (lint, complementary). Runs when `react` is a declared dependency; every row is
 advisory.

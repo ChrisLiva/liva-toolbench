@@ -43,7 +43,11 @@ def _settle_standby(row: Row, owner: Row) -> None:
     shared = [c for c in row.categories if c in owner.categories]
     excluded = owner.state == "skipped" and owner.detail.startswith("nothing to scan")
     if owner.state != "ok" and not excluded:
-        row.notes.append(f"{row.tool} graded {', '.join(shared)} on its default config because {owner.tool} reported {owner.state}")
+        graded = sum(1 for f in row.findings if f.graded and f.category in shared)
+        row.notes.append(
+            f"{row.tool} graded {', '.join(shared)} on its default config because {owner.tool} reported {owner.state}"
+            f" ({graded} graded, {sum(1 for f in row.findings if f.category in shared) - graded} advisory)"
+        )
         return
     row.findings = [f for f in row.findings if f.category not in shared]
     for category in shared:
