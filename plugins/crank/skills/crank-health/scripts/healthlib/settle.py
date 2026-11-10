@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from . import go
 from . import inventory as inv
-from .runner import Row
+from .runner import Row, ok_findings
 
 
 def settle(inventory: inv.Inventory, rows: list[Row]) -> None:
@@ -98,19 +98,15 @@ def one_defect_one_finding(rows: list[Row]) -> None:
     """Two tools naming the same place in the same category is one defect: the row from the
     earlier tool in `tools.md` stays graded and the others cite it."""
     seen: dict[tuple, str] = {}
-    secret_files = {f.file: f.rule for f in _ok_findings(rows, "gitleaks")}
+    secret_files = {f.file: f.rule for f in ok_findings(rows, "gitleaks")}
     dead_imports = {
-        (f.file, f.line): f.rule for f in _ok_findings(rows, "vulture") if f.rule.endswith("/unused-import") and f.graded
+        (f.file, f.line): f.rule for f in ok_findings(rows, "vulture") if f.rule.endswith("/unused-import") and f.graded
     }
     for row in (r for r in rows if r.state == "ok"):
         for finding in (f for f in row.findings if f.graded):
             original = _original_of(row, finding, secret_files, dead_imports, seen)
             if original is not None:
                 finding.demote(f"duplicate of {original}")
-
-
-def _ok_findings(rows: list[Row], tool: str) -> list:
-    return [f for row in rows if row.state == "ok" and row.tool == tool for f in row.findings]
 
 
 def _original_of(row: Row, finding, secret_files: dict[str, str], dead_imports: dict[tuple, str], seen: dict[tuple, str]) -> str | None:

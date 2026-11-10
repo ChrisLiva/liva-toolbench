@@ -21,7 +21,7 @@ from pathlib import Path
 from . import common, cpp, csharp, go, jsts, python, report, settle
 from . import grade as grading
 from . import inventory as inv
-from .runner import CATEGORIES, Finding, Row, Run, execute
+from .runner import CATEGORIES, Finding, Row, Run, execute, ok_findings
 
 MODULES = {"js-ts": jsts, "python": python, "go": go, "csharp": csharp, "c-cpp": cpp}
 PATH_PROBES = {
@@ -292,10 +292,6 @@ def scan_base(repo: Path, run_dir: Path, opts, head: dict, base_sha: str) -> tup
     return base, linked
 
 
-def ok_findings(rows: list[Row]) -> list[Finding]:
-    return [f for r in rows if r.state == "ok" for f in r.findings]
-
-
 def unmatched(findings: list[Finding], counts: Counter, key) -> list[Finding]:
     """The findings left once each one consumes a match from `counts`, in the order given."""
     left = []
@@ -345,7 +341,7 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
         return
     base, linked = scanned
     renames, hunks = changed_lines(repo, base_sha)
-    base_grades = grading.grade(base["projects"], base["rows"], set(base["meta"]["only"]), opts.deep)
+    base_grades = base["grades"]
 
     head_found, base_found = ok_findings(head["rows"]), ok_findings(base["rows"])
     base_counts = Counter(finding_key(f, renames) for f in base_found)

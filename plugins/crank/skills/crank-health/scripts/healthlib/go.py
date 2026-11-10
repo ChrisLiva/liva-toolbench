@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, Unavailable, batches, first_json_line, not_on_path, parse_json
+from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, Unavailable, batches, first_json_line, not_on_path, ok_findings, parse_json
 
 LANGUAGE = "go"
 CEILING = 15
@@ -286,14 +286,14 @@ def join_vulnerabilities(rows: list[Row]) -> None:
     if not verdicts:
         return
     covered = set()
-    for finding in _findings(rows, "osv-scanner"):
+    for finding in ok_findings(rows, "osv-scanner"):
         ids = [i for i in _ids(finding) if i in verdicts]
         if not ids:
             continue
         covered.update(ids)
         if finding.graded and not any(verdicts[i] for i in ids):
             finding.demote("govulncheck: the vulnerable symbol is never called")
-    for finding in _findings(rows, "govulncheck"):
+    for finding in ok_findings(rows, "govulncheck"):
         if finding.graded and set(_ids(finding)) & covered:
             finding.demote("duplicate of osv-scanner/vulnerable-dependency")
 
@@ -301,16 +301,10 @@ def join_vulnerabilities(rows: list[Row]) -> None:
 def _reachability(rows: list[Row]) -> dict[str, bool]:
     """Per advisory id or alias, whether govulncheck found a vulnerable symbol called."""
     verdicts: dict[str, bool] = {}
-    for finding in _findings(rows, "govulncheck"):
+    for finding in ok_findings(rows, "govulncheck"):
         for osv_id in _ids(finding):
             verdicts[osv_id] = verdicts.get(osv_id, False) or finding.rule.endswith("/symbol-reachable")
     return verdicts
-
-
-def _findings(rows: list[Row], tool: str):
-    for row in rows:
-        if row.tool == tool and row.state == "ok":
-            yield from row.findings
 
 
 def _ids(finding) -> list[str]:

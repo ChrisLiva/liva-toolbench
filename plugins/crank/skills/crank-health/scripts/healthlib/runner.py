@@ -236,6 +236,11 @@ class Row:
         return finding
 
 
+def ok_findings(rows: list[Row], tool: str | None = None) -> list[Finding]:
+    """The findings of the `ok` rows in row order, only `tool`'s when one is given."""
+    return [f for row in rows if row.state == "ok" and (tool is None or row.tool == tool) for f in row.findings]
+
+
 @dataclass(frozen=True)
 class Rung:
     """One place a tool's binary can come from: `repo binary`, `system binary` or `ephemeral`."""
