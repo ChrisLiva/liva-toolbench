@@ -416,7 +416,6 @@ def _both(glob: str) -> list[str]:
     return [glob] if glob.endswith("/**") else [glob, glob.rstrip("/") + "/**"]
 
 
-
 def _is_osv_manifest(rel: str) -> bool:
     name = rel.rsplit("/", 1)[-1]
     return name in OSV_MANIFESTS or bool(re.fullmatch(r"requirements.*\.txt", name))

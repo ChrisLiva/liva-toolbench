@@ -26,7 +26,6 @@ def _table(header: list[str], rows: list[list]) -> list[str]:
     return out
 
 
-
 def inventory_md(inventory: inv.Inventory, path_facts: dict, extra: list[str]) -> str:
     out = [f"repo: {inventory.repo} · head: {inventory.head} · dirty: {inventory.dirty} paths", *extra, ""]
     for project in inventory.projects:
@@ -82,7 +81,6 @@ def _listing(paths: list[str], limit: int = 6) -> str:
     return " (" + ", ".join(paths[:limit]) + more + ")"
 
 
-
 def tools_md(meta: dict, rows: list[Row]) -> str:
     scope = "all projects" if not meta["selected"] else "--project " + " ".join(meta["selected"])
     only = "all" if len(meta["only"]) == len(CATEGORIES) else "--only " + ",".join(meta["only"])
@@ -117,7 +115,6 @@ def _state(row: Row) -> str:
     return row.state
 
 
-
 def findings_path(run_dir: Path, row: Row) -> Path:
     return run_dir / "findings" / row.folder / f"{row.slug}.tsv"
 
@@ -138,7 +135,6 @@ def read_findings(run_dir: Path, row: Row) -> list[Finding]:
     except OSError:
         return []
     return [f for f in map(Finding.parse, lines) if f is not None]
-
 
 
 def _counts(findings: list[Finding], status: str) -> str:
@@ -224,7 +220,6 @@ def _write_project_summaries(folder: Path, project: inv.ProjectRecord, rows: lis
         (folder / f"{language}--{project.slug}.md").write_text(text, encoding="utf-8")
 
 
-
 def grades_md(grades: list[grading.Grade], stage: str) -> str:
     units = list(dict.fromkeys(g.unit for g in grades))
     headline = grading.headline(grades)
@@ -239,7 +234,6 @@ def grades_md(grades: list[grading.Grade], stage: str) -> str:
         body = [[c, mine[c].letter or "not assessed", mine[c].basis] for c in CATEGORIES if c in mine]
         out += _table(["category", "grade", "basis"], body) + [""]
     return "\n".join(out)
-
 
 
 def row_record(row: Row) -> dict:

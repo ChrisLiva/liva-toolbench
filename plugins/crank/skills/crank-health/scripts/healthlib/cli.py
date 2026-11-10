@@ -43,7 +43,6 @@ def say(text: str) -> None:
     print(text, file=sys.stderr, flush=True)
 
 
-
 def path_facts(run: Run) -> dict[str, str]:
     facts = {}
     for name, argv in PATH_PROBES.items():
@@ -158,7 +157,6 @@ def digest(run_dir: Path, rows: list[Row], grades: list[grading.Grade], stage: s
     print("read next: grades.md, inventory.md, tools.md, summary/*.md, findings/<project>/<tool>.tsv")
 
 
-
 def new_run_dir(repo: Path, override: str | None) -> Path:
     if override:
         path = Path(override).resolve()
@@ -203,7 +201,6 @@ def cmd_scan(opts) -> int:
     if opts.pr:
         print("pr mode: read pr.md, new-findings.tsv, resolved-findings.tsv")
     return 0
-
 
 
 def finding_key(finding: Finding, renames: dict[str, str] | None = None) -> tuple:
@@ -356,7 +353,6 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
         "Base evidence: `base/` holds its own inventory.md, tools.md, grades.md, summary/ and findings/.",
     ]
     (run_dir / "pr.md").write_text("\n".join(out) + "\n")
-
 
 
 def cmd_rerun(opts) -> int:
@@ -519,7 +515,6 @@ def written_since(repo: Path, run_dir: Path, started: float) -> list[str]:
             except OSError:
                 continue
     return sorted(found)
-
 
 
 def categories(text: str) -> list[str]:
