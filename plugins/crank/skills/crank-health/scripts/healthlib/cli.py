@@ -123,7 +123,7 @@ def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> 
         rows = plan_rows(run)
         facts = path_facts(run)
         meta = run_meta(repo, run_dir, run, opts.deep)
-        projects = [report.project_record(p) for p in inventory.projects]
+        projects = [p.record() for p in inventory.projects]
         (run_dir / "inventory.md").write_text(report.inventory_md(inventory, facts, extra))
         if opts.plan:
             (run_dir / "tools.md").write_text(report.tools_md(meta, rows))
@@ -131,16 +131,13 @@ def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> 
         else:
             run_rows(run, rows, opts.jobs)
             settle.settle(inventory, rows)
-            for project, record in zip(inventory.projects, projects):
-                record["facts"] = dict(project.facts)
-            (run_dir / "inventory.md").write_text(report.inventory_md(inventory, facts, extra))
             grades = write_all(run_dir, meta, projects, rows, "mechanical, before triage")
     finally:
         run.cleanup()
     return {"meta": meta, "projects": projects, "rows": rows, "inventory": inventory, "grades": grades}
 
 
-def write_all(run_dir: Path, meta: dict, projects: list[dict], rows: list[Row], stage: str) -> list[grading.Grade]:
+def write_all(run_dir: Path, meta: dict, projects: list[inv.ProjectRecord], rows: list[Row], stage: str) -> list[grading.Grade]:
     report.write_findings(run_dir, rows)
     report.write_summaries(run_dir, projects, rows)
     (run_dir / "tools.md").write_text(report.tools_md(meta, rows))

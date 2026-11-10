@@ -204,7 +204,7 @@ class Row:
 
     @property
     def folder(self) -> str:
-        return "repo" if self.project == "repo" else ("root" if self.project == "." else self.project.replace("/", "-"))
+        return "repo" if self.project == "repo" else inv.slug(self.project)
 
     def skip(self, reason: str) -> Row:
         self.state, self.detail, self.provenance, self.job = "skipped", reason, f"skipped: {reason}", None

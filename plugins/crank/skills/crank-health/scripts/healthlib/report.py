@@ -206,7 +206,7 @@ def _top_rules(rows: list[Row]) -> list[list]:
     ]
 
 
-def write_summaries(run_dir: Path, projects: list[dict], rows: list[Row]) -> None:
+def write_summaries(run_dir: Path, projects: list[inv.ProjectRecord], rows: list[Row]) -> None:
     folder = run_dir / "summary"
     folder.mkdir(parents=True, exist_ok=True)
     for stale in folder.glob("*.md"):
@@ -215,22 +215,21 @@ def write_summaries(run_dir: Path, projects: list[dict], rows: list[Row]) -> Non
         _write_project_summaries(folder, project, rows)
     wide = [r for r in rows if r.language == "repo-wide"]
     if wide:
-        total = sum(sum(p["lines"].values()) for p in projects)
-        files = sum(sum(p["files"].values()) for p in projects)
+        total = sum(sum(p.lines.values()) for p in projects)
+        files = sum(sum(p.files.values()) for p in projects)
         line = f"Inventory: {files} source files, {total} lines ({total / 1000:.1f} KLOC) across {len(projects)} project(s)"
         (folder / "repo-wide.md").write_text(summary_md("repo-wide · .", line, wide), encoding="utf-8")
 
 
-def _write_project_summaries(folder: Path, project: dict, rows: list[Row]) -> None:
-    for language, lines in project["lines"].items():
-        mine = [r for r in rows if r.project == project["dir"] and r.language == language]
+def _write_project_summaries(folder: Path, project: inv.ProjectRecord, rows: list[Row]) -> None:
+    for language, lines in project.lines.items():
+        mine = [r for r in rows if r.project == project.dir and r.language == language]
         if not mine:
             continue
-        count = project["files"][language]
+        count = project.files[language]
         line = f"Inventory: {count} files, {lines} lines ({lines / 1000:.1f} KLOC)"
-        slug = "root" if project["dir"] == "." else project["dir"].replace("/", "-")
-        text = summary_md(f"{language} · {project['dir']}", line, mine)
-        (folder / f"{language}--{slug}.md").write_text(text, encoding="utf-8")
+        text = summary_md(f"{language} · {project.dir}", line, mine)
+        (folder / f"{language}--{project.slug}.md").write_text(text, encoding="utf-8")
 
 
 # --- grades.md -----------------------------------------------------------------------------
@@ -253,20 +252,6 @@ def grades_md(grades: list[grading.Grade], stage: str) -> str:
 
 
 # --- results.json --------------------------------------------------------------------------
-
-
-def project_record(project: inv.Project) -> dict:
-    return {
-        "dir": project.dir,
-        "manifests": project.manifests,
-        "files": {lang: len(paths) for lang, paths in project.files.items()},
-        "lines": dict(project.lines),
-        "asset_lines": dict(project.asset_lines),
-        "owned": dict(project.owned),
-        "unowned": list(project.unowned),
-        "facts": dict(project.facts),
-        "fixture_only": dict(project.fixture_only),
-    }
 
 
 def row_record(row: Row) -> dict:
@@ -308,14 +293,14 @@ def row_from(record: dict) -> Row:
     return row
 
 
-def write_results(run_dir: Path, meta: dict, projects: list[dict], rows: list[Row]) -> None:
-    doc = {"meta": meta, "projects": projects, "rows": [row_record(r) for r in rows]}
+def write_results(run_dir: Path, meta: dict, projects: list[inv.ProjectRecord], rows: list[Row]) -> None:
+    doc = {"meta": meta, "projects": [p.to_json() for p in projects], "rows": [row_record(r) for r in rows]}
     (run_dir / "results.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
 
 
-def read_results(run_dir: Path) -> tuple[dict, list[dict], list[Row]]:
+def read_results(run_dir: Path) -> tuple[dict, list[inv.ProjectRecord], list[Row]]:
     doc = json.loads((run_dir / "results.json").read_text(encoding="utf-8"))
     rows = [row_from(r) for r in doc["rows"]]
     for row in rows:
         row.findings = read_findings(run_dir, row)
-    return doc["meta"], doc["projects"], rows
+    return doc["meta"], [inv.ProjectRecord.from_json(p) for p in doc["projects"]], rows

@@ -13,7 +13,7 @@ import re
 import stat
 import subprocess
 import tomllib
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from functools import cache
 from pathlib import Path
 
@@ -395,6 +395,36 @@ def _requirements_naming(folder: Path, want: str) -> str | None:
     return None
 
 
+def slug(dir: str) -> str:
+    return "root" if dir == "." else dir.replace("/", "-")
+
+
+@dataclass(frozen=True)
+class ProjectRecord:
+    """A project as `results.json` keeps it: file counts, not file lists."""
+
+    dir: str
+    manifests: list[str] = field(default_factory=list)
+    files: dict[str, int] = field(default_factory=dict)
+    lines: dict[str, int] = field(default_factory=dict)
+    asset_lines: dict[str, int] = field(default_factory=dict)
+    owned: dict[str, str] = field(default_factory=dict)
+    unowned: list[str] = field(default_factory=list)
+    facts: dict[str, str] = field(default_factory=dict)
+    fixture_only: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def slug(self) -> str:
+        return slug(self.dir)
+
+    def to_json(self) -> dict:
+        return {f.name: getattr(self, f.name) for f in fields(self)}
+
+    @classmethod
+    def from_json(cls, doc: dict) -> ProjectRecord:
+        return cls(**{f.name: doc[f.name] for f in fields(cls) if f.name in doc})
+
+
 @dataclass
 class Project:
     dir: str
@@ -415,7 +445,20 @@ class Project:
 
     @property
     def slug(self) -> str:
-        return "root" if self.dir == "." else self.dir.replace("/", "-")
+        return slug(self.dir)
+
+    def record(self) -> ProjectRecord:
+        return ProjectRecord(
+            dir=self.dir,
+            manifests=list(self.manifests),
+            files={lang: len(paths) for lang, paths in self.files.items()},
+            lines=dict(self.lines),
+            asset_lines=dict(self.asset_lines),
+            owned=dict(self.owned),
+            unowned=list(self.unowned),
+            facts=dict(self.facts),
+            fixture_only=dict(self.fixture_only),
+        )
 
     def kloc(self, language: str) -> float:
         return self.lines.get(language, 0) / 1000

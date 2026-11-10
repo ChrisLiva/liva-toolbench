@@ -485,7 +485,7 @@ class SilentFailureTest(RepoCase):
         ctx._knip_unmeasured(knip, "no node_modules: knip cannot load the configs that name entry points")
         self.assertEqual([f.status for f in knip.findings], ["advisory"])
         self.assertTrue(knip.notes[0].startswith("check: no node_modules"))
-        got = {g.category: g for g in grade.grade([{"dir": ".", "lines": {"js-ts": 1}, "files": {"js-ts": 1}, "asset_lines": {}}], [knip], set(CATEGORIES), False)}
+        got = {g.category: g for g in grade.grade([inv.ProjectRecord(dir=".", lines={"js-ts": 1}, files={"js-ts": 1}, asset_lines={})], [knip], set(CATEGORIES), False)}
         self.assertEqual(got["dead code"].letter, "")
 
     def test_a_recorded_mirror_command_names_the_repo(self):
@@ -545,12 +545,12 @@ def row(tool, categories, project=".", language="js-ts", state="ok", **kw) -> Ro
     return made
 
 
-PROJECT = {"dir": ".", "lines": {"js-ts": 2000}, "files": {"js-ts": 10}, "asset_lines": {"css": 500}}
+PROJECT = inv.ProjectRecord(dir=".", lines={"js-ts": 2000}, files={"js-ts": 10}, asset_lines={"css": 500})
 
 
 class GradeTest(unittest.TestCase):
     def letters(self, rows, projects=(PROJECT,), only=CATEGORIES) -> dict[str, grade.Grade]:
-        return {g.category: g for g in grade.grade(list(projects), rows, set(only), False) if g.unit == projects[0]["dir"]}
+        return {g.category: g for g in grade.grade(list(projects), rows, set(only), False) if g.unit == projects[0].dir}
 
     def test_density_is_weighted_findings_over_kloc(self):
         lint = row("oxlint", ["lint"])
@@ -615,8 +615,8 @@ class GradeTest(unittest.TestCase):
 
     def test_repo_wide_findings_grade_the_project_that_holds_the_file_and_the_rollup(self):
         projects = [
-            {"dir": "a", "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}},
-            {"dir": "b", "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}},
+            inv.ProjectRecord(dir="a", lines={"js-ts": 1000}, files={"js-ts": 1}, asset_lines={}),
+            inv.ProjectRecord(dir="b", lines={"js-ts": 1000}, files={"js-ts": 1}, asset_lines={}),
         ]
         scanner = row("osv-scanner", ["security"], project="repo", language="repo-wide")
         scanner.add("b/package-lock.json", 4, "security", "vulnerable-dependency", "error", "m")
@@ -625,7 +625,7 @@ class GradeTest(unittest.TestCase):
 
     def test_the_headline_is_the_rollup_when_there_is_one(self):
         def project(d):
-            return {"dir": d, "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}}
+            return inv.ProjectRecord(dir=d, lines={"js-ts": 1000}, files={"js-ts": 1}, asset_lines={})
 
         two = grade.grade([project("a"), project("b")], [], set(CATEGORIES), False)
         one = grade.grade([project(".")], [], set(CATEGORIES), False)
@@ -634,8 +634,8 @@ class GradeTest(unittest.TestCase):
 
     def test_duplication_reads_the_project_pass_and_the_rollup_pass(self):
         projects = [
-            {"dir": "a", "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}},
-            {"dir": "b", "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}},
+            inv.ProjectRecord(dir="a", lines={"js-ts": 1000}, files={"js-ts": 1}, asset_lines={}),
+            inv.ProjectRecord(dir="b", lines={"js-ts": 1000}, files={"js-ts": 1}, asset_lines={}),
         ]
         rows = [
             row("jscpd", ["duplication"], project="a", language="repo-wide", metrics={"duplication": Metric(40, 1000, "tokens")}),
@@ -895,6 +895,15 @@ class RunDirTest(RepoCase):
         bandit = next(r for r in rows if r.tool == "bandit")
         self.assertEqual(sorted(f.status for f in bandit.findings), ["dropped", "graded"])
         self.assertIn("1 dropped", (run_dir / "summary" / "python--root.md").read_text())
+
+    def test_results_reload_as_project_records(self):
+        _, run_dir = self.scanned()
+        projects = report.read_results(run_dir)[1]
+        self.assertTrue(all(isinstance(p, inv.ProjectRecord) for p in projects))
+        first = projects[0]
+        self.assertEqual((first.dir, first.files, first.lines, first.slug), (".", {"python": 2}, {"python": 2}, "root"))
+        raw = json.loads((run_dir / "results.json").read_text())["projects"][0]
+        self.assertEqual(list(raw), ["dir", "manifests", "files", "lines", "asset_lines", "owned", "unowned", "facts", "fixture_only"])
 
     def test_a_verdict_selects_by_line(self):
         _, run_dir = self.scanned()

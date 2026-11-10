@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from . import inventory as inv
 from .runner import CATEGORIES, Finding, Row, number
 
 WEIGHT = {"critical": 5.0, "error": 5.0, "warning": 1.0, "info": 0.2}
@@ -54,18 +55,18 @@ def _why_not(rows: list[Row], category: str, profile_note: str) -> str:
     return shown or profile_note
 
 
-def grade(projects: list[dict], rows: list[Row], only: set[str], deep: bool) -> list[Grade]:
+def grade(projects: list[inv.ProjectRecord], rows: list[Row], only: set[str], deep: bool) -> list[Grade]:
     """One grade per (project, category), then the rollup over the selection."""
-    scanned = [p for p in projects if p["lines"]]
+    scanned = [p for p in projects if p.lines]
     by_project = _by_project(projects, rows)
-    units = [(p["dir"], [p]) for p in scanned]
+    units = [(p.dir, [p]) for p in scanned]
     if len(scanned) != 1:
         units.append((ROLLUP, scanned))
     return [g for unit, members in units for g in _unit_grades(unit, members, rows, by_project, only, deep)]
 
 
 def _unit_grades(unit, members, rows, by_project, only, deep) -> list[Grade]:
-    member_dirs = {p["dir"] for p in members}
+    member_dirs = {p.dir for p in members}
     unit_rows = [r for r in rows if r.project in member_dirs or r.project == "repo"]
     found = _unit_found(unit, member_dirs, by_project)
     return [
@@ -74,10 +75,10 @@ def _unit_grades(unit, members, rows, by_project, only, deep) -> list[Grade]:
     ]
 
 
-def _by_project(projects: list[dict], rows: list[Row]) -> dict[str, list[tuple[Row, Finding]]]:
+def _by_project(projects: list[inv.ProjectRecord], rows: list[Row]) -> dict[str, list[tuple[Row, Finding]]]:
     """Every finding of a row that ran, under its project; a repo-wide row's under the file's owner."""
-    dirs = [p["dir"] for p in projects]
-    by_project: dict[str, list[tuple[Row, Finding]]] = {p["dir"]: [] for p in projects}
+    dirs = [p.dir for p in projects]
+    by_project: dict[str, list[tuple[Row, Finding]]] = {p.dir: [] for p in projects}
     for row in (r for r in rows if r.state == "ok"):
         for finding in row.findings:
             home = row.project if row.project != "repo" else owner_of(finding.file, dirs)
@@ -99,7 +100,7 @@ def _category(unit, category, members, rows, unit_rows, found, deep) -> Grade:
     if category in DENSITY:
         return _density(unit, category, members, unit_rows, found)
     if category == "duplication":
-        return _duplication(unit, rows, {p["dir"] for p in members})
+        return _duplication(unit, rows, {p.dir for p in members})
     if category in RATIO:
         return _ratio(unit, category, unit_rows, found)
     note = "deep tools are run by the agent" if deep else "quick profile never executes repo code"
@@ -146,14 +147,14 @@ def _measured_lines(category, members, rows) -> tuple[int, bool]:
     lines = 0
     assessed = False
     for project in members:
-        for language, count in project["lines"].items():
-            graders = _graders(rows, project["dir"], language, category)
+        for language, count in project.lines.items():
+            graders = _graders(rows, project.dir, language, category)
             if not graders:
                 continue
             lines += count
             assessed = True
             if category == "lint" and any(r.reads_assets for r in graders):
-                lines += sum(project.get("asset_lines", {}).values())
+                lines += sum(project.asset_lines.values())
     return lines, assessed
 
 
