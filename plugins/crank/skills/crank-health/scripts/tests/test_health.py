@@ -1056,6 +1056,12 @@ class RunDirTest(RepoCase):
     def test_a_verdict_needs_a_filter(self):
         _, run_dir = self.scanned()
         self.assertEqual(self.call("verdict", str(run_dir), "--dropped", "everything")[0], 2)
+        for flag in ("tool", "project", "category", "rule", "path", "flag", "message"):
+            self.assertEqual(self.call("verdict", str(run_dir), "--dropped", "x", f"--{flag}", "")[0], 2, flag)
+        bandit = next(r for r in report.read_results(run_dir)[2] if r.tool == "bandit")
+        self.assertEqual([f.status for f in bandit.findings], ["graded", "graded"])
+        out = self.call("verdict", str(run_dir), "--tool", "bandit", "--category", "Security", "--advisory", "y")[1]
+        self.assertIn("2 findings now read", out)
 
     def test_a_hand_edit_to_a_findings_file_is_what_grade_reads(self):
         _, run_dir = self.scanned()

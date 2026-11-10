@@ -452,7 +452,7 @@ def verdict_row_matches(row: Row, opts) -> bool:
 
 def verdict_finding_matches(finding: Finding, opts) -> bool:
     checks = (
-        (opts.category, lambda: finding.category == opts.category),
+        (opts.category, lambda: finding.category in opts.category),
         (opts.rule, lambda: rule_matches(finding.rule, opts.rule)),
         (opts.path, lambda: fnmatch.fnmatchcase(finding.file, opts.path)),
         (opts.flag, lambda: opts.flag in finding.flags),
@@ -463,10 +463,14 @@ def verdict_finding_matches(finding: Finding, opts) -> bool:
 
 
 def verdict_problem(opts, rows: list[Row]) -> str | None:
-    """Why the verdict's filters cannot run: none given, or a `--project` no row belongs to."""
+    """Why the verdict's filters cannot run: none given, one given empty, or a `--project` no row
+    belongs to. An empty `--line` is a real filter: it selects whole-file findings."""
     filters = (opts.tool, opts.project, opts.category, opts.rule, opts.path, opts.flag, opts.line, opts.message)
     if not any(f is not None for f in filters):
         return "give at least one filter, so a verdict never lands on every finding by accident"
+    names = ("tool", "project", "category", "rule", "path", "flag", "message")
+    if (empty := next((n for n in names if getattr(opts, n) is not None and not getattr(opts, n)), None)) is not None:
+        return f"--{empty} is empty; an empty filter would select every finding"
     if opts.project is not None and not any(r.project == inv.project_dir(opts.project) for r in rows):
         return f"--project {opts.project}: no row has that project; projects: {', '.join(sorted({r.project for r in rows}))}"
     return None
@@ -607,7 +611,7 @@ def main(argv: list[str] | None = None) -> int:
     how.add_argument("--graded", action="store_true", help="count the row toward its grade")
     verdict.add_argument("--tool", help="as tools.md names it")
     verdict.add_argument("--project", metavar="DIR")
-    verdict.add_argument("--category")
+    verdict.add_argument("--category", type=categories, metavar="CATEGORY,…")
     verdict.add_argument("--rule", metavar="GLOB", help="matched against the rule with or without its tool prefix")
     verdict.add_argument("--path", metavar="GLOB", help="matched against the repo-relative file")
     verdict.add_argument("--flag", help="test, snapshot, generated or touched")
