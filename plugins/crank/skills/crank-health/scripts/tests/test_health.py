@@ -502,6 +502,15 @@ class GradeTest(unittest.TestCase):
         grades = {(g.unit, g.category): g.letter for g in grade.grade(projects, [scanner], set(CATEGORIES), False)}
         self.assertEqual((grades[("a", "security")], grades[("b", "security")], grades[(grade.ROLLUP, "security")]), ("A", "D", "D"))
 
+    def test_the_headline_is_the_rollup_when_there_is_one(self):
+        def project(d):
+            return {"dir": d, "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}}
+
+        two = grade.grade([project("a"), project("b")], [], set(CATEGORIES), False)
+        one = grade.grade([project(".")], [], set(CATEGORIES), False)
+        self.assertEqual((grade.headline(two), grade.headline(one), grade.headline([])), (grade.ROLLUP, ".", ""))
+        self.assertNotIn("| absent |", "\n".join(cli.delta_table(two, one, [], [])))
+
     def test_duplication_reads_the_project_pass_and_the_rollup_pass(self):
         projects = [
             {"dir": "a", "lines": {"js-ts": 1000}, "files": {"js-ts": 1}, "asset_lines": {}},

@@ -245,7 +245,7 @@ def _write_project_summaries(folder: Path, project: dict, rows: list[Row]) -> No
 
 def grades_md(grades: list[grading.Grade], stage: str) -> str:
     units = list(dict.fromkeys(g.unit for g in grades))
-    headline = grading.ROLLUP if grading.ROLLUP in units else units[0] if units else ""
+    headline = grading.headline(grades)
     out = [f"# Grades ({stage})", ""]
     if headline:
         out += [f"Grades{' (rollup)' if headline == grading.ROLLUP else ''}: " + grading.line(grades, headline), ""]

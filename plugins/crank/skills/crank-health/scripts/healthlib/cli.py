@@ -118,6 +118,7 @@ def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> 
     (run_dir / "scope.txt").write_text("".join(f + "\n" for f in inventory.files))
 
     run = Run(inventory, run_dir, deep=opts.deep, only=opts.only, pins=pins, budget_scale=opts.budget_scale)
+    grades: list[grading.Grade] = []
     try:
         rows = plan_rows(run)
         facts = path_facts(run)
@@ -133,10 +134,10 @@ def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> 
             for project, record in zip(inventory.projects, projects):
                 record["facts"] = dict(project.facts)
             (run_dir / "inventory.md").write_text(report.inventory_md(inventory, facts, extra))
-            write_all(run_dir, meta, projects, rows, "mechanical, before triage")
+            grades = write_all(run_dir, meta, projects, rows, "mechanical, before triage")
     finally:
         run.cleanup()
-    return {"meta": meta, "projects": projects, "rows": rows, "inventory": inventory}
+    return {"meta": meta, "projects": projects, "rows": rows, "inventory": inventory, "grades": grades}
 
 
 def write_all(run_dir: Path, meta: dict, projects: list[dict], rows: list[Row], stage: str) -> list[grading.Grade]:
@@ -150,8 +151,7 @@ def write_all(run_dir: Path, meta: dict, projects: list[dict], rows: list[Row], 
 
 
 def digest(run_dir: Path, rows: list[Row], grades: list[grading.Grade], stage: str) -> None:
-    units = list(dict.fromkeys(g.unit for g in grades))
-    headline = grading.ROLLUP if grading.ROLLUP in units else (units[0] if units else "")
+    headline = grading.headline(grades)
     print(f"run dir: {run_dir}")
     if headline:
         print(f"grades ({stage}): {grading.line(grades, headline)}")
@@ -202,7 +202,7 @@ def cmd_scan(opts) -> int:
             return 2
         extra.append(f"pr mode: base {opts.pr} · merge-base {base_sha[:10]}")
     head = scan_tree(repo, run_dir, opts, {}, extra)
-    grades = grading.grade(head["projects"], head["rows"], set(head["meta"]["only"]), opts.deep)
+    grades = head["grades"]
     if opts.plan:
         print(f"run dir: {run_dir}")
         print("planned only: read inventory.md and tools.md; nothing ran")
@@ -326,8 +326,7 @@ def delta_row(g: grading.Grade, was: grading.Grade | None, new: list[Finding], r
 
 
 def delta_table(head_grades, base_grades, new: list[Finding], resolved: list[Finding]) -> list[str]:
-    units = list(dict.fromkeys(g.unit for g in head_grades))
-    unit = grading.ROLLUP if grading.ROLLUP in units else units[0]
+    unit = grading.headline(head_grades)
     before = {g.category: g for g in base_grades if g.unit == unit}
     if not before and base_grades:
         first = base_grades[0].unit
@@ -458,8 +457,7 @@ def cmd_verdict(opts) -> int:
             finding.status, finding.reason = status, reason
             changed += 1
     grades = write_all(run_dir, meta, projects, rows, "after triage")
-    units = list(dict.fromkeys(g.unit for g in grades))
-    unit = grading.ROLLUP if grading.ROLLUP in units else units[0]
+    unit = grading.headline(grades)
     print(f"{changed} findings now read `{status}{': ' + reason if reason else ''}`")
     print(f"grades (after triage): {grading.line(grades, unit)}")
     return 0

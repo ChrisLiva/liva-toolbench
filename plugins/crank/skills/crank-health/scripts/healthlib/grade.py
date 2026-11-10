@@ -208,6 +208,12 @@ def _duplication(unit, rows, member_dirs) -> Grade:
     )
 
 
+def headline(grades: list[Grade]) -> str:
+    if any(g.unit == ROLLUP for g in grades):
+        return ROLLUP
+    return grades[0].unit if grades else ""
+
+
 def line(grades: list[Grade], unit: str) -> str:
     mine = {g.category: g for g in grades if g.unit == unit}
     return " · ".join(f"{c} {mine[c].letter or 'not assessed'}" for c in CATEGORIES if c in mine)
