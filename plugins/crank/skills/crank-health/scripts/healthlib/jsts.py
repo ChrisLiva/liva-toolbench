@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
@@ -190,39 +191,42 @@ class _Context:
         argv = self.resolve(row, "oxlint", "oxlint", "oxlint", config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            prefix = argv()
-            extra = []
-            if not config:
-                default = self.run.config_dir() / "oxlintrc.json"
-                default.write_text(json.dumps(OXLINT_DEFAULT))
-                extra = ["--config", str(default), "--disable-nested-config"]
-            results = []
-            for batch in batches([self.run.abs(f) for f in self.files]):
-                done = self.run.exec(row, [*prefix, "--format", "sarif", "--no-error-on-unmatched-pattern", *extra, *batch], cwd=self.repo)
-                doc = parse_json(done.stdout)
-                if not isinstance(doc, dict) or not doc.get("runs"):
-                    # exit 0 with nothing on stdout is a file list oxlint could not read, not a clean tree
-                    raise Failed(f"exit {done.code} and no SARIF on stdout: {done.first_error}")
-                results += list(sarif_results(doc))
-            for rule, level, message, uri, line in results:
-                error = level == "error"
-                graded = bool(config) or error
-                row.add(
-                    self.run.rel(uri, self.repo),
-                    line,
-                    "lint",
-                    re.sub(r"^([^()]+)\((.+)\)$", r"\1/\2", rule),
-                    "error" if error else "warning",
-                    message,
-                    graded=graded,
-                    reason="default config: only correctness rules grade",
-                )
-            self.run.save(row, "oxlint.json", json.dumps([list(r) for r in results], indent=1))
-
-        row.job = job
+        row.job = partial(self._oxlint_job, argv, config)
         return row
+
+    def _oxlint_job(self, argv, config: str | None, row: Row) -> None:
+        prefix = argv()
+        extra = []
+        if not config:
+            default = self.run.config_dir() / "oxlintrc.json"
+            default.write_text(json.dumps(OXLINT_DEFAULT))
+            extra = ["--config", str(default), "--disable-nested-config"]
+        results = self._oxlint_results(row, [*prefix, "--format", "sarif", "--no-error-on-unmatched-pattern", *extra])
+        for rule, level, message, uri, line in results:
+            error = level == "error"
+            graded = bool(config) or error
+            row.add(
+                self.run.rel(uri, self.repo),
+                line,
+                "lint",
+                re.sub(r"^([^()]+)\((.+)\)$", r"\1/\2", rule),
+                "error" if error else "warning",
+                message,
+                graded=graded,
+                reason="default config: only correctness rules grade",
+            )
+        self.run.save(row, "oxlint.json", json.dumps([list(r) for r in results], indent=1))
+
+    def _oxlint_results(self, row: Row, command: list[str]) -> list:
+        results = []
+        for batch in batches([self.run.abs(f) for f in self.files]):
+            done = self.run.exec(row, [*command, *batch], cwd=self.repo)
+            doc = parse_json(done.stdout)
+            if not isinstance(doc, dict) or not doc.get("runs"):
+                # exit 0 with nothing on stdout is a file list oxlint could not read, not a clean tree
+                raise Failed(f"exit {done.code} and no SARIF on stdout: {done.first_error}")
+            results += list(sarif_results(doc))
+        return results
 
     def eslint(self) -> Row:
         row = self.row("lint", "eslint")
@@ -236,37 +240,44 @@ class _Context:
         if argv is None:
             return row
         cwd = self.repo / inv.parent(config) if config else self.dir
-
-        def job(row: Row) -> None:
-            prefix = argv()
-            reports = []
-            for batch in batches([self.run.abs(f) for f in self.files]):
-                flags = ["--format", "json", "--no-color", "--no-warn-ignored"]
-                done = self.run.exec(row, [*prefix, *flags, *batch], cwd=cwd)
-                if done.code == 2 and "no-warn-ignored" in done.stderr:
-                    done = self.run.exec(row, [*prefix, "--format", "json", "--no-color", *batch], cwd=cwd)
-                part = parse_json(done.stdout)
-                if not isinstance(part, list):
-                    raise Failed(done.first_error)
-                reports += part
-            for entry in reports:
-                entry.pop("source", None)
-                path = self.run.rel(entry.get("filePath", ""), cwd)
-                for message in entry.get("messages") or []:
-                    row.add(
-                        path,
-                        message.get("line", 0),
-                        "lint",
-                        message.get("ruleId") or "parse-error",
-                        "error" if message.get("severity") == 2 else "warning",
-                        message.get("message", ""),
-                    )
-                entry["messages"] = [{k: m.get(k) for k in ("ruleId", "severity", "message", "line", "column")} for m in entry.get("messages") or []]
-            row.notes.append(f"eslint reported on {len(reports)} of {len(self.files)} files; its config ignores the rest")
-            self.run.save(row, "eslint.json", json.dumps(reports, indent=1))
-
-        row.job = job
+        row.job = partial(self._eslint_job, argv, cwd)
         return row
+
+    def _eslint_job(self, argv, cwd: Path, row: Row) -> None:
+        prefix = argv()
+        reports = self._eslint_reports(row, prefix, cwd)
+        for entry in reports:
+            self._eslint_entry(row, entry, cwd)
+        row.notes.append(f"eslint reported on {len(reports)} of {len(self.files)} files; its config ignores the rest")
+        self.run.save(row, "eslint.json", json.dumps(reports, indent=1))
+
+    def _eslint_reports(self, row: Row, prefix: list[str], cwd: Path) -> list:
+        reports = []
+        for batch in batches([self.run.abs(f) for f in self.files]):
+            flags = ["--format", "json", "--no-color", "--no-warn-ignored"]
+            done = self.run.exec(row, [*prefix, *flags, *batch], cwd=cwd)
+            if done.code == 2 and "no-warn-ignored" in done.stderr:
+                done = self.run.exec(row, [*prefix, "--format", "json", "--no-color", *batch], cwd=cwd)
+            part = parse_json(done.stdout)
+            if not isinstance(part, list):
+                raise Failed(done.first_error)
+            reports += part
+        return reports
+
+    def _eslint_entry(self, row: Row, entry: dict, cwd: Path) -> None:
+        """Add one file's messages, then slim the entry to what the saved report keeps."""
+        entry.pop("source", None)
+        path = self.run.rel(entry.get("filePath", ""), cwd)
+        for message in entry.get("messages") or []:
+            row.add(
+                path,
+                message.get("line", 0),
+                "lint",
+                message.get("ruleId") or "parse-error",
+                "error" if message.get("severity") == 2 else "warning",
+                message.get("message", ""),
+            )
+        entry["messages"] = [{k: m.get(k) for k in ("ruleId", "severity", "message", "line", "column")} for m in entry.get("messages") or []]
 
     def biome(self, mode: str) -> Row:
         row = self.row(mode, f"biome {mode}")
@@ -281,46 +292,55 @@ class _Context:
         cwd = self.repo / inv.parent(config) if config else self.dir
         targets = self.lint_files if mode == "lint" else self.format_files
         row.reads_assets = mode == "lint"
-
-        def job(row: Row) -> None:
-            prefix = argv()
-            flags = ["--reporter=json", "--max-diagnostics=none", "--colors=off", "--no-errors-on-unmatched"]
-            if self.run.inv.is_git and (self.repo / ".gitignore").is_file():  # Biome errors without an ignore file
-                flags += ["--vcs-enabled=true", "--vcs-client-kind=git", "--vcs-use-ignore-file=true", f"--vcs-root={self.repo}"]
-            diagnostics, parsed = [], 0
-            for batch in batches([self.run.abs(f) for f in targets]):
-                done = self.run.exec(row, [*prefix, mode, *flags, *batch], cwd=cwd)
-                doc = first_json_line(done.stdout, "diagnostics")
-                if doc is None:
-                    raise Failed(done.first_error)
-                diagnostics += doc["diagnostics"]
-                parsed += (doc.get("summary") or {}).get("unchanged", 0) + (doc.get("summary") or {}).get("changed", 0)
-            if parsed == 0:
-                row.skip(f"nothing to scan (the Biome config includes none of this project's {len(targets)} files)")
-                return
-            failing = set()
-            for item in diagnostics:
-                category = item.get("category", "")
-                location = item.get("location") or {}
-                path = location.get("path")
-                path = self.run.rel(path.get("file", "") if isinstance(path, dict) else (path or ""), cwd)
-                line = (location.get("start") or {}).get("line", 0)
-                if category == "parse" or category.startswith("parse"):
-                    row.notes.append(f"{path}: Biome could not parse it")
-                elif mode == "format" and category == "format":
-                    if path not in failing:
-                        row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
-                    failing.add(path)
-                elif mode == "lint" and category.startswith("lint/"):
-                    severity = {"error": "error", "fatal": "error", "warning": "warning"}.get(item.get("severity"), "info")
-                    row.add(path, line, "lint", category[5:], severity, item.get("message", ""), graded=severity != "info", reason="information")
-            if mode == "format":
-                row.metrics["format"] = Metric(len(failing), parsed, "files")
-            row.notes.append(f"Biome read {parsed} of the {len(targets)} files passed")
-            self.run.save(row, f"biome-{mode}.json", json.dumps(diagnostics, indent=1))
-
-        row.job = job
+        row.job = partial(self._biome_job, argv, mode, cwd, targets)
         return row
+
+    def _biome_job(self, argv, mode: str, cwd: Path, targets: list[str], row: Row) -> None:
+        prefix = argv()
+        flags = ["--reporter=json", "--max-diagnostics=none", "--colors=off", "--no-errors-on-unmatched"]
+        if self.run.inv.is_git and (self.repo / ".gitignore").is_file():  # Biome errors without an ignore file
+            flags += ["--vcs-enabled=true", "--vcs-client-kind=git", "--vcs-use-ignore-file=true", f"--vcs-root={self.repo}"]
+        diagnostics, parsed = self._biome_diagnostics(row, [*prefix, mode, *flags], targets, cwd)
+        if parsed == 0:
+            row.skip(f"nothing to scan (the Biome config includes none of this project's {len(targets)} files)")
+            return
+        failing = self._biome_findings(row, mode, diagnostics, cwd)
+        if mode == "format":
+            row.metrics["format"] = Metric(len(failing), parsed, "files")
+        row.notes.append(f"Biome read {parsed} of the {len(targets)} files passed")
+        self.run.save(row, f"biome-{mode}.json", json.dumps(diagnostics, indent=1))
+
+    def _biome_diagnostics(self, row: Row, command: list[str], targets: list[str], cwd: Path) -> tuple[list, int]:
+        """Every diagnostic over the batches, and how many files Biome read."""
+        diagnostics, parsed = [], 0
+        for batch in batches([self.run.abs(f) for f in targets]):
+            done = self.run.exec(row, [*command, *batch], cwd=cwd)
+            doc = first_json_line(done.stdout, "diagnostics")
+            if doc is None:
+                raise Failed(done.first_error)
+            diagnostics += doc["diagnostics"]
+            parsed += (doc.get("summary") or {}).get("unchanged", 0) + (doc.get("summary") or {}).get("changed", 0)
+        return diagnostics, parsed
+
+    def _biome_findings(self, row: Row, mode: str, diagnostics: list, cwd: Path) -> set[str]:
+        """Add the diagnostics this mode reports; return the files that fail the formatter."""
+        failing = set()
+        for item in diagnostics:
+            category = item.get("category", "")
+            location = item.get("location") or {}
+            path = location.get("path")
+            path = self.run.rel(path.get("file", "") if isinstance(path, dict) else (path or ""), cwd)
+            line = (location.get("start") or {}).get("line", 0)
+            if category == "parse" or category.startswith("parse"):
+                row.notes.append(f"{path}: Biome could not parse it")
+            elif mode == "format" and category == "format":
+                if path not in failing:
+                    row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
+                failing.add(path)
+            elif mode == "lint" and category.startswith("lint/"):
+                severity = {"error": "error", "fatal": "error", "warning": "warning"}.get(item.get("severity"), "info")
+                row.add(path, line, "lint", category[5:], severity, item.get("message", ""), graded=severity != "info", reason="information")
+        return failing
 
     def react_doctor(self) -> Row | None:
         react = inv.npm_dependency(self.repo, self.project.dir, "react")
@@ -331,40 +351,39 @@ class _Context:
         if not self.run.which("node"):
             return row.unavailable("node not on PATH: brew install node")
         row.provenance = "default config, ephemeral"
-
-        def job(row: Row) -> None:
-            prefix, row.version = self.run.npx("react-doctor")
-            out = self.run.scratch_dir("react-doctor", self.project.slug)
-            env = {**NO_CACHE, "REACT_DOCTOR_CACHE_DIR": str(out / "cache"), "REACT_DOCTOR_NO_CACHE": "1"}
-            done = self.run.exec(
-                row,
-                [*prefix, self.dir, "--json", "--no-telemetry", "--no-supply-chain", "--no-dead-code", "--blocking", "none", "--output-dir", out],
-                cwd=self.run.scratch_dir(),
-                env=env,
-            )
-            doc = parse_json(done.stdout)
-            if not isinstance(doc, dict) or "diagnostics" not in doc:
-                raise Failed(done.first_error)
-            slim = []
-            for item in doc["diagnostics"]:
-                path = self.run.rel(item.get("filePath", ""), self.dir)
-                if path not in self.mine:
-                    continue
-                row.add(
-                    path,
-                    item.get("line", 0),
-                    "lint",
-                    item.get("rule", ""),
-                    "error" if item.get("severity") == "error" else "warning",
-                    item.get("message", ""),
-                    graded=False,
-                    reason="complementary tool",
-                )
-                slim.append({k: item.get(k) for k in ("filePath", "line", "rule", "severity", "message", "category")})
-            self.run.save(row, "react-doctor.json", json.dumps(slim, indent=1))
-
-        row.job = job
+        row.job = self._react_doctor_job
         return row
+
+    def _react_doctor_job(self, row: Row) -> None:
+        prefix, row.version = self.run.npx("react-doctor")
+        out = self.run.scratch_dir("react-doctor", self.project.slug)
+        env = {**NO_CACHE, "REACT_DOCTOR_CACHE_DIR": str(out / "cache"), "REACT_DOCTOR_NO_CACHE": "1"}
+        done = self.run.exec(
+            row,
+            [*prefix, self.dir, "--json", "--no-telemetry", "--no-supply-chain", "--no-dead-code", "--blocking", "none", "--output-dir", out],
+            cwd=self.run.scratch_dir(),
+            env=env,
+        )
+        doc = parse_json(done.stdout)
+        if not isinstance(doc, dict) or "diagnostics" not in doc:
+            raise Failed(done.first_error)
+        slim = []
+        for item in doc["diagnostics"]:
+            path = self.run.rel(item.get("filePath", ""), self.dir)
+            if path not in self.mine:
+                continue
+            row.add(
+                path,
+                item.get("line", 0),
+                "lint",
+                item.get("rule", ""),
+                "error" if item.get("severity") == "error" else "warning",
+                item.get("message", ""),
+                graded=False,
+                reason="complementary tool",
+            )
+            slim.append({k: item.get(k) for k in ("filePath", "line", "rule", "severity", "message", "category")})
+        self.run.save(row, "react-doctor.json", json.dumps(slim, indent=1))
 
     # --- format ------------------------------------------------------------------------
 
@@ -377,31 +396,35 @@ class _Context:
             return row
         ignore = inv.find_config(self.repo, self.project.dir, (".prettierignore",))
         cwd = self.repo / inv.parent(ignore) if ignore else self.dir
-
-        def job(row: Row) -> None:
-            prefix = argv()
-            flags = ["--list-different", "--ignore-unknown"] + ([] if is_owned else ["--no-config", "--no-editorconfig"])
-            skipped = set(ignored_by(self.run, self.repo / ignore, cwd, self.format_files)) if ignore else set()
-            targets = [f for f in self.format_files if f not in skipped]
-            listed, errors = [], []
-            for batch in batches([self.run.abs(f) for f in targets]):
-                done = self.run.exec(row, [*prefix, *flags, *batch], cwd=cwd)
-                if done.code not in (0, 1):
-                    errors.append(done.first_error)
-                listed += [line.strip() for line in done.stdout.splitlines() if line.strip()]
-            if errors and not listed:
-                raise Failed(errors[0])
-            row.notes += [f"prettier exit 2 on a batch: {e}" for e in errors[:3]]
-            failing = sorted({self.run.rel(path, cwd) for path in listed})
-            for path in failing:
-                row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
-            row.metrics["format"] = Metric(len(failing), len(targets), "files")
-            if skipped:
-                row.notes.append(f"{len(skipped)} files skipped by {ignore}")
-            self.run.save(row, "prettier.txt", "".join(p + "\n" for p in failing))
-
-        row.job = job
+        row.job = partial(self._prettier_job, argv, is_owned, ignore, cwd)
         return row
+
+    def _prettier_job(self, argv, is_owned: bool, ignore: str | None, cwd: Path, row: Row) -> None:
+        prefix = argv()
+        flags = ["--list-different", "--ignore-unknown"] + ([] if is_owned else ["--no-config", "--no-editorconfig"])
+        skipped = set(ignored_by(self.run, self.repo / ignore, cwd, self.format_files)) if ignore else set()
+        targets = [f for f in self.format_files if f not in skipped]
+        listed, errors = self._prettier_listed(row, [*prefix, *flags], targets, cwd)
+        if errors and not listed:
+            raise Failed(errors[0])
+        row.notes += [f"prettier exit 2 on a batch: {e}" for e in errors[:3]]
+        failing = sorted({self.run.rel(path, cwd) for path in listed})
+        for path in failing:
+            row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
+        row.metrics["format"] = Metric(len(failing), len(targets), "files")
+        if skipped:
+            row.notes.append(f"{len(skipped)} files skipped by {ignore}")
+        self.run.save(row, "prettier.txt", "".join(p + "\n" for p in failing))
+
+    def _prettier_listed(self, row: Row, command: list[str], targets: list[str], cwd: Path) -> tuple[list[str], list[str]]:
+        """The paths prettier lists as different, and the first error of each failed batch."""
+        listed, errors = [], []
+        for batch in batches([self.run.abs(f) for f in targets]):
+            done = self.run.exec(row, [*command, *batch], cwd=cwd)
+            if done.code not in (0, 1):
+                errors.append(done.first_error)
+            listed += [line.strip() for line in done.stdout.splitlines() if line.strip()]
+        return listed, errors
 
     def oxfmt(self) -> Row:
         row = self.row("format", "oxfmt")
@@ -411,29 +434,33 @@ class _Context:
         argv = self.resolve(row, "oxfmt", "oxfmt", "oxfmt", config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            prefix = argv()
-            failing, counted, unparsed = set(), 0, []
-            # oxfmt refuses a path containing `..` and reads .prettierignore from cwd alone
-            for batch in batches([self.project.rel(f) for f in self.format_files]):
-                done = self.run.exec(row, [*prefix, "--list-different", "--no-error-on-unmatched-pattern", *batch], cwd=self.dir)
-                if done.code not in (0, 1, 2):
-                    raise Failed(done.first_error)
-                if done.code == 2:
-                    unparsed.append(done.first_error)
-                failing.update(self.run.rel(line.strip(), self.dir) for line in done.stdout.splitlines() if line.strip())
-                check = self.run.exec(row, [*prefix, "--check", "--no-error-on-unmatched-pattern", *batch], cwd=self.dir)
-                if m := re.search(r"on (\d+) files?", check.stdout + check.stderr):
-                    counted += int(m.group(1))
-            for path in sorted(failing):
-                row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
-            row.metrics["format"] = Metric(len(failing), counted or len(self.format_files), "files")
-            row.notes += [f"oxfmt could not parse a file: {e}" for e in unparsed[:3]]
-            self.run.save(row, "oxfmt.txt", "".join(p + "\n" for p in sorted(failing)))
-
-        row.job = job
+        row.job = partial(self._oxfmt_job, argv)
         return row
+
+    def _oxfmt_job(self, argv, row: Row) -> None:
+        prefix = argv()
+        failing, counted, unparsed = self._oxfmt_listed(row, prefix)
+        for path in sorted(failing):
+            row.add(path, "", "format", "unformatted", "warning", "File would be reformatted")
+        row.metrics["format"] = Metric(len(failing), counted or len(self.format_files), "files")
+        row.notes += [f"oxfmt could not parse a file: {e}" for e in unparsed[:3]]
+        self.run.save(row, "oxfmt.txt", "".join(p + "\n" for p in sorted(failing)))
+
+    def _oxfmt_listed(self, row: Row, prefix: list[str]) -> tuple[set[str], int, list[str]]:
+        """The files oxfmt would change, how many it checked, and its parse errors."""
+        failing, counted, unparsed = set(), 0, []
+        # oxfmt refuses a path containing `..` and reads .prettierignore from cwd alone
+        for batch in batches([self.project.rel(f) for f in self.format_files]):
+            done = self.run.exec(row, [*prefix, "--list-different", "--no-error-on-unmatched-pattern", *batch], cwd=self.dir)
+            if done.code not in (0, 1, 2):
+                raise Failed(done.first_error)
+            if done.code == 2:
+                unparsed.append(done.first_error)
+            failing.update(self.run.rel(line.strip(), self.dir) for line in done.stdout.splitlines() if line.strip())
+            check = self.run.exec(row, [*prefix, "--check", "--no-error-on-unmatched-pattern", *batch], cwd=self.dir)
+            if m := re.search(r"on (\d+) files?", check.stdout + check.stderr):
+                counted += int(m.group(1))
+        return failing, counted, unparsed
 
     # --- types -------------------------------------------------------------------------
 
@@ -454,52 +481,57 @@ class _Context:
             local = None
         else:
             return row.unavailable("node not on PATH: brew install node")
-
-        def job(row: Row) -> None:
-            if local is not None:
-                prefix = [str(local)]
-                row.version = self.run.version(str(local), [*prefix, "--version"], cwd=self.dir)
-            else:
-                prefix, row.version = self.run.npx("typescript", "tsc", declared)
-                self.run.warm(f"typescript@{row.version}", [*prefix, "--version"])
-            target = self.dir
-            if not own:
-                target = self.run.config_dir("tsc-" + self.project.slug) / "tsconfig.json"
-                target.write_text(json.dumps({"compilerOptions": SCRATCH_TSCONFIG, "files": [self.run.abs(f) for f in typed]}))
-            flags = ["--noEmit", "--pretty", "false", "--incremental", "false"]
-            done = self.run.exec(row, [*prefix, *flags, "--project", target], cwd=self.repo)
-            if "TS6379" in done.stdout:  # a composite project may not disable incremental compilation
-                info = self.run.scratch_dir("tsc") / f"{self.project.slug}.tsbuildinfo"
-                done = self.run.exec(row, [*prefix, "--noEmit", "--pretty", "false", "--tsBuildInfoFile", info, "--project", target], cwd=self.repo)
-            parsed = 0
-            for line in done.stdout.splitlines():
-                if not (m := TSC_LINE.match(line)):
-                    continue
-                parsed += 1
-                path, lineno, kind, code, message = m.groups()
-                needs_install = self.modules is None and (code in TSC_NEEDS_INSTALL or "npm i --save-dev @types/" in message)
-                error = kind == "error"
-                row.add(
-                    self.run.rel(path, self.repo) if path else "",
-                    int(lineno) if lineno else "",
-                    "types",
-                    code,
-                    "error" if error else "info",
-                    message,
-                    graded=error and not needs_install,
-                    reason="no node_modules: an install that never ran" if needs_install else kind,
-                )
-            if done.code != 0 and parsed == 0:
-                raise Failed(f"exit {done.code}, no diagnostics: {(done.stdout.strip().splitlines() or [done.first_error])[0][:200]}")
-            if self.modules is None:
-                row.notes.append("no node_modules: module-resolution diagnostics are advisory and imported types are unchecked")
-            others = sorted(n for n in inv._listdir(str(self.dir)) if re.fullmatch(r"tsconfig\..+\.json", n))
-            if own and others:
-                row.notes.append(f"other tsconfig files here were not checked: {', '.join(others)}")
-            self.run.save(row, "tsc.txt", done.stdout)
-
-        row.job = job
+        row.job = partial(self._tsc_job, own, typed, declared, local)
         return row
+
+    def _tsc_prefix(self, row: Row, local: Path | None, declared: str) -> list[str]:
+        if local is not None:
+            prefix = [str(local)]
+            row.version = self.run.version(str(local), [*prefix, "--version"], cwd=self.dir)
+        else:
+            prefix, row.version = self.run.npx("typescript", "tsc", declared)
+            self.run.warm(f"typescript@{row.version}", [*prefix, "--version"])
+        return prefix
+
+    def _tsc_job(self, own: bool, typed: list[str], declared: str, local: Path | None, row: Row) -> None:
+        prefix = self._tsc_prefix(row, local, declared)
+        target = self.dir
+        if not own:
+            target = self.run.config_dir("tsc-" + self.project.slug) / "tsconfig.json"
+            target.write_text(json.dumps({"compilerOptions": SCRATCH_TSCONFIG, "files": [self.run.abs(f) for f in typed]}))
+        flags = ["--noEmit", "--pretty", "false", "--incremental", "false"]
+        done = self.run.exec(row, [*prefix, *flags, "--project", target], cwd=self.repo)
+        if "TS6379" in done.stdout:  # a composite project may not disable incremental compilation
+            info = self.run.scratch_dir("tsc") / f"{self.project.slug}.tsbuildinfo"
+            done = self.run.exec(row, [*prefix, "--noEmit", "--pretty", "false", "--tsBuildInfoFile", info, "--project", target], cwd=self.repo)
+        parsed = 0
+        for line in done.stdout.splitlines():
+            if m := TSC_LINE.match(line):
+                parsed += 1
+                self._tsc_add(row, m)
+        if done.code != 0 and parsed == 0:
+            raise Failed(f"exit {done.code}, no diagnostics: {(done.stdout.strip().splitlines() or [done.first_error])[0][:200]}")
+        if self.modules is None:
+            row.notes.append("no node_modules: module-resolution diagnostics are advisory and imported types are unchecked")
+        others = sorted(n for n in inv._listdir(str(self.dir)) if re.fullmatch(r"tsconfig\..+\.json", n))
+        if own and others:
+            row.notes.append(f"other tsconfig files here were not checked: {', '.join(others)}")
+        self.run.save(row, "tsc.txt", done.stdout)
+
+    def _tsc_add(self, row: Row, match: re.Match) -> None:
+        path, lineno, kind, code, message = match.groups()
+        needs_install = self.modules is None and (code in TSC_NEEDS_INSTALL or "npm i --save-dev @types/" in message)
+        error = kind == "error"
+        row.add(
+            self.run.rel(path, self.repo) if path else "",
+            int(lineno) if lineno else "",
+            "types",
+            code,
+            "error" if error else "info",
+            message,
+            graded=error and not needs_install,
+            reason="no node_modules: an install that never ran" if needs_install else kind,
+        )
 
     # --- dead code ---------------------------------------------------------------------
 
@@ -526,58 +558,45 @@ class _Context:
         if argv is None:
             return row
         row.scope = "project" if cwd == self.project.dir else f"workspace {cwd}, filtered to the project"
-
-        def compute():
-            prefix = argv()
-            extra = self.run.extra("knip", cwd)
-            done = self.run.exec(
-                row, [*prefix, "--reporter", "json", "--no-config-hints", "--no-progress", "--no-exit-code", *extra], cwd=self.repo / cwd, env=NO_CACHE
-            )
-            doc = first_json_line(done.stdout, "issues")
-            if doc is None:
-                raise Failed(done.first_error)
-            return doc, row.version, list(row.commands), extra
-
-        def job(row: Row) -> None:
-            doc, row.version, commands, extra = self.run.once(f"knip:{cwd}", compute)
-            row.notes.clear()
-            row.commands = row.commands or commands
-            if extra:
-                row.provenance += f" + {' '.join(extra)}"
-            dead_files = 0
-            for issue in doc.get("issues") or []:
-                path = self.run.rel(issue.get("file", ""), self.repo / cwd)
-                if path not in self.mine:
-                    continue
-                for key, rule in {**KNIP_GRADED, **KNIP_INFO}.items():
-                    graded = key in KNIP_GRADED
-                    for name, line in _knip_symbols(issue.get(key)):
-                        if key == "files":
-                            dead_files += 1
-                        row.add(
-                            path,
-                            line,
-                            "dead code",
-                            rule,
-                            "warning" if graded else "info",
-                            f"{rule.replace('-', ' ')}: {name}" if name else rule.replace("-", " "),
-                            graded=graded,
-                            reason="never grades",
-                        )
-            if dead_files >= max(5, len(self.files) // 5) and not extra:
-                # half the project unreached is no entry point at all; a fifth is worth a look
-                missing = dead_files >= max(5, len(self.files) // 2)
-                for finding in row.findings if missing else []:
-                    if finding.graded:
-                        finding.demote("no entry point reaches this project")
-                row.notes.append(
-                    f"check: knip calls {dead_files} of {len(self.files)} files unused, so {'it found no entry point' if missing else 'an entry point is probably missing'}; "
-                    'name the entries in <run-dir>/knip.json, add {"knip": ["--config", "<run-dir>/knip.json"]} to <run-dir>/overrides.json and rerun --tool knip'
-                )
-            self.run.save(row, "knip.json", json.dumps(doc, indent=1))
-
-        row.job = job
+        row.job = partial(self._knip_job, argv, cwd)
         return row
+
+    def _knip_compute(self, argv, cwd: str, row: Row):
+        prefix = argv()
+        extra = self.run.extra("knip", cwd)
+        done = self.run.exec(
+            row, [*prefix, "--reporter", "json", "--no-config-hints", "--no-progress", "--no-exit-code", *extra], cwd=self.repo / cwd, env=NO_CACHE
+        )
+        doc = first_json_line(done.stdout, "issues")
+        if doc is None:
+            raise Failed(done.first_error)
+        return doc, row.version, list(row.commands), extra
+
+    def _knip_job(self, argv, cwd: str, row: Row) -> None:
+        doc, row.version, commands, extra = self.run.once(f"knip:{cwd}", partial(self._knip_compute, argv, cwd, row))
+        row.notes.clear()
+        row.commands = row.commands or commands
+        if extra:
+            row.provenance += f" + {' '.join(extra)}"
+        dead_files = 0
+        for issue in doc.get("issues") or []:
+            path = self.run.rel(issue.get("file", ""), self.repo / cwd)
+            if path in self.mine:
+                dead_files += _knip_issue(row, path, issue)
+        if dead_files >= max(5, len(self.files) // 5) and not extra:
+            self._knip_unreached(row, dead_files)
+        self.run.save(row, "knip.json", json.dumps(doc, indent=1))
+
+    def _knip_unreached(self, row: Row, dead_files: int) -> None:
+        # half the project unreached is no entry point at all; a fifth is worth a look
+        missing = dead_files >= max(5, len(self.files) // 2)
+        for finding in row.findings if missing else []:
+            if finding.graded:
+                finding.demote("no entry point reaches this project")
+        row.notes.append(
+            f"check: knip calls {dead_files} of {len(self.files)} files unused, so {'it found no entry point' if missing else 'an entry point is probably missing'}; "
+            'name the entries in <run-dir>/knip.json, add {"knip": ["--config", "<run-dir>/knip.json"]} to <run-dir>/overrides.json and rerun --tool knip'
+        )
 
     def fallow(self, row: Row, config: str | None):
         if not self.run.which("node"):
@@ -593,39 +612,27 @@ class _Context:
         if argv is None:
             return row
         row.scope = "repo, filtered to the project"
-
-        def compute():
-            prefix = argv()
-            done = self.run.exec(row, [*prefix, "dead-code", "--format", "json", "--no-cache", "-q"], cwd=self.repo)
-            doc = parse_json(done.stdout)
-            if not isinstance(doc, dict):
-                raise Failed(done.first_error)
-            return doc, row.version, list(row.commands)
-
-        def job(row: Row) -> None:
-            doc, row.version, commands = self.run.once("fallow-dead-code", compute)
-            row.commands = row.commands or commands
-            for key, rule in {**FALLOW_GRADED, **FALLOW_INFO}.items():
-                graded = key in FALLOW_GRADED
-                for item in doc.get(key) or []:
-                    for path, line, name in _fallow_places(item):
-                        path = self.run.rel(path, self.repo)
-                        if path not in self.mine:
-                            continue
-                        row.add(
-                            path,
-                            line,
-                            "dead code",
-                            rule,
-                            "warning" if graded else "info",
-                            f"{rule.replace('-', ' ')}: {name}" if name else rule.replace("-", " "),
-                            graded=graded,
-                            reason="never grades",
-                        )
-            self.run.save(row, "fallow-dead-code.json", json.dumps({k: doc.get(k) for k in [*FALLOW_GRADED, *FALLOW_INFO, "summary"]}, indent=1))
-
-        row.job = job
+        row.job = partial(self._fallow_dead_code_job, argv)
         return row
+
+    def _fallow_dead_code_compute(self, argv, row: Row):
+        prefix = argv()
+        done = self.run.exec(row, [*prefix, "dead-code", "--format", "json", "--no-cache", "-q"], cwd=self.repo)
+        doc = parse_json(done.stdout)
+        if not isinstance(doc, dict):
+            raise Failed(done.first_error)
+        return doc, row.version, list(row.commands)
+
+    def _fallow_dead_code_job(self, argv, row: Row) -> None:
+        doc, row.version, commands = self.run.once("fallow-dead-code", partial(self._fallow_dead_code_compute, argv, row))
+        row.commands = row.commands or commands
+        for key, rule in {**FALLOW_GRADED, **FALLOW_INFO}.items():
+            for item in doc.get(key) or []:
+                for path, line, name in _fallow_places(item):
+                    path = self.run.rel(path, self.repo)
+                    if path in self.mine:
+                        _add_dead(row, path, line, rule, name, graded=key in FALLOW_GRADED)
+        self.run.save(row, "fallow-dead-code.json", json.dumps({k: doc.get(k) for k in [*FALLOW_GRADED, *FALLOW_INFO, "summary"]}, indent=1))
 
     def fallow_health(self) -> Row:
         row = self.row("complexity", "fallow health")
@@ -633,47 +640,37 @@ class _Context:
         argv = self.fallow(row, config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            prefix = argv()
-            done = self.run.exec(
-                row,
-                [*prefix, "health", "--format", "json", "--no-cache", "-q", "--root", self.dir, "--complexity", "--file-scores", "--max-cognitive", str(CEILING)],
-                cwd=self.repo,
-            )
-            doc = parse_json(done.stdout)
-            if not isinstance(doc, dict) or "findings" not in doc:
-                raise Failed(done.first_error)
-            over = 0
-            for item in doc.get("findings") or []:
-                path = self.run.rel(item.get("path", ""), self.dir)  # fallow prints paths relative to --root
-                if path not in self.mine:
-                    continue
-                cognitive = item.get("cognitive") or 0
-                if cognitive > CEILING:
-                    over += 1
-                    finding = row.add(
-                        path, item.get("line", 0), "complexity", "cognitive-complexity", "warning",
-                        f"{item.get('name', '?')} has cognitive complexity {cognitive} (ceiling {CEILING})",
-                    )
-                else:
-                    finding = row.add(
-                        path, item.get("line", 0), "complexity", str(item.get("exceeded", "threshold")).replace("_", "-"), "info",
-                        f"{item.get('name', '?')} exceeds fallow's {item.get('exceeded', '')} threshold (cyclomatic {item.get('cyclomatic', '?')}, cognitive {cognitive})",
-                        graded=False, reason="CRAP, cyclomatic and unit-size rows are advisory",
-                    )
-                finding.data.update(score=cognitive, cyclomatic=item.get("cyclomatic", ""))
-            scores = doc.get("file_scores") or []
-            mine = [s for s in scores if self.run.rel(s.get("path", ""), self.dir) in self.mine]
-            functions = sum(s.get("function_count", 0) for s in mine) if scores else (doc.get("summary") or {}).get("functions_analyzed", 0)
-            row.metrics["complexity"] = Metric(over, functions, f"functions over {CEILING}")
-            if not scores:
-                row.notes.append("no file_scores in fallow's output: the function count is its own total, not filtered to the inventory")
-            slim = {"summary": doc.get("summary"), "findings": [{k: f.get(k) for k in ("path", "name", "line", "cognitive", "cyclomatic", "exceeded")} for f in doc.get("findings") or []]}
-            self.run.save(row, "fallow-health.json", json.dumps(slim, indent=1))
-
-        row.job = job
+        row.job = partial(self._fallow_health_job, argv)
         return row
+
+    def _fallow_health_job(self, argv, row: Row) -> None:
+        prefix = argv()
+        done = self.run.exec(
+            row,
+            [*prefix, "health", "--format", "json", "--no-cache", "-q", "--root", self.dir, "--complexity", "--file-scores", "--max-cognitive", str(CEILING)],
+            cwd=self.repo,
+        )
+        doc = parse_json(done.stdout)
+        if not isinstance(doc, dict) or "findings" not in doc:
+            raise Failed(done.first_error)
+        over = self._fallow_health_findings(row, doc)
+        scores = doc.get("file_scores") or []
+        mine = [s for s in scores if self.run.rel(s.get("path", ""), self.dir) in self.mine]
+        functions = sum(s.get("function_count", 0) for s in mine) if scores else (doc.get("summary") or {}).get("functions_analyzed", 0)
+        row.metrics["complexity"] = Metric(over, functions, f"functions over {CEILING}")
+        if not scores:
+            row.notes.append("no file_scores in fallow's output: the function count is its own total, not filtered to the inventory")
+        slim = {"summary": doc.get("summary"), "findings": [{k: f.get(k) for k in ("path", "name", "line", "cognitive", "cyclomatic", "exceeded")} for f in doc.get("findings") or []]}
+        self.run.save(row, "fallow-health.json", json.dumps(slim, indent=1))
+
+    def _fallow_health_findings(self, row: Row, doc: dict) -> int:
+        """Add this project's findings; return how many functions are over the ceiling."""
+        over = 0
+        for item in doc.get("findings") or []:
+            path = self.run.rel(item.get("path", ""), self.dir)  # fallow prints paths relative to --root
+            if path in self.mine:
+                over += _fallow_health_add(row, path, item)
+        return over
 
     def stryker(self) -> Row:
         row = self.row("test quality", "stryker")
@@ -689,12 +686,39 @@ def _knip_symbols(value):
             yield from _knip_symbols(members)
     elif isinstance(value, list):
         for item in value:
-            if isinstance(item, list):
-                names = [i.get("name", "") for i in item if isinstance(i, dict)]
-                line = next((i.get("line", 0) for i in item if isinstance(i, dict)), 0)
-                yield " = ".join(names), line
-            elif isinstance(item, dict):
-                yield item.get("name", ""), item.get("line", 0)
+            yield from _knip_entry(item)
+
+
+def _knip_entry(item):
+    if isinstance(item, list):
+        symbols = [i for i in item if isinstance(i, dict)]
+        yield " = ".join(i.get("name", "") for i in symbols), next((i.get("line", 0) for i in symbols), 0)
+    elif isinstance(item, dict):
+        yield item.get("name", ""), item.get("line", 0)
+
+
+def _knip_issue(row: Row, path: str, issue: dict) -> int:
+    """Add one knip issue's findings; return how many unused files it names."""
+    dead_files = 0
+    for key, rule in {**KNIP_GRADED, **KNIP_INFO}.items():
+        for name, line in _knip_symbols(issue.get(key)):
+            if key == "files":
+                dead_files += 1
+            _add_dead(row, path, line, rule, name, graded=key in KNIP_GRADED)
+    return dead_files
+
+
+def _add_dead(row: Row, path: str, line, rule: str, name: str, *, graded: bool) -> None:
+    row.add(
+        path,
+        line,
+        "dead code",
+        rule,
+        "warning" if graded else "info",
+        f"{rule.replace('-', ' ')}: {name}" if name else rule.replace("-", " "),
+        graded=graded,
+        reason="never grades",
+    )
 
 
 def _fallow_places(item):
@@ -708,6 +732,24 @@ def _fallow_places(item):
                 yield place["path"], place.get("line", 0), name
     elif item.get("path"):
         yield item["path"], item.get("line", 0), name
+
+
+def _fallow_health_add(row: Row, path: str, item: dict) -> bool:
+    """Add one fallow health finding; return whether it is over the ceiling."""
+    cognitive = item.get("cognitive") or 0
+    if cognitive > CEILING:
+        finding = row.add(
+            path, item.get("line", 0), "complexity", "cognitive-complexity", "warning",
+            f"{item.get('name', '?')} has cognitive complexity {cognitive} (ceiling {CEILING})",
+        )
+    else:
+        finding = row.add(
+            path, item.get("line", 0), "complexity", str(item.get("exceeded", "threshold")).replace("_", "-"), "info",
+            f"{item.get('name', '?')} exceeds fallow's {item.get('exceeded', '')} threshold (cyclomatic {item.get('cyclomatic', '?')}, cognitive {cognitive})",
+            graded=False, reason="CRAP, cyclomatic and unit-size rows are advisory",
+        )
+    finding.data.update(score=cognitive, cyclomatic=item.get("cyclomatic", ""))
+    return cognitive > CEILING
 
 
 def ignored_by(run: Run, ignore_file: Path, cwd: Path, files: list[str]) -> list[str]:
