@@ -9,6 +9,7 @@ from __future__ import annotations
 import fnmatch
 import json
 import os
+import posixpath
 import re
 import stat
 import subprocess
@@ -523,7 +524,16 @@ def _workflow_files(files: list[str]) -> list[str]:
     return out
 
 
-def build(repo: Path, selected: list[str]) -> Inventory:
+class InventoryError(ValueError):
+    """A selection the repo's projects cannot satisfy."""
+
+
+def project_dir(text: str) -> str:
+    """A project dir as the inventory spells it: `./pkg/` and `pkg` are `pkg`, the root is `.`."""
+    return posixpath.normpath(text.strip()).strip("/") or "."
+
+
+def build(repo: Path, selected: list[str], strict: bool = False) -> Inventory:
     repo = repo.resolve()
     is_git = is_git_repo(repo)
     files = list_files(repo)
@@ -540,10 +550,13 @@ def build(repo: Path, selected: list[str]) -> Inventory:
     for project in projects.values():
         _mark_fixture_only(project)
 
-    wanted = sorted({(s.strip("/") or ".") for s in selected})
+    wanted = sorted({project_dir(s) for s in selected})
+    listed = [p for p in sorted(projects.values(), key=lambda p: p.dir) if p.every_file or p.manifests]
+    unknown = [d for d in wanted if d not in {p.dir for p in listed}]
+    if strict and unknown:
+        raise InventoryError(f"--project {', '.join(unknown)}: no project there; projects: {', '.join(p.dir for p in listed)}")
     head = git(repo, "rev-parse", "--short", "HEAD").stdout.decode().strip() if is_git else ""
     dirty = len(footprint(repo).splitlines()) if is_git else 0
-    listed = [p for p in sorted(projects.values(), key=lambda p: p.dir) if p.every_file or p.manifests]
     return Inventory(
         repo=repo,
         head=head or "none",

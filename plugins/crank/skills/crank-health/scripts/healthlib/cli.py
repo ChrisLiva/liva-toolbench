@@ -99,11 +99,12 @@ def run_meta(repo: Path, run_dir: Path, run: Run, deep: bool) -> dict:
     }
 
 
-def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> dict:
-    """Inventory, plan and (unless `--plan`) run one working tree into `run_dir`."""
+def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str], strict: bool = False) -> dict:
+    """Inventory, plan and (unless `--plan`) run one working tree into `run_dir`; `strict` makes
+    a `--project` that names no project raise `inv.InventoryError`."""
+    inventory = inv.build(repo, opts.project, strict)
     for part in ("scratch", "raw", "findings", "summary"):
         (run_dir / part).mkdir(parents=True, exist_ok=True)
-    inventory = inv.build(repo, opts.project)
     read_ownership(repo, inventory, list_unowned=True)
     (run_dir / "footprint.txt").write_text(inv.footprint(repo))
     (run_dir / "scope.txt").write_text("".join(f + "\n" for f in inventory.files))
@@ -186,7 +187,11 @@ def cmd_scan(opts) -> int:
             say(f"--pr {opts.pr}: no merge-base with HEAD ({found.stderr.decode().strip()})")
             return 2
         extra.append(f"pr mode: base {opts.pr} · merge-base {base_sha[:10]}")
-    head = scan_tree(repo, run_dir, opts, {}, extra)
+    try:
+        head = scan_tree(repo, run_dir, opts, {}, extra, strict=True)
+    except inv.InventoryError as err:
+        say(str(err))
+        return 2
     grades = head["grades"]
     if opts.plan:
         print(f"run dir: {run_dir}")
@@ -408,7 +413,7 @@ def print_rerun(fresh: list[Row], kept: list[tuple[Row, Row]]) -> None:
 
 def rerun_wanted(row: Row, opts) -> bool:
     wanted_tools = {t.replace("-", " ") for t in opts.tool}
-    wanted_projects = {(p.strip("/") or ".") for p in opts.project}
+    wanted_projects = {inv.project_dir(p) for p in opts.project}
     return (not wanted_tools or row.tool.replace("-", " ") in wanted_tools) and (not wanted_projects or row.project in wanted_projects)
 
 
@@ -438,7 +443,7 @@ def rule_matches(rule: str, pattern: str) -> bool:
 def verdict_row_matches(row: Row, opts) -> bool:
     if opts.tool and row.tool.replace("-", " ") != opts.tool.replace("-", " "):
         return False
-    return not opts.project or row.project == (opts.project.strip("/") or ".")
+    return not opts.project or row.project == inv.project_dir(opts.project)
 
 
 def verdict_finding_matches(finding: Finding, opts) -> bool:
@@ -453,12 +458,21 @@ def verdict_finding_matches(finding: Finding, opts) -> bool:
     return all(test() for given, test in checks if given)
 
 
+def verdict_problem(opts, rows: list[Row]) -> str | None:
+    """Why the verdict's filters cannot run: none given, or a `--project` no row belongs to."""
+    filters = (opts.tool, opts.project, opts.category, opts.rule, opts.path, opts.flag, opts.line, opts.message)
+    if not any(f is not None for f in filters):
+        return "give at least one filter, so a verdict never lands on every finding by accident"
+    if opts.project is not None and not any(r.project == inv.project_dir(opts.project) for r in rows):
+        return f"--project {opts.project}: no row has that project; projects: {', '.join(sorted({r.project for r in rows}))}"
+    return None
+
+
 def cmd_verdict(opts) -> int:
     run_dir = Path(opts.run_dir).resolve()
     meta, projects, rows = report.read_results(run_dir)
-    filters = (opts.tool, opts.project, opts.category, opts.rule, opts.path, opts.flag, opts.line, opts.message)
-    if not any(f is not None for f in filters):
-        say("give at least one filter, so a verdict never lands on every finding by accident")
+    if (problem := verdict_problem(opts, rows)) is not None:
+        say(problem)
         return 2
     status, reason = ("graded", "") if opts.graded else ("advisory", opts.advisory) if opts.advisory else ("dropped", opts.dropped)
     changed = 0

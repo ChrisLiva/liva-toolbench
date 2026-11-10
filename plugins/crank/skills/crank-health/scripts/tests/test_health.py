@@ -942,6 +942,22 @@ class RunDirTest(RepoCase):
         self.assertIn("security D", grade.line(grades, grade.headline(grades)))
         self.assertIn(f"grades (mechanical, before triage): {grade.line(grades, grade.headline(grades))}\n", out)
 
+    def test_a_project_that_names_no_project_is_an_error(self):
+        repo = self.repo({"pyproject.toml": "", "a.py": "x = 1\n", "pkg/pyproject.toml": "", "pkg/b.py": "x = 1\n"})
+        ran = []
+        for argv, code_wanted in ((["--project", "nope"], 2), (["--project", "./pkg"], 0)):
+            holder = tempfile.TemporaryDirectory()
+            self.addCleanup(holder.cleanup)
+            ran.clear()
+            with mock.patch.object(cli, "run_rows", lambda run, rows, jobs: ran.append(True)):
+                code, _ = self.call("scan", str(repo.path), "--run-dir", holder.name, *argv)
+            self.assertEqual(code, code_wanted, argv)
+            self.assertEqual(ran, [True] if code_wanted == 0 else [], argv)
+        projects = json.loads((Path(holder.name) / "results.json").read_text())["projects"]
+        self.assertEqual([p["dir"] for p in projects], ["pkg"])
+        _, run_dir = self.scanned()
+        self.assertEqual(self.call("verdict", str(run_dir), "--project", "nope", "--dropped", "x")[0], 2)
+
     def test_a_rerun_keeps_what_triage_and_settle_already_wrote(self):
         _, run_dir = self.scanned()
         meta, projects, rows = report.read_results(run_dir)
