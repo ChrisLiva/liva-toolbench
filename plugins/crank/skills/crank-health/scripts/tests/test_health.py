@@ -924,6 +924,14 @@ class RunDirTest(RepoCase):
         raw = json.loads((run_dir / "results.json").read_text())["projects"][0]
         self.assertEqual(list(raw), ["dir", "manifests", "files", "lines", "asset_lines", "owned", "unowned", "facts", "fixture_only"])
 
+    def test_a_results_project_missing_a_key_fails_to_load(self):
+        _, run_dir = self.scanned()
+        raw = json.loads((run_dir / "results.json").read_text())["projects"][0]
+        self.assertEqual(inv.ProjectRecord.from_json(raw).to_json(), raw)
+        del raw["asset_lines"]
+        with self.assertRaises(KeyError):
+            inv.ProjectRecord.from_json(raw)
+
     def test_a_verdict_selects_by_line(self):
         _, run_dir = self.scanned()
         self.assertIn("2 findings now read", self.call("verdict", str(run_dir), "--tool", "bandit", "--line", "1", "--advisory", "x")[1])

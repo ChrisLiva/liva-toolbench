@@ -422,7 +422,7 @@ class ProjectRecord:
 
     @classmethod
     def from_json(cls, doc: dict) -> ProjectRecord:
-        return cls(**{f.name: doc[f.name] for f in fields(cls) if f.name in doc})
+        return cls(**{f.name: doc[f.name] for f in fields(cls)})
 
 
 @dataclass
