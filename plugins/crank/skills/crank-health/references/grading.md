@@ -57,8 +57,8 @@ Tool severities land on four levels: critical 5, error 5, warning 1, info 0.2.
 
 ## One defect, one finding
 
-Two tools naming the same place in the same category is one defect: keep the row from the default
-tool for that category (the first in the reference's table), mark the others
+Two tools naming the same place in the same category is one defect: keep the row from the tool
+listed first in `tools.md`, mark the others
 `advisory: duplicate of <tool>/<rule>`. gitleaks outranks gosec G101 and aislop on a secret;
 staticcheck outranks go vet; ruff F401 and vulture on one import is one dead-code finding.
 Across categories the rows stay separate and link to each other, so one place can be one task.

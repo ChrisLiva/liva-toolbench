@@ -44,10 +44,10 @@ line says so: carry that sentence into the plan. An owner whose config excludes 
 the project stands the standby down too, and the category reads `not assessed`: the repo
 chose not to lint or format those files.
 
-State is one of `ok`; `error`, carrying stderr's first line; `not-available`, carrying why and
-the install hint; `skipped`, carrying `never imposed`, `nothing to scan`, `needs --deep` or
-`deep tool`; `timeout`, for a tool its budget killed. A state other than `ok` has no findings
-file.
+State is one of `ok`; `error`, carrying a one-line reason, usually stderr's first line;
+`not-available`, carrying why and the install hint; `skipped`, carrying `never imposed`,
+`nothing to scan`, `no local ruleset`, `needs --deep` or `deep tool`; `timeout`, for a tool its
+budget killed. A state other than `ok` has no findings file.
 
 A Notes line that starts `check:` names a run that finished `ok` and measured less than it
 looks: cppcheck aborting on an unknown macro, knip finding no entry point. Resolve each one or

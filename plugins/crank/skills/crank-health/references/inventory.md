@@ -51,7 +51,7 @@ often than in any dependency block, and a `scripts` entry never decides ownershi
 Ownership the rules cannot see is yours to name in the plan: a linter config under a non-standard
 filename that the repo's own script passes with `--config`, a formatter that runs only in CI.
 
-`on PATH` and `missing` list `uv`, `node`, `go` (1.25+), `dotnet` (10+), `cmake` and `meson`
+`on PATH` and `missing` list `git`, `uv`, `node`, `go` (1.25+), `dotnet` (10+), `cmake` and `meson`
 (C/C++ under `--deep`), `gitleaks`, `opengrep` and `osv-scanner`. A missing toolchain is what a
 whole language's `not assessed (reason)` cites.
 
