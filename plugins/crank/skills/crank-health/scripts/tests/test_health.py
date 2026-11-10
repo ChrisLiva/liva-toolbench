@@ -960,6 +960,42 @@ class RunDirTest(RepoCase):
         self.assertIn("security D", grade.line(grades, grade.headline(grades)))
         self.assertIn(f"grades (mechanical, before triage): {grade.line(grades, grade.headline(grades))}\n", out)
 
+    def test_scan_pr_from_a_subdirectory_diffs_the_same_files(self):
+        old = "".join("BAD\n" if n == 5 else f"line {n}\n" for n in range(1, 31))
+        repo = self.repo(
+            {
+                "sub/pyproject.toml": "",
+                "sub/a.py": "ok\nok\n",
+                "sub/old.py": old,
+                "other/pyproject.toml": "",
+                "other/b.py": "BAD\n",
+            }
+        )
+        git(repo.path, "branch", "base")
+        git(repo.path, "mv", "sub/old.py", "sub/new.py")
+        repo.write({"sub/a.py": "ok\nBAD\n"})
+        repo.commit("change")
+        holder = tempfile.TemporaryDirectory()
+        self.addCleanup(holder.cleanup)
+        run_dir = Path(holder.name)
+
+        def run_rows(run, rows, jobs):
+            bandit = next(r for r in rows if r.tool == "bandit")
+            bandit.state = "ok"
+            for name in (f for f in run.inv.files if f.endswith(".py")):
+                lines = (run.inv.repo / name).read_text().splitlines()
+                for n in (n for n, text in enumerate(lines, 1) if text == "BAD"):
+                    bandit.add(name, n, "security", "B602", "error", "bad call")
+
+        with mock.patch.object(cli, "run_rows", run_rows):
+            code, _ = self.call("scan", str(repo.path / "sub"), "--pr", "base", "--run-dir", str(run_dir))
+        self.assertEqual(code, 0)
+        new = (run_dir / "new-findings.tsv").read_text().splitlines()
+        self.assertEqual(len(new), 1, new)
+        self.assertTrue(new[0].startswith("a.py\t2\t"), new)
+        self.assertIn("touched", new[0].split("\t")[-1].split())
+        self.assertEqual((run_dir / "resolved-findings.tsv").read_text(), "")
+
     def test_a_base_tree_whose_projects_collide_is_refused(self):
         repo = self.repo({"a/b/pyproject.toml": "", "a/b/x.py": "x = 1\n", "a-b/pyproject.toml": "", "a-b/y.py": "x = 1\n"})
         git(repo.path, "branch", "base")

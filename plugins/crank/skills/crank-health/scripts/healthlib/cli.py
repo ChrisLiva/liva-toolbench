@@ -218,9 +218,10 @@ def finding_key(finding: Finding, renames: dict[str, str] | None = None) -> tupl
 
 
 def changed_lines(repo: Path, base_sha: str) -> tuple[dict[str, str], dict[str, list[tuple[int, int]]]]:
-    """Renames (old path -> new path) and, per file, the line ranges the diff added or changed."""
+    """Renames (old path -> new path) and, per file, the line ranges the diff added or changed,
+    with paths relative to `repo`, which may be a subdirectory."""
     renames, hunks = {}, {}
-    plain = ("-c", "core.quotePath=false", "diff", "--no-ext-diff", "--no-color")
+    plain = ("-c", "core.quotePath=false", "diff", "--no-ext-diff", "--no-color", "--relative")
     status = inv.git(repo, *plain, "-M", "--name-status", base_sha).stdout.decode("utf-8", "replace")
     for line in status.splitlines():
         parts = line.split("\t")
@@ -268,7 +269,8 @@ def link_dependencies(repo: Path, tree: Path, inventory: inv.Inventory) -> list[
 
 
 def scan_base(repo: Path, run_dir: Path, opts, head: dict, base_sha: str) -> tuple[dict, list[str]] | None:
-    """Scan the merge-base in a throwaway worktree; None when git cannot check it out."""
+    """Scan the merge-base in a throwaway worktree at the scan path's own subdirectory (empty when
+    the merge-base lacks it); None when git cannot check it out."""
     holder = Path(tempfile.mkdtemp(prefix="crank-health-base-"))
     tree = holder / "base"
     added = inv.git(repo, "worktree", "add", "--detach", str(tree), base_sha)
@@ -277,10 +279,12 @@ def scan_base(repo: Path, run_dir: Path, opts, head: dict, base_sha: str) -> tup
         shutil.rmtree(holder, ignore_errors=True)
         return None
     try:
-        linked = link_dependencies(repo, tree, head["inventory"])
+        root = tree / inv.git(repo, "rev-parse", "--show-prefix").stdout.decode().strip()
+        root.mkdir(parents=True, exist_ok=True)
+        linked = link_dependencies(repo, root, head["inventory"])
         say(f"pr mode: scanning merge-base {base_sha[:10]} with the head's tool versions")
         extra = [f"base tree of {repo} at {base_sha[:10]}; borrowed from head: {', '.join(linked) or 'nothing'}"]
-        base = scan_tree(tree, run_dir / "base", opts, dict(head["meta"]["pins"]), extra)
+        base = scan_tree(root, run_dir / "base", opts, dict(head["meta"]["pins"]), extra)
     finally:
         inv.git(repo, "worktree", "remove", "--force", str(tree))
         inv.git(repo, "worktree", "prune")
