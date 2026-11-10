@@ -1093,6 +1093,17 @@ class RunDirTest(RepoCase):
         self.assertEqual((b602.status, b602.reason), ("dropped", "fp"))
         self.assertIn("security B", out)
 
+    def test_a_rerun_whose_projects_now_collide_is_refused(self):
+        repo, run_dir = self.scanned()
+        before = (run_dir / "results.json").read_bytes()
+        for name in ("a/b/pyproject.toml", "a/b/x.py", "a-b/pyproject.toml", "a-b/y.py"):
+            (repo.path / name).parent.mkdir(parents=True, exist_ok=True)
+            (repo.path / name).write_text("")
+        with mock.patch.object(cli, "run_rows", lambda run, rows, jobs: self.fail("rerun ran a tool")):
+            code, _ = self.call("rerun", str(run_dir), "--tool", "bandit")
+        self.assertEqual(code, 2)
+        self.assertEqual((run_dir / "results.json").read_bytes(), before)
+
     def test_results_reload_as_project_records(self):
         _, run_dir = self.scanned()
         projects = report.read_results(run_dir)[1]

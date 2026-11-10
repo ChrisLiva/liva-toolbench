@@ -378,7 +378,11 @@ def cmd_rerun(opts) -> int:
     run_dir = Path(opts.run_dir).resolve()
     meta, projects, old_rows = report.read_results(run_dir)
     repo = Path(meta["repo"])
-    inventory = inv.build(repo, meta["selected"])
+    try:
+        inventory = inv.build(repo, meta["selected"])
+    except inv.InventoryError as err:
+        say(str(err))
+        return 2
     read_ownership(repo, inventory, list_unowned=False)
     run = Run(inventory, run_dir, deep=meta["profile"] == "deep", only=meta["only"], pins=meta["pins"], budget_scale=opts.budget_scale)
     for key in run.unread_overrides():
