@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
@@ -129,6 +130,17 @@ class _Context:
         if argv[0] == "uvx":
             self.run.pin_uvx(argv[-1], row.version)
 
+    def collect(self, row: Row, command: list[str]) -> list:
+        """Run `command` over the files in batches and join the JSON lists it prints."""
+        records = []
+        for batch in batches(self.files):
+            done = self.run.exec(row, [*command, *batch], cwd=self.cwd)
+            part = parse_json(done.stdout)
+            if not isinstance(part, list):
+                raise Failed(done.first_error)
+            records += part
+        return records
+
     # --- lint and format ---------------------------------------------------------------
 
     def ruff_check(self) -> Row:
@@ -137,43 +149,34 @@ class _Context:
         argv = self.resolve(row, "ruff", config=config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            extra = []
-            if not config:
-                default = self.run.config_dir() / "ruff.toml"
-                default.write_text(RUFF_DEFAULT)
-                extra = ["--config", str(default)]
-            records = []
-            for batch in batches(self.files):
-                done = self.run.exec(
-                    row, [*argv, "check", "--output-format", "json", "--no-cache", "--exit-zero", *extra, *batch], cwd=self.cwd
-                )
-                part = parse_json(done.stdout)
-                if not isinstance(part, list):
-                    raise Failed(done.first_error)
-                records += part
-            for record in records:
-                record.pop("fix", None)
-                code = record.get("code") or record.get("name") or "invalid-syntax"
-                syntax = code == "invalid-syntax" or code.startswith("E9")
-                security = bool(re.fullmatch(r"S\d+", code))
-                graded = bool(config) or syntax or code.startswith("F")
-                row.add(
-                    self.run.rel(record.get("filename", "")),
-                    (record.get("location") or {}).get("row", 0),
-                    "security" if security else "lint",
-                    code,
-                    "error" if syntax else "warning",
-                    record.get("message", ""),
-                    graded=graded,
-                    reason="" if graded else "default config: style rule",
-                )
-            self.run.save(row, "ruff-check.json", _dump(records))
-
-        row.job = job
+        row.job = partial(self._ruff_check_job, argv, config)
         return row
+
+    def _ruff_check_job(self, argv: list[str], config: str | None, row: Row) -> None:
+        self.stamp(row, argv)
+        extra = []
+        if not config:
+            default = self.run.config_dir() / "ruff.toml"
+            default.write_text(RUFF_DEFAULT)
+            extra = ["--config", str(default)]
+        records = self.collect(row, [*argv, "check", "--output-format", "json", "--no-cache", "--exit-zero", *extra])
+        for record in records:
+            record.pop("fix", None)
+            code = record.get("code") or record.get("name") or "invalid-syntax"
+            syntax = code == "invalid-syntax" or code.startswith("E9")
+            security = bool(re.fullmatch(r"S\d+", code))
+            graded = bool(config) or syntax or code.startswith("F")
+            row.add(
+                self.run.rel(record.get("filename", "")),
+                (record.get("location") or {}).get("row", 0),
+                "security" if security else "lint",
+                code,
+                "error" if syntax else "warning",
+                record.get("message", ""),
+                graded=graded,
+                reason="" if graded else "default config: style rule",
+            )
+        self.run.save(row, "ruff-check.json", _dump(records))
 
     def ruff_format(self) -> Row:
         row = self.row("format", "ruff format")
@@ -181,33 +184,26 @@ class _Context:
         argv = self.resolve(row, "ruff", config=config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            records, missing = [], 0
-            for batch in batches(self.files):
-                done = self.run.exec(row, [*argv, "format", "--check", "--no-cache", "--output-format", "json", *batch], cwd=self.cwd)
-                part = parse_json(done.stdout)
-                if not isinstance(part, list):
-                    raise Failed(done.first_error)
-                records += part
-            failing = set()
-            for record in records:
-                record.pop("fix", None)  # the reformatted source: megabytes, and every secret in it
-                path = self.run.rel(record.get("filename", ""))
-                if record.get("code") == "io":
-                    missing += 1
-                elif record.get("code") == "unformatted":
-                    if path not in failing:
-                        row.add(path, (record.get("location") or {}).get("row", 1), "format", "unformatted", "warning", "File would be reformatted")
-                    failing.add(path)
-                else:
-                    row.notes.append(f"{path}: {record.get('code')}: {record.get('message', '')}"[:200])
-            row.metrics["format"] = Metric(len(failing), len(self.files) - missing, "files")
-            self.run.save(row, "ruff-format.json", _dump(records))
-
-        row.job = job
+        row.job = partial(self._ruff_format_job, argv)
         return row
+
+    def _ruff_format_job(self, argv: list[str], row: Row) -> None:
+        self.stamp(row, argv)
+        records = self.collect(row, [*argv, "format", "--check", "--no-cache", "--output-format", "json"])
+        failing, missing = set(), 0
+        for record in records:
+            record.pop("fix", None)  # the reformatted source: megabytes, and every secret in it
+            path = self.run.rel(record.get("filename", ""))
+            if record.get("code") == "io":
+                missing += 1
+            elif record.get("code") == "unformatted":
+                if path not in failing:
+                    row.add(path, (record.get("location") or {}).get("row", 1), "format", "unformatted", "warning", "File would be reformatted")
+                failing.add(path)
+            else:
+                row.notes.append(f"{path}: {record.get('code')}: {record.get('message', '')}"[:200])
+        row.metrics["format"] = Metric(len(failing), len(self.files) - missing, "files")
+        self.run.save(row, "ruff-format.json", _dump(records))
 
     # --- types -------------------------------------------------------------------------
 
@@ -225,40 +221,29 @@ class _Context:
         argv = self.resolve(row, "ty", config=config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            records = []
-            for batch in batches(self.files):
-                done = self.run.exec(
-                    row,
-                    [*argv, "check", "--output-format", "gitlab", "--exit-zero", "--no-progress", "--color", "never", *batch],
-                    cwd=self.cwd,
-                )
-                part = parse_json(done.stdout)
-                if not isinstance(part, list):
-                    raise Failed(done.first_error)
-                records += part
-            for record in records:
-                rule = record.get("check_name", "")
-                location = record.get("location") or {}
-                begin = (location.get("positions") or {}).get("begin") or location.get("lines") or {}
-                error = record.get("severity") in ("major", "critical", "blocker")
-                advisory = not config and rule in TY_ADVISORY
-                row.add(
-                    self.run.rel(location.get("path", ""), self.cwd),
-                    begin.get("line") or begin.get("begin") or 0,
-                    "types",
-                    rule,
-                    "error" if error else "info",
-                    record.get("description", "").removeprefix(rule + ": "),
-                    graded=error and not advisory,
-                    reason="default config: import resolution, no virtualenv" if advisory else ("" if error else "warning"),
-                )
-            self.run.save(row, "ty.json", _dump(records))
-
-        row.job = job
+        row.job = partial(self._ty_job, argv, config)
         return row
+
+    def _ty_job(self, argv: list[str], config: str | None, row: Row) -> None:
+        self.stamp(row, argv)
+        records = self.collect(row, [*argv, "check", "--output-format", "gitlab", "--exit-zero", "--no-progress", "--color", "never"])
+        for record in records:
+            rule = record.get("check_name", "")
+            location = record.get("location") or {}
+            begin = (location.get("positions") or {}).get("begin") or location.get("lines") or {}
+            error = record.get("severity") in ("major", "critical", "blocker")
+            advisory = not config and rule in TY_ADVISORY
+            row.add(
+                self.run.rel(location.get("path", ""), self.cwd),
+                begin.get("line") or begin.get("begin") or 0,
+                "types",
+                rule,
+                "error" if error else "info",
+                record.get("description", "").removeprefix(rule + ": "),
+                graded=error and not advisory,
+                reason="default config: import resolution, no virtualenv" if advisory else ("" if error else "warning"),
+            )
+        self.run.save(row, "ty.json", _dump(records))
 
     def pyright(self) -> Row:
         row = self.row("types", "pyright")
@@ -273,37 +258,36 @@ class _Context:
             argv, row.provenance = self.run.uvx("pyright"), f"{how}, ephemeral"
         else:
             return row.unavailable("uv not on PATH: brew install uv")
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            diagnostics, analyzed = [], 0
-            for batch in batches(self.files):
-                done = self.run.exec(row, [*argv, "--outputjson", "--pythonpath", str(self.venv / "bin" / "python"), *batch], cwd=self.cwd)
-                doc = parse_json(done.stdout)
-                if not isinstance(doc, dict) or "generalDiagnostics" not in doc:
-                    raise Failed(done.first_error)
-                diagnostics += doc["generalDiagnostics"]
-                analyzed += (doc.get("summary") or {}).get("filesAnalyzed", 0)
-            for record in diagnostics:
-                rule = record.get("rule") or "error"
-                error = record.get("severity") == "error"
-                advisory = not config and rule in PYRIGHT_ADVISORY
-                start = ((record.get("range") or {}).get("start") or {}).get("line")
-                row.add(
-                    self.run.rel(record.get("file", "")),
-                    start + 1 if isinstance(start, int) else 0,  # pyright counts from 0
-                    "types",
-                    rule,
-                    "error" if error else "info",
-                    record.get("message", ""),
-                    graded=error and not advisory,
-                    reason="default config: import resolution" if advisory else ("" if error else record.get("severity", "")),
-                )
-            row.notes.append(f"{analyzed} files analyzed")
-            self.run.save(row, "pyright.json", _dump(diagnostics))
-
-        row.job = job
+        row.job = partial(self._pyright_job, argv, config)
         return row
+
+    def _pyright_job(self, argv: list[str], config: str | None, row: Row) -> None:
+        self.stamp(row, argv)
+        diagnostics, analyzed = [], 0
+        for batch in batches(self.files):
+            done = self.run.exec(row, [*argv, "--outputjson", "--pythonpath", str(self.venv / "bin" / "python"), *batch], cwd=self.cwd)
+            doc = parse_json(done.stdout)
+            if not isinstance(doc, dict) or "generalDiagnostics" not in doc:
+                raise Failed(done.first_error)
+            diagnostics += doc["generalDiagnostics"]
+            analyzed += (doc.get("summary") or {}).get("filesAnalyzed", 0)
+        for record in diagnostics:
+            rule = record.get("rule") or "error"
+            error = record.get("severity") == "error"
+            advisory = not config and rule in PYRIGHT_ADVISORY
+            start = ((record.get("range") or {}).get("start") or {}).get("line")
+            row.add(
+                self.run.rel(record.get("file", "")),
+                start + 1 if isinstance(start, int) else 0,  # pyright counts from 0
+                "types",
+                rule,
+                "error" if error else "info",
+                record.get("message", ""),
+                graded=error and not advisory,
+                reason="default config: import resolution" if advisory else ("" if error else record.get("severity", "")),
+            )
+        row.notes.append(f"{analyzed} files analyzed")
+        self.run.save(row, "pyright.json", _dump(diagnostics))
 
     def mypy(self) -> Row:
         row = self.row("types", "mypy")
@@ -319,33 +303,32 @@ class _Context:
             argv, row.provenance = self.run.uvx("mypy"), f"repo config ({config or 'none'}), ephemeral"
         else:
             return row.unavailable("uv not on PATH: brew install uv")
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            config_file = str(self.run.repo / config.split(" ")[0]) if config else ""
-            command = [*argv, "--output=json", "--cache-dir", str(self.run.scratch_dir("mypy-cache", self.project.slug))]
-            command += [f"--config-file={config_file}"]
-            if self.venv:
-                command += ["--python-executable", str(self.venv / "bin" / "python")]
-            done = self.run.exec(row, [*command, *self.files], cwd=self.cwd)
-            records = [r for r in map(parse_json, done.stdout.splitlines()) if isinstance(r, dict)]
-            if not records and done.code not in (0, 1):
-                raise Failed(done.first_error)
-            for record in records:
-                if record.get("severity") == "note":
-                    continue
-                row.add(
-                    self.run.rel(record.get("file", ""), self.cwd),
-                    record.get("line", 0),
-                    "types",
-                    record.get("code") or "error",
-                    "error",
-                    record.get("message", ""),
-                )
-            self.run.save(row, "mypy.jsonl", done.stdout)
-
-        row.job = job
+        row.job = partial(self._mypy_job, argv, config)
         return row
+
+    def _mypy_job(self, argv: list[str], config: str | None, row: Row) -> None:
+        self.stamp(row, argv)
+        config_file = str(self.run.repo / config.split(" ")[0]) if config else ""
+        command = [*argv, "--output=json", "--cache-dir", str(self.run.scratch_dir("mypy-cache", self.project.slug))]
+        command += [f"--config-file={config_file}"]
+        if self.venv:
+            command += ["--python-executable", str(self.venv / "bin" / "python")]
+        done = self.run.exec(row, [*command, *self.files], cwd=self.cwd)
+        records = [r for r in map(parse_json, done.stdout.splitlines()) if isinstance(r, dict)]
+        if not records and done.code not in (0, 1):
+            raise Failed(done.first_error)
+        for record in records:
+            if record.get("severity") == "note":
+                continue
+            row.add(
+                self.run.rel(record.get("file", ""), self.cwd),
+                record.get("line", 0),
+                "types",
+                record.get("code") or "error",
+                "error",
+                record.get("message", ""),
+            )
+        self.run.save(row, "mypy.jsonl", done.stdout)
 
     # --- dead code, complexity, security -----------------------------------------------
 
@@ -355,34 +338,33 @@ class _Context:
         argv = self.resolve(row, "vulture", config=config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            # one invocation: splitting the list invents dead code at the seams
-            done = self.run.exec(row, [*argv, "--min-confidence", "60", *self.files], cwd=self.cwd)
-            if done.code not in (0, 3):
-                raise Failed(done.first_error)
-            for line in done.stdout.splitlines():
-                if not (m := VULTURE_LINE.match(line)):
-                    continue
-                path, lineno, message, confidence = m.group(1), int(m.group(2)), m.group(3), int(m.group(4))
-                kind = re.sub(r"\s+", "-", re.split(r" '", message)[0].strip())
-                graded = confidence >= 90
-                finding = row.add(
-                    self.run.rel(path, self.cwd),
-                    lineno,
-                    "dead code",
-                    kind,
-                    "warning" if graded else "info",
-                    f"{message} ({confidence}% confidence)",
-                    graded=graded,
-                    reason="" if graded else "confidence below 90%",
-                )
-                finding.data["confidence"] = confidence
-            self.run.save(row, "vulture.txt", done.stdout)
-
-        row.job = job
+        row.job = partial(self._vulture_job, argv)
         return row
+
+    def _vulture_job(self, argv: list[str], row: Row) -> None:
+        self.stamp(row, argv)
+        # one invocation: splitting the list invents dead code at the seams
+        done = self.run.exec(row, [*argv, "--min-confidence", "60", *self.files], cwd=self.cwd)
+        if done.code not in (0, 3):
+            raise Failed(done.first_error)
+        for line in done.stdout.splitlines():
+            if not (m := VULTURE_LINE.match(line)):
+                continue
+            path, lineno, message, confidence = m.group(1), int(m.group(2)), m.group(3), int(m.group(4))
+            kind = re.sub(r"\s+", "-", re.split(r" '", message)[0].strip())
+            graded = confidence >= 90
+            finding = row.add(
+                self.run.rel(path, self.cwd),
+                lineno,
+                "dead code",
+                kind,
+                "warning" if graded else "info",
+                f"{message} ({confidence}% confidence)",
+                graded=graded,
+                reason="" if graded else "confidence below 90%",
+            )
+            finding.data["confidence"] = confidence
+        self.run.save(row, "vulture.txt", done.stdout)
 
     def complexipy(self) -> Row:
         row = self.row("complexity", "complexipy")
@@ -390,36 +372,33 @@ class _Context:
         argv = self.resolve(row, "complexipy", config=config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            # .complexipy_cache/ lands beside the cwd and cannot be disabled
-            cwd = self.run.scratch_dir("complexipy", self.project.slug)
-            functions, results = [], []
-            for n, batch in enumerate(batches(self.files)):
-                out = cwd / f"out{n}"
-                done = self.run.exec(
-                    row,
-                    [*argv, "--quiet", "--max-complexity-allowed", str(CEILING), "--output", f"{out}/", "--output-format", "json,sarif", *batch],
-                    cwd=cwd,
-                )
-                listed = parse_json(_read(out / "complexipy-results.json"))
-                if not isinstance(listed, list):
-                    raise Failed(done.first_error)
-                functions += listed
-                results += list(sarif_results(parse_json(_read(out / "complexipy-results.sarif"))))
-            over = 0
-            for rule, _level, message, uri, line in results:
-                score = re.search(r"cognitive complexity of (\d+)", message)
-                finding = row.add(self.run.rel(uri), line, "complexity", rule or "CC001", "warning", message)
-                finding.data["score"] = int(score.group(1)) if score else ""
-                over += 1
-            row.metrics["complexity"] = Metric(over, len(functions), f"functions over {CEILING}")
-            slim = [{k: f.get(k) for k in ("path", "function_name", "complexity")} for f in functions]
-            self.run.save(row, "complexipy.json", _dump(slim))
-
-        row.job = job
+        row.job = partial(self._complexipy_job, argv)
         return row
+
+    def _complexipy_job(self, argv: list[str], row: Row) -> None:
+        self.stamp(row, argv)
+        # .complexipy_cache/ lands beside the cwd and cannot be disabled
+        cwd = self.run.scratch_dir("complexipy", self.project.slug)
+        functions, results = [], []
+        for n, batch in enumerate(batches(self.files)):
+            out = cwd / f"out{n}"
+            done = self.run.exec(
+                row,
+                [*argv, "--quiet", "--max-complexity-allowed", str(CEILING), "--output", f"{out}/", "--output-format", "json,sarif", *batch],
+                cwd=cwd,
+            )
+            listed = parse_json(_read(out / "complexipy-results.json"))
+            if not isinstance(listed, list):
+                raise Failed(done.first_error)
+            functions += listed
+            results += list(sarif_results(parse_json(_read(out / "complexipy-results.sarif"))))
+        for rule, _level, message, uri, line in results:
+            score = re.search(r"cognitive complexity of (\d+)", message)
+            finding = row.add(self.run.rel(uri), line, "complexity", rule or "CC001", "warning", message)
+            finding.data["score"] = int(score.group(1)) if score else ""
+        row.metrics["complexity"] = Metric(len(results), len(functions), f"functions over {CEILING}")
+        slim = [{k: f.get(k) for k in ("path", "function_name", "complexity")} for f in functions]
+        self.run.save(row, "complexipy.json", _dump(slim))
 
     def bandit(self) -> Row:
         row = self.row("security", "bandit")
@@ -427,40 +406,42 @@ class _Context:
         argv = self.resolve(row, "bandit", config=config)
         if argv is None:
             return row
-
-        def job(row: Row) -> None:
-            self.stamp(row, argv)
-            results = []
-            for batch in batches(self.files):
-                done = self.run.exec(row, [*argv, "--format", "json", "-q", *batch], cwd=self.run.scratch_dir())
-                doc = parse_json(done.stdout)
-                if not isinstance(doc, dict) or "results" not in doc:
-                    raise Failed(done.first_error)
-                results += doc["results"]
-            for record in results:
-                record.pop("code", None)  # the source window: B105's is the credential
-                rule = record.get("test_id", "")
-                severity, confidence = record.get("issue_severity", ""), record.get("issue_confidence", "")
-                message = record.get("issue_text", "")
-                if rule in BANDIT_SECRETS:
-                    message = record["issue_text"] = re.sub(r"'.*'|\".*\"", "'<redacted>'", message)
-                secret = rule in BANDIT_SECRETS and confidence == "HIGH"
-                graded = bool(config) or secret or "HIGH" in (severity, confidence)
-                finding = row.add(
-                    self.run.rel(record.get("filename", "")),
-                    record.get("line_number", 0),
-                    "security",
-                    rule,
-                    "critical" if secret else BANDIT_LEVEL.get(severity, "info"),
-                    message,
-                    graded=graded,
-                    reason="" if graded else "default config: below HIGH severity and HIGH confidence",
-                )
-                finding.data.update(severity=severity, confidence=confidence)
-            self.run.save(row, "bandit.json", _dump(results))
-
-        row.job = job
+        row.job = partial(self._bandit_job, argv, config)
         return row
+
+    def _bandit_job(self, argv: list[str], config: str | None, row: Row) -> None:
+        self.stamp(row, argv)
+        results = []
+        for batch in batches(self.files):
+            done = self.run.exec(row, [*argv, "--format", "json", "-q", *batch], cwd=self.run.scratch_dir())
+            doc = parse_json(done.stdout)
+            if not isinstance(doc, dict) or "results" not in doc:
+                raise Failed(done.first_error)
+            results += doc["results"]
+        for record in results:
+            self._bandit_finding(row, record, config)
+        self.run.save(row, "bandit.json", _dump(results))
+
+    def _bandit_finding(self, row: Row, record: dict, config: str | None) -> None:
+        record.pop("code", None)  # the source window: B105's is the credential
+        rule = record.get("test_id", "")
+        severity, confidence = record.get("issue_severity", ""), record.get("issue_confidence", "")
+        message = record.get("issue_text", "")
+        if rule in BANDIT_SECRETS:
+            message = record["issue_text"] = re.sub(r"'.*'|\".*\"", "'<redacted>'", message)
+        secret = rule in BANDIT_SECRETS and confidence == "HIGH"
+        graded = bool(config) or secret or "HIGH" in (severity, confidence)
+        finding = row.add(
+            self.run.rel(record.get("filename", "")),
+            record.get("line_number", 0),
+            "security",
+            rule,
+            "critical" if secret else BANDIT_LEVEL.get(severity, "info"),
+            message,
+            graded=graded,
+            reason="" if graded else "default config: below HIGH severity and HIGH confidence",
+        )
+        finding.data.update(severity=severity, confidence=confidence)
 
     def deep(self, category: str, tool: str, *, owned_only: bool) -> Row | None:
         row = self.row(category, tool)
