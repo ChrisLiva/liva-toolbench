@@ -61,8 +61,8 @@ denominator and shows in Notes.
 
 **tsc** (types). A project with a `tsconfig.json` is checked against it. A project without one
 is checked on a scratch tsconfig (`strict`, `skipLibCheck`, `moduleResolution: bundler`) over its
-TypeScript files only; a project of plain JavaScript reads `skipped`, because type-checking code
-that never opted in is imposing. Advisory, not graded, when the project has no `node_modules`:
+TypeScript files only; a project of plain JavaScript reads `skipped` (per project decision: type-checking code that
+never opted in is imposing a tool, so its types are not assessed rather than graded F). Advisory, not graded, when the project has no `node_modules`:
 TS2307, TS2503, TS2580, TS2591, TS2593, TS2688, TS2792, TS7016, and any message saying
 `npm i --save-dev @types/…`. With no `node_modules` every imported type is unchecked, so a clean
 row there is weak evidence: say so beside the letter. Notes names other `tsconfig.*.json` files
