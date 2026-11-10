@@ -374,8 +374,9 @@ def cmd_rerun(opts) -> int:
         run.cleanup()
     by_key = {r.key: r for r in fresh}
     rows = [by_key.pop(r.key, r) for r in old_rows] + list(by_key.values())
+    verdicts = verdicts_of(old_rows)  # before settle, which changes old findings in place
     settle.settle(inventory, rows)
-    keep_verdicts(old_rows, fresh)
+    keep_verdicts(verdicts, rows)
     grades = write_all(run_dir, meta, projects, rows, "after a rerun")
     for row in fresh:
         graded = sum(1 for f in row.findings if f.graded)
@@ -390,13 +391,23 @@ def rerun_wanted(row: Row, opts) -> bool:
     return (not wanted_tools or row.tool.replace("-", " ") in wanted_tools) and (not wanted_projects or row.project in wanted_projects)
 
 
-def keep_verdicts(old_rows: list[Row], fresh: list[Row]) -> None:
-    """A finding that survives a rerun keeps the verdict triage gave it."""
-    verdicts = {finding_key(f): (f.status, f.reason) for r in old_rows for f in r.findings}
-    for row in fresh:
-        for finding in row.findings:
-            if (kept := verdicts.get(finding_key(finding))) is not None:
-                finding.status, finding.reason = kept
+def verdicts_of(rows: list[Row]) -> dict[tuple, tuple[str, str, bool]]:
+    """Each finding's (status, reason, touched), under its line-qualified key and its bare
+    `finding_key`. Two findings of one rule and message in one file share the bare key."""
+    verdicts = {}
+    for finding in (f for r in rows for f in r.findings):
+        kept = (finding.status, finding.reason, "touched" in finding.flags)
+        verdicts[finding_key(finding)] = kept
+        verdicts[(*finding_key(finding), finding.line)] = kept
+    return verdicts
+
+
+def keep_verdicts(verdicts: dict[tuple, tuple[str, str, bool]], rows: list[Row]) -> None:
+    """A finding that survives a rerun keeps the verdict triage gave it; the bare key serves a
+    finding whose line moved."""
+    for finding in (f for r in rows for f in r.findings):
+        if (kept := verdicts.get((*finding_key(finding), finding.line)) or verdicts.get(finding_key(finding))) is not None:
+            finding.status, finding.reason = kept[:2]
 
 
 def rule_matches(rule: str, pattern: str) -> bool:

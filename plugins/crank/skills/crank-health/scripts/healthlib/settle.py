@@ -43,9 +43,10 @@ def _settle_standby(row: Row, owner: Row) -> None:
     excluded = owner.state == "skipped" and owner.detail.startswith("nothing to scan")
     if owner.state != "ok" and not excluded:
         graded = sum(1 for f in row.findings if f.graded and f.category in shared)
-        row.notes.append(
+        _note(
+            row,
             f"{row.tool} graded {', '.join(shared)} on its default config because {owner.tool} reported {owner.state}"
-            f" ({graded} graded, {sum(1 for f in row.findings if f.category in shared) - graded} advisory)"
+            f" ({graded} graded, {sum(1 for f in row.findings if f.category in shared) - graded} advisory)",
         )
         return
     row.findings = [f for f in row.findings if f.category not in shared]
@@ -54,9 +55,16 @@ def _settle_standby(row: Row, owner: Row) -> None:
     row.stood_down = set(shared) == set(row.categories)
     if excluded:
         # the repo's own config skips these files, so no default tool grades them instead
-        row.notes.append(f"standby stood down: {owner.tool}'s config excludes every file here, so {', '.join(shared)} is not assessed")
+        _note(row, f"standby stood down: {owner.tool}'s config excludes every file here, so {', '.join(shared)} is not assessed")
     else:
-        row.notes.append(f"standby stood down: {owner.tool} graded {', '.join(shared)}")
+        _note(row, f"standby stood down: {owner.tool} graded {', '.join(shared)}")
+
+
+def _note(row: Row, text: str) -> None:
+    """Settling runs again on a rerun, so a note replaces the one it updates: the text before
+    its first ` (` names the note, and the counts after it change when triage changes a verdict."""
+    head = text.split(" (", 1)[0]
+    row.notes[:] = [n for n in row.notes if n.split(" (", 1)[0] != head] + [text]
 
 
 def drop_out_of_scope(inventory: inv.Inventory, row: Row) -> None:

@@ -661,6 +661,20 @@ class SettleTest(RepoCase):
         settle.settle(self.inventory(), [owner, standby])
         self.assertEqual((standby.findings, standby.stood_down), ([], True))
 
+    def test_settling_twice_writes_each_stand_down_note_once(self):
+        owner = row("eslint", ["lint"])
+        standby = row("oxlint", ["lint"], standby_behind="eslint")
+        settle.stand_down([owner, standby])
+        settle.stand_down([owner, standby])
+        self.assertEqual(standby.notes, ["standby stood down: eslint graded lint"])
+        owner = row("eslint", ["lint"], state="error", detail="plugin missing")
+        standby = row("oxlint", ["lint"], standby_behind="eslint")
+        standby.add("src/a.ts", 1, "lint", "x", "error", "m")
+        settle.settle(self.inventory(), [owner, standby])
+        standby.findings[0].status = "dropped"
+        settle.settle(self.inventory(), [owner, standby])
+        self.assertEqual(standby.notes, ["oxlint graded lint on its default config because eslint reported error (0 graded, 1 advisory)"])
+
     def test_a_standby_keeps_its_findings_when_the_owner_errored_and_says_so(self):
         owner = row("eslint", ["lint"], state="error", detail="plugin missing")
         standby = row("oxlint", ["lint"], standby_behind="eslint")
@@ -881,7 +895,7 @@ class RunDirTest(RepoCase):
         bandit = next(r for r in made["rows"] if r.tool == "bandit")
         bandit.state = "ok"
         bandit.add("tests/test_a.py", 1, "security", "B101", "info", "assert used").flags = ["test"]
-        bandit.add("src/a.py", 1, "security", "B602", "error", "shell=True")
+        bandit.add("src/a.py", 1, "security", "B602", "error", "shell=True").data["confidence"] = "HIGH"
         cli.write_all(run_dir, made["meta"], made["projects"], made["rows"], "test")
         return repo, run_dir
 
@@ -927,6 +941,32 @@ class RunDirTest(RepoCase):
         grades = grade.grade(projects, rows, set(meta["only"]), False)
         self.assertIn("security D", grade.line(grades, grade.headline(grades)))
         self.assertIn(f"grades (mechanical, before triage): {grade.line(grades, grade.headline(grades))}\n", out)
+
+    def test_a_rerun_keeps_what_triage_and_settle_already_wrote(self):
+        _, run_dir = self.scanned()
+        meta, projects, rows = report.read_results(run_dir)
+        ruff = next(r for r in rows if r.tool == "ruff check")
+        ruff.state = "ok"
+        ruff.add("src/a.py", 1, "security", "S602", "error", "subprocess call with shell=True")
+        next(r for r in rows if r.tool == "bandit").add("tests/test_a.py", 5, "security", "B101", "info", "assert used")
+        cli.write_all(run_dir, meta, projects, rows, "test")
+        self.assertEqual(self.call("verdict", str(run_dir), "--tool", "bandit", "--rule", "B101", "--line", "1", "--dropped", "fixture")[0], 0)
+
+        def run_rows(run, rows, jobs):
+            for row in rows:
+                row.state = "ok"
+
+        with mock.patch.object(cli, "run_rows", run_rows):
+            code, _ = self.call("rerun", str(run_dir), "--tool", "ty")
+        self.assertEqual(code, 0)
+        bandit_tsv = (run_dir / "findings" / "root" / "bandit.tsv").read_text().splitlines()
+        self.assertTrue(next(line for line in bandit_tsv if "bandit/B602" in line).endswith("confidence=HIGH"))
+        _, _, rows = report.read_results(run_dir)
+        verdicts = {(f.rule, f.line): (f.status, f.reason) for r in rows for f in r.findings}
+        self.assertEqual(verdicts[("bandit/B602", 1)], ("graded", ""))
+        self.assertEqual(verdicts[("ruff-check/S602", 1)], ("graded", ""))
+        self.assertEqual(verdicts[("bandit/B101", 1)], ("dropped", "fixture"))
+        self.assertEqual(verdicts[("bandit/B101", 5)], ("graded", ""))
 
     def test_results_reload_as_project_records(self):
         _, run_dir = self.scanned()
