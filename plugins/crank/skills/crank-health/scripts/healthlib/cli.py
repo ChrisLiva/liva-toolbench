@@ -372,17 +372,38 @@ def cmd_rerun(opts) -> int:
         run_rows(run, fresh, opts.jobs)
     finally:
         run.cleanup()
-    by_key = {r.key: r for r in fresh}
-    rows = [by_key.pop(r.key, r) for r in old_rows] + list(by_key.values())
+    rows, kept = merge_rerun(old_rows, fresh)
     verdicts = verdicts_of(old_rows)  # before settle, which changes old findings in place
     settle.settle(inventory, rows)
     keep_verdicts(verdicts, rows)
     grades = write_all(run_dir, meta, projects, rows, "after a rerun")
-    for row in fresh:
-        graded = sum(1 for f in row.findings if f.graded)
-        print(f"{row.tool} ({row.project}): {row.state}, {graded} graded, {len(row.findings) - graded} advisory or dropped")
+    print_rerun(fresh, kept)
     digest(run_dir, rows, grades, "after a rerun")
     return 0
+
+
+def merge_rerun(old_rows: list[Row], fresh: list[Row]) -> tuple[list[Row], list[tuple[Row, Row]]]:
+    """The run's rows with each fresh row in its old row's place, except that an old `ok` row
+    stays when its fresh row is not `ok`; also returns those (old, fresh) pairs."""
+    by_key = {r.key: r for r in fresh}
+    rows, kept = [], []
+    for old in old_rows:
+        new = by_key.pop(old.key, old)
+        if old.state == "ok" and new.state != "ok":
+            kept.append((old, new))
+            new = old
+        rows.append(new)
+    return rows + list(by_key.values()), kept
+
+
+def print_rerun(fresh: list[Row], kept: list[tuple[Row, Row]]) -> None:
+    kept_old = {new.key: old for old, new in kept}
+    for row in fresh:
+        if (old := kept_old.get(row.key)) is not None:
+            print(f"{row.tool} ({row.project}): rerun ended {row.state}: {row.detail}; kept the previous ok row and its {len(old.findings)} findings")
+            continue
+        graded = sum(1 for f in row.findings if f.graded)
+        print(f"{row.tool} ({row.project}): {row.state}, {graded} graded, {len(row.findings) - graded} advisory or dropped")
 
 
 def rerun_wanted(row: Row, opts) -> bool:

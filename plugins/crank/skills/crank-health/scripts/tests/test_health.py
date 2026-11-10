@@ -968,6 +968,26 @@ class RunDirTest(RepoCase):
         self.assertEqual(verdicts[("bandit/B101", 1)], ("dropped", "fixture"))
         self.assertEqual(verdicts[("bandit/B101", 5)], ("graded", ""))
 
+    def test_a_failed_rerun_keeps_the_findings_and_verdicts_it_had(self):
+        _, run_dir = self.scanned()
+        code, out = self.call("verdict", str(run_dir), "--tool", "bandit", "--rule", "B602", "--dropped", "fp")
+        self.assertEqual(code, 0)
+        self.assertIn("security B", out)
+
+        def run_rows(run, rows, jobs):
+            bandit = next(r for r in rows if r.tool == "bandit")
+            bandit.state, bandit.detail = "error", "boom"
+
+        with mock.patch.object(cli, "run_rows", run_rows):
+            code, out = self.call("rerun", str(run_dir), "--tool", "bandit")
+        self.assertEqual(code, 0)
+        self.assertIn("bandit (.): rerun ended error: boom; kept the previous ok row and its 2 findings", out)
+        self.assertTrue((run_dir / "findings" / "root" / "bandit.tsv").exists())
+        _, _, rows = report.read_results(run_dir)
+        b602 = next(f for r in rows for f in r.findings if f.rule == "bandit/B602")
+        self.assertEqual((b602.status, b602.reason), ("dropped", "fp"))
+        self.assertIn("security B", out)
+
     def test_results_reload_as_project_records(self):
         _, run_dir = self.scanned()
         projects = report.read_results(run_dir)[1]
