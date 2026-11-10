@@ -492,7 +492,7 @@ def cmd_finish(opts) -> int:
     print_listing("written since the scan started, outside the run dir: ", touched[:40])
     if len(touched) > 40:
         print(f"  … {len(touched) - 40} more")
-    if meta.get("head_full") and moved != meta["head_full"]:
+    if moved != meta["head_full"]:
         print(f"HEAD moved since the scan: {meta['head_full'][:10]} -> {moved[:10]}")
     return 1 if leaks or left else 0
 

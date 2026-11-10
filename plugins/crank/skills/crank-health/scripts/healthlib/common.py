@@ -35,8 +35,7 @@ AISLOP_ELSEWHERE = {
 
 def plan(run: Run) -> list[Row]:
     ctx = _Context(run)
-    rows = [ctx.gitleaks(), ctx.osv_scanner(), ctx.zizmor(), ctx.opengrep(), *ctx.jscpd(), ctx.aislop()]
-    return [r for r in rows if r is not None]
+    return [ctx.gitleaks(), ctx.osv_scanner(), ctx.zizmor(), ctx.opengrep(), *ctx.jscpd(), ctx.aislop()]
 
 
 def row(categories, tool: str, project: str = "repo", **kw) -> Row:

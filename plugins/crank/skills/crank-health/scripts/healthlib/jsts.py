@@ -114,11 +114,11 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
     return [r for r in rows if r is not None]
 
 
-def _standby(rows: list[Row | None]) -> None:
+def _standby(rows: list[Row]) -> None:
     """The last row is the default tool; it stands by behind the first owner that will run."""
     default = rows[-1]
-    owner = next((r for r in rows[:-1] if r is not None and r.job is not None), None)
-    if default is None or default.job is None or owner is None or not default.provenance.startswith("default config"):
+    owner = next((r for r in rows[:-1] if r.job is not None), None)
+    if default.job is None or owner is None or not default.provenance.startswith("default config"):
         return
     default.standby_behind = owner.tool
     default.provenance += f", standby behind {owner.tool}"

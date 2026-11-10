@@ -260,6 +260,7 @@ class PlanTest(RepoCase):
         for tool in ("oxlint", "prettier", "knip", "fallow health", "tsc"):
             self.assertIsNotNone(rows[f".:{tool}"].job, tool)
             self.assertEqual(rows[f".:{tool}"].provenance, "default config, ephemeral", tool)
+        self.assertNotIn(".:react-doctor", rows)
 
     def test_the_default_tool_stands_by_behind_an_owner(self):
         rows = self.rows({"package.json": json.dumps({"devDependencies": {"eslint": "9.1.0"}}), "eslint.config.js": "", "i.js": "1\n"})

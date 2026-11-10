@@ -82,7 +82,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
     venv = find_venv(run.repo, project)
     project.facts["virtualenv"] = str(venv) if venv else "none"
     ctx = _Context(run, project, files, venv)
-    rows = [
+    return [
         ctx.ruff_check(),
         ctx.ruff_format(),
         *ctx.types(),
@@ -91,7 +91,6 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
         ctx.bandit(),
         ctx.deep("test quality", "cosmic-ray", owned_only=True),
     ]
-    return [r for r in rows if r is not None]
 
 
 class _Context:
@@ -443,7 +442,7 @@ class _Context:
         )
         finding.data.update(severity=severity, confidence=confidence)
 
-    def deep(self, category: str, tool: str, *, owned_only: bool) -> Row | None:
+    def deep(self, category: str, tool: str, *, owned_only: bool) -> Row:
         row = self.row(category, tool)
         if owned_only and tool not in self.project.owned:
             return row.skip("not owned (never imposed)")
