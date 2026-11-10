@@ -521,7 +521,8 @@ class FindingTest(unittest.TestCase):
         line = finding.tsv()
         self.assertEqual(line.split("\t"), ["a.py", "3", "dead code", "vulture/unused-import", "info", "advisory: confidence below 90%", "unused import 'os'", "test confidence=60"])
         back = Finding.parse(line)
-        self.assertEqual((back.status, back.reason, back.flags), ("advisory", "confidence below 90%", ["test", "confidence=60"]))
+        self.assertEqual((back.status, back.reason, back.flags, back.data), ("advisory", "confidence below 90%", ["test"], {"confidence": "60"}))
+        self.assertEqual(back.tsv(), line)
         self.assertEqual(back.line, 3)
 
     def test_row_add_stores_an_int_line(self):
@@ -723,6 +724,18 @@ class SettleTest(RepoCase):
         go.join_vulnerabilities([osv, vuln])
         self.assertEqual((called.status, idle.status), ("graded", "advisory"))
         self.assertEqual(vuln.findings[0].reason, "duplicate of osv-scanner/vulnerable-dependency")
+
+    def test_a_reloaded_govulncheck_row_still_decides_reachability(self):
+        vuln = row("govulncheck", ["security"], language="go")
+        vuln.add("go.mod", "", "security", "imported-no-call", "info", "GO-2", graded=False, reason="never called").data["ids"] = "GO-2"
+        with tempfile.TemporaryDirectory() as tmp:
+            report.write_findings(Path(tmp), [vuln])
+            reloaded = row("govulncheck", ["security"], language="go", findings=report.read_findings(Path(tmp), vuln))
+        osv = row("osv-scanner", ["security"], project="repo", language="repo-wide")
+        idle = osv.add("go.mod", 4, "security", "vulnerable-dependency", "error", "b@1")
+        idle.data["ids"] = "GO-2"
+        go.join_vulnerabilities([osv, reloaded])
+        self.assertEqual((idle.status, idle.reason), ("advisory", "govulncheck: the vulnerable symbol is never called"))
 
 
 class ParserTest(unittest.TestCase):

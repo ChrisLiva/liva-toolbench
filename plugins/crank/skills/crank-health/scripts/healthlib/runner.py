@@ -105,8 +105,10 @@ class Finding:
         status = status.strip().lower()
         if status not in ("graded", "advisory", "dropped"):
             status, reason = "advisory", verdict
-        flags = cells[7].split() if len(cells) > 7 else []
-        return cls(file, _lineno(lineno), category, rule, severity, status, message, reason.strip(), flags=flags)
+        notes = cells[7].split() if len(cells) > 7 else []
+        data = dict(note.split("=", 1) for note in notes if "=" in note)
+        flags = [note for note in notes if "=" not in note]
+        return cls(file, _lineno(lineno), category, rule, severity, status, message, reason.strip(), data, flags)
 
 
 def _lineno(value) -> int:
