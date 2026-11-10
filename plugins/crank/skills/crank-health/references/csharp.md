@@ -2,15 +2,15 @@
 
 Only `dotnet format whitespace` and the cross-language tools read C# without building it. Lint, types, complexity and dead code all need MSBuild, which runs the project's own build logic, so they are `--deep` only. In the quick profile those four categories read `not assessed (needs --deep: MSBuild executes project build logic)`.
 
-Gate on `dotnet --version` run from the project directory (a `global.json` pins the SDK per directory). Below SDK 10 or missing: C# categories not assessed, hint https://dotnet.microsoft.com/download. A non-zero gate exit prints the installed-SDK list on stdout, so quote stderr only. Env for every command: `NUGET_PACKAGES=$HOME/.nuget/packages DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 DOTNET_CLI_UI_LANGUAGE=en`. Ephemeral tools run through `dnx -y <id> --source https://api.nuget.org/v3/index.json -v quiet -- <args>`; the `--` is load-bearing.
+The scan runs the quick tool; under `--deep` it lists the build-backed tools as rows and you run them from this file.
 
-## Commands
+The gate is `dotnet --version` run from the project directory (a `global.json` pins the SDK per directory). Below SDK 10 or missing: C# categories not assessed, hint https://dotnet.microsoft.com/download. Env for every command you run: `NUGET_PACKAGES=$HOME/.nuget/packages DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 DOTNET_CLI_UI_LANGUAGE=en`. Ephemeral tools run through `dnx -y <id> --source https://api.nuget.org/v3/index.json -v quiet -- <args>`; the `--` is load-bearing.
 
-**dotnet format whitespace** (format, quick). `--verify-no-changes` is the zero-footprint flag; `--folder` skips project load and restore. Exit 0 or 2; a missing `format-report.json` is an error. Exclude `bin`, `obj` and nested projects' directories.
-```sh
-dotnet format whitespace <project-dir> --folder --verify-no-changes --exclude bin obj <nested> --report <scratch>/dotnet-format
-```
-Always the repo's `.editorconfig`, so always repo provenance.
+## Reading the quick row
+
+**dotnet format whitespace** (format). One finding per file that would change, with its first change as the anchor; the metric is those files / the project's `.cs` files. It reads the repo's `.editorconfig`, so it is always repo provenance, and it skips `bin`, `obj` and nested projects' directories.
+
+## Deep
 
 **dotnet build + NetAnalyzers** (types, lint, complexity; deep). One build per project feeds three categories. `%2C` in the ErrorLog property is mandatory: a literal comma silently emits SARIF 1.0.
 ```sh

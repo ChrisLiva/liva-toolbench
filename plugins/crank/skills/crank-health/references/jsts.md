@@ -1,91 +1,112 @@
 # JS/TS analyzers
 
-Run from the repo root unless a row says otherwise. Ephemeral form is `npx --yes <pkg>@latest`; when the binary name differs from the package: `npx --yes --package <pkg>@latest -- <bin>`. A repo-owned tool runs as `<nearest node_modules/.bin>/<bin>` with the repo's config. Record the version each tool prints.
-
-Three file lists, each the project's tracked files of those extensions from the inventory, batched at ~200 per invocation:
-
-- `<files>` is `.ts .tsx .mts .cts .js .jsx .mjs .cjs`. Every row takes it but the two named below.
-- `<format-files>` is `<files>` plus `.css .scss .less .json .jsonc .graphql .gql .md .mdx .yaml .yml .html .vue`, minus lockfiles, minus what the repo's own `.prettierignore`, Biome `files.includes` `!`-entries or oxfmt `ignorePatterns` exclude: a file its formatter is configured to skip belongs in neither half of the ratio. The format rows take it, and the format letter is a ratio over files rather than over KLOC, so widening it moves no density band.
-- `<lint-files>` is `<files>` plus `.css .graphql .gql`, and only the `biome lint` row takes it. Biome lints `.json` as well, but the largest JSON in a repo is usually its lockfile and generated data earns no lint task, so JSON stays out of the list and out of the count.
+What the scan runs for a JS/TS project and how to read each tool's rows. The commands themselves,
+with their pinned versions and cwd, are in `<run-dir>/tools.md` → Commands.
 
 | category | default | repo-owned only (never imposed) |
 | --- | --- | --- |
-| lint | oxlint | eslint, biome lint, react-doctor (when `react` is a dependency) |
+| lint | oxlint | eslint, biome lint |
+| lint (complementary, advisory) | react-doctor, when `react` is a dependency | |
 | format | prettier | biome format, oxfmt |
-| types | tsc (needs a `tsconfig.json` in the project itself) | |
+| types | tsc | |
 | dead code | knip | fallow dead-code |
 | complexity | fallow health | |
 | test quality (deep) | | stryker |
 
-Ownership = a config file in the project or an ancestor, or the package name in any of `dependencies`, `devDependencies`, `optionalDependencies`, `peerDependencies`. A `scripts` entry never decides.
+Ownership = a config file in the project or an ancestor, or the package name in any of
+`dependencies`, `devDependencies`, `optionalDependencies`, `peerDependencies`. A `scripts` entry
+never decides. `tsc` alone is project-local: it is owned by a `tsconfig.json` in the project
+itself.
 
-## Commands
+Three file lists feed the tools, each the project's in-scope files of those extensions:
 
-**oxlint** (lint). Exit 1 = findings. Empty stdout with exit 1 = it crashed.
-```sh
-oxlint --format sarif --no-error-on-unmatched-pattern <files>
-# no repo config: add
---config <scratch>/oxlintrc.json --disable-nested-config
+- `<files>` is `.ts .tsx .mts .cts .js .jsx .mjs .cjs`.
+- `<format-files>` is `<files>` plus `.css .scss .less .json .jsonc .graphql .gql .md .mdx .yaml .yml .html .vue`,
+  minus lockfiles. A file the repo's formatter is configured to skip belongs in neither half of
+  the ratio, so each format row's denominator is the files its formatter read, not the list's
+  length. The format letter is a ratio over files rather than over KLOC, so the wider list moves
+  no density band.
+- `<lint-files>` is `<files>` plus `.css .graphql .gql`, and only `biome lint` takes it.
+
+## Reading the rows
+
+**oxlint** (lint). On the skill's default config (`correctness` as error, `suspicious` and `perf`
+as warn) only `correctness` rules grade; the rest are advisory. A repo that owns an oxlint
+config grades everything it selected. Rule ids read `oxlint/<plugin>/<rule>`.
+
+**eslint** (lint, owned only). A repo with only a legacy `.eslintrc*` and no install reads
+`not available`: ESLint 9+ no longer reads it. The Notes line gives how many of the project's
+files eslint reported on; the rest are files its own config ignores.
+
+**biome** (lint and format, owned only). The format metric is the files carrying a `format`
+diagnostic over the files Biome read: its config's `files.includes` decides that set, and it
+drops `.scss`, `.less`, `.md`, `.yaml` and `.html` without a word. Biome's recommended set lints
+`.css` and `.graphql` on their own rules, so its lint denominator is the js-ts KLOC plus the
+`lint assets` lines; when oxlint graded lint instead, the denominator drops back to js-ts KLOC
+alone. A project whose every file the Biome config excludes reads
+`skipped: nothing to scan`, and lint and format read `not assessed` there: usually generated
+code the repo chose not to lint.
+
+**prettier** (format). Format grades even on the default config (the measure is "formatted at
+all"). Files a `.prettierignore` excludes leave the denominator, and the Notes line counts them.
+A repo config that names a plugin (`prettier-plugin-tailwindcss`) needs the repo's install: without
+`node_modules` the row reads `error`, and format is not assessed rather than clean.
+A standby prettier behind Biome or oxfmt measures a style the repo never adopted: once the owner
+graded format its rows are gone, and when it graded because the owner failed, say in the plan
+whose style the number reflects.
+
+**oxfmt** (format, owned only). Its config's `ignorePatterns` and the project's
+`.prettierignore` drop files even when they are named, and a file it cannot parse leaves the
+denominator and shows in Notes.
+
+**tsc** (types). A project with a `tsconfig.json` is checked against it. A project without one
+is checked on a scratch tsconfig (`strict`, `skipLibCheck`, `moduleResolution: bundler`) over its
+TypeScript files only; a project of plain JavaScript reads `skipped` (per project decision: type-checking code that
+never opted in is imposing a tool, so its types are not assessed rather than graded F). Advisory, not graded, when the project has no `node_modules`:
+TS2307, TS2503, TS2580, TS2591, TS2593, TS2688, TS2792, TS7016, and any message saying
+`npm i --save-dev @types/…`. With no `node_modules` every imported type is unchecked, so a clean
+row there is weak evidence: say so beside the letter. Notes names other `tsconfig.*.json` files
+the run did not check.
+
+**knip** (dead code). knip's unit is the workspace, so it runs once from the highest ancestor
+with `workspaces`, a `pnpm-workspace.yaml` or a knip config, and each project keeps the rows in
+its own files. Unused dependencies, unlisted dependencies and unresolved imports are info and
+never grade. Before you leave an `unused-file` or `unused-export` row graded, read `exports`,
+`main`, `bin`, the test globs and the examples dir: a library's public modules, its tests and
+its examples are the usual false positives, and they are advisory. A `check:` line means knip
+called a fifth or more of the project's files unused, which is a missing entry point rather
+than dead code (a CLI, a bundler plugin's entries, a test setup file): write the entries to
+`<run-dir>/knip.json`, point knip at it through `overrides.json`, and rerun
+([run-dir.md](run-dir.md)). At half or more the scan marks the rows advisory and dead code
+reads `not assessed` for the project, never A. One file serves the whole workspace:
+
+```json
+{"workspaces": {
+  ".": {"entry": ["src/cli.ts"]},
+  "packages/core": {"entry": ["src/index.ts", "test/**/*.test.ts"], "project": ["src/**/*.ts", "test/**/*.ts"]}
+}}
 ```
-Default config to write: `{"plugins":["typescript","unicorn","oxc"],"categories":{"correctness":"error","suspicious":"warn","perf":"warn"}}`. On the default config only `correctness` rules grade; the rest are advisory.
 
-**eslint** (lint, owned only). Exit 1 = findings, exit 2 = could not run (no JSON). A repo with only a legacy `.eslintrc*` and no install: not available, "ESLint 9+ no longer reads it". Never `--fix` or `--cache` during the scan.
-```sh
-eslint --format json --no-color --no-warn-ignored <files>
-```
+Without `node_modules` knip cannot load the configs that name entry points (a vitest config, a
+bundler plugin), so test files and everything only tests reach read unused. The scan marks
+those rows advisory too and dead code reads `not assessed` until you name the entries and
+rerun.
 
-**biome** (lint and format, owned only). cwd must be the directory of the highest `biome.json[c]` in the ancestry: Biome refuses a config below its cwd as "nested". JSON is on stdout after other lines: take the first line starting with `{` that parses and has `diagnostics`. Never `--write`, `--fix`, `--suppress`.
-```sh
-biome lint   --reporter=json --max-diagnostics=none --colors=off --no-errors-on-unmatched --vcs-enabled=true --vcs-client-kind=git --vcs-use-ignore-file=true --vcs-root=<repo> <lint-files>
-biome format --reporter=json --max-diagnostics=none --colors=off --no-errors-on-unmatched --vcs-enabled=true --vcs-client-kind=git --vcs-use-ignore-file=true --vcs-root=<repo> <format-files>
-```
-Exit 1 = findings, 0 = clean. `summary.changed` counts files written, so a check run always reports 0: the format metric is the count of distinct `location.path` among the `diagnostics` rows whose `category` is `format`. `summary.errors` is not that count, because a `parse` row lands in it too, and a `parse` row is a tool error on that file rather than a format failure. Diagnostic paths are relative to cwd, so the cwd rule above also decides how findings anchor. The denominator is `summary.unchanged`, the files Biome parsed, never the length of the list you handed it: it formats `.css`, `.json[c]` and `.graphql` but drops `.scss`, `.less`, `.md`, `.yaml` and `.html` without counting them in `skipped` either, and in `.vue` and `.svelte` it reads the `<script>` block alone.
+**fallow** (dead code when owned; complexity by default). Dead code runs once over the repo and
+is filtered per project. The complexity metric is functions whose *cognitive* complexity is over
+15 / functions counted, both filtered to the project's files. CRAP, cyclomatic and unit-size
+rows are advisory. Its exit 1 is its own gate, not a failure, and its JSON prints paths relative
+to `--root`: a Verify filter is `jq '[.findings[] | select(.cognitive > 15)] | length'`.
 
-Biome's recommended set lints `.css` and `.graphql` on their own rules (`noUnknownProperty`, `noUnknownUnit`, `noEmptyBlock`, `noDuplicateFields`), so its lint denominator is the js-ts KLOC plus the `css` and `graphql` line counts `inventory.md` records on the project's `lint assets` row. When oxlint graded lint instead, because biome errored, the denominator drops back to js-ts KLOC alone: oxlint never read those files.
+**react-doctor** (lint, complementary). Runs when `react` is a declared dependency; every row is
+advisory.
 
-**prettier** (format). Prints one path per line for each file that would change. Exit 1 = some would change, 2 = failure. `--check` and `--list-different` are mutually exclusive.
-```sh
-prettier --list-different --ignore-unknown <format-files>
-# no repo config: add
---no-config --no-editorconfig
-```
-Format grades even on the default config (the measure is "formatted at all"). Prettier parses every extension in `<format-files>` but `.svelte`, which needs a plugin it does not ship; `--ignore-unknown` drops that one without a word, so leave it out of the denominator.
-
-**oxfmt** (format, owned only). cwd = the project dir, file paths relative to it: oxfmt refuses a path containing `..`, and reads `.prettierignore` from cwd alone. It finds `.oxfmtrc.json`, `.oxfmtrc.jsonc` or `oxfmt.config.ts` in cwd or an ancestor (0.76.0 skips `oxfmt.config.js` and `.mjs`), and that config's `ignorePatterns` drop files even when you name them. A `.gitignore`d path you name is formatted. `--write` is its default mode, so never run it without `--list-different`, which writes nothing.
-```sh
-oxfmt --list-different --no-error-on-unmatched-pattern <format-files>
-```
-Prints one path per line for each file that would change. Exit 1 = some would change, 0 = clean, 2 = a file failed to parse: stderr names it, the files it did read still print on stdout, and the unparsed file leaves the denominator. Without `--no-error-on-unmatched-pattern`, a batch whose every file its ignores drop exits 2 as well. It formats every extension in `<format-files>` but `.svelte`, which it drops without a word, so leave that out of the denominator; `oxfmt --check <same files>` ends with `Finished in <t> on <n> files`, and `<n>` is the denominator whenever no file failed to parse.
-
-**tsc** (types). Always name the project explicitly, or a monorepo grabs another package's tsconfig. `--incremental false` stops `.tsbuildinfo` being written.
-```sh
-tsc --noEmit --pretty false --incremental false --project <project-dir>
-```
-No `tsconfig.json` in the project: write `<scratch>/tsconfig.json` with `{"compilerOptions":{"strict":true,"noEmit":true,"skipLibCheck":true,"module":"esnext","moduleResolution":"bundler","target":"es2022","jsx":"preserve"},"files":[<absolute paths>]}` and point `--project` at it. Advisory, not graded, when the project has no `node_modules`: TS2307, TS2503, TS2580, TS2591, TS2593, TS2688, TS2792, TS7016, and any message saying `npm i --save-dev @types/…`. Exit non-zero with zero diagnostics parsed = error.
-
-**knip** (dead code). No file list: knip's cwd is the analysis unit. cwd = the highest ancestor with `workspaces` in `package.json` or a `pnpm-workspace.yaml` or a knip config; else the project's `package.json` dir. Unused dependencies are info and never grade.
-```sh
-knip --reporter json --no-config-hints --no-progress --no-exit-code
-```
-Before grading `unused-file` or unused-export rows, read `exports`, `main`, `bin`, the test globs and the examples dir: a library's public modules, its tests and its examples are the usual false positives, and they are advisory. A project knip found no entry point for gets its rows advisory with the note `no entry point reaches this project`.
-
-**fallow** (dead code when owned; complexity by default). cwd = repo root (its config resolves above `--root`). Exit 1 = findings; only empty stdout is failure. `--no-cache` is the zero-footprint flag; never `fix`, `--save-snapshot`, `--save-baseline`.
-```sh
-fallow dead-code --format json --no-cache -q
-fallow health    --format json --no-cache -q --root <project-dir> --complexity --file-scores --max-cognitive 15
-```
-Complexity metric = functions whose *cognitive* complexity row is over 15 / functions counted, both filtered to the project's inventory (fallow walks from `--root`, which is the whole repo for a root project). CRAP, cyclomatic and unit-size rows are advisory. Leave out `--hotspots`, `--churn` and `--ownership`: they read git with a relative time window.
-
-**react-doctor** (lint, complementary, advisory). cwd = scratch. Only when `react` is a declared dependency.
-```sh
-react-doctor <abs project-dir> --json --no-telemetry --no-supply-chain --no-dead-code --blocking none --output-dir <scratch>/react-doctor
-```
+## Deep
 
 **stryker** (test quality, `--deep`, owned and installed only). Write `<scratch>/stryker.config.mjs` that imports the repo's config and overrides `reporters: ['json']`, `jsonReporter: { fileName: '<scratch>/mutation.json' }`, `tempDirName: '<scratch>/stryker-tmp'`, `cleanTempDir: 'always'`, `incremental: false`, `allowConsoleColors: false`, `allowEmpty: true`, `fileLogLevel: 'off'`; in PR mode set `mutate` to the changed files. Then `<node_modules/.bin>/stryker run <scratch>/stryker.config.mjs` from the repo root. Budget 15 minutes. Score = killed / (killed + survived + no-coverage + timeout).
 
 ## Gotchas
 
-- A `tsconfig.json` is project-local. Every other config inherits from ancestors.
-- oxlint stands in as a standby behind an owned eslint or biome: run both, and drop oxlint's findings when the owner graded lint. Keep them, and say so, when the owner errored (an ephemeral eslint crashes on plugins only a real install provides).
 - knip and fallow both name the same export: one symbol is one dead-code finding.
 - `dist/`, `build/`, `coverage/`, `*.gen.*`, `gen/` and any glob the repo's Biome `files.includes` `!`-entries or fallow `ignorePatterns` exclude are generated: never a task, even when a tool reports them.
+- An ephemeral eslint crashes on plugins only a real install provides. Its row reads `error`, the oxlint standby keeps its findings, and the plan says so.

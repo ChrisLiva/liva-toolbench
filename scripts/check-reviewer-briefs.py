@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Gate the adversarial-review sites, the orchestrator skills' promised
-literals, the hand-synced reference copies, and the prose pointers to sections.
+literals, the hand-synced reference copies, the prose pointers to sections,
+the wizard template, and crank-health's scanner.
 
 Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
@@ -124,6 +125,15 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/PROTOTYPE.md": ["until the plan's execution finishes"],
     "plugins/crank-lite/skills/crank-lite/PROTOTYPE.md": ["until the plan's execution finishes"],
     "plugins/crank/skills/crank/ARTIFACT-HOME.md": ["until the plan's execution finishes"],
+    # crank-health's steps run its bundled scanner; a rewrite that drops a command strands the script
+    "plugins/crank/skills/crank-health/SKILL.md": [
+        "<this skill's directory>/scripts/health.py",
+        "`health.py scan",
+        "`health.py verdict`",
+        "`health.py grade <run-dir>`",
+        "`health.py rerun <run-dir>",
+        "`health.py finish <run-dir>`",
+    ],
 }
 
 # Brief prose states what the agent does, with no cost justification.
@@ -161,6 +171,10 @@ HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*#*\s*$", re.M)
 # The crank-wizard skill ships a compilable Go template; a wizard generator
 # whose own template does not compile is the failure this gate exists to catch.
 TEMPLATE_DIR = "plugins/crank-wizard/skills/crank-wizard/template"
+
+# The crank-health skill ships the scanner its steps run; its tests need no network
+# and no analyzer, so a broken scanner fails here instead of in a user's repo.
+HEALTH_TESTS = "plugins/crank/skills/crank-health/scripts/tests"
 
 
 def read(rel):
@@ -303,6 +317,16 @@ def check_template(failures):
             failures.append(f"FAIL {TEMPLATE_DIR}: {label}: " + " | ".join(tail))
 
 
+def check_health(failures):
+    proc = subprocess.run(
+        [sys.executable, "-m", "unittest", "discover", "-s", HEALTH_TESTS],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        tail = [line for line in proc.stderr.strip().splitlines() if line.strip()][-6:]
+        failures.append(f"FAIL {HEALTH_TESTS}: " + " | ".join(tail))
+
+
 def main():
     failures = []
     check_sites(failures)
@@ -310,6 +334,7 @@ def main():
     check_sync(failures)
     check_pointers(failures)
     check_template(failures)
+    check_health(failures)
     for line in failures:
         print(line)
     print(f"{len(failures)} failure(s)")

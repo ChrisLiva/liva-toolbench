@@ -1,6 +1,12 @@
 # Python analyzers
 
-`<files>` is the project's tracked `.py`/`.pyi` files, passed as a shell array. Ephemeral form is `uvx --quiet <dist> …` (`--quiet` stops uv narrating cold installs onto stderr; leave `UV_CACHE_DIR` unset, an empty value is an error); a repo-owned tool runs as `<venv>/bin/<tool>` when it is installed there (`.venv`, `venv`, `env`, then `$VIRTUAL_ENV`). Ownership = a `[tool.<name>]` table in `pyproject.toml`, a dedicated config file, or the package in PEP 621 / optional / dependency-group / poetry / pdm dependencies or `requirements*.txt`, ancestors included. Record the version each tool prints.
+What the scan runs for a Python project and how to read each tool's rows. The commands themselves,
+with their pinned versions and cwd, are in `<run-dir>/tools.md` → Commands.
+
+Ownership = a `[tool.<name>]` table in `pyproject.toml`, a dedicated config file, or the package
+in PEP 621 / optional / dependency-group / poetry / pdm dependencies or `requirements*.txt`,
+ancestors included. A repo-owned tool runs as `<venv>/bin/<tool>` when it is installed there
+(`.venv`, `venv`, `env`, then `$VIRTUAL_ENV`); everything else runs ephemerally through `uvx`.
 
 | category | default | notes |
 | --- | --- | --- |
@@ -12,55 +18,45 @@
 | security | bandit (complementary to the repo-wide scanners) | |
 | test quality (deep) | cosmic-ray, owned and installed only; coverage.py as context | |
 
-## Commands
+## Reading the rows
 
-**ruff check** (lint). `--exit-zero` so exit code carries nothing.
-```sh
-ruff check --output-format json --no-cache --exit-zero <files>
-# no repo config: add
---config <scratch>/ruff.toml     # containing: [lint]\nselect = ["E4", "E7", "E9", "F"]
-```
-On the default config `F`, `E9` and `invalid-syntax` grade; everything else advisory. Route `S\d+` rules to the security category.
+**ruff check** (lint). Without a repo config the scan selects `E4`, `E7`, `E9`, `F`: deliberately
+the old set rather than ruff's modern default, so the grade reflects correctness rules only. On
+that default `F`, `E9` and `invalid-syntax` grade and everything else is advisory. A repo config
+grades every rule it selected, and its `S` rules route to security.
 
-**ruff format** (format). Exit 1 = would reformat, 2 = unparseable file with diagnostics still printed; only empty stdout is fatal. One finding per file; a row with `"code": "io"` is a missing file, not a format finding.
-```sh
-ruff format --check --no-cache --output-format json <files>
-```
+**ruff format** (format). One finding per file that would be reformatted.
 
-**ty** (types, default without a venv). gitlab is the only machine format carrying rule, severity and range.
-```sh
-ty check --output-format gitlab --exit-zero --no-progress --color never <files>
-```
-Advisory on the default config: `unresolved-import`, `missing-typeshed-stub`.
+**ty** (types, default without a virtualenv). Advisory on the default config: import-resolution
+rules (`unresolved-import`, `import-not-found`) and `missing-typeshed-stub`, since nothing is
+installed to resolve against. Untyped Python reads F here; that is the honest reading
+([grading.md](grading.md)).
 
-**pyright** (types, default with a venv). Ranges are 0-based on both axes.
-```sh
-pyright --outputjson --pythonpath <venv>/bin/python <files>
-```
-Advisory on the default config: `reportMissingImports`, `reportMissingModuleSource`, `reportMissingTypeStubs`, `reportAttributeAccessIssue`.
+**pyright** (types, default with a virtualenv). It runs from the virtualenv, else from PATH, else ephemerally. Advisory on the default config:
+`reportMissingImports`, `reportMissingModuleSource`, `reportMissingTypeStubs`,
+`reportAttributeAccessIssue`. One library pattern can account for hundreds of rows (a pydantic
+`Field` default read as the declared type): group by rule and message before you judge the
+count.
 
-**mypy** (types, owned only). One invocation over all files (it builds one dependency graph). `--config-file=` with an empty value stops mypy discovering `setup.cfg` or `~/.mypy.ini`. Never pass `--txt-report`, `--html-report`, `--xml-report`, `--cobertura-xml-report`: they abort without lxml. Output is JSON lines; drop `note` rows. Not installed and no venv: not available.
-```sh
-mypy --output=json --cache-dir <scratch>/mypy-cache --config-file <owned config or empty> --python-executable <venv>/bin/python <files>
-```
+**mypy** (types, owned only). Its `note` rows are dropped. With mypy owned, ty or pyright runs as
+the standby. Not installed and no virtualenv: not available.
 
-**vulture** (dead code). One invocation over all files (splitting invents dead code at the seams). Exit 0 or 3.
-```sh
-vulture --min-confidence 60 <files>
-```
+**vulture** (dead code). The `confidence` flag carries the number; below 90 is advisory. An
+unused import ruff also reports (`F401`) is one dead-code finding: ruff's row reads
+`advisory: duplicate of vulture/unused-import`.
 
-**complexipy** (complexity). cwd = `<scratch>/complexipy`, because `.complexipy_cache/` lands beside the cwd and cannot be disabled. Trailing `/` on `--output` is required. JSON gives the denominator (every function), SARIF gives the locations over the ceiling.
-```sh
-complexipy --quiet --max-complexity-allowed 15 --output <scratch>/complexipy/out/ --output-format json,sarif <absolute files>
-```
+**complexipy** (complexity). The metric is functions over 15 / every function it counted, and the
+`score` flag carries each function's number.
 
-**bandit** (security). cwd = scratch. Exit 0 or 1. `B105`, `B106`, `B107` quote the literal in their message: replace the quoted value with `<redacted>` before writing anything, and strip the `code` window from the saved JSON.
-```sh
-bandit --format json -q <absolute files>
-```
-On the default config a finding grades at HIGH severity or HIGH confidence; HIGH and HIGH is `error`, the rest medium-confidence heuristics are advisory. A repo that owns a bandit config grades every tier it selected.
+**bandit** (security). On the default config a finding grades at HIGH severity or HIGH
+confidence; the medium-confidence heuristics are advisory. A repo that owns a bandit config
+grades every tier it selected. `B105`, `B106` and `B107` are secrets: critical at high
+confidence, their quoted literal replaced with `<redacted>`. `B101` grades every `assert` in a
+pytest suite, at info: rows flagged `test` are yours to drop in one ruling.
 
-**coverage.py** (deep, context only). Suite failure is not the verdict. Never graded; a line can be executed by a test that asserts nothing.
+## Deep
+
+**coverage.py** (deep, context only). Suite failure is not the verdict. Never graded; a line can be executed by a test that asserts nothing. When coverage is not installed in the virtualenv, `uv run --no-sync --with coverage python -m coverage …` supplies it without touching the lockfile.
 ```sh
 COVERAGE_FILE=<scratch>/.coverage PYTHONDONTWRITEBYTECODE=1 <venv>/bin/python -m coverage run -m pytest -q -p no:cacheprovider
 COVERAGE_FILE=<scratch>/.coverage <venv>/bin/python -m coverage json -o <scratch>/coverage.json --quiet
@@ -77,5 +73,5 @@ cosmic-ray dump <scratch>/session.sqlite
 ## Gotchas
 
 - `uv` missing from PATH: every Python category is not assessed, hint `brew install uv`.
-- `__pycache__` and `.pytest_cache`: `PYTHONDONTWRITEBYTECODE=1` and `-p no:cacheprovider` on anything that imports the code.
-- The ruff default select is deliberately the old `E4,E7,E9,F` set, not ruff's modern default, so the grade reflects correctness rules only.
+- `__pycache__` and `.pytest_cache`: `PYTHONDONTWRITEBYTECODE=1` and `-p no:cacheprovider` on anything you run that imports the code.
+- A suite with a slow marker can outlast the deep budget: read the repo's test configuration for the marker its own CI excludes before you run coverage.
