@@ -119,6 +119,17 @@ class InventoryTest(RepoCase):
         self.assertEqual(projects["."].files, {"js-ts": ["tool.js"]})
         self.assertEqual(projects["apps/api"].lines, {"go": 1})
 
+    def test_projects_that_would_share_a_folder_are_refused(self):
+        repo = self.repo({"a/b/package.json": "{}", "a/b/x.js": "1\n", "a-b/package.json": "{}", "a-b/y.js": "1\n"})
+        with self.assertRaises(inv.InventoryError) as caught:
+            inv.build(repo.path, [])
+        self.assertIn("a/b", str(caught.exception))
+        self.assertIn("a-b", str(caught.exception))
+        self.assertEqual([p.dir for p in inv.build(repo.path, ["a/b"]).projects], ["a/b"])
+        named_repo = self.repo({"repo/pyproject.toml": "", "repo/a.py": "x = 1\n"})
+        with self.assertRaises(inv.InventoryError):
+            inv.build(named_repo.path, [])
+
     def test_a_manifest_directory_without_source_is_a_workspace_shell(self):
         repo = self.repo({"package.json": "{}", "packages/a/package.json": "{}", "packages/a/i.ts": "1\n"})
         projects = {p.dir: p for p in inv.build(repo.path, []).projects}
@@ -941,6 +952,17 @@ class RunDirTest(RepoCase):
         grades = grade.grade(projects, rows, set(meta["only"]), False)
         self.assertIn("security D", grade.line(grades, grade.headline(grades)))
         self.assertIn(f"grades (mechanical, before triage): {grade.line(grades, grade.headline(grades))}\n", out)
+
+    def test_a_base_tree_whose_projects_collide_is_refused(self):
+        repo = self.repo({"a/b/pyproject.toml": "", "a/b/x.py": "x = 1\n", "a-b/pyproject.toml": "", "a-b/y.py": "x = 1\n"})
+        git(repo.path, "branch", "base")
+        git(repo.path, "rm", "-rq", "a-b")
+        repo.commit("drop a-b")
+        holder = tempfile.TemporaryDirectory()
+        self.addCleanup(holder.cleanup)
+        with mock.patch.object(cli, "run_rows", lambda run, rows, jobs: None):
+            code, _ = self.call("scan", str(repo.path), "--pr", "base", "--run-dir", holder.name)
+        self.assertEqual(code, 2)
 
     def test_a_project_that_names_no_project_is_an_error(self):
         repo = self.repo({"pyproject.toml": "", "a.py": "x = 1\n", "pkg/pyproject.toml": "", "pkg/b.py": "x = 1\n"})

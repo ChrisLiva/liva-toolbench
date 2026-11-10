@@ -198,7 +198,11 @@ def cmd_scan(opts) -> int:
         print("planned only: read inventory.md and tools.md; nothing ran")
         return 0
     if opts.pr:
-        pr_mode(repo, run_dir, opts, head, base_sha, grades)
+        try:
+            pr_mode(repo, run_dir, opts, head, base_sha, grades)
+        except inv.InventoryError as err:
+            say(str(err))
+            return 2
     moved = inv.git(repo, "rev-parse", "HEAD").stdout.decode().strip()
     if moved != head["meta"]["head_full"]:
         print(f"check: HEAD moved during the scan ({head['meta']['head_full'][:10]} -> {moved[:10]}); findings describe a mix of both")

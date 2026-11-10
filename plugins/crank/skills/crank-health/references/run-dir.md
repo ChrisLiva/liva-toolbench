@@ -21,6 +21,7 @@ this when you open a run dir, rule on findings, or need a tool run again.
 
 `<project>` in a path is the project directory with `/` as `-`, `root` for `.`, and `repo` for
 the repo-wide tools.
+The scan refuses a selection where two projects would share a folder, or a project dir is named `repo`.
 
 ## tools.md
 

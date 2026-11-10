@@ -564,7 +564,7 @@ def build(repo: Path, selected: list[str], strict: bool = False) -> Inventory:
         is_git=is_git,
         files=files,
         line_counts=line_counts,
-        projects=[p for p in listed if not wanted or p.dir in wanted],
+        projects=_check_folders([p for p in listed if not wanted or p.dir in wanted]),
         selected=wanted,
         workflows=_workflow_files(files),
         snapshots=sorted({"/".join(f.split("/")[: _snapshot_depth(f)]) + "/" for f in files if under_snapshot(f)}),
@@ -572,6 +572,21 @@ def build(repo: Path, selected: list[str], strict: bool = False) -> Inventory:
         lockfiles=[f for f in files if f.rsplit("/", 1)[-1] in LOCKFILES],
         unassessed=unassessed,
     )
+
+
+def _check_folders(projects: list[Project]) -> list[Project]:
+    """`projects`, refused when their run-dir folders would coincide, with each other or with `repo`."""
+    seen: dict[str, str] = {}
+    for project in projects:
+        name = project.slug
+        if name == "repo":
+            raise InventoryError(
+                f"project {project.dir} would share the run-dir folder `repo` with the repo-wide tools; scan it apart with --project"
+            )
+        if name in seen:
+            raise InventoryError(f"projects {seen[name]} and {project.dir} share the run-dir folder `{name}`; scan them apart with --project")
+        seen[name] = project.dir
+    return projects
 
 
 def _marker_dirs(repo: Path, files: list[str]) -> dict[str, list[str]]:
