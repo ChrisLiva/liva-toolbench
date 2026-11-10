@@ -84,7 +84,7 @@ def drop_out_of_scope(inventory: inv.Inventory, row: Row) -> None:
 def flag(inventory: inv.Inventory, row: Row) -> None:
     generated = set(inventory.generated)
     for finding in row.findings:
-        marks = []
+        marks = ["touched"] if "touched" in finding.flags else []
         if inv.is_test_path(finding.file):
             marks.append("test")
         if inv.under_snapshot(finding.file):

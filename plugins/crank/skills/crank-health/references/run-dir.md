@@ -75,8 +75,8 @@ file  line  category  tool/rule  severity  verdict  message  flags
 - `verdict` is `graded`, `advisory: <reason>` or `dropped: <reason>`. The scan writes the first
   two from the lookups in grading.md. `dropped` is yours: it takes a row out of every count.
 - `flags` is what you sort on first: `test`, `snapshot` and `generated` for the path's class,
-  `touched` in PR mode, and the numbers behind a message (`score=24`, `confidence=60`,
-  `ids=GHSA-…`, `hits=512`).
+  `touched` in PR mode, which `verdict` and `rerun` keep, and the numbers behind a message
+  (`score=24`, `confidence=60`, `ids=GHSA-…`, `hits=512`).
 
 Messages are one line and never quote a secret. Source excerpts are not copied.
 

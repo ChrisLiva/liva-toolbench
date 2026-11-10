@@ -353,6 +353,7 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
     new = unmatched(sorted(head_found, key=lambda f: (f.file, f.line)), base_counts, finding_key)
     for finding in new:
         mark_touched(finding, hunks)
+    report.write_findings(run_dir, head["rows"])
     resolved = unmatched(base_found, head_counts, lambda f: finding_key(f, renames))
     rank = {category: n for n, category in enumerate(CATEGORIES)}
     new.sort(key=lambda f: ("touched" not in f.flags, not f.graded, rank.get(f.category, 9), settle.order(f)))
@@ -446,11 +447,13 @@ def verdicts_of(rows: list[Row]) -> dict[tuple, tuple[str, str, bool]]:
 
 
 def keep_verdicts(verdicts: dict[tuple, tuple[str, str, bool]], rows: list[Row]) -> None:
-    """A finding that survives a rerun keeps the verdict triage gave it; the bare key serves a
-    finding whose line moved."""
+    """A finding that survives a rerun keeps the verdict triage gave it and its `touched` flag;
+    the bare key serves a finding whose line moved."""
     for finding in (f for r in rows for f in r.findings):
         if (kept := verdicts.get((*finding_key(finding), finding.line)) or verdicts.get(finding_key(finding))) is not None:
             finding.status, finding.reason = kept[:2]
+            if kept[2] and "touched" not in finding.flags:
+                finding.flags = ["touched", *finding.flags]
 
 
 def rule_matches(rule: str, pattern: str) -> bool:

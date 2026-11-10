@@ -733,9 +733,9 @@ class SettleTest(RepoCase):
     def test_findings_carry_their_path_class(self):
         scanner = row("oxlint", ["lint"])
         scanner.add("src/a.test.ts", 1, "lint", "x", "warning", "m")
-        scanner.add("src/a.ts", 1, "lint", "x", "warning", "m")
+        scanner.add("src/a.ts", 1, "lint", "x", "warning", "m").flags = ["touched"]
         settle.settle(self.inventory(), [scanner])
-        self.assertEqual([f.flags for f in scanner.findings], [["test"], []])
+        self.assertEqual([f.flags for f in scanner.findings], [["test"], ["touched"]])
 
     def test_govulncheck_decides_a_go_advisory_and_never_double_counts(self):
         osv = row("osv-scanner", ["security"], project="repo", language="repo-wide")
@@ -995,6 +995,17 @@ class RunDirTest(RepoCase):
         self.assertTrue(new[0].startswith("a.py\t2\t"), new)
         self.assertIn("touched", new[0].split("\t")[-1].split())
         self.assertEqual((run_dir / "resolved-findings.tsv").read_text(), "")
+
+        code, out = self.call("verdict", str(run_dir), "--flag", "touched", "--advisory", "later")
+        self.assertEqual(code, 0)
+        self.assertIn("1 findings now read `advisory: later`", out)
+        with mock.patch.object(cli, "run_rows", run_rows):
+            code, _ = self.call("rerun", str(run_dir), "--tool", "bandit")
+        self.assertEqual(code, 0)
+        kept = [line for line in (run_dir / "findings" / "root" / "bandit.tsv").read_text().splitlines() if line.startswith("a.py\t")]
+        self.assertEqual(len(kept), 1, kept)
+        self.assertIn("advisory: later", kept[0].split("\t"))
+        self.assertIn("touched", kept[0].split("\t")[-1].split())
 
     def test_a_base_tree_whose_projects_collide_is_refused(self):
         repo = self.repo({"a/b/pyproject.toml": "", "a/b/x.py": "x = 1\n", "a-b/pyproject.toml": "", "a-b/y.py": "x = 1\n"})
