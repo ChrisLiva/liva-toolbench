@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, batches, not_on_path
+from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, Rung, batches, not_on_path, pick_binary
 
 LANGUAGE = "c-cpp"
 CEILING = 15
@@ -59,12 +59,12 @@ def _wire_format(ctx: _Context, fmt: Row) -> None:
     run, project = ctx.run, ctx.project
     if "clang-format" not in project.owned:
         fmt.skip("not owned (never imposed)")
-    elif run.which("xcrun"):
-        fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), system binary", ctx.clang_format
-    elif run.which("uv"):
-        fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), ephemeral", ctx.clang_format
-    else:
-        fmt.unavailable(not_on_path("uv"))
+        return
+    rungs = [
+        Rung("system binary", bool(run.which("xcrun")), lambda: ctx.clang_format),
+        Rung("ephemeral", bool(run.which("uv")), lambda: ctx.clang_format),
+    ]
+    fmt.job = pick_binary(fmt, f"repo config ({project.owned['clang-format']})", rungs, not_on_path("uv"))
 
 
 def _route(rule: str, severity: str) -> tuple[str, str] | None:

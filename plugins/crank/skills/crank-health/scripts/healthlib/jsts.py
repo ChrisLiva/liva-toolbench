@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, batches, first_json_line, not_on_path, parse_json, sarif_results
+from .runner import Failed, Metric, Row, Run, Rung, batches, first_json_line, not_on_path, parse_json, pick_binary, sarif_results
 
 LANGUAGE = "js-ts"
 CEILING = 15
@@ -164,26 +164,22 @@ class _Context:
         how = f"repo config ({config})" if config else "default config"
         is_owned = tool in self.project.owned
         local = self.local_bin(binary) if is_owned else None
-        if local is not None:
-            row.provenance = f"{how}, repo binary"
-
-            def argv() -> list[str]:
-                row.version = self.run.version(str(local), [str(local), "--version"], cwd=self.dir)
-                return [str(local)]
-
-            return argv
-        if not self.run.which("node"):
-            row.unavailable(not_on_path("node"))
-            return None
-        row.provenance = f"{how}, ephemeral"
         declared = self.declared(package) if is_owned else ""
 
-        def argv() -> list[str]:
+        def local_argv() -> list[str]:
+            row.version = self.run.version(str(local), [str(local), "--version"], cwd=self.dir)
+            return [str(local)]
+
+        def npx_argv() -> list[str]:
             prefix, row.version = self.run.npx(package, binary, declared)
             self.run.warm(f"{package}@{row.version}", [*prefix, "--version"])
             return prefix
 
-        return argv
+        rungs = [
+            Rung("repo binary", is_owned and local is not None, lambda: local_argv),
+            Rung("ephemeral", bool(self.run.which("node")), lambda: npx_argv),
+        ]
+        return pick_binary(row, how, rungs, not_on_path("node"))
 
     # --- lint --------------------------------------------------------------------------
 
@@ -477,14 +473,14 @@ class _Context:
         declared = self.declared("typescript")
         local = self.local_bin("tsc")
         how = f"repo config ({config})" if own else "default config"
-        if local is not None and (own or declared):
-            row.provenance = f"{how}, repo binary"
-        elif self.run.which("node"):
-            row.provenance = f"{how}, ephemeral"
-            local = None
-        else:
-            return row.unavailable(not_on_path("node"))
-        row.job = partial(self._tsc_job, own, typed, declared, local)
+        rungs = [
+            Rung("repo binary", local is not None and bool(own or declared), lambda: local),
+            Rung("ephemeral", bool(self.run.which("node")), lambda: None),
+        ]
+        picked = pick_binary(row, how, rungs, not_on_path("node"))
+        if row.state == "not-available":
+            return row
+        row.job = partial(self._tsc_job, own, typed, declared, picked)
         return row
 
     def _tsc_prefix(self, row: Row, local: Path | None, declared: str) -> list[str]:

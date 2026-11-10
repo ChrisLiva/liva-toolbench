@@ -336,6 +336,58 @@ class PlanTest(RepoCase):
         self.assertEqual(py_rows[".:pyright"].standby_behind, "mypy")
         self.assertEqual(py_rows[".:pyright"].provenance, "repo config (pyproject.toml [tool.pyright]), system binary, standby behind mypy")
 
+    def test_each_binary_rung_names_its_provenance(self):
+        js_bare = {
+            "package.json": json.dumps({"devDependencies": {"eslint": "9.1.0", "typescript": "5.4.0"}}),
+            "eslint.config.js": "",
+            "tsconfig.json": "{}",
+            "i.ts": "1\n",
+        }
+        js_installed = {**js_bare, "node_modules/.bin/eslint": "", "node_modules/.bin/tsc": ""}
+        py_installed = {
+            "pyproject.toml": "[tool.ruff]\n[tool.mypy]\n[tool.pyright]\n",
+            "requirements-dev.txt": "ruff\nmypy\n",
+            "a.py": "x = 1\n",
+            ".venv/bin/python": "",
+            ".venv/bin/ruff": "",
+            ".venv/bin/pyright": "",
+            ".venv/bin/mypy": "",
+        }
+        py_bare = {"pyproject.toml": "[tool.mypy]\n[tool.pyright]\n", "requirements-dev.txt": "mypy\n", "a.py": "x = 1\n", ".venv/bin/python": ""}
+        py_no_venv = {"pyproject.toml": "[tool.mypy]\n", "requirements-dev.txt": "mypy\n", "a.py": "x = 1\n"}
+        cpp_files = {"CMakeLists.txt": "project(x)\n", "a.cpp": "int a;\n", ".clang-format": ""}
+        no_node = "not available: node not on PATH: brew install node"
+        no_uv = "not available: uv not on PATH: brew install uv"
+        pyright = "repo config (pyproject.toml [tool.pyright])"
+        cases = [
+            (js_installed, set(), ".:eslint", "repo config (eslint.config.js), repo binary"),
+            (js_installed, set(), ".:tsc", "repo config (tsconfig.json), repo binary"),
+            (js_bare, {"node"}, ".:eslint", "repo config (eslint.config.js), ephemeral"),
+            (js_bare, {"node"}, ".:tsc", "repo config (tsconfig.json), ephemeral"),
+            (js_bare, set(), ".:eslint", no_node),
+            (js_bare, set(), ".:tsc", no_node),
+            (py_installed, set(), ".:ruff check", "repo config (pyproject.toml [tool.ruff]), repo binary"),
+            (py_installed, set(), ".:mypy", "repo config (pyproject.toml [tool.mypy]), repo binary"),
+            (py_bare, {"pyright", "uv"}, ".:pyright", f"{pyright}, system binary, standby behind mypy"),
+            (py_bare, {"pyright", "uv"}, ".:mypy", "repo config (pyproject.toml [tool.mypy]), ephemeral"),
+            (py_bare, {"uv"}, ".:pyright", f"{pyright}, ephemeral, standby behind mypy"),
+            (py_bare, {"uv"}, ".:ruff check", "default config, ephemeral"),
+            (py_bare, set(), ".:pyright", no_uv),
+            (py_bare, set(), ".:mypy", no_uv),
+            (py_bare, set(), ".:ruff check", no_uv),
+            (py_no_venv, {"uv"}, ".:mypy", "not available: mypy is not installed and the project has no virtualenv"),
+            (cpp_files, {"xcrun", "uv"}, ".:clang-format", "repo config (.clang-format), system binary"),
+            (cpp_files, {"uv"}, ".:clang-format", "repo config (.clang-format), ephemeral"),
+            (cpp_files, set(), ".:clang-format", no_uv),
+        ]
+        for files, present, key, provenance in cases:
+            with self.subTest(key=key, present=sorted(present), files=sorted(files)):
+                self.assertEqual(self.rows(files, present=present)[key].provenance, provenance)
+        for files, present in ((js_installed, set()), (js_bare, {"node"})):
+            eslint = self.rows(files, present=present)[".:eslint"]
+            self.assertEqual(eslint.version, "")  # the argv thunk stamps the version only when the job runs
+            self.assertTrue(callable(eslint.job))
+
     def test_only_keeps_the_rows_of_the_selected_categories(self):
         rows = self.rows({"pyproject.toml": "", "a.py": "x = 1\n"}, only=["format"])
         self.assertEqual(sorted(r.tool for r in rows.values()), ["ruff format"])

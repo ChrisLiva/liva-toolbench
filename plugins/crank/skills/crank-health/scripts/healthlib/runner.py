@@ -19,6 +19,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from collections.abc import Callable
+from typing import Any
 
 from . import inventory as inv
 
@@ -235,6 +236,26 @@ class Row:
         )
         self.findings.append(finding)
         return finding
+
+
+@dataclass(frozen=True)
+class Rung:
+    """One place a tool's binary can come from: `repo binary`, `system binary` or `ephemeral`."""
+
+    kind: str
+    ready: bool
+    make: Callable[[], Any]  # called only for the winning rung
+
+
+def pick_binary(row: Row, how: str, rungs: list[Rung], missing: str):
+    """The first ready rung's `make()`, with the row's provenance set to `"{how}, {kind}"`;
+    None, with the row marked unavailable for `missing`, when no rung is ready."""
+    for rung in rungs:
+        if rung.ready:
+            row.provenance = f"{how}, {rung.kind}"
+            return rung.make()
+    row.unavailable(missing)
+    return None
 
 
 class Run:

@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, Unavailable, batches, not_on_path, parse_json, read_text, sarif_results
+from .runner import Failed, Metric, Row, Run, Rung, batches, not_on_path, parse_json, pick_binary, read_text, sarif_results
 
 LANGUAGE = "python"
 CEILING = 15
@@ -101,27 +101,15 @@ class _Context:
     def row(self, categories, tool: str, **kw) -> Row:
         return Row(project=self.project.dir, language=LANGUAGE, categories=categories, tool=tool, **kw)
 
-    def binary(self, row: Row, tool: str, dist: str | None = None, *, config: str | None) -> list[str]:
-        """argv prefix for a tool, and the provenance that goes with it."""
-        dist = dist or tool
+    def resolve(self, row: Row, tool: str, dist: str | None = None, *, config: str | None) -> list[str] | None:
+        """argv prefix for a tool, with the provenance that goes with it set on the row."""
         how = f"repo config ({config})" if config else "default config"
         local = self.venv / "bin" / tool if self.venv else None
-        if tool in self.project.owned and local and local.exists():
-            row.provenance = f"{how}, repo binary"
-            argv = [str(local)]
-        else:
-            self.run.need("uv")
-            row.provenance = f"{how}, ephemeral"
-            argv = self.run.uvx(dist, tool)
-        return argv
-
-    def resolve(self, row: Row, tool: str, dist: str | None = None, *, config: str | None) -> list[str] | None:
-        try:
-            argv = self.binary(row, tool, dist, config=config)
-        except Unavailable as exc:
-            row.unavailable(str(exc))
-            return None
-        return argv
+        rungs = [
+            Rung("repo binary", tool in self.project.owned and local is not None and local.exists(), lambda: [str(local)]),
+            Rung("ephemeral", bool(self.run.which("uv")), lambda: self.run.uvx(dist or tool, tool)),
+        ]
+        return pick_binary(row, how, rungs, not_on_path("uv"))
 
     def stamp(self, row: Row, argv: list[str], flag: str = "--version") -> None:
         row.version = self.run.version(" ".join(argv), [*argv, flag], cwd=self.run.scratch_dir())
@@ -247,14 +235,14 @@ class _Context:
         config = has_config(self.run.repo, self.project, "pyright")
         how = f"repo config ({config})" if config else "default config"
         local = self.venv / "bin" / "pyright"
-        if local.exists():
-            argv, row.provenance = [str(local)], f"{how}, repo binary"
-        elif self.run.which("pyright"):
-            argv, row.provenance = [self.run.which("pyright")], f"{how}, system binary"
-        elif self.run.which("uv"):
-            argv, row.provenance = self.run.uvx("pyright"), f"{how}, ephemeral"
-        else:
-            return row.unavailable(not_on_path("uv"))
+        rungs = [
+            Rung("repo binary", local.exists(), lambda: [str(local)]),
+            Rung("system binary", bool(self.run.which("pyright")), lambda: [self.run.which("pyright")]),
+            Rung("ephemeral", bool(self.run.which("uv")), lambda: self.run.uvx("pyright")),
+        ]
+        argv = pick_binary(row, how, rungs, not_on_path("uv"))
+        if argv is None:
+            return row
         row.job = partial(self._pyright_job, argv, config)
         return row
 
@@ -291,15 +279,16 @@ class _Context:
         if "mypy" not in self.project.owned:
             return row.skip("not owned (never imposed)")
         config = has_config(self.run.repo, self.project, "mypy") or _setup_cfg_section(self.run.repo, self.project, "mypy")
-        local = self.venv / "bin" / "mypy" if self.venv else None
-        if local and local.exists():
-            argv, row.provenance = [str(local)], f"repo config ({config or 'none'}), repo binary"
-        elif self.venv is None:
+        if self.venv is None:
             return row.unavailable("mypy is not installed and the project has no virtualenv")
-        elif self.run.which("uv"):
-            argv, row.provenance = self.run.uvx("mypy"), f"repo config ({config or 'none'}), ephemeral"
-        else:
-            return row.unavailable(not_on_path("uv"))
+        local = self.venv / "bin" / "mypy"
+        rungs = [
+            Rung("repo binary", local.exists(), lambda: [str(local)]),
+            Rung("ephemeral", bool(self.run.which("uv")), lambda: self.run.uvx("mypy")),
+        ]
+        argv = pick_binary(row, f"repo config ({config or 'none'})", rungs, not_on_path("uv"))
+        if argv is None:
+            return row
         row.job = partial(self._mypy_job, argv, config)
         return row
 
