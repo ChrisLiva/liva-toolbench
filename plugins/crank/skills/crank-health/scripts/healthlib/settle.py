@@ -35,24 +35,25 @@ def stand_down(rows: list[Row]) -> None:
         if not row.standby_behind or row.state != "ok":
             continue
         owner = next((r for r in rows if r.project == row.project and r.tool == row.standby_behind), None)
-        if owner is None:
-            continue
-        shared = [c for c in row.categories if c in owner.categories]
-        excluded = owner.state == "skipped" and owner.detail.startswith("nothing to scan")
-        if owner.state == "ok" or excluded:
-            row.findings = [f for f in row.findings if f.category not in shared]
-            for category in shared:
-                row.metrics.pop(category, None)
-            row.stood_down = set(shared) == set(row.categories)
-            if excluded:
-                # the repo's own config skips these files, so no default tool grades them instead
-                row.notes.append(f"standby stood down: {owner.tool}'s config excludes every file here, so {', '.join(shared)} is not assessed")
-            else:
-                row.notes.append(f"standby stood down: {owner.tool} graded {', '.join(shared)}")
-        else:
-            row.notes.append(
-                f"{row.tool} graded {', '.join(shared)} on its default config because {owner.tool} reported {owner.state}"
-            )
+        if owner is not None:
+            _settle_standby(row, owner)
+
+
+def _settle_standby(row: Row, owner: Row) -> None:
+    shared = [c for c in row.categories if c in owner.categories]
+    excluded = owner.state == "skipped" and owner.detail.startswith("nothing to scan")
+    if owner.state != "ok" and not excluded:
+        row.notes.append(f"{row.tool} graded {', '.join(shared)} on its default config because {owner.tool} reported {owner.state}")
+        return
+    row.findings = [f for f in row.findings if f.category not in shared]
+    for category in shared:
+        row.metrics.pop(category, None)
+    row.stood_down = set(shared) == set(row.categories)
+    if excluded:
+        # the repo's own config skips these files, so no default tool grades them instead
+        row.notes.append(f"standby stood down: {owner.tool}'s config excludes every file here, so {', '.join(shared)} is not assessed")
+    else:
+        row.notes.append(f"standby stood down: {owner.tool} graded {', '.join(shared)}")
 
 
 def drop_out_of_scope(inventory: inv.Inventory, row: Row) -> None:
@@ -86,33 +87,31 @@ def one_defect_one_finding(rows: list[Row]) -> None:
     """Two tools naming the same place in the same category is one defect: the row from the
     earlier tool in `tools.md` stays graded and the others cite it."""
     seen: dict[tuple, str] = {}
-    secret_files: dict[str, str] = {}
-    for row in rows:
-        if row.state == "ok" and row.tool == "gitleaks":
-            secret_files.update({f.file: f.rule for f in row.findings})
+    secret_files = {f.file: f.rule for f in _ok_findings(rows, "gitleaks")}
     dead_imports = {
-        (f.file, str(f.line)): f.rule
-        for row in rows
-        if row.state == "ok" and row.tool == "vulture"
-        for f in row.findings
-        if f.rule.endswith("/unused-import") and f.graded
+        (f.file, str(f.line)): f.rule for f in _ok_findings(rows, "vulture") if f.rule.endswith("/unused-import") and f.graded
     }
-    for row in rows:
-        if row.state != "ok":
-            continue
-        for finding in row.findings:
-            if not finding.graded:
-                continue
-            if row.tool != "gitleaks" and finding.severity == "critical" and finding.file in secret_files:
-                finding.demote(f"duplicate of {secret_files[finding.file]}")
-                continue
-            if finding.rule == "ruff-check/F401" and (finding.file, str(finding.line)) in dead_imports:
-                finding.demote(f"duplicate of {dead_imports[(finding.file, str(finding.line))]}")
-                continue
-            if not finding.line:
-                continue
-            place = (finding.category, finding.file, str(finding.line))
-            first = seen.setdefault(place, finding.rule)
-            tool = finding.rule.split("/", 1)[0]
-            if first != finding.rule and first.split("/", 1)[0] != tool:
-                finding.demote(f"duplicate of {first}")
+    for row in (r for r in rows if r.state == "ok"):
+        for finding in (f for f in row.findings if f.graded):
+            original = _original_of(row, finding, secret_files, dead_imports, seen)
+            if original is not None:
+                finding.demote(f"duplicate of {original}")
+
+
+def _ok_findings(rows: list[Row], tool: str) -> list:
+    return [f for row in rows if row.state == "ok" and row.tool == tool for f in row.findings]
+
+
+def _original_of(row: Row, finding, secret_files: dict[str, str], dead_imports: dict[tuple, str], seen: dict[tuple, str]) -> str | None:
+    """The rule an earlier finding of the same defect carries, or None when this one is the first.
+    Records the finding's place in `seen` once the specific duplicates rule it out."""
+    if row.tool != "gitleaks" and finding.severity == "critical" and finding.file in secret_files:
+        return secret_files[finding.file]
+    if finding.rule == "ruff-check/F401" and (finding.file, str(finding.line)) in dead_imports:
+        return dead_imports[(finding.file, str(finding.line))]
+    if not finding.line:
+        return None
+    first = seen.setdefault((finding.category, finding.file, str(finding.line)), finding.rule)
+    if first != finding.rule and first.split("/", 1)[0] != finding.rule.split("/", 1)[0]:
+        return first
+    return None

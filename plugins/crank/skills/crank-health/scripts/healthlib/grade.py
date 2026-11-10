@@ -56,41 +56,54 @@ def _why_not(rows: list[Row], category: str, profile_note: str) -> str:
 
 def grade(projects: list[dict], rows: list[Row], only: set[str], deep: bool) -> list[Grade]:
     """One grade per (project, category), then the rollup over the selection."""
-    dirs = [p["dir"] for p in projects]
     scanned = [p for p in projects if p["lines"]]
-    by_project: dict[str, list[tuple[Row, Finding]]] = {p["dir"]: [] for p in projects}
-    for row in rows:
-        if row.state != "ok":
-            continue
-        for finding in row.findings:
-            home = row.project if row.project != "repo" else owner_of(finding.file, dirs)
-            by_project.setdefault(home, []).append((row, finding))
-
-    grades: list[Grade] = []
+    by_project = _by_project(projects, rows)
     units = [(p["dir"], [p]) for p in scanned]
     if len(scanned) != 1:
         units.append((ROLLUP, scanned))
-    for unit, members in units:
-        member_dirs = {p["dir"] for p in members}
-        unit_rows = [r for r in rows if r.project in member_dirs or r.project == "repo"]
-        found = [pair for d in member_dirs for pair in by_project.get(d, [])]
-        if unit == ROLLUP:
-            found += [pair for d, pairs in by_project.items() if d not in member_dirs for pair in pairs]
-        for category in CATEGORIES:
-            if category not in only:
-                grades.append(Grade(unit, category, "", "not selected"))
-            elif category == "security":
-                grades.append(_security(unit, unit_rows, found))
-            elif category in DENSITY:
-                grades.append(_density(unit, category, members, unit_rows, found))
-            elif category == "duplication":
-                grades.append(_duplication(unit, rows, member_dirs))
-            elif category in RATIO:
-                grades.append(_ratio(unit, category, unit_rows, found))
-            else:
-                note = "deep tools are run by the agent" if deep else "quick profile never executes repo code"
-                grades.append(Grade(unit, category, "", _why_not(unit_rows, category, note)))
-    return grades
+    return [g for unit, members in units for g in _unit_grades(unit, members, rows, by_project, only, deep)]
+
+
+def _unit_grades(unit, members, rows, by_project, only, deep) -> list[Grade]:
+    member_dirs = {p["dir"] for p in members}
+    unit_rows = [r for r in rows if r.project in member_dirs or r.project == "repo"]
+    found = _unit_found(unit, member_dirs, by_project)
+    return [
+        _category(unit, category, members, rows, unit_rows, found, deep) if category in only else Grade(unit, category, "", "not selected")
+        for category in CATEGORIES
+    ]
+
+
+def _by_project(projects: list[dict], rows: list[Row]) -> dict[str, list[tuple[Row, Finding]]]:
+    """Every finding of a row that ran, under its project; a repo-wide row's under the file's owner."""
+    dirs = [p["dir"] for p in projects]
+    by_project: dict[str, list[tuple[Row, Finding]]] = {p["dir"]: [] for p in projects}
+    for row in (r for r in rows if r.state == "ok"):
+        for finding in row.findings:
+            home = row.project if row.project != "repo" else owner_of(finding.file, dirs)
+            by_project.setdefault(home, []).append((row, finding))
+    return by_project
+
+
+def _unit_found(unit: str, member_dirs: set[str], by_project: dict[str, list[tuple[Row, Finding]]]) -> list[tuple[Row, Finding]]:
+    """The unit's members' findings; the rollup also takes those no scanned project owns."""
+    found = [pair for d in member_dirs for pair in by_project.get(d, [])]
+    if unit == ROLLUP:
+        found += [pair for d, pairs in by_project.items() if d not in member_dirs for pair in pairs]
+    return found
+
+
+def _category(unit, category, members, rows, unit_rows, found, deep) -> Grade:
+    if category == "security":
+        return _security(unit, unit_rows, found)
+    if category in DENSITY:
+        return _density(unit, category, members, unit_rows, found)
+    if category == "duplication":
+        return _duplication(unit, rows, {p["dir"] for p in members})
+    if category in RATIO:
+        return _ratio(unit, category, unit_rows, found)
+    note = "deep tools are run by the agent" if deep else "quick profile never executes repo code"
+    return Grade(unit, category, "", _why_not(unit_rows, category, note))
 
 
 def _security(unit, rows, found) -> Grade:
@@ -100,42 +113,52 @@ def _security(unit, rows, found) -> Grade:
     mine = [f for _, f in found if f.category == "security" and not f.dropped]
     counts = {level: sum(1 for f in mine if f.graded and f.severity == level) for level in WEIGHT}
     advisory = sum(1 for f in mine if f.status == "advisory")
+    return Grade(unit, "security", _security_letter(counts, bool(mine)), _security_basis(counts, advisory))
+
+
+def _security_basis(counts: dict[str, int], advisory: int) -> str:
     basis = ", ".join(f"{n} {level}" for level, n in counts.items() if n) or "0 findings"
     basis += " (graded)" if any(counts.values()) else ""
     basis += f"; {advisory} advisory" if advisory else ""
+    return basis
+
+
+def _security_letter(counts: dict[str, int], any_kept: bool) -> str:
     if counts["critical"]:
-        letter = "F"
-    elif counts["error"]:
-        letter = "D"
-    elif counts["warning"] > 2 or counts["info"] > 10:
-        letter = "C"
-    elif mine:
-        letter = "B"
-    else:
-        letter = "A"
-    return Grade(unit, "security", letter, basis)
+        return "F"
+    if counts["error"]:
+        return "D"
+    if counts["warning"] > 2 or counts["info"] > 10:
+        return "C"
+    return "B" if any_kept else "A"
 
 
-def _density(unit, category, members, rows, found) -> Grade:
+def _graders(rows, project_dir: str, language: str, category: str) -> list[Row]:
+    return [
+        r
+        for r in rows
+        if r.project == project_dir and r.language == language and category in r.categories and r.state == "ok" and not r.stood_down
+    ]
+
+
+def _measured_lines(category, members, rows) -> tuple[int, bool]:
+    """Lines of the languages some tool graded `category` in, and whether there were any."""
     lines = 0
-    assessed = []
+    assessed = False
     for project in members:
         for language, count in project["lines"].items():
-            graders = [
-                r
-                for r in rows
-                if r.project == project["dir"]
-                and r.language == language
-                and category in r.categories
-                and r.state == "ok"
-                and not r.stood_down
-            ]
+            graders = _graders(rows, project["dir"], language, category)
             if not graders:
                 continue
             lines += count
-            assessed.append(language)
+            assessed = True
             if category == "lint" and any(r.reads_assets for r in graders):
                 lines += sum(project.get("asset_lines", {}).values())
+    return lines, assessed
+
+
+def _density(unit, category, members, rows, found) -> Grade:
+    lines, assessed = _measured_lines(category, members, rows)
     if not assessed:
         return Grade(unit, category, "", _why_not(rows, category, "no tool measures it here"))
     weighted = sum(WEIGHT.get(f.severity, 0) for _, f in found if f.category == category and f.graded)

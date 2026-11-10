@@ -32,32 +32,7 @@ def _table(header: list[str], rows: list[list]) -> list[str]:
 def inventory_md(inventory: inv.Inventory, path_facts: dict, extra: list[str]) -> str:
     out = [f"repo: {inventory.repo} · head: {inventory.head} · dirty: {inventory.dirty} paths", *extra, ""]
     for project in inventory.projects:
-        out.append(f"## project {project.dir}")
-        if project.manifests:
-            out.append("  manifests: " + ", ".join(project.manifests))
-        if project.shell:
-            out += ["  workspace shell: no source of its own", ""]
-            continue
-        for language in LANGUAGE_ORDER:
-            if language not in project.files:
-                continue
-            count, lines = len(project.files[language]), project.lines[language]
-            line = f"  {language:<8} {count:>5} files {lines:>8} lines ({lines / 1000:.1f} KLOC)"
-            if language in project.fixture_only:
-                line += f"   every file under {project.fixture_only[language]}/: likely fixtures"
-            out.append(line)
-        if project.assets:
-            parts = [
-                f"{kind} {len(paths)} files {project.asset_lines[kind]} lines ({project.asset_lines[kind] / 1000:.1f} KLOC)"
-                for kind, paths in sorted(project.assets.items())
-            ]
-            out.append("  lint assets  " + "; ".join(parts))
-        owned = ", ".join(f"{tool} ({why})" for tool, why in sorted(project.owned.items()))
-        out.append("  owned: " + (owned or "none"))
-        out.append("  unowned: " + (", ".join(sorted(project.unowned)) or "none"))
-        for name, value in sorted(project.facts.items()):
-            out.append(f"  {name}: {value}")
-        out.append("")
+        out += _project_md(project)
     out.append("## repo-wide")
     present = [f"{name} {version}" for name, version in path_facts.items() if version]
     missing = [name for name, version in path_facts.items() if not version]
@@ -71,6 +46,35 @@ def inventory_md(inventory: inv.Inventory, path_facts: dict, extra: list[str]) -
     out.append("  unassessed: " + (" ".join(f"{ext}:{n}" for ext, n in rest[:16]) or "none"))
     out.append(f"  file list: scope.txt ({len(inventory.files)} files)")
     return "\n".join(out) + "\n"
+
+
+def _project_md(project: inv.Project) -> list[str]:
+    out = [f"## project {project.dir}"]
+    if project.manifests:
+        out.append("  manifests: " + ", ".join(project.manifests))
+    if project.shell:
+        return out + ["  workspace shell: no source of its own", ""]
+    out += [_language_md(project, language) for language in LANGUAGE_ORDER if language in project.files]
+    if project.assets:
+        parts = [
+            f"{kind} {len(paths)} files {project.asset_lines[kind]} lines ({project.asset_lines[kind] / 1000:.1f} KLOC)"
+            for kind, paths in sorted(project.assets.items())
+        ]
+        out.append("  lint assets  " + "; ".join(parts))
+    owned = ", ".join(f"{tool} ({why})" for tool, why in sorted(project.owned.items()))
+    out.append("  owned: " + (owned or "none"))
+    out.append("  unowned: " + (", ".join(sorted(project.unowned)) or "none"))
+    out += [f"  {name}: {value}" for name, value in sorted(project.facts.items())]
+    out.append("")
+    return out
+
+
+def _language_md(project: inv.Project, language: str) -> str:
+    count, lines = len(project.files[language]), project.lines[language]
+    line = f"  {language:<8} {count:>5} files {lines:>8} lines ({lines / 1000:.1f} KLOC)"
+    if language in project.fixture_only:
+        line += f"   every file under {project.fixture_only[language]}/: likely fixtures"
+    return line
 
 
 def _listing(paths: list[str], limit: int = 6) -> str:
@@ -98,16 +102,17 @@ def tools_md(meta: dict, rows: list[Row]) -> str:
     ]
     out += _table(["project", "category", "tool", "version", "provenance", "scope", "state"], body)
     out += ["", "## Commands", "", "Each row's commands as they ran: versions pinned, exit code and seconds beside them.", ""]
-    for row in rows:
-        if not row.commands:
-            continue
-        out.append(f"### {row.project} · {row.tool}")
-        out.append("")
+    for row in (r for r in rows if r.commands):
+        out += [f"### {row.project} · {row.tool}", ""]
         for command in row.commands:
-            code = "killed" if command["exit"] is None else f"exit {command['exit']}"
-            runs = f" · {command['runs']} batches" if command.get("runs") else ""
-            out += ["```sh", f"cd {command['cwd']} && {command['command']}", "```", f"{code} · {command['seconds']} s{runs}", ""]
+            out += _command_md(command)
     return "\n".join(out) + "\n"
+
+
+def _command_md(command: dict) -> list[str]:
+    code = "killed" if command["exit"] is None else f"exit {command['exit']}"
+    runs = f" · {command['runs']} batches" if command.get("runs") else ""
+    return ["```sh", f"cd {command['cwd']} && {command['command']}", "```", f"{code} · {command['seconds']} s{runs}", ""]
 
 
 def _state(row: Row) -> str:
@@ -171,37 +176,39 @@ def _metric(row: Row) -> str:
 
 def summary_md(title: str, inventory_line: str, rows: list[Row]) -> str:
     out = [f"# Scan summary: {title}", "", inventory_line, "", "## Tools", ""]
-    body = []
-    for row in rows:
-        provenance = row.provenance + (f" (stood down: {row.standby_behind} graded {row.category})" if row.stood_down else "")
-        dropped = sum(1 for f in row.findings if f.dropped)
-        advisory = _counts(row.findings, "advisory") + (f"; {dropped} dropped" if dropped else "")
-        ok = row.state == "ok"
-        name = row.tool if row.language != "repo-wide" or row.project == "repo" else f"{row.tool} ({row.project})"
-        body.append(
-            [name, row.version, provenance, row.state, _counts(row.findings, "graded") if ok else "", advisory if ok else "", _metric(row)]
-        )
-    out += _table(["tool", "version", "provenance", "state", "graded", "advisory", "metric"], body)
+    out += _table(["tool", "version", "provenance", "state", "graded", "advisory", "metric"], [_tool_cells(row) for row in rows])
     out += ["", "## Top rules (graded)", ""]
+    rule_rows = _top_rules(rows)
+    out += _table(["category", "tool/rule", "count", "files", "sample"], rule_rows) if rule_rows else ["none"]
+    out += ["", "## Notes", ""]
+    notes = [f"- {_tool_name(row)}: {note}" for row in rows for note in row.notes]
+    out += notes or ["- none"]
+    return "\n".join(out) + "\n"
+
+
+def _tool_name(row: Row) -> str:
+    """A repo-wide tool that ran per project carries the project beside its name."""
+    return row.tool if row.language != "repo-wide" or row.project == "repo" else f"{row.tool} ({row.project})"
+
+
+def _tool_cells(row: Row) -> list:
+    provenance = row.provenance + (f" (stood down: {row.standby_behind} graded {row.category})" if row.stood_down else "")
+    if row.state != "ok":
+        return [_tool_name(row), row.version, provenance, row.state, "", "", _metric(row)]
+    dropped = sum(1 for f in row.findings if f.dropped)
+    advisory = _counts(row.findings, "advisory") + (f"; {dropped} dropped" if dropped else "")
+    return [_tool_name(row), row.version, provenance, row.state, _counts(row.findings, "graded"), advisory, _metric(row)]
+
+
+def _top_rules(rows: list[Row]) -> list[list]:
     tally: dict[tuple[str, str], list[Finding]] = {}
-    for row in rows:
-        for finding in row.findings:
-            if finding.graded:
-                tally.setdefault((finding.category, finding.rule), []).append(finding)
+    for finding in (f for row in rows for f in row.findings if f.graded):
+        tally.setdefault((finding.category, finding.rule), []).append(finding)
     top = sorted(tally.items(), key=lambda kv: (-len(kv[1]), kv[0]))[:15]
-    rule_rows = [
+    return [
         [category, rule, len(found), len({f.file for f in found}), f"{found[0].file}:{found[0].line}" if found[0].line else found[0].file]
         for (category, rule), found in top
     ]
-    out += _table(["category", "tool/rule", "count", "files", "sample"], rule_rows) if rule_rows else ["none"]
-    out += ["", "## Notes", ""]
-    notes = [
-        f"- {row.tool}{'' if row.language != 'repo-wide' or row.project == 'repo' else ' (' + row.project + ')'}: {note}"
-        for row in rows
-        for note in row.notes
-    ]
-    out += notes or ["- none"]
-    return "\n".join(out) + "\n"
 
 
 def write_summaries(run_dir: Path, projects: list[dict], rows: list[Row]) -> None:
@@ -210,21 +217,25 @@ def write_summaries(run_dir: Path, projects: list[dict], rows: list[Row]) -> Non
     for stale in folder.glob("*.md"):
         stale.unlink()
     for project in projects:
-        for language, lines in project["lines"].items():
-            mine = [r for r in rows if r.project == project["dir"] and r.language == language]
-            if not mine:
-                continue
-            count = project["files"][language]
-            line = f"Inventory: {count} files, {lines} lines ({lines / 1000:.1f} KLOC)"
-            slug = "root" if project["dir"] == "." else project["dir"].replace("/", "-")
-            text = summary_md(f"{language} · {project['dir']}", line, mine)
-            (folder / f"{language}--{slug}.md").write_text(text, encoding="utf-8")
+        _write_project_summaries(folder, project, rows)
     wide = [r for r in rows if r.language == "repo-wide"]
     if wide:
         total = sum(sum(p["lines"].values()) for p in projects)
         files = sum(sum(p["files"].values()) for p in projects)
         line = f"Inventory: {files} source files, {total} lines ({total / 1000:.1f} KLOC) across {len(projects)} project(s)"
         (folder / "repo-wide.md").write_text(summary_md("repo-wide · .", line, wide), encoding="utf-8")
+
+
+def _write_project_summaries(folder: Path, project: dict, rows: list[Row]) -> None:
+    for language, lines in project["lines"].items():
+        mine = [r for r in rows if r.project == project["dir"] and r.language == language]
+        if not mine:
+            continue
+        count = project["files"][language]
+        line = f"Inventory: {count} files, {lines} lines ({lines / 1000:.1f} KLOC)"
+        slug = "root" if project["dir"] == "." else project["dir"].replace("/", "-")
+        text = summary_md(f"{language} · {project['dir']}", line, mine)
+        (folder / f"{language}--{slug}.md").write_text(text, encoding="utf-8")
 
 
 # --- grades.md -----------------------------------------------------------------------------

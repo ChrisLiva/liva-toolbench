@@ -104,22 +104,24 @@ def list_files(repo: Path) -> list[str]:
     if done.returncode == 0:
         names = [n for n in done.stdout.decode("utf-8", "surrogateescape").split("\0") if n]
     else:
-        names = []
-        for base, dirs, files in os.walk(repo):
-            dirs[:] = [d for d in dirs if d != ".git"]
-            rel = os.path.relpath(base, repo)
-            names += [f if rel == "." else f"{rel}/{f}".replace(os.sep, "/") for f in files]
-    kept = []
-    for name in sorted(set(names)):
-        if not in_scope(name):
-            continue
-        try:
-            mode = os.lstat(repo / name).st_mode
-        except OSError:
-            continue
-        if stat.S_ISREG(mode):
-            kept.append(name)
-    return kept
+        names = _walk_files(repo)
+    return [name for name in sorted(set(names)) if in_scope(name) and _is_regular(repo / name)]
+
+
+def _walk_files(repo: Path) -> list[str]:
+    names = []
+    for base, dirs, files in os.walk(repo):
+        dirs[:] = [d for d in dirs if d != ".git"]
+        rel = os.path.relpath(base, repo)
+        names += [f if rel == "." else f"{rel}/{f}".replace(os.sep, "/") for f in files]
+    return names
+
+
+def _is_regular(path: Path) -> bool:
+    try:
+        return stat.S_ISREG(os.lstat(path).st_mode)
+    except OSError:
+        return False
 
 
 def count_lines(path: Path) -> int:
@@ -192,13 +194,20 @@ def _listdir(path: str) -> tuple[str, ...]:
 def find_config(repo: Path, rel_dir: str, patterns, *, local: bool = False) -> str | None:
     """First file or directory matching `patterns` in `rel_dir` or an ancestor, repo-relative."""
     for here in ancestry(rel_dir):
-        names = _listdir(str(repo / here))
-        for pattern in patterns:
-            for name in names:
-                if fnmatch.fnmatchcase(name, pattern):
-                    return name if here == "." else f"{here}/{name}"
+        name = _first_match(_listdir(str(repo / here)), patterns)
+        if name is not None:
+            return name if here == "." else f"{here}/{name}"
         if local:
             return None
+    return None
+
+
+def _first_match(names: tuple[str, ...], patterns) -> str | None:
+    """The first name the earliest pattern matches: pattern order outranks name order."""
+    for pattern in patterns:
+        for name in names:
+            if fnmatch.fnmatchcase(name, pattern):
+                return name
     return None
 
 
@@ -219,36 +228,44 @@ def read_jsonc(path: str):
             text = fh.read()
     except OSError:
         return None
-    out, i, in_string = [], 0, False
-    while i < len(text):
-        ch = text[i]
-        if in_string:
-            out.append(ch)
-            if ch == "\\" and i + 1 < len(text):
-                out.append(text[i + 1])
-                i += 1
-            elif ch == '"':
-                in_string = False
-        elif ch == '"':
-            in_string = True
-            out.append(ch)
-        elif text.startswith("//", i):
-            i = text.find("\n", i)
-            if i < 0:
-                break
-            continue
-        elif text.startswith("/*", i):
-            end = text.find("*/", i + 2)
-            i = len(text) if end < 0 else end + 2
-            continue
-        else:
-            out.append(ch)
-        i += 1
-    cleaned = re.sub(r",(\s*[}\]])", r"\1", "".join(out))
+    cleaned = re.sub(r",(\s*[}\]])", r"\1", _strip_comments(text))
     try:
         return json.loads(cleaned)
     except ValueError:
         return None
+
+
+def _strip_comments(text: str) -> str:
+    out, i = [], 0
+    while i < len(text):
+        if text[i] == '"':
+            end = _string_end(text, i)
+            out.append(text[i:end])
+            i = end
+        elif text.startswith("//", i):
+            i = text.find("\n", i)
+            if i < 0:
+                break
+        elif text.startswith("/*", i):
+            end = text.find("*/", i + 2)
+            i = len(text) if end < 0 else end + 2
+        else:
+            out.append(text[i])
+            i += 1
+    return "".join(out)
+
+
+def _string_end(text: str, start: int) -> int:
+    """The index just past the string literal that opens at `start`, or the end of `text`."""
+    i = start + 1
+    while i < len(text):
+        if text[i] == "\\":
+            i += 2
+        elif text[i] == '"':
+            return i + 1
+        else:
+            i += 1
+    return len(text)
 
 
 @cache
@@ -268,15 +285,18 @@ def npm_dependency(repo: Path, rel_dir: str, *names: str) -> str | None:
     the package. A `scripts` entry never decides ownership, so the manifest is read as JSON."""
     for here in ancestry(rel_dir):
         manifest = read_json(str(repo / here / "package.json"))
-        if not isinstance(manifest, dict):
-            continue
-        for block in DEP_BLOCKS:
-            deps = manifest.get(block)
-            if isinstance(deps, dict):
-                for name in names:
-                    if name in deps:
-                        where = "package.json" if here == "." else f"{here}/package.json"
-                        return f"{where} {block}"
+        block = _dependency_block(manifest, names) if isinstance(manifest, dict) else None
+        if block is not None:
+            where = "package.json" if here == "." else f"{here}/package.json"
+            return f"{where} {block}"
+    return None
+
+
+def _dependency_block(manifest: dict, names) -> str | None:
+    for block in DEP_BLOCKS:
+        deps = manifest.get(block)
+        if isinstance(deps, dict) and any(name in deps for name in names):
+            return block
     return None
 
 
@@ -309,27 +329,29 @@ def _pyproject_dependencies(doc: dict) -> dict[str, set[str]]:
     """Declared packages by the table that declares them, covering PEP 621, PEP 735,
     poetry, pdm and uv's legacy dev list."""
     out: dict[str, set[str]] = {}
-
-    def add(label, names):
+    for label, names in _dependency_tables(doc):
         if names:
             out.setdefault(label, set()).update(names)
+    return out
 
+
+def _dependency_tables(doc: dict):
+    """(label, normalized names) per table, in the order a lookup reports the first match."""
     project = doc.get("project") or {}
-    add("project.dependencies", _requirement_names(project.get("dependencies")))
+    yield "project.dependencies", _requirement_names(project.get("dependencies"))
     for extra, entries in (project.get("optional-dependencies") or {}).items():
-        add(f"project.optional-dependencies.{extra}", _requirement_names(entries))
+        yield f"project.optional-dependencies.{extra}", _requirement_names(entries)
     for group, entries in (doc.get("dependency-groups") or {}).items():
-        add(f"dependency-groups.{group}", _requirement_names(entries))
+        yield f"dependency-groups.{group}", _requirement_names(entries)
     tool = doc.get("tool") or {}
     poetry = tool.get("poetry") or {}
     for key in ("dependencies", "dev-dependencies"):
-        add(f"tool.poetry.{key}", {_normal(n) for n in (poetry.get(key) or {})})
+        yield f"tool.poetry.{key}", {_normal(n) for n in (poetry.get(key) or {})}
     for group, body in (poetry.get("group") or {}).items():
-        add(f"tool.poetry.group.{group}", {_normal(n) for n in ((body or {}).get("dependencies") or {})})
+        yield f"tool.poetry.group.{group}", {_normal(n) for n in ((body or {}).get("dependencies") or {})}
     for group, entries in ((tool.get("pdm") or {}).get("dev-dependencies") or {}).items():
-        add(f"tool.pdm.dev-dependencies.{group}", _requirement_names(entries))
-    add("tool.uv.dev-dependencies", _requirement_names((tool.get("uv") or {}).get("dev-dependencies")))
-    return out
+        yield f"tool.pdm.dev-dependencies.{group}", _requirement_names(entries)
+    yield "tool.uv.dev-dependencies", _requirement_names((tool.get("uv") or {}).get("dev-dependencies"))
 
 
 def python_tool_table(repo: Path, rel_dir: str, name: str) -> str | None:
@@ -346,18 +368,30 @@ def python_dependency(repo: Path, rel_dir: str, name: str) -> str | None:
     for here in ancestry(rel_dir):
         prefix = "" if here == "." else f"{here}/"
         doc = read_toml(str(repo / here / "pyproject.toml"))
-        if isinstance(doc, dict):
-            for label, names in _pyproject_dependencies(doc).items():
-                if want in names:
-                    return f"{prefix}pyproject.toml {label}"
-        for entry in _listdir(str(repo / here)):
-            if fnmatch.fnmatchcase(entry, "requirements*.txt"):
-                try:
-                    lines = (repo / here / entry).read_text(errors="replace").splitlines()
-                except OSError:
-                    continue
-                if want in _requirement_names(l for l in lines if not l.lstrip().startswith(("#", "-"))):
-                    return f"{prefix}{entry}"
+        label = _pyproject_label(doc, want) if isinstance(doc, dict) else None
+        if label is not None:
+            return f"{prefix}pyproject.toml {label}"
+        entry = _requirements_naming(repo / here, want)
+        if entry is not None:
+            return f"{prefix}{entry}"
+    return None
+
+
+def _pyproject_label(doc: dict, want: str) -> str | None:
+    return next((label for label, names in _pyproject_dependencies(doc).items() if want in names), None)
+
+
+def _requirements_naming(folder: Path, want: str) -> str | None:
+    """The first `requirements*.txt` in `folder` that lists the normalized package `want`."""
+    for entry in _listdir(str(folder)):
+        if not fnmatch.fnmatchcase(entry, "requirements*.txt"):
+            continue
+        try:
+            lines = (folder / entry).read_text(errors="replace").splitlines()
+        except OSError:
+            continue
+        if want in _requirement_names(l for l in lines if not l.lstrip().startswith(("#", "-"))):
+            return entry
     return None
 
 
@@ -450,16 +484,7 @@ def build(repo: Path, selected: list[str]) -> Inventory:
     repo = repo.resolve()
     is_git = is_git_repo(repo)
     files = list_files(repo)
-    by_dir: dict[str, set[str]] = {}
-    for rel in files:
-        by_dir.setdefault(parent(rel), set()).add(rel.rsplit("/", 1)[-1])
-
-    marker_dirs: dict[str, list[str]] = {}
-    for rel in files:
-        here = parent(rel)
-        if _is_project_marker(repo, rel, by_dir[here]):
-            marker_dirs.setdefault(here, []).append(rel)
-    marker_dirs.setdefault(".", [])
+    marker_dirs = _marker_dirs(repo, files)
     ordered = sorted(marker_dirs, key=lambda d: (d == ".", -len(d), d))  # the root matches last
 
     projects = {d: Project(dir=d, manifests=sorted(m)) for d, m in marker_dirs.items()}
@@ -467,25 +492,10 @@ def build(repo: Path, selected: list[str]) -> Inventory:
     unassessed: dict[str, int] = {}
     for rel in files:
         owner = projects[next(d for d in ordered if is_within(rel, d))]
-        owner.every_file.append(rel)
-        lang, asset = language_of(rel), asset_of(rel)
-        if lang:
-            n = line_counts[rel] = count_lines(repo / rel)
-            owner.files.setdefault(lang, []).append(rel)
-            owner.lines[lang] = owner.lines.get(lang, 0) + n
-        elif asset:
-            n = line_counts[rel] = count_lines(repo / rel)
-            owner.assets.setdefault(asset, []).append(rel)
-            owner.asset_lines[asset] = owner.asset_lines.get(asset, 0) + n
-        else:
-            ext = ext_of(rel).lstrip(".") or "(none)"
-            unassessed[ext] = unassessed.get(ext, 0) + 1
+        _add_file(repo, rel, owner, line_counts, unassessed)
 
     for project in projects.values():
-        for lang, paths in project.files.items():
-            if all(under_snapshot(p) for p in paths):
-                roots = sorted({"/".join(p.split("/")[: _snapshot_depth(p)]) for p in paths})
-                project.fixture_only[lang] = ", ".join(roots)
+        _mark_fixture_only(project)
 
     wanted = sorted({(s.strip("/") or ".") for s in selected})
     head = git(repo, "rev-parse", "--short", "HEAD").stdout.decode().strip() if is_git else ""
@@ -506,6 +516,43 @@ def build(repo: Path, selected: list[str]) -> Inventory:
         lockfiles=[f for f in files if f.rsplit("/", 1)[-1] in LOCKFILES],
         unassessed=unassessed,
     )
+
+
+def _marker_dirs(repo: Path, files: list[str]) -> dict[str, list[str]]:
+    """Each directory holding a project marker, with its markers; the root is always one."""
+    by_dir: dict[str, set[str]] = {}
+    for rel in files:
+        by_dir.setdefault(parent(rel), set()).add(rel.rsplit("/", 1)[-1])
+    marker_dirs: dict[str, list[str]] = {}
+    for rel in files:
+        here = parent(rel)
+        if _is_project_marker(repo, rel, by_dir[here]):
+            marker_dirs.setdefault(here, []).append(rel)
+    marker_dirs.setdefault(".", [])
+    return marker_dirs
+
+
+def _add_file(repo: Path, rel: str, owner: Project, line_counts: dict[str, int], unassessed: dict[str, int]) -> None:
+    owner.every_file.append(rel)
+    lang, asset = language_of(rel), asset_of(rel)
+    if lang:
+        n = line_counts[rel] = count_lines(repo / rel)
+        owner.files.setdefault(lang, []).append(rel)
+        owner.lines[lang] = owner.lines.get(lang, 0) + n
+    elif asset:
+        n = line_counts[rel] = count_lines(repo / rel)
+        owner.assets.setdefault(asset, []).append(rel)
+        owner.asset_lines[asset] = owner.asset_lines.get(asset, 0) + n
+    else:
+        ext = ext_of(rel).lstrip(".") or "(none)"
+        unassessed[ext] = unassessed.get(ext, 0) + 1
+
+
+def _mark_fixture_only(project: Project) -> None:
+    for lang, paths in project.files.items():
+        if all(under_snapshot(p) for p in paths):
+            roots = sorted({"/".join(p.split("/")[: _snapshot_depth(p)]) for p in paths})
+            project.fixture_only[lang] = ", ".join(roots)
 
 
 def _snapshot_depth(rel: str) -> int:

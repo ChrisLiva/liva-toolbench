@@ -84,16 +84,36 @@ def run_rows(run: Run, rows: list[Row], jobs: int) -> None:
             say(f"[{n}/{len(pending)}] {row.state:<13} {row.tool} ({row.project}) {row.seconds:.1f}s{tail}")
 
 
+def read_ownership(repo: Path, inventory: inv.Inventory, list_unowned: bool) -> None:
+    for project in inventory.projects:
+        for language in project.files:
+            module = MODULES[language]
+            project.owned.update(module.owned(repo, project))
+            if list_unowned:
+                project.unowned += [t for t in module.OWNABLE if t not in project.owned]
+
+
+def run_meta(repo: Path, run_dir: Path, run: Run, deep: bool) -> dict:
+    return {
+        "run_dir": str(run_dir),
+        "repo": str(repo),
+        "head": run.inv.head,
+        "head_full": inv.git(repo, "rev-parse", "HEAD").stdout.decode().strip(),
+        "profile": "deep" if deep else "quick",
+        "selected": run.inv.selected,
+        "only": [c for c in CATEGORIES if c in run.only],
+        "started": time.time(),
+        "date": datetime.date.today().isoformat(),
+        "pins": run.pins,
+    }
+
+
 def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> dict:
     """Inventory, plan and (unless `--plan`) run one working tree into `run_dir`."""
     for part in ("scratch", "raw", "findings", "summary"):
         (run_dir / part).mkdir(parents=True, exist_ok=True)
     inventory = inv.build(repo, opts.project)
-    for project in inventory.projects:
-        for language in project.files:
-            module = MODULES[language]
-            project.owned.update(module.owned(repo, project))
-            project.unowned += [t for t in module.OWNABLE if t not in project.owned]
+    read_ownership(repo, inventory, list_unowned=True)
     (run_dir / "footprint.txt").write_text(inv.footprint(repo))
     (run_dir / "scope.txt").write_text("".join(f + "\n" for f in inventory.files))
 
@@ -101,18 +121,7 @@ def scan_tree(repo: Path, run_dir: Path, opts, pins: dict, extra: list[str]) -> 
     try:
         rows = plan_rows(run)
         facts = path_facts(run)
-        meta = {
-            "run_dir": str(run_dir),
-            "repo": str(repo),
-            "head": inventory.head,
-            "head_full": inv.git(repo, "rev-parse", "HEAD").stdout.decode().strip(),
-            "profile": "deep" if opts.deep else "quick",
-            "selected": inventory.selected,
-            "only": [c for c in CATEGORIES if c in run.only],
-            "started": time.time(),
-            "date": datetime.date.today().isoformat(),
-            "pins": run.pins,
-        }
+        meta = run_meta(repo, run_dir, run, opts.deep)
         projects = [report.project_record(p) for p in inventory.projects]
         (run_dir / "inventory.md").write_text(report.inventory_md(inventory, facts, extra))
         if opts.plan:
@@ -230,11 +239,18 @@ def changed_lines(repo: Path, base_sha: str) -> tuple[dict[str, str], dict[str, 
     for line in diff.splitlines():
         if line.startswith("+++ "):
             current = line[6:] if line.startswith("+++ b/") else None
-        elif line.startswith("@@") and current and (m := re.match(r"@@ -\S+ \+(\d+)(?:,(\d+))? @@", line)):
-            start, count = int(m.group(1)), int(m.group(2) or 1)
-            if count:
-                hunks.setdefault(current, []).append((start, start + count - 1))
+        elif current and (span := hunk_span(line)):
+            hunks.setdefault(current, []).append(span)
     return renames, hunks
+
+
+def hunk_span(line: str) -> tuple[int, int] | None:
+    """The first and last new-side line of a `@@` header that adds lines, else None."""
+    m = re.match(r"@@ -\S+ \+(\d+)(?:,(\d+))? @@", line)
+    if not m:
+        return None
+    start, count = int(m.group(1)), int(m.group(2) or 1)
+    return (start, start + count - 1) if count else None
 
 
 def link_dependencies(repo: Path, tree: Path, inventory: inv.Inventory) -> list[str]:
@@ -249,14 +265,15 @@ def link_dependencies(repo: Path, tree: Path, inventory: inv.Inventory) -> list[
     return linked
 
 
-def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_grades) -> None:
+def scan_base(repo: Path, run_dir: Path, opts, head: dict, base_sha: str) -> tuple[dict, list[str]] | None:
+    """Scan the merge-base in a throwaway worktree; None when git cannot check it out."""
     holder = Path(tempfile.mkdtemp(prefix="crank-health-base-"))
     tree = holder / "base"
     added = inv.git(repo, "worktree", "add", "--detach", str(tree), base_sha)
     if added.returncode != 0:
         say("pr mode: git worktree add failed: " + added.stderr.decode().strip())
         shutil.rmtree(holder, ignore_errors=True)
-        return
+        return None
     try:
         linked = link_dependencies(repo, tree, head["inventory"])
         say(f"pr mode: scanning merge-base {base_sha[:10]} with the head's tool versions")
@@ -266,32 +283,72 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
         inv.git(repo, "worktree", "remove", "--force", str(tree))
         inv.git(repo, "worktree", "prune")
         shutil.rmtree(holder, ignore_errors=True)
+    return base, linked
+
+
+def ok_findings(rows: list[Row]) -> list[Finding]:
+    return [f for r in rows if r.state == "ok" for f in r.findings]
+
+
+def unmatched(findings: list[Finding], counts: Counter, key) -> list[Finding]:
+    """The findings left once each one consumes a match from `counts`, in the order given."""
+    left = []
+    for finding in findings:
+        k = key(finding)
+        if counts[k] > 0:
+            counts[k] -= 1
+        else:
+            left.append(finding)
+    return left
+
+
+def mark_touched(finding: Finding, hunks: dict[str, list[tuple[int, int]]]) -> None:
+    ranges = hunks.get(finding.file)
+    line = report._line(finding)
+    if ranges is not None and (not line or any(a <= line <= b for a, b in ranges)):
+        finding.flags = ["touched", *finding.flags]
+
+
+def delta_row(g: grading.Grade, was: grading.Grade | None, new: list[Finding], resolved: list[Finding]) -> list:
+    fresh = [f for f in new if f.category == g.category]
+    graded = [f for f in fresh if f.graded]
+    return [
+        g.category,
+        (was.letter or "not assessed") if was else "absent",
+        g.letter or "not assessed",
+        len(graded),
+        sum(1 for f in graded if "touched" in f.flags),
+        len(fresh) - len(graded),
+        sum(1 for f in resolved if f.category == g.category and f.graded),
+    ]
+
+
+def delta_table(head_grades, base_grades, new: list[Finding], resolved: list[Finding]) -> list[str]:
+    units = list(dict.fromkeys(g.unit for g in head_grades))
+    unit = grading.ROLLUP if grading.ROLLUP in units else units[0]
+    before = {g.category: g for g in base_grades if g.unit == unit}
+    if not before and base_grades:
+        first = base_grades[0].unit
+        before = {g.category: g for g in base_grades if g.unit == first}
+    body = [delta_row(g, before.get(g.category), new, resolved) for g in head_grades if g.unit == unit]
+    return report._table(["category", "base", "head", "new graded", "of which touched", "new advisory", "resolved graded"], body)
+
+
+def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_grades) -> None:
+    scanned = scan_base(repo, run_dir, opts, head, base_sha)
+    if scanned is None:
+        return
+    base, linked = scanned
     renames, hunks = changed_lines(repo, base_sha)
     base_grades = grading.grade(base["projects"], base["rows"], set(base["meta"]["only"]), opts.deep)
 
-    def flat(rows):
-        return [f for r in rows if r.state == "ok" for f in r.findings]
-
-    head_found, base_found = flat(head["rows"]), flat(base["rows"])
+    head_found, base_found = ok_findings(head["rows"]), ok_findings(base["rows"])
     base_counts = Counter(finding_key(f, renames) for f in base_found)
     head_counts = Counter(finding_key(f) for f in head_found)
-    new, resolved = [], []
-    for finding in sorted(head_found, key=lambda f: (f.file, report._line(f))):
-        key = finding_key(finding)
-        if base_counts[key] > 0:
-            base_counts[key] -= 1
-            continue
-        ranges = hunks.get(finding.file)
-        line = report._line(finding)
-        if ranges is not None and (not line or any(a <= line <= b for a, b in ranges)):
-            finding.flags = ["touched", *finding.flags]
-        new.append(finding)
-    for finding in base_found:
-        key = finding_key(finding, renames)
-        if head_counts[key] > 0:
-            head_counts[key] -= 1
-            continue
-        resolved.append(finding)
+    new = unmatched(sorted(head_found, key=lambda f: (f.file, report._line(f))), base_counts, finding_key)
+    for finding in new:
+        mark_touched(finding, hunks)
+    resolved = unmatched(base_found, head_counts, lambda f: finding_key(f, renames))
     rank = {category: n for n, category in enumerate(CATEGORIES)}
     new.sort(key=lambda f: ("touched" not in f.flags, not f.graded, rank.get(f.category, 9), settle.order(f)))
     resolved.sort(key=lambda f: (rank.get(f.category, 9), settle.order(f)))
@@ -305,29 +362,7 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
         f"base tree borrowed from head: {', '.join(linked) or 'nothing'}",
         "",
     ]
-    units = list(dict.fromkeys(g.unit for g in head_grades))
-    unit = grading.ROLLUP if grading.ROLLUP in units else units[0]
-    before = {g.category: g for g in base_grades if g.unit == unit}
-    if not before and base_grades:
-        first = base_grades[0].unit
-        before = {g.category: g for g in base_grades if g.unit == first}
-    body = []
-    for g in (g for g in head_grades if g.unit == unit):
-        was = before.get(g.category)
-        fresh = [f for f in new if f.category == g.category]
-        gone = [f for f in resolved if f.category == g.category]
-        body.append(
-            [
-                g.category,
-                (was.letter or "not assessed") if was else "absent",
-                g.letter or "not assessed",
-                sum(1 for f in fresh if f.graded),
-                sum(1 for f in fresh if f.graded and "touched" in f.flags),
-                sum(1 for f in fresh if not f.graded),
-                sum(1 for f in gone if f.graded),
-            ]
-        )
-    out += report._table(["category", "base", "head", "new graded", "of which touched", "new advisory", "resolved graded"], body)
+    out += delta_table(head_grades, base_grades, new, resolved)
     out += [
         "",
         "Finding sets are keyed on (category, tool/rule, file after rename mapping, message with numbers masked).",
@@ -345,18 +380,10 @@ def cmd_rerun(opts) -> int:
     meta, projects, old_rows = report.read_results(run_dir)
     repo = Path(meta["repo"])
     inventory = inv.build(repo, meta["selected"])
-    for project in inventory.projects:
-        for language in project.files:
-            project.owned.update(MODULES[language].owned(repo, project))
+    read_ownership(repo, inventory, list_unowned=False)
     run = Run(inventory, run_dir, deep=meta["profile"] == "deep", only=meta["only"], pins=meta["pins"], budget_scale=opts.budget_scale)
     try:
-        wanted_tools = {t.replace("-", " ") for t in opts.tool}
-        wanted_projects = {(p.strip("/") or ".") for p in opts.project}
-        fresh = [
-            r
-            for r in plan_rows(run)
-            if (not wanted_tools or r.tool.replace("-", " ") in wanted_tools) and (not wanted_projects or r.project in wanted_projects)
-        ]
+        fresh = [r for r in plan_rows(run) if rerun_wanted(r, opts)]
         if not fresh:
             say("no row matches; tools.md lists the tool and project names")
             return 2
@@ -366,17 +393,50 @@ def cmd_rerun(opts) -> int:
     by_key = {r.key: r for r in fresh}
     rows = [by_key.pop(r.key, r) for r in old_rows] + list(by_key.values())
     settle.settle(inventory, rows)
-    verdicts = {finding_key(f): (f.status, f.reason) for r in old_rows for f in r.findings}
-    for row in fresh:
-        for finding in row.findings:
-            if (kept := verdicts.get(finding_key(finding))) is not None:
-                finding.status, finding.reason = kept
+    keep_verdicts(old_rows, fresh)
     grades = write_all(run_dir, meta, projects, rows, "after a rerun")
     for row in fresh:
         graded = sum(1 for f in row.findings if f.graded)
         print(f"{row.tool} ({row.project}): {row.state}, {graded} graded, {len(row.findings) - graded} advisory or dropped")
     digest(run_dir, rows, grades, "after a rerun")
     return 0
+
+
+def rerun_wanted(row: Row, opts) -> bool:
+    wanted_tools = {t.replace("-", " ") for t in opts.tool}
+    wanted_projects = {(p.strip("/") or ".") for p in opts.project}
+    return (not wanted_tools or row.tool.replace("-", " ") in wanted_tools) and (not wanted_projects or row.project in wanted_projects)
+
+
+def keep_verdicts(old_rows: list[Row], fresh: list[Row]) -> None:
+    """A finding that survives a rerun keeps the verdict triage gave it."""
+    verdicts = {finding_key(f): (f.status, f.reason) for r in old_rows for f in r.findings}
+    for row in fresh:
+        for finding in row.findings:
+            if (kept := verdicts.get(finding_key(finding))) is not None:
+                finding.status, finding.reason = kept
+
+
+def rule_matches(rule: str, pattern: str) -> bool:
+    return fnmatch.fnmatchcase(rule.split("/", 1)[-1], pattern) or fnmatch.fnmatchcase(rule, pattern)
+
+
+def verdict_row_matches(row: Row, opts) -> bool:
+    if opts.tool and row.tool.replace("-", " ") != opts.tool.replace("-", " "):
+        return False
+    return not opts.project or row.project == (opts.project.strip("/") or ".")
+
+
+def verdict_finding_matches(finding: Finding, opts) -> bool:
+    checks = (
+        (opts.category, lambda: finding.category == opts.category),
+        (opts.rule, lambda: rule_matches(finding.rule, opts.rule)),
+        (opts.path, lambda: fnmatch.fnmatchcase(finding.file, opts.path)),
+        (opts.flag, lambda: opts.flag in finding.flags),
+        (opts.line is not None, lambda: str(finding.line) == str(opts.line)),
+        (opts.message, lambda: opts.message in finding.message),
+    )
+    return all(test() for given, test in checks if given)
 
 
 def cmd_verdict(opts) -> int:
@@ -388,29 +448,11 @@ def cmd_verdict(opts) -> int:
         say("give at least one filter, so a verdict never lands on every finding by accident")
         return 2
     status, reason = ("graded", "") if opts.graded else ("advisory", opts.advisory) if opts.advisory else ("dropped", opts.dropped)
-    tool = opts.tool.replace("-", " ") if opts.tool else None
     changed = 0
-    for row in rows:
-        if tool and row.tool.replace("-", " ") != tool:
-            continue
-        if opts.project and row.project != (opts.project.strip("/") or "."):
-            continue
-        for finding in row.findings:
-            if opts.category and finding.category != opts.category:
-                continue
-            if opts.rule and not fnmatch.fnmatchcase(finding.rule.split("/", 1)[-1], opts.rule) and not fnmatch.fnmatchcase(finding.rule, opts.rule):
-                continue
-            if opts.path and not fnmatch.fnmatchcase(finding.file, opts.path):
-                continue
-            if opts.flag and opts.flag not in finding.flags:
-                continue
-            if opts.line is not None and str(finding.line) != str(opts.line):
-                continue
-            if opts.message and opts.message not in finding.message:
-                continue
-            if (finding.status, finding.reason) != (status, reason):
-                finding.status, finding.reason = status, reason
-                changed += 1
+    for finding in (f for r in rows if verdict_row_matches(r, opts) for f in r.findings if verdict_finding_matches(f, opts)):
+        if (finding.status, finding.reason) != (status, reason):
+            finding.status, finding.reason = status, reason
+            changed += 1
     grades = write_all(run_dir, meta, projects, rows, "after triage")
     units = list(dict.fromkeys(g.unit for g in grades))
     unit = grading.ROLLUP if grading.ROLLUP in units else units[0]
@@ -435,6 +477,23 @@ def cmd_finish(opts) -> int:
     repo = Path(meta["repo"])
     for scratch in (run_dir / "scratch", run_dir / "base" / "scratch"):
         shutil.rmtree(scratch, ignore_errors=True)
+    leaks = secret_leaks(run_dir)
+    before = set((run_dir / "footprint.txt").read_text().splitlines())
+    left = [line for line in inv.footprint(repo).splitlines() if line not in before]
+    touched = written_since(repo, run_dir, meta["started"])
+    moved = inv.git(repo, "rev-parse", "HEAD").stdout.decode().strip()
+    print("scratch: removed")
+    print_listing("secret patterns in the run dir: ", leaks)
+    print_listing("footprint (paths git status shows now and not before the scan): ", left)
+    print_listing("written since the scan started, outside the run dir: ", touched[:40])
+    if len(touched) > 40:
+        print(f"  … {len(touched) - 40} more")
+    if meta.get("head_full") and moved != meta["head_full"]:
+        print(f"HEAD moved since the scan: {meta['head_full'][:10]} -> {moved[:10]}")
+    return 1 if leaks or left else 0
+
+
+def secret_leaks(run_dir: Path) -> list[str]:
     leaks = []
     for base, _dirs, files in os.walk(run_dir):
         for name in files:
@@ -444,25 +503,13 @@ def cmd_finish(opts) -> int:
                     leaks.append(str(path))
             except OSError:
                 continue
-    before = set((run_dir / "footprint.txt").read_text().splitlines())
-    left = [line for line in inv.footprint(repo).splitlines() if line not in before]
-    touched = written_since(repo, run_dir, meta["started"])
-    moved = inv.git(repo, "rev-parse", "HEAD").stdout.decode().strip()
-    print("scratch: removed")
-    print("secret patterns in the run dir: " + ("none" if not leaks else ""))
-    for path in leaks:
-        print(f"  {path}")
-    print("footprint (paths git status shows now and not before the scan): " + ("none" if not left else ""))
-    for line in left:
-        print(f"  {line}")
-    print("written since the scan started, outside the run dir: " + ("none" if not touched else ""))
-    for path in touched[:40]:
-        print(f"  {path}")
-    if len(touched) > 40:
-        print(f"  … {len(touched) - 40} more")
-    if meta.get("head_full") and moved != meta["head_full"]:
-        print(f"HEAD moved since the scan: {meta['head_full'][:10]} -> {moved[:10]}")
-    return 1 if leaks or left else 0
+    return leaks
+
+
+def print_listing(heading: str, items: list[str]) -> None:
+    print(heading + ("none" if not items else ""))
+    for item in items:
+        print(f"  {item}")
 
 
 def written_since(repo: Path, run_dir: Path, started: float) -> list[str]:
