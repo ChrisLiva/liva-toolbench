@@ -384,27 +384,26 @@ class Run:
     def _record(self, row: Row, argv: list[str], cwd: str, env, code, seconds: float) -> None:
         """Keep the command as it ran. A long trailing file list goes to `lists/` and the
         record reads it back through xargs, so a batched tool is one runnable line."""
+        command = self._command_line(row, argv, cwd, env)
+        for earlier in row.commands:
+            if earlier["command"] == command and earlier["cwd"] == cwd:
+                _fold(earlier, code, seconds)
+                return
+        row.commands.append({"cwd": cwd, "command": command, "exit": code, "seconds": round(seconds, 1)})
+
+    def _command_line(self, row: Row, argv: list[str], cwd: str, env) -> str:
         head = list(argv)
         files = []
         while head and os.path.isfile(os.path.join(cwd, head[-1])):
             files.append(head.pop())
         prefix = "".join(f"{k}={shlex.quote(str(v))} " for k, v in (env or {}).items())
         if len(files) < 4:
-            command = prefix + shlex.join(argv)
-        else:
-            listing = self.run_dir / "lists" / f"{row.folder}--{row.slug}.txt"
-            listing.parent.mkdir(parents=True, exist_ok=True)
-            known = listing.read_text().splitlines() if listing.exists() else []
-            listing.write_text("".join(f + "\n" for f in dict.fromkeys([*known, *reversed(files)])))
-            command = f"tr '\\n' '\\0' < {shlex.quote(str(listing))} | {prefix}xargs -0 {shlex.join(head)}"
-        for earlier in row.commands:
-            if earlier["command"] == command and earlier["cwd"] == cwd:
-                earlier["seconds"] = round(earlier["seconds"] + seconds, 1)
-                if code is None or (earlier["exit"] is not None and code > earlier["exit"]):
-                    earlier["exit"] = code
-                earlier["runs"] = earlier.get("runs", 1) + 1
-                return
-        row.commands.append({"cwd": cwd, "command": command, "exit": code, "seconds": round(seconds, 1)})
+            return prefix + shlex.join(argv)
+        listing = self.run_dir / "lists" / f"{row.folder}--{row.slug}.txt"
+        listing.parent.mkdir(parents=True, exist_ok=True)
+        known = listing.read_text().splitlines() if listing.exists() else []
+        listing.write_text("".join(f + "\n" for f in dict.fromkeys([*known, *reversed(files)])))
+        return f"tr '\\n' '\\0' < {shlex.quote(str(listing))} | {prefix}xargs -0 {shlex.join(head)}"
 
     def version(self, key: str, argv, *, cwd=None, env=None, pattern=r"\d+\.\d+(?:\.\d+)?(?:[-+.][0-9A-Za-z.]+)?") -> str:
         """The version a tool prints, probed once per run."""
@@ -471,6 +470,14 @@ class Run:
             self.exec(None, argv, cwd=cwd, env=env, budget=budget)
 
 
+def _fold(earlier: dict, code, seconds: float) -> None:
+    """Merge a repeat of a recorded command into its record, keeping the worst exit."""
+    earlier["seconds"] = round(earlier["seconds"] + seconds, 1)
+    if code is None or (earlier["exit"] is not None and code > earlier["exit"]):
+        earlier["exit"] = code
+    earlier["runs"] = earlier.get("runs", 1) + 1
+
+
 def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8", errors="replace")
@@ -514,13 +521,15 @@ def sarif_results(doc):
             rule_id = result.get("ruleId") or (result.get("rule") or {}).get("id") or ""
             level = result.get("level") or ((rules.get(rule_id) or {}).get("defaultConfiguration") or {}).get("level") or "warning"
             message = (result.get("message") or {}).get("text") or ""
-            uri, line = "", 0
-            for location in result.get("locations") or []:
-                physical = location.get("physicalLocation") or {}
-                uri = (physical.get("artifactLocation") or {}).get("uri") or ""
-                line = (physical.get("region") or {}).get("startLine") or 0
-                break
-            yield rule_id, level, message, uri, line
+            yield rule_id, level, message, *_sarif_location(result)
+
+
+def _sarif_location(result: dict) -> tuple[str, int]:
+    """The file uri and start line of a SARIF result's first location."""
+    for location in result.get("locations") or []:
+        physical = location.get("physicalLocation") or {}
+        return (physical.get("artifactLocation") or {}).get("uri") or "", (physical.get("region") or {}).get("startLine") or 0
+    return "", 0
 
 
 def execute(run: Run, row: Row) -> None:

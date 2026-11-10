@@ -46,14 +46,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
     else:
         for row in (cppcheck, lizard):
             row.unavailable("uv not on PATH: brew install uv")
-    if "clang-format" not in project.owned:
-        fmt.skip("not owned (never imposed)")
-    elif run.which("xcrun"):
-        fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), system binary", ctx.clang_format
-    elif run.which("uv"):
-        fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), ephemeral", ctx.clang_format
-    else:
-        fmt.unavailable("uv not on PATH: brew install uv")
+    _wire_format(ctx, fmt)
     if run.deep:
         tidy.skip("deep tool: run it from references/cpp.md")
     else:
@@ -63,6 +56,29 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
     else:
         mull.skip("deep tool: run it from references/cpp.md" if run.deep else "needs --deep")
     return [cppcheck, lizard, fmt, tidy, mull]
+
+
+def _wire_format(ctx: _Context, fmt: Row) -> None:
+    run, project = ctx.run, ctx.project
+    if "clang-format" not in project.owned:
+        fmt.skip("not owned (never imposed)")
+    elif run.which("xcrun"):
+        fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), system binary", ctx.clang_format
+    elif run.which("uv"):
+        fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), ephemeral", ctx.clang_format
+    else:
+        fmt.unavailable("uv not on PATH: brew install uv")
+
+
+def _route(rule: str, severity: str) -> tuple[str, str] | None:
+    """The category and level a cppcheck result files under, or None for one the row drops."""
+    if rule == "unusedFunction":
+        return "dead code", "warning"
+    if severity in ("error", "warning"):
+        return "security", severity
+    if severity in CPPCHECK_LINT:
+        return "lint", "warning"
+    return None
 
 
 class _Context:
@@ -106,6 +122,18 @@ class _Context:
         row.raw.append(str(report.relative_to(self.run.run_dir)))
         if extra:
             row.provenance += f" + {' '.join(extra)}"
+        unresolved, aborted = self._cppcheck_results(row, root)
+        row.notes.append(f"{unresolved} unresolved (information rows: missing includes, configurations cppcheck gave up on)")
+        if aborted:
+            sample = ", ".join(f"{path} ({rule})" for path, rule in sorted(aborted.items())[:5])
+            row.notes.append(
+                f"check: cppcheck aborted in {len(aborted)} files and measured nothing in the translation units past them: {sample}. "
+                'Name the macros\' library in <run-dir>/overrides.json ({"cppcheck": ["--library=boost"]}) and rerun --tool cppcheck'
+            )
+
+    def _cppcheck_results(self, row: Row, root: ET.Element) -> tuple[int, dict[str, str]]:
+        """File the report's results on the row; return the count of unresolved
+        information rows and the first aborting rule per file."""
         unresolved, aborted = 0, {}
         for error in root.iter("error"):
             rule, severity = error.get("id", ""), error.get("severity", "")
@@ -119,22 +147,10 @@ class _Context:
             if severity == "information":
                 unresolved += rule != "checkersReport"
                 continue
-            if rule == "unusedFunction":
-                category, level = "dead code", "warning"
-            elif severity in ("error", "warning"):
-                category, level = "security", severity
-            elif severity in CPPCHECK_LINT:
-                category, level = "lint", "warning"
-            else:
-                continue
-            row.add(path, line, category, rule, level, error.get("msg", ""))
-        row.notes.append(f"{unresolved} unresolved (information rows: missing includes, configurations cppcheck gave up on)")
-        if aborted:
-            sample = ", ".join(f"{path} ({rule})" for path, rule in sorted(aborted.items())[:5])
-            row.notes.append(
-                f"check: cppcheck aborted in {len(aborted)} files and measured nothing in the translation units past them: {sample}. "
-                'Name the macros\' library in <run-dir>/overrides.json ({"cppcheck": ["--library=boost"]}) and rerun --tool cppcheck'
-            )
+            if routed := _route(rule, severity):
+                category, level = routed
+                row.add(path, line, category, rule, level, error.get("msg", ""))
+        return unresolved, aborted
 
     def lizard(self, row: Row) -> None:
         argv = self.run.uvx("lizard")

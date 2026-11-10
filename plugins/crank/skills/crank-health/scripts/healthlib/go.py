@@ -15,6 +15,7 @@ CEILING = 15
 OWNABLE = ("golangci-lint", "gremlins")
 BROKEN_GRAPH = ("cannot find module providing package", "no required module provides", "import lookup disabled")
 GOSEC_LEVEL = {"HIGH": "error", "MEDIUM": "warning", "LOW": "info"}
+VULN_LABELS = {2: "symbol-reachable", 1: "imported-no-call", 0: "not-imported"}
 MODULES = {
     "staticcheck": ("honnef.co/go/tools", "honnef.co/go/tools/cmd/staticcheck"),
     "golangci-lint": ("github.com/golangci/golangci-lint/v2", "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"),
@@ -58,6 +59,16 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
         rows["gremlins"].skip("not owned (never imposed)")
     else:
         rows["gremlins"].skip("deep tool: run it from references/go.md" if run.deep else "needs --deep")
+    _wire(ctx, rows)
+    if not (run.repo / project.dir / "go.mod").is_file():
+        for tool in ("staticcheck", "go vet", "golangci-lint", "gocognit", "gosec", "govulncheck"):
+            if rows[tool].job is not None:
+                rows[tool].unavailable("no go.mod in the project directory")
+    return list(rows.values())
+
+
+def _wire(ctx: _Context, rows: dict[str, Row]) -> None:
+    """Give every row not already skipped its job, or the reason the Go gate refused."""
     gate = ctx.gate()
     for tool, row in rows.items():
         if row.state == "skipped":
@@ -69,15 +80,10 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
         row.provenance = "default config, system binary" if tool in ("go vet", "gofmt") else "default config, ephemeral"
         row.job = getattr(ctx, tool.replace(" ", "_").replace("-", "_"))
     if rows["golangci-lint"].job is not None:
-        rows["golangci-lint"].provenance = f"repo config ({project.owned['golangci-lint']}), ephemeral"
+        rows["golangci-lint"].provenance = f"repo config ({ctx.project.owned['golangci-lint']}), ephemeral"
         if rows["staticcheck"].job is not None:
             rows["staticcheck"].standby_behind = "golangci-lint"
             rows["staticcheck"].provenance += ", lint standby behind golangci-lint"
-    if not (run.repo / project.dir / "go.mod").is_file():
-        for tool in ("staticcheck", "go vet", "golangci-lint", "gocognit", "gosec", "govulncheck"):
-            if rows[tool].job is not None:
-                rows[tool].unavailable("no go.mod in the project directory")
-    return list(rows.values())
 
 
 class _Context:
@@ -149,14 +155,9 @@ class _Context:
         documents = _json_documents(text)
         if done.code != 0 and not any(documents):
             raise Failed(_real_stderr(done.stderr) or f"exit {done.code}")
-        for document in documents:
-            for analyzers in document.values():
-                if not isinstance(analyzers, dict):
-                    continue
-                for analyzer, items in analyzers.items():
-                    for item in items if isinstance(items, list) else []:
-                        path, _, rest = str(item.get("posn", "")).partition(":")
-                        row.add(self.run.rel(path, self.dir), rest.split(":")[0] if rest else "", "lint", analyzer, "warning", item.get("message", ""))
+        for analyzer, item in _vet_diagnostics(documents):
+            path, _, rest = str(item.get("posn", "")).partition(":")
+            row.add(self.run.rel(path, self.dir), rest.split(":")[0] if rest else "", "lint", analyzer, "warning", item.get("message", ""))
         self.run.save(row, "go-vet.json", json.dumps(documents, indent=1))
 
     def golangci_lint(self, row: Row) -> None:
@@ -235,64 +236,92 @@ class _Context:
         documents = _json_documents(done.stdout)
         if not documents:
             raise Failed(_real_stderr(done.stderr) or f"exit {done.code}")
-        aliases: dict[str, list[str]] = {}
-        verdicts: dict[str, tuple[int, dict]] = {}
-        for document in documents:
-            if isinstance(document.get("osv"), dict):
-                entry = document["osv"]
-                aliases[entry.get("id", "")] = entry.get("aliases") or []
-            finding = document.get("finding")
-            if isinstance(finding, dict):
-                frame = (finding.get("trace") or [{}])[0]
-                rank = 2 if frame.get("function") else 1 if frame.get("package") else 0
-                if rank >= verdicts.get(finding.get("osv", ""), (-1, {}))[0]:
-                    verdicts[finding.get("osv", "")] = (rank, {**frame, "fixed": finding.get("fixed_version", "")})
-        labels = {2: "symbol-reachable", 1: "imported-no-call", 0: "not-imported"}
+        aliases, verdicts = _vuln_verdicts(documents)
         for osv_id, (rank, frame) in sorted(verdicts.items()):
-            reachable = rank == 2
-            position = frame.get("position") or {}
-            module = f"{frame.get('module', '?')}@{frame.get('version', '?')}"
-            finding = row.add(
-                self.run.rel(position.get("filename", ""), self.dir) if position.get("filename") else ("go.mod" if self.project.dir == "." else f"{self.project.dir}/go.mod"),
-                position.get("line", "") if position.get("filename") else "",
-                "security",
-                labels[rank],
-                "error" if reachable else "info",
-                f"{osv_id} in {module}: {labels[rank]}" + (f"; fixed in {frame['fixed']}" if frame.get("fixed") else "; no fixed version"),
-                graded=reachable,
-                reason="the vulnerable symbol is never called",
-            )
-            finding.data.update(ids=",".join([osv_id, *aliases.get(osv_id, [])]), verdict=labels[rank])
+            self._vulnerability(row, osv_id, rank, frame, aliases.get(osv_id, []))
         slim = [d for d in documents if "finding" in d or "config" in d]
         self.run.save(row, "govulncheck.json", json.dumps(slim, indent=1))
+
+    def _vulnerability(self, row: Row, osv_id: str, rank: int, frame: dict, aliases: list[str]) -> None:
+        label = VULN_LABELS[rank]
+        reachable = rank == 2
+        position = frame.get("position") or {}
+        module = f"{frame.get('module', '?')}@{frame.get('version', '?')}"
+        if position.get("filename"):
+            path, line = self.run.rel(position.get("filename", ""), self.dir), position.get("line", "")
+        else:
+            path, line = ("go.mod" if self.project.dir == "." else f"{self.project.dir}/go.mod"), ""
+        finding = row.add(
+            path,
+            line,
+            "security",
+            label,
+            "error" if reachable else "info",
+            f"{osv_id} in {module}: {label}" + (f"; fixed in {frame['fixed']}" if frame.get("fixed") else "; no fixed version"),
+            graded=reachable,
+            reason="the vulnerable symbol is never called",
+        )
+        finding.data.update(ids=",".join([osv_id, *aliases]), verdict=label)
+
+
+def _vet_diagnostics(documents: list[dict]):
+    """(analyzer, diagnostic) from `go vet -json`: package -> analyzer -> list of diagnostics."""
+    packages = [analyzers for document in documents for analyzers in document.values() if isinstance(analyzers, dict)]
+    for analyzers in packages:
+        for analyzer, items in analyzers.items():
+            if isinstance(items, list):
+                yield from ((analyzer, item) for item in items)
+
+
+def _vuln_verdicts(documents: list[dict]) -> tuple[dict[str, list[str]], dict[str, tuple[int, dict]]]:
+    """Each advisory's aliases, and the deepest trace govulncheck reached for it as
+    (rank, frame): 2 a called symbol, 1 an imported package, 0 the module only."""
+    entries = [document["osv"] for document in documents if isinstance(document.get("osv"), dict)]
+    aliases = {entry.get("id", ""): entry.get("aliases") or [] for entry in entries}
+    verdicts: dict[str, tuple[int, dict]] = {}
+    for finding in (document["finding"] for document in documents if isinstance(document.get("finding"), dict)):
+        frame = (finding.get("trace") or [{}])[0]
+        rank = 2 if frame.get("function") else 1 if frame.get("package") else 0
+        if rank >= verdicts.get(finding.get("osv", ""), (-1, {}))[0]:
+            verdicts[finding.get("osv", "")] = (rank, {**frame, "fixed": finding.get("fixed_version", "")})
+    return aliases, verdicts
 
 
 def join_vulnerabilities(rows: list[Row]) -> None:
     """govulncheck's reachability decides an osv-scanner Go advisory; the two never both grade."""
-    verdicts: dict[str, bool] = {}
-    for row in rows:
-        if row.tool == "govulncheck" and row.state == "ok":
-            for finding in row.findings:
-                for osv_id in str(finding.data.get("ids", "")).split(","):
-                    verdicts[osv_id] = verdicts.get(osv_id, False) or finding.rule.endswith("/symbol-reachable")
+    verdicts = _reachability(rows)
     if not verdicts:
         return
     covered = set()
-    for row in rows:
-        if row.tool != "osv-scanner" or row.state != "ok":
+    for finding in _findings(rows, "osv-scanner"):
+        ids = [i for i in _ids(finding) if i in verdicts]
+        if not ids:
             continue
-        for finding in row.findings:
-            ids = [i for i in str(finding.data.get("ids", "")).split(",") if i in verdicts]
-            if not ids:
-                continue
-            covered.update(ids)
-            if finding.graded and not any(verdicts[i] for i in ids):
-                finding.demote("govulncheck: the vulnerable symbol is never called")
+        covered.update(ids)
+        if finding.graded and not any(verdicts[i] for i in ids):
+            finding.demote("govulncheck: the vulnerable symbol is never called")
+    for finding in _findings(rows, "govulncheck"):
+        if finding.graded and set(_ids(finding)) & covered:
+            finding.demote("duplicate of osv-scanner/vulnerable-dependency")
+
+
+def _reachability(rows: list[Row]) -> dict[str, bool]:
+    """Per advisory id or alias, whether govulncheck found a vulnerable symbol called."""
+    verdicts: dict[str, bool] = {}
+    for finding in _findings(rows, "govulncheck"):
+        for osv_id in _ids(finding):
+            verdicts[osv_id] = verdicts.get(osv_id, False) or finding.rule.endswith("/symbol-reachable")
+    return verdicts
+
+
+def _findings(rows: list[Row], tool: str):
     for row in rows:
-        if row.tool == "govulncheck" and row.state == "ok":
-            for finding in row.findings:
-                if finding.graded and set(str(finding.data.get("ids", "")).split(",")) & covered:
-                    finding.demote("duplicate of osv-scanner/vulnerable-dependency")
+        if row.tool == tool and row.state == "ok":
+            yield from row.findings
+
+
+def _ids(finding) -> list[str]:
+    return str(finding.data.get("ids", "")).split(",")
 
 
 def _real_stderr(stderr: str) -> str:
