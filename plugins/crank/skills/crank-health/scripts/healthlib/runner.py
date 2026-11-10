@@ -61,13 +61,13 @@ class Finding:
 
     `verdict` is `graded`, `advisory: <reason>` or `dropped: <reason>`. The scan writes the
     first two; triage rewrites the column, and `dropped` takes a row out of every count.
-    `line` is empty for a finding about a whole file. `flags` carries what triage sorts on:
-    path classes (`test`, `snapshot`, `generated`) and the numbers behind a message
-    (`score=24`, `confidence=60`).
+    `line` is 0 for a finding about a whole file (an empty cell in the file). `flags` carries
+    what triage sorts on: path classes (`test`, `snapshot`, `generated`) and the numbers
+    behind a message (`score=24`, `confidence=60`).
     """
 
     file: str
-    line: int | str
+    line: int
     category: str
     rule: str
     severity: str
@@ -105,7 +105,14 @@ class Finding:
         if status not in ("graded", "advisory", "dropped"):
             status, reason = "advisory", verdict
         flags = cells[7].split() if len(cells) > 7 else []
-        return cls(file, lineno, category, rule, severity, status, message, reason.strip(), flags=flags)
+        return cls(file, _lineno(lineno), category, rule, severity, status, message, reason.strip(), flags=flags)
+
+
+def _lineno(value) -> int:
+    text = str(value).strip()
+    if text.isascii() and text.isdigit():
+        return int(text)
+    return 0
 
 
 def number(value: float) -> str:
@@ -202,7 +209,7 @@ class Row:
     def add(self, file, line, category, rule, severity, message, *, graded=True, reason="") -> Finding:
         finding = Finding(
             file,
-            line if line else "",
+            _lineno(line),
             category,
             f"{self.tool.replace(' ', '-')}/{rule}",
             severity,

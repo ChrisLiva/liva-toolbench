@@ -407,12 +407,19 @@ class FindingTest(unittest.TestCase):
         self.assertEqual(line.split("\t"), ["a.py", "3", "dead code", "vulture/unused-import", "info", "advisory: confidence below 90%", "unused import 'os'", "test confidence=60"])
         back = Finding.parse(line)
         self.assertEqual((back.status, back.reason, back.flags), ("advisory", "confidence below 90%", ["test", "confidence=60"]))
+        self.assertEqual(back.line, 3)
+
+    def test_row_add_stores_an_int_line(self):
+        row = Row(project=".", language="python", categories=("lint",), tool="t")
+        got = [row.add("a.py", line, "lint", "r", "warning", "m").line for line in (12, "12", "", None, 0, "C")]
+        self.assertEqual(got, [12, 12, 0, 0, 0, 0])
 
     def test_triage_verdicts_parse(self):
         base = "a.py\t\tlint\tx/y\twarning\t{}\tm\t"
         self.assertTrue(Finding.parse(base.format("graded")).graded)
         dropped = Finding.parse(base.format("dropped: fixture"))
-        self.assertEqual((dropped.status, dropped.reason, dropped.line), ("dropped", "fixture", ""))
+        self.assertEqual((dropped.status, dropped.reason, dropped.line), ("dropped", "fixture", 0))
+        self.assertEqual(dropped.tsv().split("\t")[1], "")
         self.assertEqual(Finding.parse(base.format("Advisory")).status, "advisory")
         self.assertIsNone(Finding.parse("too\tfew\tcolumns"))
 
@@ -774,6 +781,16 @@ class RunDirTest(RepoCase):
         bandit = next(r for r in rows if r.tool == "bandit")
         self.assertEqual(sorted(f.status for f in bandit.findings), ["dropped", "graded"])
         self.assertIn("1 dropped", (run_dir / "summary" / "python--root.md").read_text())
+
+    def test_a_verdict_selects_by_line(self):
+        _, run_dir = self.scanned()
+        self.assertIn("2 findings now read", self.call("verdict", str(run_dir), "--tool", "bandit", "--line", "1", "--advisory", "x")[1])
+        _, run_dir = self.scanned()
+        path = run_dir / "findings" / "root" / "bandit.tsv"
+        path.write_text(path.read_text().replace("src/a.py\t1\t", "src/a.py\t\t"))
+        for line, reason, count in (("0", "y0", 0), ("", "y", 1), ("1", "y1", 1)):
+            out = self.call("verdict", str(run_dir), "--tool", "bandit", "--line", line, "--advisory", reason)[1]
+            self.assertIn(f"{count} findings now read", out, f"--line {line!r}")
 
     def test_a_verdict_needs_a_filter(self):
         _, run_dir = self.scanned()

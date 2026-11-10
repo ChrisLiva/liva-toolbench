@@ -146,13 +146,6 @@ def read_findings(run_dir: Path, row: Row) -> list[Finding]:
     return [f for f in map(Finding.parse, lines) if f is not None]
 
 
-def _line(finding: Finding) -> int:
-    try:
-        return int(finding.line)
-    except (TypeError, ValueError):
-        return 0
-
-
 # --- summaries -----------------------------------------------------------------------------
 
 

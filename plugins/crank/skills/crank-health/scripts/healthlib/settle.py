@@ -25,8 +25,7 @@ def settle(inventory: inv.Inventory, rows: list[Row]) -> None:
 
 
 def order(finding) -> tuple:
-    line = int(finding.line) if str(finding.line).isdigit() else 0
-    return (finding.file, line, finding.category, finding.rule, finding.message)
+    return (finding.file, finding.line, finding.category, finding.rule, finding.message)
 
 
 def stand_down(rows: list[Row]) -> None:
@@ -93,7 +92,7 @@ def one_defect_one_finding(rows: list[Row]) -> None:
     seen: dict[tuple, str] = {}
     secret_files = {f.file: f.rule for f in _ok_findings(rows, "gitleaks")}
     dead_imports = {
-        (f.file, str(f.line)): f.rule for f in _ok_findings(rows, "vulture") if f.rule.endswith("/unused-import") and f.graded
+        (f.file, f.line): f.rule for f in _ok_findings(rows, "vulture") if f.rule.endswith("/unused-import") and f.graded
     }
     for row in (r for r in rows if r.state == "ok"):
         for finding in (f for f in row.findings if f.graded):
@@ -111,11 +110,11 @@ def _original_of(row: Row, finding, secret_files: dict[str, str], dead_imports: 
     Records the finding's place in `seen` once the specific duplicates rule it out."""
     if row.tool != "gitleaks" and finding.severity == "critical" and finding.file in secret_files:
         return secret_files[finding.file]
-    if finding.rule == "ruff-check/F401" and (finding.file, str(finding.line)) in dead_imports:
-        return dead_imports[(finding.file, str(finding.line))]
+    if finding.rule == "ruff-check/F401" and (finding.file, finding.line) in dead_imports:
+        return dead_imports[(finding.file, finding.line)]
     if not finding.line:
         return None
-    first = seen.setdefault((finding.category, finding.file, str(finding.line)), finding.rule)
+    first = seen.setdefault((finding.category, finding.file, finding.line), finding.rule)
     if first != finding.rule and first.split("/", 1)[0] != finding.rule.split("/", 1)[0]:
         return first
     return None

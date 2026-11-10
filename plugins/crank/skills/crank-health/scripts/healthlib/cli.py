@@ -306,7 +306,7 @@ def unmatched(findings: list[Finding], counts: Counter, key) -> list[Finding]:
 
 def mark_touched(finding: Finding, hunks: dict[str, list[tuple[int, int]]]) -> None:
     ranges = hunks.get(finding.file)
-    line = report._line(finding)
+    line = finding.line
     if ranges is not None and (not line or any(a <= line <= b for a, b in ranges)):
         finding.flags = ["touched", *finding.flags]
 
@@ -346,7 +346,7 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
     head_found, base_found = ok_findings(head["rows"]), ok_findings(base["rows"])
     base_counts = Counter(finding_key(f, renames) for f in base_found)
     head_counts = Counter(finding_key(f) for f in head_found)
-    new = unmatched(sorted(head_found, key=lambda f: (f.file, report._line(f))), base_counts, finding_key)
+    new = unmatched(sorted(head_found, key=lambda f: (f.file, f.line)), base_counts, finding_key)
     for finding in new:
         mark_touched(finding, hunks)
     resolved = unmatched(base_found, head_counts, lambda f: finding_key(f, renames))
@@ -436,7 +436,7 @@ def verdict_finding_matches(finding: Finding, opts) -> bool:
         (opts.rule, lambda: rule_matches(finding.rule, opts.rule)),
         (opts.path, lambda: fnmatch.fnmatchcase(finding.file, opts.path)),
         (opts.flag, lambda: opts.flag in finding.flags),
-        (opts.line is not None, lambda: str(finding.line) == str(opts.line)),
+        (opts.line is not None, lambda: str(finding.line or "") == opts.line),
         (opts.message, lambda: opts.message in finding.message),
     )
     return all(test() for given, test in checks if given)
