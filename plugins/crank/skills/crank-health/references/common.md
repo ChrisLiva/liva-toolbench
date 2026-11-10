@@ -1,42 +1,29 @@
 # Repo-wide analyzers
 
-Run over the selected directories (the whole repo when unscoped), cwd = scratch, whatever languages they hold. Ephemeral forms: `npx --yes jscpd@latest`, `npx --yes aislop@latest`, `uvx --quiet zizmor`. gitleaks, opengrep and osv-scanner are release binaries with no npm or PyPI package (the npm names are unrelated or empty placeholders), so use the one on PATH and degrade with the install hint when it is missing: `brew install gitleaks`, `brew install opengrep`, `brew install osv-scanner`. Security tools are a union: one owned by the repo never stands the others down. Record the version each tool prints.
+What the scan runs over the selected directories (the whole repo when unscoped), whatever
+languages they hold, and how to read each tool's rows. The commands themselves, with their
+pinned versions and cwd, are in `<run-dir>/tools.md` → Commands.
 
-**gitleaks** (secrets, critical, never advisory). `--redact=100` is the whole design: the secret value never enters the output, the run dir, or your context. Anchor a finding on the rule id and the file, not the flagged line (the line contains the secret). The repo's own `.gitleaks.toml` is picked up by gitleaks itself.
-```sh
-gitleaks dir --no-banner --redact=100 --report-format json --report-path <scratch>/gitleaks.json --exit-code 0 <repo>
-```
-Hits outside the inventory (ignored or vendored paths) are dropped with a count, not a listing.
+gitleaks, opengrep and osv-scanner are release binaries with no npm or PyPI package (the npm names are unrelated or empty placeholders), so the scan uses the one on PATH and the row reads `not available` with the install hint when it is missing: `brew install gitleaks`, `brew install opengrep`, `brew install osv-scanner`. Security tools are a union: one owned by the repo never stands the others down.
 
-**osv-scanner** (vulnerable dependencies). `--allow-no-lockfiles` avoids exit 128 on a repo without one. A root `osv-scanner.toml` only reaches nested lockfiles via `--config`. Offline markers on stderr (`no such host`, `dial tcp`, `i/o timeout`, `TLS handshake timeout`): not available, never a clean tree. Never `osv-scanner fix`.
-```sh
-osv-scanner scan source --recursive --allow-no-lockfiles --format json --output-file <scratch>/osv.json --verbosity error [--config <abs osv-scanner.toml>] <repo>
-```
-One finding per vulnerable package, not per CVE: `lodash@4.17.15 (npm): 4 advisories; fix: upgrade to ≥4.18.0`. Walk `fixed` out of the affected ranges. Advisory, not graded: no fixed version exists; the package is reached only from `devDependencies` (`package-lock.json` marks `dev: true`; for `pnpm-lock.yaml` walk each importer's `dependencies` and `optionalDependencies`). Every uncertainty grades: an unreadable or missing lockfile, `yarn.lock`, a package the lockfile never mentions.
+## Reading the rows
 
-**govulncheck** (Go reachability, once per `go.mod`, cwd = module dir, 300 s). Join to osv-scanner's rows by alias (`GO-…` vs `GHSA-…`). Verdicts: `symbol-reachable` grades, `imported-no-call` and `not-imported` move the advisory out of the grade. No `go` on PATH: every Go advisory grades, reason "reachability unknown".
-```sh
-go run golang.org/x/vuln/cmd/govulncheck@latest -json ./...
-```
+**gitleaks** (secrets, critical, never advisory). It scans a copy of the in-scope files, kept outside the repo and deleted with the run, so a gitignored `.env`, a build tree or an old checkout under a hidden directory never enters the scan: over the working tree, an ignored build directory can spend the whole budget on hits that are out of scope anyway. One row per (file, rule) with the hit count in `hits`, anchored on the rule id and the file, never the flagged line; the secret value never enters the output, the run dir, or your context. The repo's own `.gitleaks.toml` and `.gitleaksignore` apply.
 
-**zizmor** (GitHub workflow security). Files = every `.github/workflows/*.yml|yaml` and `action.yml|yaml` in the inventory; none: not available. `--offline` keeps it hermetic. zizmor discovers a `zizmor.yml` at the target repo's root on its own even from scratch: that is repo provenance, record it, and pass `--no-config` only to count what it waives. Demote `unpinned-uses` and `unpinned-images` from high to warning, or every workflow repo caps at D on hygiene alone. Anchor on the document route (`jobs.build.steps.0`).
-```sh
-uvx --quiet zizmor --format json-v1 --offline --no-exit-codes --no-progress -- <abs workflow files>
-```
+A secret stays critical in the findings file. Proving a hit is not a secret (512 `cache_key` values that are sha256 digests) is a ruling you make with `--dropped` and the proof as its reason.
 
-**opengrep** (SAST, JS/TS, Python and C/C++, when installed). Only a local ruleset: `--config auto`, `p/…` and URLs pull semgrep-registry rules under semgrep's license. Use the repo's own `.opengrep/` or `.semgrep/` rules dir when it has one; otherwise skip with the note "no local ruleset". Rule id = last dotted segment of `check_id`. Strip `extra.lines` from the saved JSON.
-```sh
-opengrep scan --config <rules-dir> --json --disable-version-check --quiet <abs files>
-```
+**osv-scanner** (vulnerable dependencies). One run per in-scope lockfile or manifest, named in Notes: a lockfile under an ignored or hidden directory is not read, and a lockfile osv-scanner could not parse is named there too. Offline markers on stderr turn the row `not available`, never a clean tree. Never `osv-scanner fix`.
 
-**jscpd** (duplication, one pass over the whole tree). cwd = scratch, always the skill's own config (a repo's `minTokens` would tune its own grade). Pass the scan directory, never a file list. Ignore globs go in the config file (`--ignore` splits on commas) and each is anchored to the absolute scan root, or a checkout under a dotted directory matches `**/.*/**` and reads a flattering 0%.
-```sh
-jscpd --reporters json --output <scratch>/jscpd --format javascript,jsx,typescript,tsx,python,csharp,go,c,c-header,cpp,cpp-header --config <scratch>/jscpd.json --absolute --no-colors <repo>
-```
-`<scratch>/jscpd.json`: `{"minTokens":50,"minLines":5,"ignore":["<abs>/**/node_modules/**","<abs>/**/vendor/**","<abs>/**/dist/**","<abs>/**/build/**","<abs>/**/bin/**","<abs>/**/obj/**","<abs>/**/.*/**", <repo's own Biome/fallow excludes>]}`. Grade = `statistics.total.percentageTokens`; its denominator counts only files at or above `minLines`, so print the token counts beside the percent. Clones are listed as evidence, not graded one by one. Say where the clones sit (a test suite alone can read F). One pass per project directory for the project letter, one over the selection for the rollup.
+One finding per vulnerable package, not per CVE: `lodash@4.17.15 (npm): 4 advisories; fix: upgrade to >=4.18.0`, anchored on the lockfile line that names it, with the advisory ids and the highest CVSS score as flags. CVSS 7.0 or above, or a HIGH or CRITICAL label, is error; the rest warning. Advisory, not graded: no fixed version exists; the package is reached only from `devDependencies` (`package-lock.json` marks `dev: true`; for `pnpm-lock.yaml` the scan walks each importer's `dependencies` and `optionalDependencies` through the snapshots). Every uncertainty grades and says why in the message: an unreadable lockfile, `yarn.lock`, `bun.lock`, a package the lockfile never mentions.
 
-**aislop** (AI-slop lint across all five languages, complementary). Scans a mirror of the inventory under `<scratch>/aislop/repo` so its git calls and config discovery never touch the repo. The mirror must be a git repo with one commit (`git init -q && git add -A && git commit -qm scan`): aislop's file walk is git-backed and an un-committed mirror scans 0 files at exit 0. Copy the repo's `.aislop/` config beside it when there is one. Env `AISLOP_NO_TELEMETRY=1`. Exit 0 or 1. `--json` returns only the summary; `--sarif` carries the per-finding rows, with paths relative to the scan root.
-```sh
-npx --yes aislop@latest scan --sarif <scratch>/aislop/repo > <raw>/aislop.sarif
-```
-The mirror holds every secret the repo does: it lives under `scratch/` and is deleted before the report.
+A devDependency that ships (an Electron app's `electron`, a bundler whose output is the product) is production code: promote its row with `verdict --graded`.
+
+**govulncheck** (Go reachability, once per `go.mod`). It joins osv-scanner's rows by advisory id and alias. `symbol-reachable` grades; `imported-no-call` and `not-imported` move the advisory out of the grade. No `go` on PATH: every Go advisory grades.
+
+**zizmor** (GitHub workflow security). Files = every `.github/workflows/*.yml|yaml` (and the same under `.gitea/` and `.forgejo/`) and every `action.yml|yaml` in the inventory, each passed by name; none: `skipped: nothing to scan`. A `zizmor.yml` at the repo root is repo provenance, and what it waives is counted in Notes. `unpinned-uses` and `unpinned-images` are demoted from high to warning, or every workflow repo caps at D on hygiene alone. Each row anchors on the document route (`jobs.build.steps.0`) and carries zizmor's confidence as a flag: one Low-confidence High finding holding the security letter is worth reading before it becomes a task. A workflow outside the root `.github/` never runs on GitHub; say so instead of planning a fix.
+
+**opengrep** (SAST, JS/TS, Python and C/C++, when installed). Only a local ruleset: the semgrep registry's rules carry semgrep's license. With the repo's own `.opengrep/` or `.semgrep/` rules directory it runs against that; otherwise `skipped: no local ruleset`. Rule id = last dotted segment of `check_id`.
+
+**jscpd** (duplication). One pass per project directory for the project letter and one over the selection for the rollup, always on the skill's own config (`minTokens` 50, `minLines` 5: a repo's own would tune its own grade). Left out: `node_modules`, `vendor`, `dist`, `build`, `bin`, `obj`, hidden directories, what the repo's own Biome `files.includes` `!`-entries and fallow `ignorePatterns` exclude, and the generated files `inventory.md` lists, because protobuf and sqlc output alone can grade a clean module F. The grade is duplicated tokens / tokens, both printed. Clones are advisory rows, evidence rather than findings, each with its partner and token count. Notes says how many sit between two test files: a test suite alone can read F, so say where the clones sit. A pass that reached no file reads `not assessed`, never 0%.
+
+**aislop** (AI-slop lint across all five languages, complementary). It scans a git-committed copy of the in-scope files outside the repo, with the repo's `.aislop/` config beside it when there is one. On the default config its own `ai-slop/*` and `security/*` rules grade at warning, `security/*` in the security category. Its bundled engines' rules (`eslint/*`, `knip/*`, `react/*`, `jsx-a11y/*`) are advisory, because an engine the repo never chose is never imposed, as are `complexity/*`, `code-quality/duplicate-block` and `security/vulnerable-dependency`, which other categories measure. A repo that owns an `.aislop/` config grades every rule it selected. Its injection rules fire on any interpolated string: read the line before you leave `security/shell-injection` or `security/sql-injection` graded.

@@ -1,8 +1,14 @@
 # Grading
 
-Read this when turning tool findings into letters. Eight categories, fixed order (also the
-remediation order): security, types, dead code, complexity, duplication, lint, format, test quality.
-A category no tool measured is `not assessed (reason)`, never A. All eight appear in every report.
+Read this when ruling on findings and when grading a deep tool by hand. Eight categories, fixed
+order (also the remediation order): security, types, dead code, complexity, duplication, lint,
+format, test quality. A category no tool measured is `not assessed (reason)`, never A. All eight
+appear in every report.
+
+The scan applies every lookup below when it writes a finding's verdict and severity, and
+`health.py grade` does the arithmetic from the findings files as they stand. What it cannot do is
+read the repo: a rule below that turns on what the code is for (a library's public API, a
+fixture, a waiver's intent) is yours to apply with `health.py verdict`.
 
 ## Graded vs advisory
 
@@ -22,6 +28,8 @@ Only graded findings count toward a letter. A finding is advisory when:
 - bandit severity < HIGH and confidence < HIGH under the default config;
 - a vulnerable dependency has no fixed version, is reachable only from devDependencies, or
   govulncheck says the vulnerable symbol is never called;
+- aislop reported it on its default config from a bundled engine (`eslint/*`, `knip/*`, `react/*`,
+  `jsx-a11y/*`) or from a rule another category measures;
 - a formatter disagreement comes from a repo that formats in CI with an older formatter version.
 
 A repo that owns a tool's config grades every finding that config selected, and a finding that

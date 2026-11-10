@@ -1,6 +1,14 @@
 # Go analyzers
 
-cwd = the module directory (the one holding `go.mod`); run once per module. Env for every command: `GOFLAGS=-mod=readonly GOMODCACHE=$HOME/go/pkg/mod`. Ephemeral form is `go run <import-path>@latest`, which builds into the module and build caches, never the repo. Gate every tool on `go version` run from the same directory (a `go.work` or `toolchain` directive changes the answer per directory); no `go`, or below 1.25: every Go category is not assessed with one sentence naming https://go.dev/dl. Strip `go: downloading …`, `go: extracting …`, `go: finding …` lines from stderr before reading it. Record the version each tool prints; gocognit has no `-version` and a `go run @latest` gosec prints `dev`, so resolve those with `cd <scratch> && GOFLAGS= go list -m -f '{{.Version}}' <module>@latest`.
+What the scan runs for a Go module and how to read each tool's rows. The commands themselves, with
+their pinned versions and cwd, are in `<run-dir>/tools.md` → Commands.
+
+Every tool runs once per module, from the directory holding `go.mod`, with
+`GOFLAGS=-mod=readonly`, so nothing rewrites `go.mod` or `go.sum`. Ephemeral tools run as
+`go run <import path>@<version>`, which builds into the module and build caches, never the repo.
+The gate is `go version` run from the module directory (a `go.work` or `toolchain` directive
+changes the answer per directory): no `go`, or below 1.25, and every Go category reads
+`not assessed`, naming https://go.dev/dl.
 
 | category | tool |
 | --- | --- |
@@ -9,40 +17,44 @@ cwd = the module directory (the one holding `go.mod`); run once per module. Env 
 | types | staticcheck compile diagnostics |
 | dead code | staticcheck U1000 |
 | complexity | gocognit |
-| security | gosec; govulncheck (repo-wide, see common.md) |
+| security | gosec; govulncheck (joined to osv-scanner, see [common.md](common.md)) |
 | test quality (deep) | gremlins (owned only); `go test -cover` as context |
 
-## Commands
+Ownership: golangci-lint by `.golangci.yml|yaml|toml|json`, gremlins by `.gremlins.yaml|yml`, in
+the module or an ancestor. A golangci config under another name that the repo's own script
+passes with `--config` is not seen: name it in the plan, and read its waivers before you leave
+the findings it waives graded.
 
-**staticcheck** (types, dead code, lint from one run). Exit 1 = findings; failure = non-zero and nothing parsed. `compile` records saying `cannot find module providing package`, `no required module provides` or `import lookup disabled` mean the module graph is broken: refuse the whole run as error rather than grade a partial graph. Route: `U\d+` to dead code, `compile` to types as error, the rest to lint as warning.
-```sh
-go run honnef.co/go/tools/cmd/staticcheck@latest -f json ./...
-```
+## Reading the rows
 
-**go vet** (lint). Exit 0 even with diagnostics; non-zero = package load failure, stderr's first line names the package. Output is several pretty-printed JSON documents concatenated (`{}` per silent package): split by brace counting outside strings.
-```sh
-go vet -json ./...
-```
+**staticcheck** (types, dead code, lint from one run). `U…` rules are dead code, `compile` rows
+are type errors, the rest is lint at warning. A `compile` row saying the module graph is broken
+(`cannot find module providing package`, `no required module provides`, `import lookup disabled`)
+turns the whole row into `error`: a partial graph is not graded. With golangci-lint owned,
+staticcheck's lint rows stand down and its types and dead-code rows stay.
 
-**golangci-lint** (lint, owned only: `.golangci.yml|yaml|toml|json`). Stdout is one JSON line followed by prose: take the line carrying `Issues`. Rule = `FromLinter`.
-```sh
-go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest run --output.json.path stdout
-```
+**go vet** (lint). A non-zero exit is a package that did not load, and the row reads `error`
+with the package named.
 
-**gofmt** (format). Pass files, never a directory (a directory walks vendor and generated code). Exit 0 always; non-zero = unparseable file. Never `-w`, never `go fmt`.
-```sh
-gofmt -l <module-relative files>
-```
+**golangci-lint** (lint, owned only). The rule is the linter that reported (`FromLinter`).
 
-**gocognit** (complexity). `-over -1` is load-bearing: the default omits zero-scored functions and shrinks the denominator. `./...` is rejected; pass `.` and filter to the inventory.
-```sh
-go run github.com/uudashr/gocognit/cmd/gocognit@latest -json -over -1 .
-```
+**gofmt** (format). The metric is files it would rewrite / files passed.
 
-**gosec** (security). No `-quiet` (under it a load failure prints nothing and exits 0). Exit 1 for findings and for load errors alike, so read the envelope: empty `Issues` with non-empty `Golang errors` is a refusal. `line` and `column` arrive as strings. Drop the `code` window from findings and from the saved JSON before it leaves scratch (G101's window is the credential): `jq 'del(.Issues[].code)'`.
-```sh
-go run github.com/securego/gosec/v2/cmd/gosec@latest -fmt=json ./...
-```
+**gocognit** (complexity). Every function counts, zero-scored ones included, so the denominator
+is honest; the `score` flag carries each number. Generated files are in both halves: say so when
+`inventory.md` lists many.
+
+**gosec** (security). HIGH is error, MEDIUM warning, LOW info, and every row grades on the
+default config. `G101` is a secret: critical, its message replaced. `G115` integer-conversion
+rows on generated database code are the usual bulk; read the repo's own linter config for a
+waiver before you count them.
+
+**govulncheck** (security). One row per advisory with its verdict as the rule:
+`symbol-reachable`, `imported-no-call` or `not-imported`. Its verdict decides the osv-scanner row
+for the same advisory, and the two never both grade: reachable leaves osv-scanner's row graded
+and marks govulncheck's a duplicate; unreachable makes osv-scanner's advisory.
+
+## Deep
 
 **go test** (deep, context only). Total is the `total: (statements) N%` line. This is statement coverage, say so.
 ```sh
@@ -56,6 +68,6 @@ go run github.com/go-gremlins/gremlins/cmd/gremlins@latest unleash --output <scr
 
 ## Gotchas
 
-- Timeouts: the 300 s budget covers every Go tool here; a cold module cache compiles the world.
+- Timeouts: every Go tool gets 300 s; a cold module cache compiles the world. A `timeout` row reruns warm, usually inside the budget.
 - `vendor/` is out of the inventory; the tools' `./...` respects `-mod=readonly`.
 - A nested `go.mod` is its own module and its own project.
