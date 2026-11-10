@@ -876,14 +876,21 @@ snapshots:
 
 class PrModeTest(RepoCase):
     def test_changed_lines_maps_renames_and_added_ranges(self):
-        repo = self.repo({"a.py": "one\ntwo\nthree\n", "old.py": "".join(f"line {n}\n" for n in range(40))})
+        repo = self.repo(
+            {"a.py": "one\ntwo\nthree\n", "café.py": "a\n", "old.py": "".join(f"line {n}\n" for n in range(40))}
+        )
         base = subprocess.run(["git", "-C", str(repo.path), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         git(repo.path, "mv", "old.py", "new.py")
-        repo.write({"a.py": "one\nTWO\nthree\nfour\nfive\n"})
+        repo.write({"a.py": "one\nTWO\nthree\nfour\nfive\n", "café.py": "A\n"})
         repo.commit("change")
+        repo.write({"fresh.py": "x = 1\n"})
+        git(repo.path, "config", "diff.noprefix", "true")
+        git(repo.path, "config", "diff.mnemonicPrefix", "true")
         renames, hunks = cli.changed_lines(repo.path, base)
         self.assertEqual(renames, {"old.py": "new.py"})
         self.assertEqual(hunks["a.py"], [(2, 2), (4, 5)])
+        self.assertEqual(hunks["café.py"], [(1, 1)])
+        self.assertEqual(hunks["fresh.py"], [(1, sys.maxsize)])
         self.assertEqual(hunks["new.py"], [])
 
     def test_the_finding_key_ignores_line_numbers_and_follows_renames(self):

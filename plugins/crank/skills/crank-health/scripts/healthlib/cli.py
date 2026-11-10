@@ -220,7 +220,8 @@ def finding_key(finding: Finding, renames: dict[str, str] | None = None) -> tupl
 def changed_lines(repo: Path, base_sha: str) -> tuple[dict[str, str], dict[str, list[tuple[int, int]]]]:
     """Renames (old path -> new path) and, per file, the line ranges the diff added or changed."""
     renames, hunks = {}, {}
-    status = inv.git(repo, "diff", "-M", "--name-status", base_sha).stdout.decode("utf-8", "replace")
+    plain = ("-c", "core.quotePath=false", "diff", "--no-ext-diff", "--no-color")
+    status = inv.git(repo, *plain, "-M", "--name-status", base_sha).stdout.decode("utf-8", "replace")
     for line in status.splitlines():
         parts = line.split("\t")
         if parts[0].startswith("R") and len(parts) == 3:
@@ -228,13 +229,21 @@ def changed_lines(repo: Path, base_sha: str) -> tuple[dict[str, str], dict[str, 
         if len(parts) >= 2:
             hunks.setdefault(parts[-1], [])
     current = None
-    diff = inv.git(repo, "diff", "-U0", "-M", "--no-color", base_sha).stdout.decode("utf-8", "replace")
+    prefixes = ("--src-prefix=a/", "--dst-prefix=b/")
+    diff = inv.git(repo, *plain, *prefixes, "-U0", "-M", base_sha).stdout.decode("utf-8", "replace")
     for line in diff.splitlines():
         if line.startswith("+++ "):
             current = line[6:] if line.startswith("+++ b/") else None
         elif current and (span := hunk_span(line)):
             hunks.setdefault(current, []).append(span)
+    hunks.update(untracked_hunks(repo))
     return renames, hunks
+
+
+def untracked_hunks(repo: Path) -> dict[str, list[tuple[int, int]]]:
+    """Every untracked-unignored file, which `git diff` omits, as wholly added."""
+    names = inv.git(repo, "ls-files", "-z", "--others", "--exclude-standard").stdout.decode("utf-8", "surrogateescape")
+    return {name: [(1, sys.maxsize)] for name in names.split("\0") if name}
 
 
 def hunk_span(line: str) -> tuple[int, int] | None:
