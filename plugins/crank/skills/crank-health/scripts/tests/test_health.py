@@ -247,11 +247,29 @@ venv = ".venv"
 
 
 class PlanTest(RepoCase):
-    def rows(self, files: dict[str, str], **kw) -> dict[str, Row]:
+    def rows(self, files: dict[str, str], *, present: set[str] | None = None, **kw) -> dict[str, Row]:
         run = self.run_for(self.repo(files), **kw)
-        run.which = lambda name: f"/usr/bin/{name}"  # every toolchain present, none executed
+        if present is None:
+            run.which = lambda name: f"/usr/bin/{name}"  # every toolchain present, none executed
+        else:
+            run.which = lambda name: f"/usr/bin/{name}" if name in present else None
         run.version = lambda *a, **k: "99.0.0"
         return {f"{r.project}:{r.tool}": r for r in cli.plan_rows(run)}
+
+    def test_a_missing_toolchain_names_its_install_hint(self):
+        rows = self.rows({"package.json": "{}", "i.ts": "1\n", "pyproject.toml": "", "a.py": "x = 1\n", "go.mod": "module x\n", "a.go": "package a\n", "CMakeLists.txt": "project(x)\n", "a.cpp": "int a;\n", ".clang-format": "", "p/p.csproj": "<Project/>", "p/a.cs": "class A {}\n"}, present=set())
+        expected = {
+            "repo:gitleaks": "gitleaks not on PATH: brew install gitleaks",
+            "repo:osv-scanner": "osv-scanner not on PATH: brew install osv-scanner",
+            "repo:opengrep": "opengrep not on PATH: brew install opengrep",
+            ".:go vet": "go not on PATH: https://go.dev/dl (1.25+)",
+            "p:dotnet format whitespace": "dotnet not on PATH: https://dotnet.microsoft.com/download (SDK 10+)",
+            ".:oxlint": "node not on PATH: brew install node",
+            ".:ruff check": "uv not on PATH: brew install uv",
+            ".:clang-format": "uv not on PATH: brew install uv",
+        }
+        for key, detail in expected.items():
+            self.assertEqual(rows[key].detail, detail, key)
 
     def test_never_imposed_tools_are_skipped_and_defaults_run(self):
         rows = self.rows({"package.json": "{}", "i.ts": "1\n"})

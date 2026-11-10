@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, Unavailable, batches, parse_json, read_text, sarif_results
+from .runner import Failed, Metric, Row, Run, Unavailable, batches, not_on_path, parse_json, read_text, sarif_results
 
 LANGUAGE = "python"
 CEILING = 15
@@ -254,7 +254,7 @@ class _Context:
         elif self.run.which("uv"):
             argv, row.provenance = self.run.uvx("pyright"), f"{how}, ephemeral"
         else:
-            return row.unavailable("uv not on PATH: brew install uv")
+            return row.unavailable(not_on_path("uv"))
         row.job = partial(self._pyright_job, argv, config)
         return row
 
@@ -299,7 +299,7 @@ class _Context:
         elif self.run.which("uv"):
             argv, row.provenance = self.run.uvx("mypy"), f"repo config ({config or 'none'}), ephemeral"
         else:
-            return row.unavailable("uv not on PATH: brew install uv")
+            return row.unavailable(not_on_path("uv"))
         row.job = partial(self._mypy_job, argv, config)
         return row
 

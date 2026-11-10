@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, parse_json
+from .runner import Failed, Metric, Row, Run, not_on_path, parse_json
 
 LANGUAGE = "csharp"
 OWNABLE = ("stryker.net",)
@@ -86,7 +86,7 @@ def _row(project: inv.Project, categories, tool: str) -> Row:
 def _dotnet(run: Run, cwd: Path) -> tuple[str, str]:
     """The SDK version answering from `cwd`, and the reason dotnet format cannot run, if any."""
     if not run.which("dotnet"):
-        return "", "dotnet not on PATH: https://dotnet.microsoft.com/download"
+        return "", not_on_path("dotnet")
     version = run.version(f"dotnet:{cwd}", ["dotnet", "--version"], cwd=cwd, env=ENV)
     major = re.match(r"(\d+)", version)
     if not major or int(major.group(1)) < 10:

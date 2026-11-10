@@ -15,7 +15,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, Unavailable, batches, parse_json, read_text, sarif_results
+from .runner import Failed, Metric, Row, Run, Unavailable, batches, not_on_path, parse_json, read_text, sarif_results
 
 LANGUAGE = "repo-wide"
 JSCPD_FORMATS = "javascript,jsx,typescript,tsx,python,csharp,go,c,c-header,cpp,cpp-header"
@@ -63,7 +63,7 @@ class _Context:
     def gitleaks(self) -> Row:
         r = row("security", "gitleaks")
         if not self.run.which("gitleaks"):
-            return r.unavailable("brew install gitleaks")
+            return r.unavailable(not_on_path("gitleaks"))
         config = inv.find_config(self.repo, ".", (".gitleaks.toml",), local=True)
         r.provenance = (f"repo config ({config})" if config else "default config") + ", system binary"
         r.job = self._gitleaks_job
@@ -113,7 +113,7 @@ class _Context:
     def osv_scanner(self) -> Row:
         r = row("security", "osv-scanner")
         if not self.run.which("osv-scanner"):
-            return r.unavailable("brew install osv-scanner")
+            return r.unavailable(not_on_path("osv-scanner"))
         locks = [f for f in self.files if _is_osv_manifest(f)]
         config = inv.find_config(self.repo, ".", ("osv-scanner.toml",), local=True)
         r.provenance = (f"repo config ({config})" if config else "default config") + ", system binary"
@@ -168,7 +168,7 @@ class _Context:
         if not workflows:
             return r.skip("nothing to scan (no workflow files)")
         if not self.run.which("uv"):
-            return r.unavailable("uv not on PATH: brew install uv")
+            return r.unavailable(not_on_path("uv"))
         config = inv.find_config(self.repo, ".", ("zizmor.yml", "zizmor.yaml"), local=True) or (
             ".github/zizmor.yml" if (self.repo / ".github/zizmor.yml").exists() else None
         )
@@ -220,7 +220,7 @@ class _Context:
     def opengrep(self) -> Row:
         r = row("security", "opengrep")
         if not self.run.which("opengrep"):
-            return r.unavailable("brew install opengrep")
+            return r.unavailable(not_on_path("opengrep"))
         rules = next((d for d in (".opengrep", ".semgrep") if (self.repo / d).is_dir()), None)
         if rules is None:
             return r.skip("no local ruleset")
@@ -269,7 +269,7 @@ class _Context:
             r = row("duplication", "jscpd", project=project)
             r.scope = "project" if project != "repo" else "selected project dirs"
             if not self.run.which("node"):
-                rows.append(r.unavailable("node not on PATH: brew install node"))
+                rows.append(r.unavailable(not_on_path("node")))
                 continue
             r.provenance = "skill config, ephemeral"
             r.job = partial(self._jscpd_job, dirs, nested)
@@ -344,7 +344,7 @@ class _Context:
     def aislop(self) -> Row:
         r = row(("lint", "security"), "aislop")
         if not self.run.which("node"):
-            return r.unavailable("node not on PATH: brew install node")
+            return r.unavailable(not_on_path("node"))
         config = ".aislop" if (self.repo / ".aislop").is_dir() else None
         r.provenance = (f"repo config ({config}/)" if config else "default config") + ", ephemeral"
         r.job = partial(self._aislop_job, config)

@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, Unavailable, batches, first_json_line, parse_json
+from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, Unavailable, batches, first_json_line, not_on_path, parse_json
 
 LANGUAGE = "go"
 CEILING = 15
@@ -95,7 +95,7 @@ class _Context:
     def gate(self) -> str:
         """Empty when Go 1.25+ answers from this directory; otherwise the reason."""
         if not self.run.which("go"):
-            return "go not on PATH: https://go.dev/dl"
+            return not_on_path("go")
         version = self.run.version(f"go:{self.dir}", ["go", "version"], cwd=self.dir, pattern=r"go(\d+\.\d+(?:\.\d+)?)")
         found = re.search(r"(\d+)\.(\d+)", version)
         if not found or (int(found.group(1)), int(found.group(2))) < (1, 25):

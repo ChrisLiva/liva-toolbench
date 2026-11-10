@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, batches
+from .runner import BUDGET_SLOW, Failed, Metric, Row, Run, batches, not_on_path
 
 LANGUAGE = "c-cpp"
 CEILING = 15
@@ -45,7 +45,7 @@ def plan(run: Run, project: inv.Project) -> list[Row]:
             cppcheck.skip("nothing to scan (headers only)")
     else:
         for row in (cppcheck, lizard):
-            row.unavailable("uv not on PATH: brew install uv")
+            row.unavailable(not_on_path("uv"))
     _wire_format(ctx, fmt)
     if run.deep:
         tidy.skip("deep tool: run it from references/cpp.md")
@@ -64,7 +64,7 @@ def _wire_format(ctx: _Context, fmt: Row) -> None:
     elif run.which("uv"):
         fmt.provenance, fmt.job = f"repo config ({project.owned['clang-format']}), ephemeral", ctx.clang_format
     else:
-        fmt.unavailable("uv not on PATH: brew install uv")
+        fmt.unavailable(not_on_path("uv"))
 
 
 def _route(rule: str, severity: str) -> tuple[str, str] | None:

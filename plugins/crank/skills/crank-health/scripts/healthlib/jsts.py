@@ -8,7 +8,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, batches, first_json_line, parse_json, sarif_results
+from .runner import Failed, Metric, Row, Run, batches, first_json_line, not_on_path, parse_json, sarif_results
 
 LANGUAGE = "js-ts"
 CEILING = 15
@@ -173,7 +173,7 @@ class _Context:
 
             return argv
         if not self.run.which("node"):
-            row.unavailable("node not on PATH: brew install node")
+            row.unavailable(not_on_path("node"))
             return None
         row.provenance = f"{how}, ephemeral"
         declared = self.declared(package) if is_owned else ""
@@ -351,7 +351,7 @@ class _Context:
         self.project.facts["react"] = react
         row = self.row("lint", "react-doctor")
         if not self.run.which("node"):
-            return row.unavailable("node not on PATH: brew install node")
+            return row.unavailable(not_on_path("node"))
         row.provenance = "default config, ephemeral"
         row.job = self._react_doctor_job
         return row
@@ -483,7 +483,7 @@ class _Context:
             row.provenance = f"{how}, ephemeral"
             local = None
         else:
-            return row.unavailable("node not on PATH: brew install node")
+            return row.unavailable(not_on_path("node"))
         row.job = partial(self._tsc_job, own, typed, declared, local)
         return row
 
@@ -613,7 +613,7 @@ class _Context:
 
     def fallow(self, row: Row, config: str | None):
         if not self.run.which("node"):
-            row.unavailable("node not on PATH: brew install node")
+            row.unavailable(not_on_path("node"))
             return None
         return self.resolve(row, "fallow", "fallow", "fallow", config)
 

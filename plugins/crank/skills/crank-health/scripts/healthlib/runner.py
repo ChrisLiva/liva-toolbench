@@ -42,6 +42,10 @@ INSTALL_HINTS = {
 }
 
 
+def not_on_path(name: str) -> str:
+    return f"{name} not on PATH: {INSTALL_HINTS.get(name, 'install ' + name)}"
+
+
 # stderr lines that say nothing about why a tool failed
 NOISE = ("go: downloading", "go: extracting", "go: finding", "npm warn", "Oops! Something went wrong", "ESLint: ")
 
@@ -320,7 +324,7 @@ class Run:
     def need(self, name: str) -> str:
         found = self.which(name)
         if not found:
-            raise Unavailable(f"{name} not on PATH: {INSTALL_HINTS.get(name, 'install ' + name)}")
+            raise Unavailable(not_on_path(name))
         return found
 
     def lock(self, name: str) -> threading.Lock:
