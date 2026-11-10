@@ -1,7 +1,7 @@
 """The table-lookup calls made once every tool has run: a standby stands down, a hit
 outside the inventory leaves, one defect seen by two tools is counted once.
 
-Everything here is a rule `references/grading.md` or `assets/tools.md` states as a lookup.
+Everything here is a rule `references/grading.md` or `references/run-dir.md` states as a lookup.
 Whether a finding is a false positive, a fixture or a public API stays with the agent.
 """
 

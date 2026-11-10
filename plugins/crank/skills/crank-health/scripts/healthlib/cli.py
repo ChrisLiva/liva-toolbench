@@ -1,11 +1,5 @@
 """crank-health's mechanical half: inventory a repo, choose its analyzers, run them, and
 normalize what they print. Judgment (triage, the plan) stays with the agent.
-
-    health.py scan   [path] [--pr BASE] [--deep] [--only CATS] [--project DIR]... [--plan]
-    health.py verdict <run-dir> (--advisory REASON | --dropped REASON | --graded) <filters>
-    health.py rerun  <run-dir> [--tool NAME]... [--project DIR]...
-    health.py grade  <run-dir>
-    health.py finish <run-dir>
 """
 
 from __future__ import annotations
@@ -48,8 +42,6 @@ SECRET = re.compile(rb"AKIA[0-9A-Z]{16}|BEGIN [A-Z ]*PRIVATE KEY|ghp_[A-Za-z0-9]
 def say(text: str) -> None:
     print(text, file=sys.stderr, flush=True)
 
-
-# --- one tree ------------------------------------------------------------------------------
 
 
 def path_facts(run: Run) -> dict[str, str]:
@@ -166,8 +158,6 @@ def digest(run_dir: Path, rows: list[Row], grades: list[grading.Grade], stage: s
     print("read next: grades.md, inventory.md, tools.md, summary/*.md, findings/<project>/<tool>.tsv")
 
 
-# --- scan ----------------------------------------------------------------------------------
-
 
 def new_run_dir(repo: Path, override: str | None) -> Path:
     if override:
@@ -214,8 +204,6 @@ def cmd_scan(opts) -> int:
         print("pr mode: read pr.md, new-findings.tsv, resolved-findings.tsv")
     return 0
 
-
-# --- PR mode -------------------------------------------------------------------------------
 
 
 def finding_key(finding: Finding, renames: dict[str, str] | None = None) -> tuple:
@@ -370,8 +358,6 @@ def pr_mode(repo: Path, run_dir: Path, opts, head: dict, base_sha: str, head_gra
     (run_dir / "pr.md").write_text("\n".join(out) + "\n")
 
 
-# --- rerun, grade, finish ------------------------------------------------------------------
-
 
 def cmd_rerun(opts) -> int:
     run_dir = Path(opts.run_dir).resolve()
@@ -440,7 +426,6 @@ def verdict_finding_matches(finding: Finding, opts) -> bool:
 
 
 def cmd_verdict(opts) -> int:
-    """Triage in bulk: set the verdict column of every finding the filters select."""
     run_dir = Path(opts.run_dir).resolve()
     meta, projects, rows = report.read_results(run_dir)
     filters = (opts.tool, opts.project, opts.category, opts.rule, opts.path, opts.flag, opts.line, opts.message)
@@ -535,8 +520,6 @@ def written_since(repo: Path, run_dir: Path, started: float) -> list[str]:
                 continue
     return sorted(found)
 
-
-# --- entry ---------------------------------------------------------------------------------
 
 
 def categories(text: str) -> list[str]:

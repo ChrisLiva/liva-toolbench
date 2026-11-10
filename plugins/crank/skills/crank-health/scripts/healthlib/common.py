@@ -58,8 +58,6 @@ class _Context:
             shutil.copyfile(self.repo / rel, target)
         return root
 
-    # --- secrets -----------------------------------------------------------------------
-
     def gitleaks(self) -> Row:
         r = row("security", "gitleaks")
         if not self.run.which("gitleaks"):
@@ -107,8 +105,6 @@ class _Context:
             )
             finding.data["hits"] = len(lines)
         return kept
-
-    # --- vulnerable dependencies -------------------------------------------------------
 
     def osv_scanner(self) -> Row:
         r = row("security", "osv-scanner")
@@ -159,8 +155,6 @@ class _Context:
             for package in result.get("packages") or []:
                 if package.get("vulnerabilities"):
                     _osv_finding(r, lock, text, reach if npm else None, package)
-
-    # --- workflows ---------------------------------------------------------------------
 
     def zizmor(self) -> Row:
         r = row("security", "zizmor")
@@ -215,8 +209,6 @@ class _Context:
         )
         finding.data.update(confidence=marks.get("confidence", ""), severity=marks.get("severity", ""))
 
-    # --- SAST --------------------------------------------------------------------------
-
     def opengrep(self) -> Row:
         r = row("security", "opengrep")
         if not self.run.which("opengrep"):
@@ -256,8 +248,6 @@ class _Context:
                 extra.get("message", ""),
             )
         self.run.save(r, "opengrep.json", json.dumps(results, indent=1))
-
-    # --- duplication -------------------------------------------------------------------
 
     def jscpd(self) -> list[Row]:
         scanned = self.inv.scanned()
@@ -338,8 +328,6 @@ class _Context:
             base = self.repo / inv.parent(rel)
             globs += [g for p in _exclude_patterns(self.repo, rel) for g in _both(f"{base}/{p.lstrip('/')}")]
         return globs
-
-    # --- aislop ------------------------------------------------------------------------
 
     def aislop(self) -> Row:
         r = row(("lint", "security"), "aislop")
@@ -428,8 +416,6 @@ def _both(glob: str) -> list[str]:
     return [glob] if glob.endswith("/**") else [glob, glob.rstrip("/") + "/**"]
 
 
-# --- osv helpers ---------------------------------------------------------------------------
-
 
 def _is_osv_manifest(rel: str) -> bool:
     name = rel.rsplit("/", 1)[-1]
@@ -480,7 +466,7 @@ def _advisory_message(package: str, count: int, fixes: list[str], target: str) -
 
 
 def _osv_reason(target: str, reach: _Reachability | None, name: str, version: str) -> tuple[str, str]:
-    """(advisory reason, message suffix). Only a lockfile that proves a package dev-only demotes it."""
+    """(advisory reason, message suffix)."""
     if not target:
         return "no fixed version exists", ""
     if reach is None:

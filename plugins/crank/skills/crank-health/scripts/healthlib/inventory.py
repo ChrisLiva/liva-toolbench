@@ -1,4 +1,4 @@
-"""Step 1: what is in scope, how it splits into projects, how many lines each holds.
+"""What is in scope, how it splits into projects, how many lines each holds.
 
 The rules are the ones `references/inventory.md` states. Ownership of a tool is decided
 beside that tool, in the language modules; this module supplies the readers they share.
@@ -604,7 +604,7 @@ def _snapshot_depth(rel: str) -> int:
 
 
 def footprint(repo: Path) -> str:
-    """The repo's dirty state; step 7 compares a second listing against the first."""
+    """The repo's dirty state; `health.py finish` compares a second listing against the first."""
     done = git(repo, "status", "--porcelain", "--untracked-files=all", "--ignored=no")
     lines = done.stdout.decode("utf-8", "surrogateescape").splitlines()
     return "".join(line + "\n" for line in sorted(lines))

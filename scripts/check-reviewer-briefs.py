@@ -318,7 +318,6 @@ def check_template(failures):
 
 
 def check_health(failures):
-    """crank-health's scanner must pass its own tests."""
     proc = subprocess.run(
         [sys.executable, "-m", "unittest", "discover", "-s", HEALTH_TESTS],
         cwd=ROOT, capture_output=True, text=True,

@@ -122,8 +122,6 @@ class _Context:
     def go(self, row: Row, argv: list[str]):
         return self.run.exec(row, argv, cwd=self.dir, env=self.env)
 
-    # --- staticcheck: types, dead code and lint from one run -----------------------------
-
     def staticcheck(self, row: Row) -> None:
         done = self.go(row, [*self.tool(row, "staticcheck"), "-f", "json", "./..."])
         records = [r for r in map(parse_json, done.stdout.splitlines()) if isinstance(r, dict)]

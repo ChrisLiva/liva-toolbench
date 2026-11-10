@@ -56,23 +56,19 @@ class Unavailable(Exception):
 
 
 class Failed(Exception):
-    """The tool ran and produced nothing usable; the message is stderr's first line."""
+    """The tool ran and produced nothing usable; the message is a one-line reason, usually stderr's first line."""
 
 
 @dataclass
 class Finding:
-    """One row of a findings file:
-    file  line  category  tool/rule  severity  verdict  message  flags
+    """One row of a findings file.
 
-    `verdict` is `graded`, `advisory: <reason>` or `dropped: <reason>`. The scan writes the
-    first two; triage rewrites the column, and `dropped` takes a row out of every count.
-    `line` is 0 for a finding about a whole file (an empty cell in the file). `flags` carries
-    what triage sorts on: path classes (`test`, `snapshot`, `generated`) and the numbers
-    behind a message (`score=24`, `confidence=60`).
+    Columns, verdicts and flags: `references/run-dir.md` → Findings. `parse` reads a verdict
+    it does not know as advisory.
     """
 
     file: str
-    line: int
+    line: int  # 0: a whole-file finding, an empty cell in the file
     category: str
     rule: str
     severity: str
@@ -279,10 +275,8 @@ class Run:
         self._versions: dict[str, str] = {}
         self._shared: dict[str, tuple[bool, object]] = {}
 
-    # --- paths -------------------------------------------------------------------------
-
     def temp_dir(self, *parts: str) -> Path:
-        """A directory outside the repo for mirrors and worktrees: a tool that honours
+        """A directory outside the repo for the mirrors: a tool that honours
         `.gitignore` sees nothing under the run dir, which `.crank-health/.gitignore` hides."""
         with self._guard:
             if self.temp is None:
@@ -335,8 +329,6 @@ class Run:
         except ValueError:
             return path
 
-    # --- PATH --------------------------------------------------------------------------
-
     def which(self, name: str) -> str | None:
         if name not in self._which:
             self._which[name] = shutil.which(name)
@@ -368,7 +360,6 @@ class Run:
     OVERRIDABLE = ("knip", "cppcheck")
 
     def unread_overrides(self) -> list[str]:
-        """Keys of `overrides.json` no tool reads."""
         doc = parse_json(read_text(self.run_dir / "overrides.json")) or {}
         return [key for key in doc if key.split("@", 1)[0] not in self.OVERRIDABLE] if isinstance(doc, dict) else []
 
@@ -379,8 +370,6 @@ class Run:
         doc = parse_json(read_text(self.run_dir / "overrides.json")) or {}
         args = doc.get(f"{tool}@{project}", doc.get(tool)) or []
         return [str(a).replace("<run-dir>", str(self.run_dir)) for a in args] if isinstance(args, list) else []
-
-    # --- commands ----------------------------------------------------------------------
 
     def env(self, extra: dict | None = None) -> dict:
         env = dict(os.environ)
@@ -474,8 +463,6 @@ class Run:
                 except (Unavailable, TimeoutError):
                     self._versions[key] = ""
             return self._versions[key]
-
-    # --- ephemeral runners -------------------------------------------------------------
 
     def npm_version(self, package: str, declared: str = "") -> str:
         """Pin `latest` to the number it means now, so every call in a run agrees. A version

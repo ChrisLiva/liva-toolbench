@@ -139,8 +139,6 @@ class _Context:
     def row(self, categories, tool: str, **kw) -> Row:
         return Row(project=self.project.dir, language=LANGUAGE, categories=categories, tool=tool, **kw)
 
-    # --- resolving a binary ------------------------------------------------------------
-
     def local_bin(self, name: str) -> Path | None:
         for here in inv.ancestry(self.project.dir):
             candidate = self.repo / here / "node_modules" / ".bin" / name
@@ -180,8 +178,6 @@ class _Context:
             Rung("ephemeral", bool(self.run.which("node")), lambda: npx_argv),
         ]
         return pick_binary(row, how, rungs, not_on_path("node"))
-
-    # --- lint --------------------------------------------------------------------------
 
     def oxlint(self) -> Row:
         row = self.row("lint", "oxlint")
@@ -383,8 +379,6 @@ class _Context:
             slim.append({k: item.get(k) for k in ("filePath", "line", "rule", "severity", "message", "category")})
         self.run.save(row, "react-doctor.json", json.dumps(slim, indent=1))
 
-    # --- format ------------------------------------------------------------------------
-
     def prettier(self) -> Row:
         row = self.row("format", "prettier")
         is_owned = "prettier" in self.project.owned
@@ -461,8 +455,6 @@ class _Context:
                 counted += int(m.group(1))
         return failing, counted, unparsed
 
-    # --- types -------------------------------------------------------------------------
-
     def tsc(self) -> Row:
         row = self.row("types", "tsc")
         own = "tsc" in self.project.owned
@@ -531,8 +523,6 @@ class _Context:
             graded=error and not needs_install,
             reason="no node_modules: an install that never ran" if needs_install else kind,
         )
-
-    # --- dead code ---------------------------------------------------------------------
 
     def knip_cwd(self) -> str | None:
         """The highest ancestor with workspaces or a knip config; else the nearest package.json."""

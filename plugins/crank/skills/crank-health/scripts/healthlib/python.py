@@ -127,8 +127,6 @@ class _Context:
             records += part
         return records
 
-    # --- lint and format ---------------------------------------------------------------
-
     def ruff_check(self) -> Row:
         row = self.row(("lint", "security"), "ruff check")
         config = has_config(self.run.repo, self.project, "ruff")
@@ -190,8 +188,6 @@ class _Context:
                 row.notes.append(f"{path}: {record.get('code')}: {record.get('message', '')}"[:200])
         row.metrics["format"] = Metric(len(failing), len(self.files) - missing, "files")
         self.run.save(row, "ruff-format.json", _dump(records))
-
-    # --- types -------------------------------------------------------------------------
 
     def types(self) -> list[Row]:
         mypy = self.mypy()
@@ -315,8 +311,6 @@ class _Context:
                 record.get("message", ""),
             )
         self.run.save(row, "mypy.jsonl", done.stdout)
-
-    # --- dead code, complexity, security -----------------------------------------------
 
     def vulture(self) -> Row:
         row = self.row("dead code", "vulture")

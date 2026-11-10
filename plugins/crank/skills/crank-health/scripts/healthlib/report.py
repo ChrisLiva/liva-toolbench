@@ -26,8 +26,6 @@ def _table(header: list[str], rows: list[list]) -> list[str]:
     return out
 
 
-# --- inventory.md ------------------------------------------------------------------------
-
 
 def inventory_md(inventory: inv.Inventory, path_facts: dict, extra: list[str]) -> str:
     out = [f"repo: {inventory.repo} · head: {inventory.head} · dirty: {inventory.dirty} paths", *extra, ""]
@@ -84,8 +82,6 @@ def _listing(paths: list[str], limit: int = 6) -> str:
     return " (" + ", ".join(paths[:limit]) + more + ")"
 
 
-# --- tools.md ----------------------------------------------------------------------------
-
 
 def tools_md(meta: dict, rows: list[Row]) -> str:
     scope = "all projects" if not meta["selected"] else "--project " + " ".join(meta["selected"])
@@ -121,8 +117,6 @@ def _state(row: Row) -> str:
     return row.state
 
 
-# --- findings ------------------------------------------------------------------------------
-
 
 def findings_path(run_dir: Path, row: Row) -> Path:
     return run_dir / "findings" / row.folder / f"{row.slug}.tsv"
@@ -145,8 +139,6 @@ def read_findings(run_dir: Path, row: Row) -> list[Finding]:
         return []
     return [f for f in map(Finding.parse, lines) if f is not None]
 
-
-# --- summaries -----------------------------------------------------------------------------
 
 
 def _counts(findings: list[Finding], status: str) -> str:
@@ -232,8 +224,6 @@ def _write_project_summaries(folder: Path, project: inv.ProjectRecord, rows: lis
         (folder / f"{language}--{project.slug}.md").write_text(text, encoding="utf-8")
 
 
-# --- grades.md -----------------------------------------------------------------------------
-
 
 def grades_md(grades: list[grading.Grade], stage: str) -> str:
     units = list(dict.fromkeys(g.unit for g in grades))
@@ -250,8 +240,6 @@ def grades_md(grades: list[grading.Grade], stage: str) -> str:
         out += _table(["category", "grade", "basis"], body) + [""]
     return "\n".join(out)
 
-
-# --- results.json --------------------------------------------------------------------------
 
 
 def row_record(row: Row) -> dict:

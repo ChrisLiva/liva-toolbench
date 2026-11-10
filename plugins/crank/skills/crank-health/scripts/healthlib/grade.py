@@ -1,7 +1,7 @@
 """Letters from findings: the shapes, weights and bands `references/grading.md` states.
 
-Grading reads what is on disk in the run dir, so a triage edit to a findings file (a row
-flipped to `advisory: <reason>`) moves the letter the next time `grade` runs.
+`health.py grade` re-reads the findings files, so a hand edit to a verdict (a row flipped to
+`advisory: <reason>`) moves the letter.
 """
 
 from __future__ import annotations
