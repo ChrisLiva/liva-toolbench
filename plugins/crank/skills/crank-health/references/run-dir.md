@@ -97,8 +97,9 @@ findings file by hand works too; run `health.py grade <run-dir>` afterwards.
 
 `health.py rerun <run-dir> [--tool <name>]… [--project <dir>]…` runs those rows again at the
 run's pinned versions, keeps the verdict of every finding that is still there, and re-grades.
-A rerun that ends `error` or `timeout` keeps the previous `ok` row, its findings and their
-verdicts, and says so. Use it after a fix, after a `timeout` (add `--budget-scale 3`), and after an override.
+A rerun that ends anything but `ok` (`error`, `timeout`, `skipped`, `not-available`) keeps the
+previous `ok` row, its findings and their verdicts, and says so. Use it after a fix, after a
+`timeout` (add `--budget-scale 3`), and after an override.
 
 `<run-dir>/overrides.json` adds arguments to knip or cppcheck, the two tools whose first run
 routinely needs one: `{"<tool>": ["<arg>", …]}`, or for one project the key
