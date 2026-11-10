@@ -15,7 +15,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, Unavailable, batches, parse_json, sarif_results
+from .runner import Failed, Metric, Row, Run, Unavailable, batches, parse_json, read_text, sarif_results
 
 LANGUAGE = "repo-wide"
 JSCPD_FORMATS = "javascript,jsx,typescript,tsx,python,csharp,go,c,c-header,cpp,cpp-header"
@@ -79,7 +79,7 @@ class _Context:
             r,
             ["gitleaks", "dir", "--no-banner", "--redact=100", "--report-format", "json", "--report-path", report, "--exit-code", "0", *ignore, mirror],
         )
-        hits = parse_json(_read(report))
+        hits = parse_json(read_text(report))
         report.unlink(missing_ok=True)
         if not isinstance(hits, list):
             raise Failed(done.first_error)
@@ -147,14 +147,14 @@ class _Context:
         done = self.run.exec(r, [*argv, "--lockfile", self.repo / lock])
         if any(marker in done.stderr for marker in OFFLINE):
             raise Unavailable("offline: " + done.first_error)
-        doc = parse_json(_read(out))
+        doc = parse_json(read_text(out))
         if not isinstance(doc, dict) or "results" not in doc:
             return None, done.first_error
         return doc, ""
 
     def _osv_findings(self, r: Row, lock: str, doc: dict) -> None:
         reach = _Reachability(self.repo / lock)
-        text = _read(self.repo / lock)
+        text = read_text(self.repo / lock)
         npm = lock.rsplit("/", 1)[-1] in NPM_LOCKS
         for result in doc.get("results") or []:
             for package in result.get("packages") or []:
@@ -288,7 +288,7 @@ class _Context:
             r,
             [*argv, "--reporters", "json", "--output", out, "--format", JSCPD_FORMATS, "--config", config, "--absolute", "--no-colors", *(self.repo / d for d in dirs)],
         )
-        doc = parse_json(_read(out / "jscpd-report.json"))
+        doc = parse_json(read_text(out / "jscpd-report.json"))
         if not isinstance(doc, dict) or "statistics" not in doc:
             raise Failed(done.first_error)
         total = (doc.get("statistics") or {}).get("total") or {}
@@ -628,10 +628,3 @@ def parse_yaml_maps(text: str) -> dict:
         elif not value.startswith(("[", "|", ">")):
             parent[key] = value.strip("'\"")
     return root
-
-
-def _read(path) -> str:
-    try:
-        return Path(path).read_text(encoding="utf-8", errors="replace")
-    except OSError:
-        return ""

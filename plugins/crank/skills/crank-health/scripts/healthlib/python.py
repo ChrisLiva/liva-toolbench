@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 
 from . import inventory as inv
-from .runner import Failed, Metric, Row, Run, Unavailable, batches, parse_json, sarif_results
+from .runner import Failed, Metric, Row, Run, Unavailable, batches, parse_json, read_text, sarif_results
 
 LANGUAGE = "python"
 CEILING = 15
@@ -386,11 +386,11 @@ class _Context:
                 [*argv, "--quiet", "--max-complexity-allowed", str(CEILING), "--output", f"{out}/", "--output-format", "json,sarif", *batch],
                 cwd=cwd,
             )
-            listed = parse_json(_read(out / "complexipy-results.json"))
+            listed = parse_json(read_text(out / "complexipy-results.json"))
             if not isinstance(listed, list):
                 raise Failed(done.first_error)
             functions += listed
-            results += list(sarif_results(parse_json(_read(out / "complexipy-results.sarif"))))
+            results += list(sarif_results(parse_json(read_text(out / "complexipy-results.sarif"))))
         for rule, _level, message, uri, line in results:
             score = re.search(r"cognitive complexity of (\d+)", message)
             finding = row.add(self.run.rel(uri), line, "complexity", rule or "CC001", "warning", message)
@@ -460,13 +460,6 @@ def _setup_cfg_section(repo: Path, project: inv.Project, section: str) -> str | 
         except OSError:
             continue
     return None
-
-
-def _read(path: Path) -> str:
-    try:
-        return path.read_text(errors="replace")
-    except OSError:
-        return ""
 
 
 def _dump(value) -> str:

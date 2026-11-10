@@ -325,14 +325,14 @@ class Run:
 
     def unread_overrides(self) -> list[str]:
         """Keys of `overrides.json` no tool reads."""
-        doc = parse_json(_read_text(self.run_dir / "overrides.json")) or {}
+        doc = parse_json(read_text(self.run_dir / "overrides.json")) or {}
         return [key for key in doc if key.split("@", 1)[0] not in self.OVERRIDABLE] if isinstance(doc, dict) else []
 
     def extra(self, tool: str, project: str = "") -> list[str]:
         """Arguments the agent added for one tool in `<run-dir>/overrides.json`, a map of
         tool name to argument list: a knip `--config`, a cppcheck `--library=`. A
         `<tool>@<project dir>` key reaches one project and wins over the bare tool name."""
-        doc = parse_json(_read_text(self.run_dir / "overrides.json")) or {}
+        doc = parse_json(read_text(self.run_dir / "overrides.json")) or {}
         args = doc.get(f"{tool}@{project}", doc.get(tool)) or []
         return [str(a).replace("<run-dir>", str(self.run_dir)) for a in args] if isinstance(args, list) else []
 
@@ -492,7 +492,7 @@ def _fold(earlier: dict, code, seconds: float) -> None:
     earlier["runs"] = earlier.get("runs", 1) + 1
 
 
-def _read_text(path: Path) -> str:
+def read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8", errors="replace")
     except OSError:
