@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from healthlib import cli, common, cpp, go, grade, jsts, python, report, settle  # noqa: E402
 from healthlib import inventory as inv  # noqa: E402
-from healthlib.runner import CATEGORIES, Failed, Finding, Metric, Row, Run, execute, sarif_results  # noqa: E402
+from healthlib.runner import CATEGORIES, Done, Failed, Finding, Metric, Row, Run, execute, sarif_results  # noqa: E402
 
 
 def git(repo: Path, *args: str) -> None:
@@ -898,6 +898,19 @@ class PrModeTest(RepoCase):
         after = Finding("new.py", 14, "lint", "ruff-check/F401", "warning", "graded", "`os` imported but unused at 14")
         self.assertEqual(cli.finding_key(before, {"old.py": "new.py"}), cli.finding_key(after))
         self.assertNotEqual(cli.finding_key(before), cli.finding_key(after))
+
+
+class GoTest(RepoCase):
+    def test_staticcheck_with_nothing_parsed_and_a_failing_exit_is_an_error(self):
+        run = self.run_for(self.repo({"go.mod": "module x\n\ngo 1.25\n", "a.go": "package x\n"}))
+        run.which = lambda name: f"/usr/bin/{name}"
+        run.version = lambda *a, **k: "99.0.0"
+        row = next(r for r in cli.plan_rows(run) if r.project == "." and r.tool == "staticcheck")
+        run.pins[go.MODULES["staticcheck"][0]] = "v0.0.1"
+        stderr = "go: downloading x\nexit status 1\n"
+        run.exec = lambda *a, **k: Done(argv=[], cwd=".", code=1, seconds=0.0, stdout="", stderr=stderr)
+        execute(run, row)
+        self.assertEqual((row.state, row.detail), ("error", "exit 1, nothing on stderr"))
 
 
 class RunDirTest(RepoCase):

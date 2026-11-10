@@ -48,7 +48,7 @@ def not_on_path(name: str) -> str:
 
 
 # stderr lines that say nothing about why a tool failed
-NOISE = ("go: downloading", "go: extracting", "go: finding", "npm warn", "Oops! Something went wrong", "ESLint: ")
+NOISE = ("go: downloading", "go: extracting", "go: finding", "exit status", "npm warn", "Oops! Something went wrong", "ESLint: ")
 
 
 class Unavailable(Exception):

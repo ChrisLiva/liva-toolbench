@@ -125,8 +125,8 @@ class _Context:
     def staticcheck(self, row: Row) -> None:
         done = self.go(row, [*self.tool(row, "staticcheck"), "-f", "json", "./..."])
         records = [r for r in map(parse_json, done.stdout.splitlines()) if isinstance(r, dict)]
-        if not records and done.code != 0 and _real_stderr(done.stderr):
-            raise Failed(_real_stderr(done.stderr))
+        if not records and done.code != 0:
+            raise Failed(done.first_error)
         for record in records:
             code, message = record.get("code", ""), record.get("message", "")
             if code == "compile" and any(marker in message for marker in BROKEN_GRAPH):
@@ -147,7 +147,7 @@ class _Context:
         text = done.stderr + "\n" + done.stdout
         documents = _json_documents(text)
         if done.code != 0 and not any(documents):
-            raise Failed(_real_stderr(done.stderr) or f"exit {done.code}")
+            raise Failed(done.first_error)
         for analyzer, item in _vet_diagnostics(documents):
             path, _, rest = str(item.get("posn", "")).partition(":")
             row.add(self.run.rel(path, self.dir), rest.split(":")[0] if rest else "", "lint", analyzer, "warning", item.get("message", ""))
@@ -157,7 +157,7 @@ class _Context:
         done = self.go(row, [*self.tool(row, "golangci-lint"), "run", "--output.json.path", "stdout"])
         doc = first_json_line(done.stdout, "Issues")
         if doc is None:
-            raise Failed(_real_stderr(done.stderr) or f"exit {done.code}, no JSON line carrying Issues")
+            raise Failed(f"{done.first_error} (no JSON line carrying Issues)")
         for issue in doc.get("Issues") or []:
             position = issue.get("Pos") or {}
             issue.pop("SourceLines", None)
@@ -182,7 +182,7 @@ class _Context:
         done = self.go(row, [*self.tool(row, "gocognit"), "-json", "-over", "-1", "."])
         records = parse_json(done.stdout)
         if not isinstance(records, list):
-            raise Failed(_real_stderr(done.stderr) or f"exit {done.code}")
+            raise Failed(done.first_error)
         counted = over = 0
         for record in records:
             position = record.get("Pos") or {}
@@ -205,7 +205,7 @@ class _Context:
         done = self.go(row, [*self.tool(row, "gosec"), "-fmt=json", "./..."])
         doc = parse_json(done.stdout)
         if not isinstance(doc, dict) or "Issues" not in doc:
-            raise Failed(_real_stderr(done.stderr) or f"exit {done.code}")
+            raise Failed(done.first_error)
         issues = doc.get("Issues") or []
         if not issues and doc.get("Golang errors"):
             raise Failed("gosec could not load the packages: " + str(next(iter(doc["Golang errors"])))[:200])
@@ -228,7 +228,7 @@ class _Context:
         done = self.go(row, [*self.tool(row, "govulncheck"), "-json", "./..."])
         documents = _json_documents(done.stdout)
         if not documents:
-            raise Failed(_real_stderr(done.stderr) or f"exit {done.code}")
+            raise Failed(done.first_error)
         aliases, verdicts = _vuln_verdicts(documents)
         for osv_id, (rank, frame) in sorted(verdicts.items()):
             self._vulnerability(row, osv_id, rank, frame, aliases.get(osv_id, []))
@@ -309,12 +309,6 @@ def _reachability(rows: list[Row]) -> dict[str, bool]:
 
 def _ids(finding) -> list[str]:
     return str(finding.data.get("ids", "")).split(",")
-
-
-def _real_stderr(stderr: str) -> str:
-    skip = ("go: downloading", "go: extracting", "go: finding", "exit status")
-    lines = [l.strip() for l in stderr.splitlines() if l.strip() and not l.startswith(skip)]
-    return lines[0][:300] if lines else ""
 
 
 def _json_documents(text: str) -> list[dict]:
