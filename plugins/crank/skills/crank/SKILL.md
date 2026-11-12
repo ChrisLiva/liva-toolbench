@@ -17,7 +17,7 @@ Route the user's ask to the right phase of the design pipeline — **brainstorm 
 | `spec` | [SPEC.md](SPEC.md) | The idea is formed (or a brainstorm brief exists) and needs acceptance criteria and technical decisions. |
 | `plan` | [PLAN.md](PLAN.md) | Behavior and design are settled — a finished spec, or a well-understood change like a scoped bug fix — and only "how to build it" remains. |
 
-Execution is deliberately **not** a route: when a plan is done, recommend `/crank-execute` and stop. Sharpening an artifact without advancing it is `/crank-refine`'s job.
+Execution is deliberately **not** a route: when a plan is done, recommend `/crank-execute` and stop. Simplifying a written spec or plan without advancing it is `/crank-refine`'s job: a simpler design, existing code or libraries in place of invention, and scope the needs never asked for.
 
 Four asks enter elsewhere: a codebase-wide hunt for shallow modules or leaking seams is `/crank-deepen` (it hands back a brainstorm brief); judging existing changes is `/crank-review`, a test suite is `/crank-test-prune`, and stripping AI slop, hunting code-judo restructurings, or pruning outgrown comments over a declared scope is `/crank-deslop`.
 

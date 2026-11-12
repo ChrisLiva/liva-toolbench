@@ -1,7 +1,7 @@
 interface:
   display_name: "Crank Refine"
-  short_description: "Grill and sharpen a crank artifact in place"
-  default_prompt: "Use $crank:crank-refine to grill and sharpen the provided crank brainstorm, spec, or plan in place."
+  short_description: "Simplify a spec or plan before anyone builds it"
+  default_prompt: "Use $crank:crank-refine to refine this spec or plan into a list of simplifications."
 
 policy:
   allow_implicit_invocation: false
