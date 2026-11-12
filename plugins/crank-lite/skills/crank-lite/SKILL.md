@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Crank Lite
 
-Route the user's ask to the right phase: **brainstorm → spec → plan**, then run that phase. Load **only** the phase file you route to:
+Route the user's ask to the right phase: **brainstorm → spec → plan**, then run that phase. Load the phase file you route to; the other two load only on an explicit "continue" (Phase end):
 
 | Route | Phase file | Right when |
 | --- | --- | --- |

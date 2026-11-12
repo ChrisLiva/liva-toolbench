@@ -8,7 +8,7 @@
 
 Send the whole artifact as one message, compressed:
 
-- **Open with what the artifact commits to and what it cuts**, in two or three lines.
+- **Open with what the artifact commits to and what it cuts**, as a short lead above the items.
 - **Walk every section in the artifact's order** as its items, one line each: the decisions, criteria, cuts, tasks, and rows themselves. A section copied unchanged from the previous phase's artifact, and the Grounding section, each get one line: its name and item count.
 - **Show each judgment call beside the option it beat.**
 - **Mark the review's work**, where a review ran: tag each item it added or rewrote `(review)`, and after the last section state how many findings it landed and refuted. List each finding the review left as a decision, such as one marked `decision` or `Spec decision:` in its findings file, with your recommendation and the text it would change, or, where the phase landed it, the replacement it beat.
