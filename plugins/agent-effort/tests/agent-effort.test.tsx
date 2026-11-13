@@ -62,7 +62,7 @@ function engine(on: On) {
 const BAND = {
   plugin: 'agent-effort',
   component: 'AbovePrompt',
-  props: { hasSurvey: false, isWorking: true, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+  props: { hasSurvey: false, isCollapsed: false, isWorking: true, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} },
 } as const
 
 // Stands for another plugin's band when the plugins' load order puts it beneath
