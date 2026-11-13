@@ -17,11 +17,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # The adversarial-reviewer and review-merge dispatch sites: brief files, plus the
-# crank-lite review skill that carries its reviewer instruction as dispatch prose.
+# crank-lite review skill that carries its reviewer instruction as dispatch prose,
+# and crank-execute's plan walk, a lookup-heavy dispatch held to the same batch rule.
 SITES = [
     "plugins/crank/skills/crank/PLAN-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank/SPEC-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank/MERGE-BRIEF.md",
+    "plugins/crank/skills/crank-execute/PLAN-WALK-BRIEF.md",
     "plugins/crank/skills/crank-execute/PER-TASK-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-execute/FINAL-REVIEW-BRIEF.md",
     "plugins/crank/skills/crank-execute/FINAL-MERGE-BRIEF.md",
@@ -103,6 +105,7 @@ PRESENCE_LITERALS = {
         "Standing defect rules",
         "**Stage gate.**",
         "plan-walk-<stage>.md",
+        "](PLAN-WALK-BRIEF.md)",
         "\nBound: <Task <N>, the plan's last",
         "final-merge-rubric.md",
         "two or more stages",
