@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Gate the adversarial-review sites, the orchestrator skills' promised
 literals, the hand-synced reference copies, the prose pointers to sections,
-the wizard template, and crank-health's scanner.
+the wizard template, crank-health's scanner, and the agent-effort mod.
 
 Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
 """
 
+import json
 import os
 import re
 import subprocess
@@ -183,6 +184,10 @@ TEMPLATE_DIR = "plugins/crank-wizard/skills/crank-wizard/template"
 # and no analyzer, so a broken scanner fails here instead of in a user's repo.
 HEALTH_TESTS = "plugins/crank/skills/crank-health/scripts/tests"
 
+# The agent-effort mod runs against an engine API that changes between Claude
+# Code releases, so the installed engine checks it on every gate run.
+MOD_DIR = "plugins/agent-effort"
+
 
 def read(rel):
     path = ROOT / rel
@@ -334,6 +339,43 @@ def check_health(failures):
         failures.append(f"FAIL {HEALTH_TESTS}: " + " | ".join(tail))
 
 
+def validate_findings(stdout):
+    """Each error and warning in a `claude plugin validate --json` report."""
+    try:
+        report = json.loads(stdout)
+        return [
+            f"{Path(part['file']).name} {found.get('path', '')}: {found['message']}"
+            for part in [report["manifest"], *report["contents"]]
+            for found in part["errors"] + part["warnings"]
+        ]
+    except (ValueError, KeyError, TypeError):
+        return []
+
+
+def check_mod(failures):
+    """The mod must validate with no warning and pass its tests on the installed engine."""
+    try:
+        validated = subprocess.run(
+            ["claude", "plugin", "validate", MOD_DIR, "--strict", "--json"],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+        tested = subprocess.run(
+            ["claude", "plugin", "test", MOD_DIR],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        failures.append(f"FAIL {MOD_DIR}: claude CLI not found, mod unverified")
+        return
+    if validated.returncode != 0:
+        found = validate_findings(validated.stdout)
+        shown = f"{found[0]} ({len(found)} in all)" if found else " | ".join((validated.stderr or validated.stdout).strip().splitlines()[-3:])
+        failures.append(f"FAIL {MOD_DIR}: claude plugin validate --strict: {shown}")
+    if tested.returncode != 0:
+        output = (tested.stdout + tested.stderr).splitlines()
+        failed = [line for line in output if line.startswith("(fail)")] or [line for line in output if line.strip()][-3:]
+        failures.append(f"FAIL {MOD_DIR}: claude plugin test: " + " | ".join(failed))
+
+
 def main():
     failures = []
     check_sites(failures)
@@ -342,6 +384,7 @@ def main():
     check_pointers(failures)
     check_template(failures)
     check_health(failures)
+    check_mod(failures)
     for line in failures:
         print(line)
     print(f"{len(failures)} failure(s)")

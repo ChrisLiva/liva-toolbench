@@ -239,8 +239,13 @@ pointer, so renaming or splitting a heading fails the gate instead of stranding 
 pointers that name it. It compiles `crank-wizard`'s Go template (`go vet`,
 then `go build` natively and with `GOOS=windows`), so a template edit that breaks
 either shipped OS fails the gate on this darwin machine instead of on a teammate's.
-Finally it runs the tests of `crank-health`'s scanner, which need no network and no
-analyzer on PATH.
+It runs the tests of `crank-health`'s scanner, which need no network and no
+analyzer on PATH. Finally it runs `claude plugin validate plugins/agent-effort --strict`
+and `claude plugin test plugins/agent-effort` on the installed Claude Code (per project
+decision: the gate depends on the `claude` CLI, because the mod's API changes between
+releases; 2.1.323 added a required `isCollapsed` prop to the band, and the mod's tests
+kept passing while validate reported four type errors nothing ran, 2026-11-13). A
+failure there after a Claude Code update means the engine moved, not the commit under test.
 
 A pinned literal records what the prose promised when it was pinned; it does not
 freeze the wording (per project decision: a gate literal must not block a better
