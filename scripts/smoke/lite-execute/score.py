@@ -131,8 +131,15 @@ def git(run, *args):
     return subprocess.run(["git", "-C", str(run / "repo"), *args], capture_output=True, text=True).stdout
 
 
+def prune_dispatches(items):
+    return [(i, it[1]["input"]) for i, it in enumerate(items)
+            if it[0] == "Agent" and "TEST-PRUNE.md" in it[1]["input"].get("prompt", "")]
+
+
 def dispatches(items):
-    agents = [(i, it[1]["input"]) for i, it in enumerate(items) if it[0] == "Agent"]
+    """The implementer and reviewer dispatches; the test prune's dispatch is neither."""
+    agents = [(i, it[1]["input"]) for i, it in enumerate(items)
+              if it[0] == "Agent" and "TEST-PRUNE.md" not in it[1]["input"].get("prompt", "")]
     def is_review(a):
         p = a.get("prompt", "")
         return "REVIEW-BRIEF" in p or bool(re.search(r"\breview", p, re.I) and re.search(r"\bdiff\b", p))
@@ -756,6 +763,9 @@ def score_review(run, st, block, s):
     else:
         s["review_shape"] = int(len(reviewer) == 1 and not re.search(r"^Lens:", reviewer[0][1].get("prompt", ""), re.M))
     s["review_tiers"] = [f"{a.get('model')}/{a.get('effort')}" for _, a in reviewer]
+    prune = prune_dispatches(st.items)
+    s["prune_dispatched_once"] = int(len(prune) == 1)
+    s["prune_after_review"] = None if not prune or not reviewer else int(prune[0][0] > reviewer[-1][0])
     returns = agent_returns(run, st, reviewer)
     text = "\n".join(map(confirmed_text, returns)).lower()
     for name, _, named in defects:

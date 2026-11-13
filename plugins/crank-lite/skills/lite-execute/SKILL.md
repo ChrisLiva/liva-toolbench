@@ -18,7 +18,7 @@ You orchestrate one plan's execution. Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md),
 7. End the run on the first case that matches:
    - boxes still unchecked: finish as a short run;
    - `.crank/<slug>/retro.md` already exists: report the plan done and stop;
-   - every box checked: run Review, Close the loop, and Retro.
+   - every box checked: run Review, Test prune, Close the loop, and Retro.
 
 ## Resolve the plan
 
@@ -67,7 +67,7 @@ Resolve the tiers once per run:
 
 <subagent-tiers>
 - **standard** fallback (implementers and review lenses): Claude Code `model: sonnet` · Codex Luna at high effort · Cursor Composer
-- **heavy** fallback (adversarial review and its merge): Claude Code `model: opus` · Codex Sol at high effort · Cursor Sol at high effort
+- **heavy** fallback (adversarial review, its merge, and the test prune): Claude Code `model: opus` · Codex Sol at high effort · Cursor Sol at high effort
 </subagent-tiers>
 
 ## Shape
@@ -115,13 +115,13 @@ Every invocation, resumed runs included, write these lines with every line fille
 
 Pre-flight: branch <current branch>
 Shape: <sequential | parallel | solo>
-Subagents: standard = <model> (implementers, review lenses) · heavy = <model> (adversarial review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
+Subagents: standard = <model> (implementers, review lenses) · heavy = <model> (adversarial review, test prune) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 Tasks: <N> (<M> remaining, <R> this run)
 Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
 Base: <HEAD before the first task>
 ```
 
-On the `Subagents` line, write the resolved model names, never bare tier labels; `resolved from` names the instruction file you mapped the tiers onto, or `harness fallback`. A solo run's line reads `Subagents: heavy = <model> (adversarial review) — implementation inline · resolved from <source>`; when it reviews a plan of two or more stages, it opens with `standard = <model> (review lenses) · `.
+On the `Subagents` line, write the resolved model names, never bare tier labels; `resolved from` names the instruction file you mapped the tiers onto, or `harness fallback`. A solo run's line reads `Subagents: heavy = <model> (adversarial review, test prune) — implementation inline · resolved from <source>`; when it reviews a plan of two or more stages, it opens with `standard = <model> (review lenses) · `.
 
 Completion criterion: the plan's Progress block opens with this run's filled Pre-flight lines, written before any other edit, commit, or dispatch.
 
@@ -170,7 +170,7 @@ The plan's destination is frozen; the road is not. Settle every surprise that le
 
 ## Short run
 
-A **short run** skips Review, Close the loop, and Retro, since the review reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
+A **short run** skips Review, Test prune, Close the loop, and Retro, since the review reads the whole diff against the whole plan. Leave the plan able to brief whoever picks it up instead:
 
 1. Read each unchecked task's text against this run's diff. On its line, append `— open: <a question this run raised about it>` or `— note: <an interface, path, or contract its task text no longer matches>`, as many as apply. A task this run did not affect gets `— note: unaffected`, unless its line already carries one.
 2. On each task that landed this run, append `— note: <one line>` per observation the retro would otherwise have carried.
@@ -214,6 +214,27 @@ Once every box is checked:
 
 Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision.
 
+## Test prune
+
+Once Review's last fix is committed, list the test files in `git diff --name-only <Base>..HEAD`, leaving out any file `git status --porcelain` shows with uncommitted changes: a restore below would lose them. A list that comes out empty skips this section. Otherwise:
+
+1. Dispatch one heavy-tier subagent to run [TEST-PRUNE.md](TEST-PRUNE.md), with this message, and wait on it (Dispatch and wait):
+
+   ```
+   Read <absolute path to this skill's TEST-PRUNE.md> and follow it.
+   Scope: the tests `git diff <the Progress block's Base SHA>..HEAD` added or changed, in <the listed test files>. A test the diff left alone gets no verdict, and still counts when you judge redundancy suite-wide.
+   Plan: <plan path>. A DELETE or MERGE verdict on a test a Coverage row's verify step runs names, in its reason, the test that proves the row afterwards.
+   Report: <absolute path to .crank/<slug>/test-prune.md>, where the verdict table goes.
+   Return: the counts per verdict, the net line delta, and each production bug the pass surfaced. Leave your edits uncommitted.
+   ```
+2. Run the full suite, and re-run each Coverage row whose verify step runs a file the prune touched. Rewrite a verify step that names a deleted or merged test to name the test its verdict row gives.
+3. Take the case that matches:
+   - **Green:** commit the prune as its own commit, staged as in Task loop step 3.
+   - **Red:** send the output back to the same subagent, once. When the suite is still red after that, restore the pruned test files from HEAD by path and keep the red output for the retro.
+4. A production bug the prune surfaced goes to Close the loop as a loose end.
+
+Completion criterion: the list was empty; or `.crank/<slug>/test-prune.md` holds the verdict table and the prune is committed, with the suite and every touched Coverage row green after it; or the pruned files are restored from HEAD, with the red output kept for the retro.
+
 ## Close the loop
 
 Before the retro:
@@ -223,5 +244,5 @@ Before the retro:
 
 ## Retro
 
-1. Record the retro to `.crank/<slug>/retro.md`. Include, when each earns its place: what changed, verification run, review outcome, deviations from the plan, where any promoted fact landed, and any surviving decisions.
+1. Record the retro to `.crank/<slug>/retro.md`. Include, when each earns its place: what changed, verification run, review outcome, the test prune's counts per verdict and commit, deviations from the plan, where any promoted fact landed, and any surviving decisions.
 2. Tell the user the commit SHAs this run landed and the retro path; when nothing survived the loop-close, say the work is complete. Then stop.

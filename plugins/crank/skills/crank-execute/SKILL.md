@@ -29,7 +29,7 @@ These hold at every step; a rule that binds one step lives with that step.
 
 ### Subagents
 
-This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = exploration, implementation, per-task review, the final review's lenses; **heavy** = the final cross-task review of a plan with one stage or no Stages table, the final review's merge and its fix-round re-review (and a one-time escalation for a `BLOCKED` task). That file's **Dispatch or main thread** default governs off-plan investigation; the execution shape (Flow step 1) governs implementation and review.
+This skill spawns subagents at two tiers — resolve each per [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md): a loaded instruction file's preference first, its harness models only as the fallback. **standard** = exploration, implementation, per-task review, the final review's lenses; **heavy** = the final cross-task review of a plan with one stage or no Stages table, the final review's merge and its fix-round re-review, the test prune (and a one-time escalation for a `BLOCKED` task). That file's **Dispatch or main thread** default governs off-plan investigation; the execution shape (Flow step 1) governs implementation and review.
 
 ### Vocabulary
 
@@ -89,11 +89,12 @@ One line lives under the Pre-flight lines instead: `Stopped: <why> — resume at
 
 ### Retro
 
-Written by the run that lands the **last** plan task, to `.crank/<slug>/retro.md` (Flow step 7); a short run hands the ledger forward instead (Flow step 4). Sections:
+Written by the run that lands the **last** plan task, to `.crank/<slug>/retro.md` (Flow step 8); a short run hands the ledger forward instead (Flow step 4). Sections:
 
 - **Summary** — what shipped, commits `<first>..<last>` on `<branch>`.
 - **Deviations** — every detour taken (what blocked, the fix), plus anywhere else the diff meaningfully differs from the plan and why. "None" if none.
 - **Final review** — verdict, findings fixed (with commit SHAs), findings dismissed as false positives, findings deferred: each per References → Review verdicts.
+- **Test prune** — the counts per verdict, the net line delta, and the prune's commit SHA; `no tests touched` when the step was skipped; the red gate output when the prune was restored.
 - **Open items** — only what survived Flow → Close the loop, each written to that step's completion criterion. Deferred findings and dismissals stay in the Final review section above.
 - **Promoted** — each fact this run sent outliving the effort: the fact, its evidence line, and the `file:line` it landed at. Empty when the run promoted nothing.
 - **Validation evidence** — commands run, outcomes.
@@ -112,12 +113,12 @@ Open the progress ledger (Deliverables → Progress ledger); one that already ex
 Pre-flight: branch <current branch>
 Grounding: <.crank/<slug>/grounding.md — N entries | none>
 Shape: <solo | sequential | parallel>
-Subagents: standard = <model> (implement, per-task review, final review lenses) · heavy = <model> (final review) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
+Subagents: standard = <model> (implement, per-task review, final review lenses) · heavy = <model> (final review, test prune) · resolved from <user CLAUDE.md | project CLAUDE.md/AGENTS.md | harness fallback>
 Tasks: <N> (<M> remaining)
 Bound: <Task <N>, the plan's last | Task <N>, the user's stop | Task <N>, the stage <S> gate the user named>
 ```
 
-Line rules: the Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and its entry count. Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. In solo the Subagents line reads `standard = <model> (plan walk) · heavy = <model> (final review) — implementation inline · resolved from <source>`. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's **Stages** table); a Stages table on its own leaves the bound at the last task.
+Line rules: the Grounding line reads `none` when the effort's grounding file is absent or empty; otherwise it names the file and its entry count. Models are the **resolved** names after [SUBAGENT-TIERS.md](SUBAGENT-TIERS.md) is applied, never bare tier labels, and `resolved from` names the instruction file whose subagent preference the tiers were mapped onto, or `harness fallback` when no loaded instruction file states one. In solo the Subagents line reads `standard = <model> (plan walk) · heavy = <model> (final review, test prune) — implementation inline · resolved from <source>`. `<M> remaining` counts the ledger's unchecked boxes; a fresh run has `M = N`. The Bound line names the task the run ends after: the plan's last task, or an earlier one the user's ask named (`stop after Task 4`, `stop at the stage 1 gate` — the gate's last task per the plan's **Stages** table); a Stages table on its own leaves the bound at the last task.
 
 - **Solo (in this session)** — small plans (~3 tasks or fewer), tasks that share in-flight state, quick fixes. No per-task review: the final gate is solo's one review.
 - **Sequential subagents** — the default for >3 tasks: a fresh context and an independent reviewer per task.
@@ -180,7 +181,7 @@ Completion criterion, per task: its ledger line is `[x]` with the commit SHA(s) 
 
 ### 4. Short run: hand the ledger forward
 
-A run whose task loop ends with boxes still unchecked on the ledger is a **short run** — its Bound (step 1) fell short of the last task, or a reroute or a `BLOCKED` report stopped it; the final gate, the loop-close, and the retro belong to the run that lands the **last** plan task. The bound ends the unit of work, not the phase: the run ends after that unit's verification, whatever it uncovers — newly discovered defects become surfaced findings with a recommendation, never a new fix round. The short run ends here, with the ledger left able to brief whoever picks the plan up.
+A run whose task loop ends with boxes still unchecked on the ledger is a **short run** — its Bound (step 1) fell short of the last task, or a reroute or a `BLOCKED` report stopped it; the final gate, the test prune, the loop-close, and the retro belong to the run that lands the **last** plan task. The bound ends the unit of work, not the phase: the run ends after that unit's verification, whatever it uncovers — newly discovered defects become surfaced findings with a recommendation, never a new fix round. The short run ends here, with the ledger left able to brief whoever picks the plan up.
 
 Read each unchecked task against what this run actually shipped, then write what changed, per Deliverables → Progress ledger → Line grammar:
 
@@ -188,7 +189,7 @@ Read each unchecked task against what this run actually shipped, then write what
 - in `.crank/<slug>/grounding.md`, every corrected repo fact with its evidence — a fact wider than one task lands there, not on a line;
 - under the Pre-flight lines, the `Stopped:` line.
 
-Then hand back per step 8.
+Then hand back per step 9.
 
 Completion criterion: every unchecked task has been read against this run's diff and either carries what it needs or is confirmed unaffected, the `Stopped:` line names the resume point, and `git status --short` is clean or its leftovers named in the hand-back.
 
@@ -206,7 +207,27 @@ On `CHANGES_REQUESTED`, vet each finding before you touch code, per References �
 
 Completion criterion: the gate commands ran green this session, every Coverage row ran green this session or is human-only and in the retro's Open items, `final-review.md` holds its latest round's verdict, and every finding that round left open is fixed in its own commit, dismissed with its reasoning recorded, or written to the retro as an Open item.
 
-### 6. Close the loop
+### 6. Prune the tests
+
+The final review judged the run's tests as they landed. This step runs once, after that review's last fix, and cuts the tests that pin no behavior. List the test files in `git diff --name-only <BASE>..HEAD`, with BASE the ledger's `Base:`, leaving out any file `git status --short` shows with uncommitted changes: a restore below would lose them. A list that comes out empty skips the step.
+
+Otherwise, whatever the shape, dispatch one **heavy** subagent and hand it:
+
+- the absolute path to this skill's [TEST-PRUNE.md](TEST-PRUNE.md), to read and follow as its instructions;
+- its **scope**: the tests `<BASE>..HEAD` added or changed, given as the BASE SHA and the test files listed. A test the diff left alone gets no verdict, and still counts when the prune judges redundancy suite-wide;
+- the **plan path**, for its Coverage table: a DELETE or MERGE verdict on a test a row's verify step runs names, in its reason, the test that proves the row afterwards;
+- the **report path** `test-prune-report.md` in the brief dir, where its verdict table goes. It leaves its edits uncommitted and returns the counts per verdict, the net line delta, each production bug the pass surfaced, and that path.
+
+On its return, run the plan's gate commands, and re-run every Coverage row whose verify step runs a file the prune touched: the prune changed what step 5 verified. Rewrite a verify step that names a deleted or merged test to name the test its verdict row gives.
+
+- **Green:** commit the prune as its own commit.
+- **Red:** send the output back to the same subagent, once. A gate still red after that ends the prune: restore the pruned test files from HEAD by path, and keep the red output for the retro.
+
+A production bug the prune surfaced is a loose end for Close the loop.
+
+Completion criterion: the list was empty; or `test-prune-report.md` holds the verdict table and the prune is committed, with the gate commands and every touched Coverage row green after it; or the pruned files are restored from HEAD, with the red output kept for the retro.
+
+### 7. Close the loop
 
 You ship finished work. Before writing the retro, gather every loose end the plan produced — what earlier short runs parked on the ledger's task lines, the Notes and dismissals in every `task-<N>-review.md` the ledger points at, plus this run's plan risks, human-only Coverage rows, and your own "worth noting" observations — and triage each:
 
@@ -217,11 +238,11 @@ You ship finished work. Before writing the retro, gather every loose end the pla
 
 Completion criterion: every loose end is settled, fixed, promoted with the `file:line` it landed at, or written as a decision with a recommendation — none merely restates a fact you could have checked this session.
 
-### 7. Retro
+### 8. Retro
 
 Write the retro to `.crank/<slug>/retro.md` at the repository root, with the sections listed in Deliverables → Retro.
 
-### 8. Hand back
+### 9. Hand back
 
 Report finished work: what shipped, the verification that proves it, and — only when items survived Close the loop — each one as written there.
 

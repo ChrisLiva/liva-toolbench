@@ -161,6 +161,7 @@ CANONICAL = {
     "READBACK": "plugins/crank/skills/crank",
     "ARTIFACT-HOME": "plugins/crank/skills/crank",
     "STAGES": "plugins/crank/skills/crank",
+    "TEST-PRUNE": "plugins/crank/skills/crank-test-prune",
     "INTERVIEW": "plugins/crank-lite/skills/crank-lite",
 }
 

@@ -49,7 +49,7 @@ Forces a **spec → plan → execute** sequence before any code is written. Each
 | Skill | Invoke | What it does |
 |---|---|---|
 | `crank:crank` | `/crank [brainstorm\|spec\|plan]` | The pipeline's **front door and router**. Takes an explicit route, or triages the ask itself — a raw idea routes to **brainstorm** (design brief), a formed idea or brief to **spec** (PRD + technical spec, adversarially reviewed), a settled design or scoped bug fix to **plan** (ordered tasks, each behavior line a RED→GREEN→REFACTOR cycle, adversarially reviewed). Each phase hands off to the next only on an explicit "continue". |
-| `crank:crank-execute` | `/crank-execute` | Executes a plan **task-by-task** — picks a solo / sequential / parallel shape, runs RED→GREEN→REFACTOR where a real seam exists, gates every "done" on verification evidence, runs a fresh-eyes final review, and writes `retro.md`. |
+| `crank:crank-execute` | `/crank-execute` | Executes a plan **task-by-task** — picks a solo / sequential / parallel shape, runs RED→GREEN→REFACTOR where a real seam exists, gates every "done" on verification evidence, runs a fresh-eyes final review, prunes the tests the run added or changed, and writes `retro.md`. |
 | `crank:crank-deepen` | `/crank-deepen` | Scans a codebase for **deepening opportunities** — shallow modules, leaking seams — presents them as a visual HTML report, grills through your pick, and emits a brainstorm brief that feeds the pipeline. |
 | `crank:crank-refine` | `/crank-refine [spec or plan path]` | Refines a crank or crank-lite spec or plan **before anyone builds it**: three finders return a short list of simplifications, each citing the section it changes — a simpler design that meets the same criteria, existing code or libraries in place of invention, and scope the stated needs never asked for — then offers to apply it in place. Standalone pass; doesn't advance the pipeline. |
 | `crank:crank-review` | `/crank-review` | Reviews a PR, commit range, or uncommitted changes for a **short list of high-confidence findings** — does the code do what it says, what can be deleted, what edge case slips through — each independently validated before it ships. |
@@ -76,7 +76,7 @@ The same brainstorm → spec → plan → execute shape as `crank`, with less ce
 | Skill | Invoke | What it does |
 |---|---|---|
 | `crank-lite:crank-lite` | `/crank-lite [brainstorm\|spec\|plan]` | Front door and router — triages the ask to brainstorm, spec, or plan and runs that phase. |
-| `crank-lite:lite-execute` | `/lite-execute` | Executes a PRD, spec, or plan: implement, verify, review, and commit the work. |
+| `crank-lite:lite-execute` | `/lite-execute` | Executes a PRD, spec, or plan: implement, verify, review, prune the tests the run added or changed, and commit the work. |
 | `crank-lite:lite-deepen` | `/lite-deepen` | The lightweight deepening scan — presents opportunities as chat cards with ASCII before/after diagrams and emits a brainstorm brief for the pipeline. |
 | `crank-lite:lite-review` | `/lite-review` | Reviews a PR, commit range, or uncommitted changes into a short list of validated findings — one adversarial validation pass, then an offer to apply the fixes. |
 
@@ -122,7 +122,8 @@ plugins/
       crank-deepen/…            #   shared docs (never symlinks); same for
       crank-refine/…            #   the other crank skills
       crank-review/…
-      crank-test-prune/…
+      crank-test-prune/…        # canonical TEST-PRUNE.md; crank-execute and
+                                #   lite-execute carry copies
       crank-health/SKILL.md     # references/ per language, assets/plan.md,
                                 #   scripts/health.py: inventory, run, normalize, grade
   crank-lite/
