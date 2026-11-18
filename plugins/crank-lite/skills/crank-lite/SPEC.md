@@ -37,11 +37,14 @@ The spec's file is `spec.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTI
 
 - the problem;
 - proposed solution;
+- user stories, one line per distinct actor and goal: `As an <actor>, I want <feature>, so that <benefit>`;
 - acceptance criteria;
 - key technical decisions;
 - testing/validation;
 - a Grounding section holding the interview's banked entries (ARTIFACT-HOME.md → Grounding);
 - out of scope.
+
+Every spec carries user stories. A story's actor is whoever meets the change: a role the product or `CONTEXT.md` names, a caller of an API or CLI, or, for an internal change such as a refactor or migration, the maintainer or operator who lives with it. State the feature as what that actor does or sees, with no module, schema, or library named, and the benefit as the outcome the problem says they lack. Take each story from the user's words in the interview or the incoming artifact; an actor or goal they left unnamed takes a targeted question before its story is written. At least one acceptance criterion proves each story.
 
 Every claim about the code as it stands carries its **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), or a command and what it printed.
 
