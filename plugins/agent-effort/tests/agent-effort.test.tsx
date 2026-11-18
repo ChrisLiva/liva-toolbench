@@ -54,7 +54,22 @@ function engine(on: On) {
     result: { status: 'async_launched', agentId: AGENT, description: e.description, prompt: 'Reply ok.', outputFile: '/tmp/probe.output' },
   }))
   on('agent.list', () => ({
-    value: [{ id: AGENT, description: 'probe bg', type: 'Explore', status: 'running' }],
+    value: [
+      {
+        id: AGENT,
+        description: 'probe bg',
+        type: 'Explore',
+        status: 'running',
+        kind: 'local_agent',
+        taskStatus: 'running',
+        label: 'probe bg',
+        startTime: 0,
+        cwd: '/tmp',
+        tokenCount: 0,
+        tokenSamples: [],
+        hasRow: true,
+      },
+    ],
   }))
   on('turn.complete', (_$, e) => ({ text: e.answer }))
 }
