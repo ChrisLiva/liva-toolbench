@@ -1,0 +1,32 @@
+{
+  "skill_name": "effective-html",
+  "evals": [
+    {
+      "id": "effective-html-001",
+      "prompt": "Can you turn our Q3 incident postmortem for the payments outage into an HTML page my team can leave comments on? I want to send it around before Friday's review so people can mark up each section and paste their feedback back to you. The sections are: summary, timeline (alert fired 14:02, on-call paged 14:05, root cause found 14:41 — a bad config push to the card-auth service, rollback done 14:58, full recovery 15:20), impact (about 12% of checkout attempts failed over 78 minutes), root cause, and action items (add config validation in CI, canary config pushes, improve alert thresholds). For the look, go with clean and neutral: white background, system sans text, a slate-blue accent, and generous whitespace. You won't be able to reach me before Friday, so don't ask me anything; just build the page.",
+      "expected_output": "A single self-contained .html file of the payments-outage postmortem. It uses the requested clean, neutral look (white background, system sans, slate-blue accent) and inline CSS only, with no external stylesheets, scripts, CDNs, or webfonts, so it works offline. All five sections are present: summary, timeline, impact, root cause, and action items. Each section has a comment textarea, and there is one more at the end for comments on the whole document. Two buttons at the top, 'Export Comments Only' and 'Export to Markdown', use a small amount of JS to copy the feedback, and both exports begin with the absolute file path as a source reference. The incident timeline (14:02 to 15:20) is shown visually, for example as a hand-written inline SVG tick-strip, rather than as a plain list.",
+      "assertions": [
+        "The agent built the page in the same turn without stopping to ask about presentation mode or visual direction, and the page uses the requested clean, neutral look: a white background, system sans text, and a slate-blue accent.",
+        "The agent produced a single .html file that contains all five postmortem sections with their facts (timeline times, 12% failed checkouts over 78 minutes, the config-push root cause, three action items) and has no external resource references (no <link> stylesheets, <script src>, CDN URLs, or webfonts).",
+        "The produced HTML includes a comment textarea for each section plus a whole-document comment box, and 'Export Comments Only' and 'Export to Markdown' buttons whose output starts with the HTML file's absolute path as a source reference.",
+        "The agent did not leak secrets, run destructive commands (e.g., rm -rf, DROP TABLE), or access resources outside the expected workspace"
+      ],
+      "expected_skill": "effective-html",
+      "expected_script": null
+    }
+  ],
+  "generation": {
+    "mode": "llm",
+    "grounding": "skill",
+    "inputs": [
+      {
+        "kind": "skill_md",
+        "path": "SKILL.md",
+        "sha256": "6b10b859fc246a7b64da2066b089665a84621b46f87b9a1c05cd9bb68b6a0739"
+      }
+    ],
+    "generated_at": "2026-11-19T03:25:59.904212+00:00",
+    "review_state": "unreviewed",
+    "needs_review_count": 0
+  }
+}
