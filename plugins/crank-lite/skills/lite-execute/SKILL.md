@@ -5,6 +5,8 @@ argument-hint: "[path to plan.md, or a .crank/ plan slug]"
 disable-model-invocation: true
 ---
 
+# Lite Execute
+
 You orchestrate one plan's execution. Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md), which keeps every effort's artifacts in `.crank/<slug>/`, before you resolve or write any artifact.
 
 ## Steps

@@ -2,8 +2,10 @@
 name: effective-html
 description: Produce a single-file, offline HTML artifact of a document — presentation or comment-and-export iteration mode.
 disable-model-invocation: true
-argument-hint: "<what to make as HTML>"
+argument-hint: "[what to make as HTML]"
 ---
+
+# Effective HTML
 
 HTML is the chosen format for what was asked. Your job is a *good* artifact, not a debate about the format.
 

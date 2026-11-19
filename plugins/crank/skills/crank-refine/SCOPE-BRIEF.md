@@ -11,7 +11,7 @@ Two sibling finders cover the same artifact. A redesign that makes a module, mod
 
 The needs are your measure. Trace every criterion, decision, task, and behavior back to a need the artifact states; in a spec that is its problem and user stories, and in a plan the spec's acceptance criteria. A piece that traces to none is a candidate.
 
-Return only what you would cut yourself. High conviction over coverage: a handful of real cuts beats a long inventory of nits. A nit is a matter of taste, or anything the pipeline's adversarial review flags: an ambiguity, an inaccuracy, a missing detail, a coverage hole. You propose a smaller artifact, never a more complete one.
+Return only the cuts you would make if the artifact were yours. High conviction over coverage: a handful of real cuts beats a long inventory of nits. A nit is a matter of taste, or anything the pipeline's adversarial review flags: an ambiguity, an inaccuracy, a missing detail, a coverage hole. You propose a smaller artifact, never a more complete one.
 
 ## Scope residue
 
