@@ -17,6 +17,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 ├── scripts/
 │   ├── check-reviewer-briefs.py  # the repo's gate (see The repo's gate)
 │   ├── measure-review-cost.py    # how a review thread spent its turns
+│   ├── skill-eval.sh             # NVIDIA SkillEvaluator scan of the skills (not a gate)
 │   ├── fixtures/                 # the measurement's oracle transcripts
 │   ├── smoke/sandboxed_claude.py # starts every headless session inside the OS sandbox
 │   ├── smoke/lite-execute/       # headless smoke harness for lite-execute
@@ -274,6 +275,22 @@ a score.
 phases, driving each interview with a scripted user that agrees with every round. Its
 README lists the six scenarios and which behaviors its `score.py` counts and which need
 a blind transcript read.
+
+`scripts/skill-eval.sh [skill-name ...]` runs NVIDIA SkillEvaluator over the skills and
+writes its reports to `reports/skill-eval/`. It is a second opinion, not a gate. It runs
+Tier 1 (schema, security, PII, quality and harness checks, no model) on each named skill,
+or on every skill, and Tier 2 similarity of every skill's name and description, using
+Ollama's `nomic-embed-text` embeddings on this machine. It scans a copy of the tracked
+and unignored files (per project decision: scanning the worktree counted the gate's
+ignored `__pycache__` and `.complexipy_cache` dirs as shipped bytecode and failed
+crank-health on bytecode findings no install carries). Some findings are known false
+positives, so leave the code alone: crank-health's Bandit B610 (a method named
+`.extra()`, not Django's) and B314 (cppcheck XML the scanner wrote itself) and its
+`dict(os.environ)` "harvesting"; crank-wizard's `.env` "credential access", which is
+the wizard's job. SkillSpector reports crank and crank-health incomplete, because it
+does not resolve some linked references and skips executable files, and an incomplete
+scan fails Tier 1. Tier 2 rates crank ↔ crank-lite and crank-deepen ↔ lite-deepen high
+similarity by design; a rising score means two descriptions compete for selection.
 
 ---
 
