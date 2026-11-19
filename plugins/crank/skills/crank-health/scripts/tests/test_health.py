@@ -413,6 +413,43 @@ class PlanTest(RepoCase):
         self.assertEqual(sorted(key for key in rows if key.endswith(":jscpd")), ["a:jscpd", "b:jscpd", "repo:jscpd"])
 
 
+class PropertyTest(RepoCase):
+    def row(self, files: dict[str, str], project: str = ".") -> Row:
+        run = self.run_for(self.repo(files))
+        run.which = lambda name: None
+        row = next(r for r in cli.plan_rows(run) if r.key == f"{project}::property tests")
+        execute(run, row)
+        return row
+
+    def test_a_test_that_imports_the_library_is_counted_and_nothing_is_offered(self):
+        used = [
+            ({"pyproject.toml": "", "a.py": "x = 1\n", "tests/test_a.py": "from hypothesis import given\n", "tests/test_b.py": "import a\n"}, "hypothesis in 1 of 2"),
+            ({"package.json": "{}", "a.ts": "1\n", "a.test.ts": "import fc from 'fast-check'\n"}, "fast-check in 1 of 1"),
+            ({"package.json": "{}", "a.ts": "1\n", "a.test.ts": 'import { test } from "@fast-check/vitest"\n'}, "fast-check in 1 of 1"),
+            ({"go.mod": "module x\n", "a.go": "package a\n", "a_test.go": "package a\n\nfunc FuzzParse(f *testing.F) {}\n"}, "go fuzz in 1 of 1"),
+            ({"p/p.csproj": "<Project/>", "p/a.cs": "class A {}\n", "p/ATests.cs": "using FsCheck;\n"}, "FsCheck in 1 of 1"),
+            ({"CMakeLists.txt": "project(x)\n", "a.cpp": "int a;\n", "a_test.cpp": "#include <rapidcheck.h>\n"}, "RapidCheck in 1 of 1"),
+        ]
+        for files, found in used:
+            row = self.row(files, "p" if "p/p.csproj" in files else ".")
+            self.assertEqual(row.state, "ok", found)
+            self.assertEqual(row.unmeasured, f"{found} test files")
+            self.assertEqual(row.findings, [])
+
+    def test_a_project_without_one_gets_an_advisory_offer_on_its_manifest(self):
+        row = self.row({"pyproject.toml": "", "a.py": "import hypothesis\n", "tests/test_a.py": "import a\n"})
+        self.assertEqual(row.unmeasured, "no property test in 1 test files")
+        (finding,) = row.findings
+        self.assertEqual((finding.file, finding.rule, finding.status), ("pyproject.toml", "property-tests/none", "advisory"))
+        self.assertIn("uv add --dev hypothesis", finding.message)
+
+    def test_the_offer_never_grades_test_quality(self):
+        row = self.row({"pyproject.toml": "", "a.py": "x = 1\n"})
+        grades = grade.grade([inv.ProjectRecord(dir=".", lines={"python": 1}, files={"python": 1}, asset_lines={})], [row], set(CATEGORIES), False)
+        (quality,) = [g for g in grades if g.category == "test quality"]
+        self.assertEqual(quality.text, "not assessed (property tests: no property test in 0 test files)")
+
+
 class RunnerTest(RepoCase):
     def run_one(self, job) -> Row:
         run = self.run_for(self.repo({"a.py": "x = 1\n"}))

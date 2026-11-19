@@ -18,7 +18,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from . import common, cpp, csharp, go, jsts, python, report, settle
+from . import common, cpp, csharp, go, jsts, properties, python, report, settle
 from . import grade as grading
 from . import inventory as inv
 from .runner import CATEGORIES, Finding, Row, Run, execute, ok_findings
@@ -59,7 +59,9 @@ def plan_rows(run: Run) -> list[Row]:
                 continue
             if language in project.fixture_only and real:
                 continue  # one sample file per language under tests/fixtures is not a codebase
-            rows += MODULES[language].plan(run, project)
+            planned = MODULES[language].plan(run, project)
+            if planned:
+                rows += [*planned, properties.plan(run, project, language)]
     rows += common.plan(run)
     return [r for r in rows if set(r.categories) & run.only]
 
