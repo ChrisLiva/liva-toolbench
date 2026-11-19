@@ -1,0 +1,30 @@
+--- a/skillevaluator/tier3/harbor/runner.py
++++ b/skillevaluator/tier3/harbor/runner.py
+@@ -2979,6 +2979,8 @@
+         "CLAUDE_CODE_USE_VERTEX",
+         "ANTHROPIC_VERTEX_PROJECT_ID",
+         "CLOUD_ML_REGION",
++        "CLAUDE_CODE_OAUTH_TOKEN",
++        "CLAUDE_FORCE_OAUTH",
+     )
+     credentials = {name: os.environ.get(name, "") for name in candidate_names if os.environ.get(name)}
+ 
+@@ -3034,6 +3036,8 @@
+     credentials = _independent_anthropic_agent_credentials(env_mode=env_mode, environment_kwargs=environment_kwargs)
+     if credentials.get("ANTHROPIC_API_KEY", "").strip() or credentials.get("CLAUDE_CODE_USE_VERTEX", "").strip() == "1":
+         return credentials
++    if credentials.get("CLAUDE_FORCE_OAUTH", "").strip() == "1" and credentials.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip():
++        return {k: credentials[k] for k in ("CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_FORCE_OAUTH")}
+     base_url = credentials.get("ANTHROPIC_BASE_URL")
+     if not base_url:
+         base_url = _normalize_anthropic_base_url(provider.base_url or "", variable="SKILL_EVAL_LLM_BASE_URL")
+@@ -5840,6 +5844,9 @@
+             target[1].append(label)
+ 
+     for agent in agents:
++        # A subscription token cannot list models through the API catalog; the trial itself proves it.
++        if runtime_plans[agent].subprocess_env.get("CLAUDE_FORCE_OAUTH") == "1":
++            continue
+         add_probe_target(agent, runtime_plans[agent].provider)
+ 
+     if grading_mode != "custom_only":

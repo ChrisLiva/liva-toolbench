@@ -18,6 +18,9 @@ When working in this repo, you are usually creating, editing, or testing plugin 
 │   ├── check-reviewer-briefs.py  # the repo's gate (see The repo's gate)
 │   ├── measure-review-cost.py    # how a review thread spent its turns
 │   ├── skill-eval.sh             # NVIDIA SkillEvaluator scan of the skills (not a gate)
+│   ├── skill-eval-tier3.sh       # SkillEvaluator live run of one skill on the Claude subscription
+│   ├── skillevaluator-oauth.patch # lets SkillEvaluator 1.0.1 run Claude Code on a subscription token
+│   ├── claude_chat_shim.py       # OpenAI chat endpoint backed by `claude -p`, for Tier 3's case writer and judge
 │   ├── fixtures/                 # the measurement's oracle transcripts
 │   ├── smoke/sandboxed_claude.py # starts every headless session inside the OS sandbox
 │   ├── smoke/lite-execute/       # headless smoke harness for lite-execute
@@ -291,6 +294,29 @@ the wizard's job. SkillSpector reports crank and crank-health incomplete, becaus
 does not resolve some linked references and skips executable files, and an incomplete
 scan fails Tier 1. Tier 2 rates crank ↔ crank-lite and crank-deepen ↔ lite-deepen high
 similarity by design; a rising score means two descriptions compete for selection.
+
+`scripts/skill-eval-tier3.sh <skill-name> [cases]` runs SkillEvaluator's Tier 3 on one
+skill: Claude Code (Sonnet unless `SKILL_EVAL_AGENT_MODEL` names another model) does each
+case with and without the skill, and Opus (`SKILL_EVAL_LLM_MODEL` overrides it) writes the
+cases and grades the attempts. Every session signs in with a `claude setup-token` token that
+the script reads from the `skill-eval-claude-oauth` Keychain item (per project decision:
+Tier 3 bills the Claude subscription, not API credits, and Opus, not a local model, writes
+and grades the cases, 2026-11-18). SkillEvaluator calls its case writer and judge through an
+OpenAI chat API, so `scripts/claude_chat_shim.py` serves one on 127.0.0.1 and answers each
+request with a `claude -p` session that has no tools and an empty `CLAUDE_CONFIG_DIR`, so
+none of the user's CLAUDE.md, plugins or hooks shape a grade. SkillEvaluator
+1.0.1 accepts only an API key for Claude Code, so the script builds a venv under
+`~/.local/share/liva-toolbench/` and applies `scripts/skillevaluator-oauth.patch`, which
+forwards `CLAUDE_CODE_OAUTH_TOKEN` and `CLAUDE_FORCE_OAUTH` and skips the API-catalog probe
+a subscription token cannot pass. A version bump of SkillEvaluator needs the patch redone.
+Each case is two headless sessions, which count against a skill change's three-run budget
+(see *Iteration loop*), and `cases` defaults to 1. The sessions run under SkillEvaluator's
+local mode, its own Seatbelt sandbox with an isolated `HOME` and open network egress, not
+`scripts/smoke/sandboxed_claude.py`. The staged copy drops `disable-model-invocation`,
+because SkillEvaluator ignores it and Claude Code honors it, and with it the with-skill arm
+could never load 13 of the 14 skills. A first run writes starter cases to the report
+directory; review them and copy them to `scripts/skill-eval-cases/<skill>.json`, which
+later runs reuse.
 
 ---
 
