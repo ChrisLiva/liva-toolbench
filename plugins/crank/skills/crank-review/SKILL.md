@@ -9,11 +9,12 @@ argument-hint: "[what to review] [optional focus, e.g. 'especially simplicity']"
 
 ## Goal
 
-A short list of findings, each one a senior engineer would hold the merge for. Three questions drive every finding, defined in [REVIEW-BRIEF.md](REVIEW-BRIEF.md):
+A short list of findings, each one a senior engineer would hold the merge for. Four questions drive every finding, defined in [REVIEW-BRIEF.md](REVIEW-BRIEF.md):
 
 1. **Does this code do what it says, clearly?**
 2. **What can be deleted, consolidated, or refactored away?**
 3. **What edge case slips through?**
+4. **What can an attacker make it do?**
 
 Precision over coverage. Each nit spends trust the real findings need.
 
@@ -45,8 +46,9 @@ Spawn one standard-tier finder per lens, each with the pointers **Subagents pull
 
 - **Correctness and contract.** The brief's questions 1 and 3.
 - **Simplicity and deletion.** The brief's question 2 and the sections it points to.
+- **Security.** The brief's question 4. (per project decision: security is a fourth question with its own finder, in place of security findings filed under question 1, because a leaked secret or an unpinned fetch answers none of the first three questions and the attacker's read is a different pass from the contract read, 2026-11-19.)
 
-A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding.
+A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding or a confirmed security finding. A security candidate passes the same validation as any other.
 
 **Done when:** every finder has returned, you've deduped identical claims into one candidate each, and you've folded candidates that name the same class into one candidate carrying the union of their sites. Two candidates name the same class when one class search finds both mistakes.
 
@@ -75,15 +77,16 @@ Render the review in this shape, findings ordered by severity; the Refuted list 
 ## Review — <target>
 
 ### Findings (<n>)
-1. `<file:line>` — <what's wrong> · _<contract | deletion | edge>_ · **fix:** <smallest fix>
+1. `<file:line>` — <what's wrong> · _<contract | deletion | edge | security>_ · **fix:** <smallest fix>
    - class: <the mistake in one phrase> · search: `<the class search>`
    - sites: `<file:line>`, `<file:line>`
    <!-- the class and sites lines only on a class finding, listing every confirmed site -->
+   <!-- a security finding names both anchors: its cause and where it lands -->
    <!-- tie a deletion finding to the deletion test or the code-judo move -->
 <!-- if none: "No high-confidence findings." -->
 
 ### Pre-existing (<n>)
-- `<file:line>` — <what's wrong> · _<contract | deletion | edge>_
+- `<file:line>` — <what's wrong> · _<contract | deletion | edge | security>_
 <!-- each CONFIRMED candidate marked `pre-existing`: a defect the diff did not introduce, outside the Findings count; if none: "None." -->
 
 ### Oscillation

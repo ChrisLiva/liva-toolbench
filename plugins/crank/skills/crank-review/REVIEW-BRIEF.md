@@ -9,13 +9,21 @@ Read-only: do NOT checkout, reset, stash, commit, or otherwise mutate the workin
 
 Report only what a senior engineer would hold the merge for, and only what you can ground in the code. High conviction over coverage: a handful of real findings, never a long list of nits. A nit is not a finding: anything a compiler, type-checker, linter, or formatter already catches, or a matter of taste (naming, ordering, "consider maybe"). When you can't tell whether something is a real problem, it isn't one. Look past "maybe rename this" when the real issue is structural, and past a cleaner version of the same messy idea when a simpler idea is in reach.
 
-## Three questions
+## Four questions
 
 Every finding answers one of these:
 
 1. **Does the code do what it says, clearly?** The names, signatures, types, comments, and commit/PR messages are the stated contract. Flag where the implementation silently diverges from it, where a reader would be actively misled, or where a test asserts the contract through a back channel instead of the **seam**, the entry point a real caller reaches (an **implementation-detail test**: it mocks an internal collaborator, asserts call counts or order, or reaches a private method). A comment, doc line, or citation elsewhere in the repo that this diff has made untrue is the same finding at one remove; grep for the symbols and version strings this diff moved before you clear this question. Mocking a true external boundary the code doesn't own (network, filesystem, clock) is legitimate. When the target has a commit or PR message that presents the diff as a fix (`git log <BASE>..HEAD`, or the PR's body when the diff command names a PR), find the cause that message names: a diff that guards the symptom at one call site while the cause stays reachable from another caller is a finding that cites the cause's `file:line`.
 2. **What can be deleted, consolidated, or refactored away?** Ask of every structure, type, abstraction, and branch the diff introduces: *how could this be simpler and still mean exactly the same thing?* Bias hard toward cutting and unifying; see Deletion and Magic strings below.
 3. **What edge case slips through?** The empty input, the boundary value, the error path, the concurrent case, the invariant the diff breaks. Flag a missed case only when it is reachable and the failure is real, not a defensive check against the impossible.
+4. **What can an attacker make it do?** Read the diff as an attacker would: follow each value that arrives from outside the code's trust to where it lands. Every security finding answers this question and cites two `file:line` anchors, its cause and where it lands:
+   - **Outside input reaching an interpreter unescaped** (SQL, shell, markup, file path, deserializer): where the input enters, and the sink it reaches.
+   - **An entry point that acts without the authentication or ownership check its sibling entry points apply**: that entry point, and the check its sibling applies.
+   - **A secret or personal data written to a log, an error message, a URL, or the repo** (a password, a credential, a key): where the value is read, and where it is written.
+   - **A protection the diff weakens**: the changed line, and a path it no longer guards.
+   - **Code fetched or installed from an unpinned or unverified source**: the fetch or install line, and the line that runs what it fetched.
+
+   No finding: hardening with no reachable path, a missing rate limit, a risk that exists only in test fixtures, and input from a caller the code already trusts.
 
 ## Deletion
 
@@ -55,7 +63,7 @@ A **pre-existing** defect sits on lines the diff neither added nor changed and i
 
 ## If you are a finder
 
-Apply the rubric across the whole diff, or the single lens the dispatch names. Return only a list of candidate findings, each with `file:line`, the claim in one sentence, which of the three questions it answers, why it matters, and the smallest fix. A class finding also carries its class phrase, its search command, and every site. A pre-existing candidate carries the word `pre-existing` beside its question tag. If the diff is clean, return an empty list; never manufacture findings to fill it.
+Apply the rubric across the whole diff, or the single lens the dispatch names. Return only a list of candidate findings, each with `file:line`, the claim in one sentence, which of the four questions it answers, why it matters, and the smallest fix. A class finding also carries its class phrase, its search command, and every site. A pre-existing candidate carries the word `pre-existing` beside its question tag. If the diff is clean, return an empty list; never manufacture findings to fill it.
 
 ## If you are a validator
 

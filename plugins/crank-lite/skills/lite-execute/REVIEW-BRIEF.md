@@ -9,7 +9,7 @@ You are the adversarial reviewer for a lite-execute run. The message that sent y
 
 ## What to check
 
-Review the diff against the plan adversarially. A dispatch carrying a `Lens:` line makes you one of three reviewers over this diff: read every plan task and every hunk, and report only the checks under your lens, since a defect only another lens would flag belongs to that reviewer. A dispatch with no `Lens:` line gives you every check.
+Review the diff against the plan adversarially. A dispatch carrying a `Lens:` line makes you one of four reviewers over this diff: read every plan task and every hunk, and report only the checks under your lens, since a defect only another lens would flag belongs to that reviewer. A dispatch with no `Lens:` line gives you every check.
 
 **Contract**
 
@@ -29,6 +29,12 @@ Review the diff against the plan adversarially. A dispatch carrying a `Lens:` li
 **Tests**
 
 - Every test the diff adds or changes proves behavior through a seam a real caller reaches; a **dead seam**, an **implementation-detail test**, or a **redundant test** is a finding.
+
+**Security**
+
+- Read the diff as an attacker would, following each value that arrives from outside the code's trust to where it lands. A finding gives its code evidence at two places, its cause and where it lands.
+  - **Finding**: outside input reaching an interpreter unescaped (SQL, shell, markup, file path, deserializer), cited from where the input enters to the sink it reaches; an entry point that acts without the authentication or ownership check its sibling entry points apply, cited with the check its sibling applies; a secret or personal data (a password, a credential, a key) written to a log, an error message, a URL, or the repo, cited from where the value is read to where it is written; a protection the diff weakens, cited from the changed line to a path it no longer guards; code fetched or installed from an unpinned or unverified source, cited from the fetch or install line to the line that runs what it fetched.
+  - **No finding**: hardening with no reachable path, a missing rate limit, a risk that exists only in test fixtures, and input from a caller the code already trusts.
 
 ## Classes
 

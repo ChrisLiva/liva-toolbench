@@ -755,10 +755,10 @@ def score_review(run, st, block, s):
     stages = re.search(r"^## Stages\n(.*?)(?=^## |\Z)", plan_text(run, "crank-before"), re.M | re.S)
     s["review_plan_stages"] = len(re.findall(r"^\|\s*\d+\b", stages.group(1), re.M)) if stages else 0
     lenses = [(i, m.group(1)) for i, a in reviewer
-              if (m := re.search(r"^Lens: (Contract|Coherence|Tests)\s*$", a.get("prompt", ""), re.M))]
+              if (m := re.search(r"^Lens: (Contract|Coherence|Tests|Security)\s*$", a.get("prompt", ""), re.M))]
     merges = [i for i, a in reviewer if "MERGE-BRIEF.md" in a.get("prompt", "")]
     if s["review_plan_stages"] >= 2:
-        s["review_shape"] = int(len(reviewer) == 4 and sorted(n for _, n in lenses) == ["Coherence", "Contract", "Tests"]
+        s["review_shape"] = int(len(reviewer) == 5 and sorted(n for _, n in lenses) == ["Coherence", "Contract", "Security", "Tests"]
                                 and len(merges) == 1 and all(merges[0] > i for i, _ in lenses))
     else:
         s["review_shape"] = int(len(reviewer) == 1 and not re.search(r"^Lens:", reviewer[0][1].get("prompt", ""), re.M))

@@ -9,11 +9,12 @@ disable-model-invocation: true
 
 ## Goal
 
-A short list of findings a senior engineer would hold the merge for. Three questions drive every finding:
+A short list of findings a senior engineer would hold the merge for. Four questions drive every finding:
 
 1. **Does this code do what it says, clearly?**
 2. **What can be deleted, consolidated, or refactored away?**
 3. **What edge case slips through?**
+4. **What can an attacker make it do?**
 
 Precision over coverage: three real problems beat thirty nits. The run is read-only until the user approves fixes.
 
@@ -31,9 +32,9 @@ If the target is ambiguous (committed work *and* uncommitted changes both presen
 
 ## Find
 
-Find candidates yourself — no finder subagents. Read the diff through two lenses: **correctness & contract** (questions 1 and 3) and **simplicity & deletion** (question 2).
+Find candidates yourself — no finder subagents. Read the diff through three lenses: **correctness & contract** (questions 1 and 3), **simplicity & deletion** (question 2), and **security** (question 4), where you read the diff as an attacker would, following each value that arrives from outside the code's trust to where it lands. (per project decision: the security lens is a third read on the main thread, so the run keeps its one dispatch, 2026-11-19.)
 
-Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a correctness finding. Each candidate carries `file:line`, the claim, why it matters, and the smallest fix.
+Honor any focus in the argument (e.g. "especially simplicity") by weighting the lenses — but a focus never suppresses a correctness finding or a confirmed security finding. Each candidate carries `file:line`, the claim, why it matters, and the smallest fix.
 
 A defect that is one instance of a repeatable mistake gets a **class**: one phrase naming the mistake, and the one repo-wide search that finds its instances, written as a single shell command whose output lists each hit as `file:line`. Run that search, read each hit, and list in the same candidate every **site**, each as `file:line`: a hit where the same failure is reachable. A hit where the failure is not reachable is not a site, and a site on lines the diff did not touch stays in the candidate and is fixed with it.
 
@@ -47,6 +48,8 @@ Read [VOCABULARY.md](VOCABULARY.md) for the working language: the **deletion tes
 
 - Never raise what a compiler, type-checker, formatter, or linter already catches, nor a matter of taste.
 - A deletion or consolidation finding passes the **deletion test**: the complexity it removes concentrates rather than reappearing across callers.
+- A security finding answers question 4 and cites two `file:line` anchors, its cause and where it lands: outside input reaching an interpreter unescaped (SQL, shell, markup, file path, deserializer), cited from where the input enters to the sink it reaches; an entry point that acts without the authentication or ownership check its sibling entry points apply, cited with the check its sibling applies; a secret or personal data (a password, a credential, a key) written to a log, an error message, a URL, or the repo, cited from where the value is read to where it is written; a protection the diff weakens, cited from the changed line to a path it no longer guards; code fetched or installed from an unpinned or unverified source, cited from the fetch or install line to the line that runs what it fetched.
+- No security finding: hardening with no reachable path, a missing rate limit, a risk that exists only in test fixtures, and input from a caller the code already trusts.
 - **Never cut required behavior.** Trust-boundary validation, data-loss and error paths, security checks, and accessibility are never "unnecessary surface", however simple their removal would make the code.
 
 ## Validate
