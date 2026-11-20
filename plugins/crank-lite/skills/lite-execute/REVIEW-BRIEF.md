@@ -34,6 +34,10 @@ Review the diff against the plan adversarially. A dispatch carrying a `Lens:` li
 
 A finding that is one instance of a repeatable mistake gets a **class**: one phrase naming the mistake, and the one repo-wide search that finds its instances, written as a single shell command whose output lists each hit as `file:line`, so the orchestrator re-runs it unchanged after the fix. Run that search, read each hit, and list in the same finding every **site**, each as `file:line`: a hit where the same failure is reachable. A hit where the failure is not reachable is not a site. A site on lines the diff did not touch stays in the class finding and is fixed with it.
 
+## Pre-existing defects
+
+A defect on lines the diff neither added nor changed, and not a site of a class finding, is **pre-existing**; a defect the diff makes newly reachable is the diff's own finding. Report one only when you meet it while reading the symbols the diff changes or calls on its changed lines; never go looking for one. Return it as `PRE-EXISTING`, whichever lens you hold: the orchestrator records it and fixes none.
+
 ## Rounds
 
 Work your lookups in **rounds** until the completion criterion below holds. Each round:
@@ -44,9 +48,9 @@ Work your lookups in **rounds** until the completion criterion below holds. Each
 
 ## Return
 
-Return each finding as `CONFIRMED` or `REFUTED` with its code evidence: path, enclosing symbol, and the line that proves it. A class finding adds its class phrase, its search command, and every site. Default to `REFUTED` when the evidence is thin.
+Return each finding as `CONFIRMED` or `REFUTED` with its code evidence: path, enclosing symbol, and the line that proves it. A class finding adds its class phrase, its search command, and every site. Return each pre-existing defect as `PRE-EXISTING` with the same evidence. Default to `REFUTED` when the evidence is thin.
 
-Given a `Findings:` path, write your numbered findings there in the form above, and reply with one line: the counts of `CONFIRMED` and `REFUTED` findings.
+Given a `Findings:` path, write your numbered findings there in the form above, and reply with one line: the counts of `CONFIRMED`, `REFUTED`, and `PRE-EXISTING` findings.
 
 Completion criterion:
 

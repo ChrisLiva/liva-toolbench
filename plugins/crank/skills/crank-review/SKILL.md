@@ -23,7 +23,7 @@ Precision over coverage. Each nit spends trust the real findings need.
 - **Not a linter.** A nit, anything a compiler, type-checker, formatter, or linter catches, or a matter of taste (naming preference, ordering, "consider maybe"), never ships.
 - **Bias toward deletion and consolidation, never past required behavior.** Collapsing parallel structures into one counts as deletion. The brief's [_Never cut required behavior_](REVIEW-BRIEF.md) section lists what required behavior covers.
 - **Read-only.** Never edit, stage, commit, or otherwise mutate the tree; fixes are a separate, approved step after the report.
-- **Subagents pull their own facts.** A dispatch carries pointers only: the brief's path, the BASE SHA, the diff command with any untracked-files list, and either the finder's lens or the validator's one candidate, given as `file:line` and the claim as the finder worded it, with its class phrase, search command, and sites when the finder returned a class. Never add the rubric's text, your characterization of the diff, or a defense of a finding.
+- **Subagents pull their own facts.** A dispatch carries pointers only: the brief's path, the BASE SHA, the diff command with any untracked-files list, and either the finder's lens or the validator's one candidate, given as `file:line` and the claim as the finder worded it, with its class phrase, search command, and sites when the finder returned a class, and its `pre-existing` mark when it carries one. Never add the rubric's text, your characterization of the diff, or a defense of a finding.
 
 ## Flow
 
@@ -81,6 +81,10 @@ Render the review in this shape, findings ordered by severity; the Refuted list 
    <!-- the class and sites lines only on a class finding, listing every confirmed site -->
    <!-- tie a deletion finding to the deletion test or the code-judo move -->
 <!-- if none: "No high-confidence findings." -->
+
+### Pre-existing (<n>)
+- `<file:line>` — <what's wrong> · _<contract | deletion | edge>_
+<!-- each CONFIRMED candidate marked `pre-existing`: a defect the diff did not introduce, outside the Findings count; if none: "None." -->
 
 ### Oscillation
 - `<sha>` reversed by `<sha>`: <settled decision the diff reopens>. Offer an ADR.

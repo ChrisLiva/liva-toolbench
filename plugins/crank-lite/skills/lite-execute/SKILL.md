@@ -218,7 +218,9 @@ Once every box is checked:
    - A fix to a site on lines `git diff <Base>..HEAD` neither added nor changed lands in a commit apart from the fixes to sites on lines it did. A site on an untouched line of a changed file counts as outside.
    - A site whose fix would change a contract the plan or the spec names is not fixed: fix the class's other sites first, and carry it to Close the loop as a decision. The class finding stays open until the user answers.
 
-Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision, and every class search ran after its fix.
+   Record each `PRE-EXISTING` finding for the retro and fix none: the diff did not introduce it. A single reviewer's `PRE-EXISTING` lines stand as returned, and a merger lists them under its `## Pre-existing` heading.
+
+Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision, every class search ran after its fix, and every `PRE-EXISTING` finding is recorded for the retro, unfixed.
 
 ## Test prune
 
@@ -250,5 +252,5 @@ Before the retro:
 
 ## Retro
 
-1. Record the retro to `.crank/<slug>/retro.md`. Include, when each earns its place: what changed, verification run, review outcome, the test prune's counts per verdict and commit, deviations from the plan, where any promoted fact landed, and any surviving decisions.
+1. Record the retro to `.crank/<slug>/retro.md`. Include, when each earns its place: what changed, verification run, review outcome, each pre-existing defect the review listed, the test prune's counts per verdict and commit, deviations from the plan, where any promoted fact landed, and any surviving decisions.
 2. Tell the user the commit SHAs this run landed and the retro path; when nothing survived the loop-close, say the work is complete. Then stop.

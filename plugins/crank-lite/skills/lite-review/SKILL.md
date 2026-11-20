@@ -37,6 +37,8 @@ Honor any focus in the argument (e.g. "especially simplicity") by weighting the 
 
 A defect that is one instance of a repeatable mistake gets a **class**: one phrase naming the mistake, and the one repo-wide search that finds its instances, written as a single shell command whose output lists each hit as `file:line`. Run that search, read each hit, and list in the same candidate every **site**, each as `file:line`: a hit where the same failure is reachable. A hit where the failure is not reachable is not a site, and a site on lines the diff did not touch stays in the candidate and is fixed with it.
 
+A **pre-existing** defect sits on lines the diff neither added nor changed and is not a site of a class candidate; a defect the diff makes newly reachable is the diff's own finding. Note one only when you meet it while reading the symbols the diff changes or calls on its changed lines, never by searching for one, and mark its candidate `pre-existing`.
+
 When the target has a commit or PR message that presents the diff as a fix, find the cause that message names: a diff that guards the symptom at one call site while the cause stays reachable from another caller is a candidate that cites the cause's `file:line`.
 
 ## Rubric
@@ -49,9 +51,9 @@ Read [VOCABULARY.md](VOCABULARY.md) for the working language: the **deletion tes
 
 ## Validate
 
-Dispatch **one** heavy-tier subagent (see Subagent tiers) to adversarially validate the whole candidate list. Hand it pointers — the BASE SHA, the diff command, each candidate's `file:line` and claim, with a class candidate's phrase, search command, and sites — never your characterization of the code or a defense of a finding; it runs the diff and reads the cited code itself. Tell it to work its lookups in **rounds**: a round's **frontier** is every lookup whose answer it does not need before issuing the next one, and the whole frontier goes out as one batch in a single turn, every return read before it composes the next round.
+Dispatch **one** heavy-tier subagent (see Subagent tiers) to adversarially validate the whole candidate list. Hand it pointers — the BASE SHA, the diff command, each candidate's `file:line` and claim, with a class candidate's phrase, search command, and sites, and a candidate's `pre-existing` mark — never your characterization of the code or a defense of a finding; it runs the diff and reads the cited code itself. Tell it to work its lookups in **rounds**: a round's **frontier** is every lookup whose answer it does not need before issuing the next one, and the whole frontier goes out as one batch in a single turn, every return read before it composes the next round.
 
-Its job is to **refute**: for each candidate, decide whether the claim holds and **default to REFUTED** when the evidence is thin, the complexity a cut targets turns out to be load-bearing, or the call is a matter of taste. For a class candidate it reads every listed site and confirms or drops each one: a site stays only when the same failure is reachable there. Every candidate leaves this step carrying a CONFIRMED or REFUTED verdict with its code evidence; only CONFIRMED findings ship.
+Its job is to **refute**: for each candidate, decide whether the claim holds and **default to REFUTED** when the evidence is thin, the complexity a cut targets turns out to be load-bearing, or the call is a matter of taste. For a class candidate it reads every listed site and confirms or drops each one: a site stays only when the same failure is reachable there. For a candidate marked `pre-existing` it confirms the defect and that the diff neither added nor changed its lines. Every candidate leaves this step carrying a CONFIRMED or REFUTED verdict with its code evidence; only CONFIRMED findings ship.
 
 ## Report
 
@@ -64,10 +66,13 @@ Render the validated review, findings ordered by severity:
    sites: `<file:line>`, `<file:line>` <!-- a class finding only: every confirmed site -->
 <!-- if none: "No validated findings — the diff is clean." -->
 
+Pre-existing: `<file:line>` — <what's wrong>
+<!-- one line per validated pre-existing defect, after the numbered findings; leave the line out when there is none -->
+
 Refuted: <n> candidate(s) killed in validation.
 ```
 
-Then offer to apply the small fixes in-session on the user's approval, a class finding's fix covering every confirmed site, and recommend `/crank-lite plan` for any finding that implies design work rather than a spot fix.
+Then offer to apply the small fixes in-session on the user's approval, a class finding's fix covering every confirmed site, name the pre-existing defects as a separate choice, since the diff did not introduce them, and recommend `/crank-lite plan` for any finding that implies design work rather than a spot fix.
 
 ## Subagent tiers
 
