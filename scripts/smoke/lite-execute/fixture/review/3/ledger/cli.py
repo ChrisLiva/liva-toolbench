@@ -34,7 +34,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "list":
         for e in load_entries(args.file):
-            print(f"{e.date}  {e.payee:<30} {e.amount_cents / 100:>10.2f}")
+            if e.amount_cents:
+                print(f"{e.date}  {e.payee:<30} {e.amount_cents / 100:>10.2f}")
     elif args.command == "export":
         Path(args.out).write_text(to_csv(_read(args.file)), encoding="utf-8-sig")
     return 0

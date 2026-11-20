@@ -272,7 +272,7 @@ non-lookup bucket.
 `scripts/smoke/lite-execute/` measures a lite-execute prose change on the models that
 execute it. Read its README before a run, because it lists the scenarios and their
 fixtures' traps, the `batch.sh` and `score.py` commands, the run budget, and how to read
-a score.
+a score. `python3 -m unittest discover -s scripts/smoke/lite-execute` tests how its scorer reads a review return.
 
 `scripts/smoke/crank-lite/` does the same for crank-lite's brainstorm, spec, and plan
 phases, driving each interview with a scripted user that agrees with every round. Its

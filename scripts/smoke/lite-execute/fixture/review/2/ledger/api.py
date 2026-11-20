@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from ledger.csv_export import to_csv
 from ledger.store import load_entries
 
 ROUTES = {}
+DATA_DIR = Path("data")
 
 
 class Response:
@@ -37,8 +39,10 @@ def entries(store_path):
     return json.dumps([e.__dict__ for e in load_entries(store_path)])
 
 
-def export_csv(store_path):
-    """Serve the whole ledger as a CSV download."""
+def export_csv(store_path=None, ledger=None):
+    """Serve a ledger as a CSV download: the file at store_path, or the one named ledger in the data directory."""
+    if ledger is not None:
+        store_path = DATA_DIR / ledger
     return Response(
         to_csv(load_entries(store_path)),
         "text/csv",

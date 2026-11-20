@@ -36,7 +36,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "list":
         for e in load_entries(args.file):
-            print(f"{e.date}  {e.payee:<30} {e.amount_cents / 100:>10.2f}")
+            if e.amount_cents:
+                print(f"{e.date}  {e.payee:<30} {e.amount_cents / 100:>10.2f}")
     elif args.command == "export":
         entries = _read(args.file)
         if len(entries) > STREAM_THRESHOLD:

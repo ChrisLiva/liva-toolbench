@@ -19,5 +19,6 @@ def to_csv(entries: list[Entry]) -> str:
     writer = csv.writer(out, lineterminator="\n")
     writer.writerow(HEADER)
     for e in entries:
-        writer.writerow(_row(e))
+        if e.amount_cents:
+            writer.writerow(_row(e))
     return out.getvalue()

@@ -428,14 +428,15 @@ def agent_returns(run, st, agents):
 
 
 def confirmed_text(text):
-    """The lines of a review return under a CONFIRMED verdict, up to the next REFUTED one."""
-    keep, confirmed, discarded = [], False, False
+    """The lines of a review return under a CONFIRMED verdict, up to the next REFUTED or PRE-EXISTING one."""
+    keep, confirmed, closed = [], False, False
     for line in text.splitlines():
         heading = line.lstrip().startswith("#")
         if heading:
-            # A merger's Discarded section names findings their lens confirmed, so nothing under it counts.
-            discarded = bool(re.search(r"discard", line, re.I))
-        if discarded or re.search(r"\bREFUTED\b", line) or heading and re.search(r"refuted", line, re.I):
+            # A merger's Discarded section names findings their lens confirmed, and its Pre-existing
+            # section names bugs the diff did not introduce, so nothing under either counts.
+            closed = bool(re.search(r"discard|pre-?existing", line, re.I))
+        if closed or re.search(r"\bREFUTED\b|\bPRE-EXISTING\b", line) or heading and re.search(r"refuted", line, re.I):
             confirmed = False
         elif re.search(r"\bCONFIRMED\b", line) or heading and re.search(r"confirmed", line, re.I):
             confirmed = True
@@ -510,6 +511,74 @@ for name, check in checks.items():
     except Exception:
         fixed[name] = False
 print(json.dumps(fixed))
+"""
+
+# The review seed's three planted items beyond DEFECTS, each scored under its own keys so caught_total
+# and fixed_total keep counting the nine. A path traversal in the export route, which only the security
+# read reaches. Zero-amount entries dropped by a truthiness test, a class with one site in the diff
+# (to_csv) and one in the baseline (the list command). And load_entries dropping any line that holds
+# "#", a baseline bug the diff never touches. Each matcher reads the lowercased CONFIRMED text.
+ZERO_AMOUNT = r"zero[- ]amount|amount(?:_cents)? (?:of|is|==|equals?|equal to) (?:zero|0)\b|\b0[- ]cents?\b|falsy|truthi|if e\.amount_cents"
+HASH = (r"[\"'`]#[\"'`]|# (?:character|sign|symbol|anywhere|in (?:the |its |a )?(?:payee|line))|hash (?:sign|character|symbol|mark)"
+        r"|pound sign|contain\w* (?:a |an |the )?[\"'`]?#")
+PLANT_CATCHES = [
+    ("traversal_caught", lambda t: near(t, r"travers|\.\./|climb|outside (?:of )?(?:the )?`?data|escap\w* (?:from )?(?:the )?`?data"
+                                         r"|arbitrary (?:file|path)|any (?:readable )?file|containment",
+                                      r"export_csv|ledger=|`ledger`|data_dir|store_path")),
+    ("zero_amount_caught", lambda t: near(t, ZERO_AMOUNT, r"drop|skip|omit|missing|los[et]|exclud|filter|silently|not written|never written"
+                                                         r"|disappear|vanish|left out")),
+    # The class finding lists the baseline site: the list command in ledger/cli.py, which the diff never touches.
+    ("zero_amount_baseline_site_listed", lambda t: near(t, r"cli\.py|\blist\b[^.\n]{0,40}(?:command|branch|subcommand)|`list`", ZERO_AMOUNT, 300)),
+]
+
+
+def hash_payee_named(t):
+    return near(t, HASH, r"load_entries|payee|store\.py", 300) and near(t, HASH, r"drop|skip|los[et]|discard|omit|missing|swallow|ignor", 300)
+
+
+# Prints, as JSON, what the run's final tree does with each planted item: the traversal closed, both
+# sites of the zero-amount class fixed, and the baseline "#" bug still there, since a review that
+# reports it as pre-existing fixes nothing.
+PLANT_PROBE = r"""
+import json, os, subprocess, sys, tempfile
+from pathlib import Path
+
+def folder():
+    return Path(tempfile.mkdtemp())
+
+def traversal_fixed():
+    from ledger.api import export_csv
+    outside = folder() / "outside.tsv"
+    outside.write_text("2026-09-09\tOUTSIDE PAYEE\t123\n", encoding="utf-8")
+    climb = os.path.relpath(os.path.realpath(outside), os.path.realpath("data"))
+    try:
+        body = export_csv(ledger=climb).body
+    except Exception:
+        return True  # the route refuses the name, or no longer takes one
+    return "OUTSIDE PAYEE" not in body
+
+def zero_amount_fixed():
+    d = folder()
+    (d / "zero.tsv").write_text("2026-09-01\tOpening balance\t0\n2026-09-02\tCafe\t-450\n", encoding="utf-8")
+    cli = [sys.executable, "-m", "ledger", "--file", str(d / "zero.tsv")]
+    listed = subprocess.run(cli + ["list"], capture_output=True, text=True)
+    exported = subprocess.run(cli + ["export", "--out", str(d / "zero.csv")], capture_output=True, text=True)
+    return (listed.returncode == 0 and "Opening balance" in listed.stdout and exported.returncode == 0
+            and "Opening balance" in (d / "zero.csv").read_text(encoding="utf-8-sig"))
+
+def hash_payee_left_unfixed():
+    from ledger.store import load_entries
+    p = folder() / "hash.tsv"
+    p.write_text("# date\tpayee\tamount_cents\n2026-09-01\tFlat #4 rent\t-90000\n2026-09-02\tCafe\t-450\n", encoding="utf-8")
+    return [e.payee for e in load_entries(p)] == ["Cafe"]
+
+found = {}
+for check in [traversal_fixed, zero_amount_fixed, hash_payee_left_unfixed]:
+    try:
+        found[check.__name__] = bool(check())
+    except Exception:
+        found[check.__name__] = False
+print(json.dumps(found))
 """
 
 # The review-large seed's planted defects, in the same shape. A territory is a half of the twelve
@@ -747,8 +816,10 @@ def score_review(run, st, block, s):
     """Every task is committed and checked, so the run goes straight to Review over a diff carrying
     the scenario's planted defects (REVIEW_FIXTURES). A defect counts as caught when a CONFIRMED
     finding in a reviewer's return names it, and as fixed when the scenario's probe finds it gone
-    from the final tree."""
-    slug, defects, defect_probe = REVIEW_FIXTURES[(run / "arm").read_text().split()[0]]
+    from the final tree. The review scenario's three other planted items score under their own keys
+    (PLANT_CATCHES, PLANT_PROBE)."""
+    scenario = (run / "arm").read_text().split()[0]
+    slug, defects, defect_probe = REVIEW_FIXTURES[scenario]
     impl, reviewer = dispatches(st.items)
     s["reviewer_dispatched"] = int(bool(reviewer))
     s["review_dispatches"] = len(reviewer)
@@ -776,6 +847,14 @@ def score_review(run, st, block, s):
     for name, _, _ in defects:
         s[f"fixed_{name}"] = int(fixed[name]) if name in fixed else None
     s["fixed_total"] = sum(fixed.values()) if fixed else None
+    if scenario == "review":
+        for key, named in PLANT_CATCHES:
+            s[key] = int(named(text)) if reviewer else None
+        s["hash_payee_not_confirmed"] = int(not hash_payee_named(text)) if reviewer else None
+        probe = subprocess.run(["python3", "-c", PLANT_PROBE], cwd=run / "repo", capture_output=True, text=True)
+        found = json.loads(probe.stdout) if probe.returncode == 0 else {}
+        for key in ("traversal_fixed", "zero_amount_fixed", "hash_payee_left_unfixed"):
+            s[key] = int(found[key]) if key in found else None
     s.update(review_cost(run))
     s["retro_written"] = int((run / "crank-after" / slug / "retro.md").exists())
     t = subprocess.run(["python3", "-m", "unittest", "discover", "-s", "tests"], cwd=run / "repo",

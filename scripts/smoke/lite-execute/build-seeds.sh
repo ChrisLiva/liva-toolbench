@@ -7,7 +7,8 @@
 #                            that the /health route uses (scenario D)
 #   <out-dir>/seed-prototype   a ledger CSV reader with no report page yet (the prototype scenarios)
 #   <out-dir>/seed-review    all five CSV-export tasks committed, one commit each, carrying the
-#                            review scenario's planted defects (README.md lists them)
+#                            review scenario's planted defects, over a baseline that carries two
+#                            planted bugs of its own (README.md lists them)
 #   <out-dir>/seed-review-large   all twelve bank-import tasks committed, one commit each, carrying
 #                            the review-large scenario's planted defects (README.md lists them)
 set -euo pipefail
@@ -42,9 +43,11 @@ git -C "$out/seed-prototype" add -A
 commit "$out/seed-prototype" "feat: read ledger entries"
 
 # review_seed <seed> <overlay dir> <message>...: the ledger repo, then one commit per numbered overlay.
+# An overlay dir's 0/, when it has one, lands in the baseline commit, so its files predate the diff.
 review_seed() {
   local d=$out/$1 src=$here/fixture/$2 n=0; shift 2
   cp -R "$here/fixture/repo" "$d"
+  if [ -d "$src/0" ]; then cp -R "$src/0/." "$d/"; fi
   git -C "$d" init -q -b main
   git -C "$d" add -A
   commit "$d" "chore: seed ledger"
