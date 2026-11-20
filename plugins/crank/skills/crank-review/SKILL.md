@@ -48,13 +48,13 @@ Spawn one standard-tier finder per lens, each with the pointers **Subagents pull
 - **Simplicity and deletion.** The brief's question 2 and the sections it points to.
 - **Security.** The brief's question 4. (per project decision: security is a fourth question with its own finder, in place of security findings filed under question 1, because a leaked secret or an unpinned fetch answers none of the first three questions and the attacker's read is a different pass from the contract read, 2026-11-19.)
 
-A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding or a confirmed security finding; only a skip in the repo's `REVIEW.md`, read as it stood at BASE, does. A security candidate passes the same validation as any other.
+A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding or a confirmed security finding; only a skip in the repo's `REVIEW.md` does.
 
 **Done when:** every finder has returned, you've deduped identical claims into one candidate each, and you've folded candidates that name the same class into one candidate carrying the union of their sites. Two candidates name the same class when one class search finds both mistakes.
 
 ### 3. Validate
 
-For each candidate, spawn a standard-tier validator with the pointers **Subagents pull their own facts** lists. Launch them in waves, each wave returning before the next starts. Each tries to **refute** its candidate on the defaults in the brief's [_If you are a validator_](REVIEW-BRIEF.md) section; only a code-grounded CONFIRMED survives. A class candidate's validator confirms or drops each listed site by reading it, and only the confirmed sites reach the report.
+For each candidate, spawn a standard-tier validator with the pointers **Subagents pull their own facts** lists. Launch them in waves, each wave returning before the next starts. Each tries to **refute** its candidate on the defaults in the brief's [_If you are a validator_](REVIEW-BRIEF.md) section; only a code-grounded CONFIRMED survives. Only the sites a class candidate's validator confirms reach the report.
 
 **Done when:** every candidate carries a CONFIRMED or REFUTED verdict with its evidence, and every site a class candidate listed is confirmed or dropped.
 

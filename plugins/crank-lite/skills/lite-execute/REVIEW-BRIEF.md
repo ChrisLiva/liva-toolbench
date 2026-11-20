@@ -33,7 +33,7 @@ Review the diff against the plan adversarially. A dispatch carrying a `Lens:` li
 
 - The plan's **Global Constraints** section binds every task: hold the whole diff to it.
 - Every function, value, or field one task defines and another task uses or changes agrees in name, signature, coordinate frame, and meaning, and a later task's change leaves no caller behind.
-- The repo's rules bind the diff as the Global Constraints do: a diff line that breaks a rule `REVIEW.md`, `CLAUDE.md`, or `AGENTS.md` states is a finding that cites the rule's file and heading beside its code evidence. A check `REVIEW.md` adds is applied here, and its findings carry the same evidence and verdict as any other.
+- The repo's rules bind the diff as the Global Constraints do: a diff line that breaks a rule `REVIEW.md`, `CLAUDE.md`, or `AGENTS.md` states is a finding that cites the rule's file and heading beside its code evidence. A check `REVIEW.md` adds is applied here.
 
 **Tests**
 

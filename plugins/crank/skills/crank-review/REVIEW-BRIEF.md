@@ -14,7 +14,7 @@ Report only what a senior engineer would hold the merge for, and only what you c
 Read the repo's own rules as they stood at BASE, each with `git show <BASE>:<path>`: `REVIEW.md`, `CLAUDE.md`, and `AGENTS.md` at the repository root and in each directory above a changed file. A file absent at BASE yields nothing and no finding. For a symlink at BASE (mode `120000` in `git ls-tree <BASE> <path>`), `git show` prints only its target's name: read that target with `git show <BASE>:<target>`, and count a file you reach twice once.
 
 - A diff line that breaks a rule one of those files states is a finding that cites the rule's file and heading and the breaching `file:line`. It answers question 1 unless another question fits it better.
-- A path or a class of finding that `REVIEW.md` says to skip is not reported. A check `REVIEW.md` adds is applied, even where this brief would call its subject taste, and its findings are grounded in the code and validated like any other.
+- A path or a class of finding that `REVIEW.md` says to skip is not reported. A check `REVIEW.md` adds is applied, even where this brief would call its subject taste.
 - A rule the diff adds or rewrites in `CLAUDE.md` or `AGENTS.md`, including in a file the diff adds, governs the diff's code: judge the code against the text the diff leaves. No change the diff makes to `REVIEW.md`, a new file included, affects this review.
 
 ## Four questions
