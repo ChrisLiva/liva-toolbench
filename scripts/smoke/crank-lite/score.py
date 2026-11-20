@@ -17,7 +17,7 @@ import extract  # noqa: E402
 NEXT_PHASE = {"brainstorm": "SPEC.md", "spec": "PLAN.md", "plan": "lite-execute/SKILL.md"}
 CATALOGUE = [r"absen", r"permission|EACCES|EPERM", r"stale", r"destr|delet", r"limit|large|size", r"interrupt|concurren|partial|crash", r"trust|valid|ownership"]
 # PLAN.md hands a reviewer each pointer as an absolute path, so a lookup that names the brief in prose is no review
-REVIEW_BRIEF_RE = re.compile(r"(?:^|[\s`\"'(=:])/[^\s`\"')]*PLAN-(?:REVIEW|MERGE)-BRIEF\.md")
+REVIEW_BRIEF_RE = re.compile(r"(?:^|[\s`\"'(=:])/[^\s`\"')]*PLAN-REVIEW-BRIEF\.md")
 
 
 def turns_of(run):
@@ -30,7 +30,7 @@ def turns_of(run):
 
 
 def plan_review_dispatches(run):
-    """The inputs of the orchestrator's Agent or Task calls handing over the plan review or merge brief, in stream order."""
+    """The inputs of the orchestrator's Agent or Task calls handing over the plan review brief, in stream order."""
     out = []
     for t in sorted(run.glob("turns/*.jsonl"), key=lambda p: int(p.stem)):
         for line in t.read_text(encoding="utf-8", errors="replace").split("\n"):
@@ -60,14 +60,9 @@ def plan_stages(body):
     return max(len(rows) - 1, 0)
 
 
-def review_shape(dispatches, stages):
-    """1 when the dispatches match the review shape the plan's stage count calls for, else 0."""
-    prompts = [str(d.get("prompt", "")) for d in dispatches]
-    shards = [(i, m.group(1)) for i, p in enumerate(prompts) for m in [re.search(r"^\s*Shard:\s*([ABX])\b", p, re.M)] if m]
-    if stages < 2:
-        return int(sum("PLAN-REVIEW-BRIEF" in p for p in prompts) == 1 and not shards)
-    merges = [i for i, p in enumerate(prompts) if "PLAN-MERGE-BRIEF" in p]
-    return int(sorted(s for _, s in shards) == ["A", "B", "X"] and len(merges) == 1 and merges[0] > max(i for i, _ in shards))
+def review_shape(dispatches):
+    """1 when the plan review is one dispatch, the shape every plan gets whatever its stage count, else 0."""
+    return int(len(dispatches) == 1)
 
 
 def score(run):
@@ -106,7 +101,7 @@ def score(run):
         stages = plan_stages(body)
         s["review_dispatched"] = reviewer_dispatched(dispatches)
         s["plan_stages"] = stages
-        s["review_shape"] = review_shape(dispatches, stages)
+        s["review_shape"] = review_shape(dispatches)
         s["review_tiers"] = [f"{d.get('model')}/{d.get('effort')}" for d in dispatches]
     else:
         s["review_dispatched"] = None

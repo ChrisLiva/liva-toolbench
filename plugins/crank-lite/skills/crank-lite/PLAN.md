@@ -73,18 +73,12 @@ By case, when a task:
 
 ## Review
 
-Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch the review ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers). Every dispatch carries pointers only, each an absolute path, and blocks, so wait on it as INTERVIEW.md says to wait on a lookup batch:
+Once `plan.md` is written, read [PLAN-REVIEW-BRIEF.md](PLAN-REVIEW-BRIEF.md) and dispatch one heavy-tier reviewer ([INTERVIEW.md](INTERVIEW.md) → Subagent tiers), handed the brief, the plan, the spec when one exists, and this skill's `VOCABULARY.md`. The dispatch carries pointers only, each an absolute path, and blocks, so wait on it as INTERVIEW.md says to wait on a lookup batch. (per project decision: a staged plan gets the same one reviewer as any other, because across 22 real plans three review shards and their merge took a median 30 minutes against 14 for one reviewer, and the executions that followed confirmed no fewer review findings on the sharded plans, 2026-11-20.)
 
-- **A plan with one stage or no Stages table**: one heavy-tier reviewer, handed the brief, the plan, the spec when one exists, and this skill's `VOCABULARY.md`.
-- **A plan with two or more stages**: three reviewers in one wave, each handed those pointers plus a `Shard: <A | B | X>` line and a `Findings: <absolute path to .crank/<slug>/plan-review-<a | b | x>.md>` line.
-  - Shard A and Shard B run at the standard tier, each also handed a `Tasks: <first>-<last>` line. Split the tasks at the stage boundary that leaves the two ranges closest in task count, the earlier on a tie.
-  - Shard X runs at the heavy tier.
-  - Once all three return, dispatch one heavy-tier merger handed [PLAN-MERGE-BRIEF.md](PLAN-MERGE-BRIEF.md), the review brief, the plan, the spec when one exists, `VOCABULARY.md`, and the three findings paths.
-
-Land each finding the reviewer returns, or each row the merger returns:
+Land each finding the reviewer returns:
 
 - **`CONFIRMED`, correcting a fact**: land its `old` → `new` edit in `plan.md` verbatim.
-- **`CONFIRMED`, with more than one defensible replacement, or a merged row carrying a `Spec decision:` line**: a decision. Land it as written, and show it in the readback beside the replacement it beat.
+- **`CONFIRMED`, with more than one defensible replacement**: a decision. Land it as written, and show it in the readback beside the replacement it beat.
 - **`REFUTED`**: no edit.
 
 Then strike or rewrite any Grounding entry a landed edit contradicts ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding).

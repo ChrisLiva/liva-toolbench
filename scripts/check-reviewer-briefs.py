@@ -39,7 +39,6 @@ SITES = [
     "plugins/crank-lite/skills/lite-execute/MERGE-BRIEF.md",
     "plugins/crank-lite/skills/lite-review/SKILL.md",
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md",
-    "plugins/crank-lite/skills/crank-lite/PLAN-MERGE-BRIEF.md",
 ]
 
 # Every site sends its whole frontier as one batch per turn.
@@ -85,11 +84,11 @@ FLAG_LITERALS = {
     "plugins/crank-lite/skills/lite-execute/REVIEW-BRIEF.md": ["dead seam", "implementation-detail test", "redundant test", "repeatable mistake", "Return it as `PRE-EXISTING`", "as an attacker would", "git show <Base>:<path>"],
     "plugins/crank-lite/skills/lite-execute/MERGE-BRIEF.md": ["Plan decision:", "style preference", "one class search finds both", "`## Pre-existing`"],
     "plugins/crank-lite/skills/lite-review/SKILL.md": ["repeatable mistake", "guards the symptom", "\nPre-existing: `<file:line>`", "What can an attacker make it do?", "as an attacker would", "git show <BASE>:<path>"],
-    "plugins/crank-lite/skills/crank-lite/PLAN-MERGE-BRIEF.md": ["Spec decision:", "style preference"],
     "plugins/crank-lite/skills/crank-lite/PLAN-REVIEW-BRIEF.md": [
         "unverifiable check",
         "unretired risk",
         "uncited claim",
+        "interface drift",
         "hollow stage gate",
         "dead seam",
         "unreferenced prototype",
@@ -123,7 +122,7 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/SKILL.md": ["](MERGE-BRIEF.md)", "one stage or no Stages table"],
     "plugins/crank/skills/crank/PLAN-TEMPLATE.md": ["\nPrototype: <"],
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
-    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "](PLAN-MERGE-BRIEF.md)", "two or more stages"],
+    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "one heavy-tier reviewer"],
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/SPEC.md": [
         "](PROTOTYPE.md)",
