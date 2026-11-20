@@ -112,6 +112,7 @@ PRESENCE_LITERALS = {
         "final-merge-rubric.md",
         "two or more stages",
         "a Note that begins `pre-existing:`",
+        "The third round of surviving findings ends the task's loop",
     ],
     "plugins/crank/skills/crank-execute/IMPLEMENTER-BRIEF.md": ["## Standing defect rules", "reported under Observations as `pinned:"],
     "plugins/crank-lite/skills/lite-execute/SKILL.md": ["outlives the effort", "\nBound: <Task <N>, the plan's last", "`Prototype:` slot", "MERGE-BRIEF.md", "two or more stages", "Record each `PRE-EXISTING` finding"],
