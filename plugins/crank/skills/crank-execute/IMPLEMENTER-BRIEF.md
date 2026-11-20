@@ -132,21 +132,25 @@ Write one file per fix round, in the same directory. The fixer reads it, `implem
 
 Branch: <branch>
 FIX_BASE: <the HEAD the reviewer judged>
+Run base: <the `Base:` SHA from the progress ledger>
 Findings: <path to task-<N>-findings.md>
 Orientation: <path to orientation.md>
 Report path: <path to task-<N>-report.md>
 
 ## Scope
 
-Apply the findings under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings) — the fix diff is this round's whole scope. A behavioral fix gets its failing test first; the original brief's behavior list does not bound this round. Rules: `implementer-rules.md` in this directory — read it first.
+Apply the findings under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings) — the fix diff is this round's whole scope. A finding that names a class is fixed at every site it lists. A behavioral fix gets its failing test first, at each seam the sites sit behind, and sites behind one seam share one test; the original brief's behavior list does not bound this round. Rules: `implementer-rules.md` in this directory — read it first.
+
+- A fix to a site on lines the run's diff (`git diff <Run base>..<FIX_BASE>`) neither added nor changed lands in its own commit, apart from the fixes to sites on lines it did. A site on an untouched line of a changed file counts as outside.
+- A site whose fix would change a contract the plan or the spec names is not yours to fix: fix the class's other sites first, then return `BLOCKED` naming that site and the reroute.
 
 ## Files block
 
-- <every path the findings cite, plus the files their fixes reach>
+- <every path the findings cite, each class site included, plus the files their fixes reach>
 
 ## Verify
 
-`<exact verify command from the plan>` — re-run it after the fixes land and append its fresh output under a `## Verify (round <R>)` heading in the report above before returning. The re-reviewer reads that output instead of re-running the suite.
+`<exact verify command from the plan>` — re-run it after the fixes land and append its fresh output under a `## Verify (round <R>)` heading in the report above before returning. Then re-run each class finding's search, unchanged, and append the command and its output under the same heading. The re-reviewer reads that output instead of re-running the suite.
 
 ## Return
 
@@ -154,8 +158,8 @@ Apply the findings under the findings file's newest `## Round <R>` heading (ever
     Commits:
     - <sha> <subject>
     Findings:
-    - <finding one-liner> — fixed at <file:line>
-    Verify: <one-line result of the appended re-run>
+    - <finding one-liner> — fixed at <file:line, one per site>
+    Verify: <one-line result of the appended re-run, and of each class search>
     Report: <path to task-<N>-report.md>
 ```
 

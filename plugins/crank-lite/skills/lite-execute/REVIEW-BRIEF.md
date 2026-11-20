@@ -30,6 +30,10 @@ Review the diff against the plan adversarially. A dispatch carrying a `Lens:` li
 
 - Every test the diff adds or changes proves behavior through a seam a real caller reaches; a **dead seam**, an **implementation-detail test**, or a **redundant test** is a finding.
 
+## Classes
+
+A finding that is one instance of a repeatable mistake gets a **class**: one phrase naming the mistake, and the one repo-wide search that finds its instances, written as a single shell command whose output lists each hit as `file:line`, so the orchestrator re-runs it unchanged after the fix. Run that search, read each hit, and list in the same finding every **site**, each as `file:line`: a hit where the same failure is reachable. A hit where the failure is not reachable is not a site. A site on lines the diff did not touch stays in the class finding and is fixed with it.
+
 ## Rounds
 
 Work your lookups in **rounds** until the completion criterion below holds. Each round:
@@ -40,7 +44,7 @@ Work your lookups in **rounds** until the completion criterion below holds. Each
 
 ## Return
 
-Return each finding as `CONFIRMED` or `REFUTED` with its code evidence: path, enclosing symbol, and the line that proves it. Default to `REFUTED` when the evidence is thin.
+Return each finding as `CONFIRMED` or `REFUTED` with its code evidence: path, enclosing symbol, and the line that proves it. A class finding adds its class phrase, its search command, and every site. Default to `REFUTED` when the evidence is thin.
 
 Given a `Findings:` path, write your numbered findings there in the form above, and reply with one line: the counts of `CONFIRMED` and `REFUTED` findings.
 
@@ -48,4 +52,5 @@ Completion criterion:
 
 - every plan task and every hunk has been read;
 - each winning variant or `in chat` block a `Prototype:` line names has been read and compared with the surface it covers;
+- each class finding's search has run, and every hit is a listed site or was read and left out;
 - each finding carries its verdict and evidence.

@@ -212,9 +212,13 @@ Once every box is checked:
      Vocabulary: <absolute path to this skill's VOCABULARY.md>
      ```
    - **A plan with two or more stages**: three standard-tier lens reviewers in one wave. Each gets the message above plus two lines: `Lens: <Contract | Coherence | Tests>` and `Findings: <absolute path to .crank/<slug>/review-<contract | coherence | tests>.md>`. Once all three have returned, dispatch one heavy-tier merger with the single reviewer's message, its first line replaced by `Read <absolute path to this skill's MERGE-BRIEF.md> and follow it.`, plus two lines: `Review brief: <absolute path to this skill's REVIEW-BRIEF.md>` and `Findings: <the three Findings paths>`.
-4. Fix every `CONFIRMED` finding the reviewer or the merger returns and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. A merged row whose `Plan decision:` line quotes a recorded user decision goes to Close the loop as a decision. Commit the fixes as in step 1.
+4. Fix every `CONFIRMED` finding the reviewer or the merger returns and re-run the check that covers it, or record it in the retro's deviations with the reason it stands. A merged row whose `Plan decision:` line quotes a recorded user decision goes to Close the loop as a decision. Commit the fixes as in step 1. A finding that names a class is fixed at every site it lists:
+   - A fix that changes behavior gets a failing test first at each seam the sites sit behind; sites behind one seam share one test.
+   - Re-run the class search before you commit, and read its output for an instance left.
+   - A fix to a site on lines `git diff <Base>..HEAD` neither added nor changed lands in a commit apart from the fixes to sites on lines it did. A site on an untouched line of a changed file counts as outside.
+   - A site whose fix would change a contract the plan or the spec names is not fixed: fix the class's other sites first, and carry it to Close the loop as a decision. The class finding stays open until the user answers.
 
-Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision.
+Completion criterion: every `CONFIRMED` finding is fixed and re-verified by the same check, recorded in the retro's deviations with the reason it stands, or carried to Close the loop as a decision, and every class search ran after its fix.
 
 ## Test prune
 

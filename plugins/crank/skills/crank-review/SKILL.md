@@ -23,7 +23,7 @@ Precision over coverage. Each nit spends trust the real findings need.
 - **Not a linter.** A nit, anything a compiler, type-checker, formatter, or linter catches, or a matter of taste (naming preference, ordering, "consider maybe"), never ships.
 - **Bias toward deletion and consolidation, never past required behavior.** Collapsing parallel structures into one counts as deletion. The brief's [_Never cut required behavior_](REVIEW-BRIEF.md) section lists what required behavior covers.
 - **Read-only.** Never edit, stage, commit, or otherwise mutate the tree; fixes are a separate, approved step after the report.
-- **Subagents pull their own facts.** A dispatch carries pointers only: the brief's path, the BASE SHA, the diff command with any untracked-files list, and either the finder's lens or the validator's one candidate, given as `file:line` and the claim as the finder worded it. Never add the rubric's text, your characterization of the diff, or a defense of a finding.
+- **Subagents pull their own facts.** A dispatch carries pointers only: the brief's path, the BASE SHA, the diff command with any untracked-files list, and either the finder's lens or the validator's one candidate, given as `file:line` and the claim as the finder worded it, with its class phrase, search command, and sites when the finder returned a class. Never add the rubric's text, your characterization of the diff, or a defense of a finding.
 
 ## Flow
 
@@ -48,13 +48,13 @@ Spawn one standard-tier finder per lens, each with the pointers **Subagents pull
 
 A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding.
 
-**Done when:** every finder has returned and you've deduped identical claims into one candidate each.
+**Done when:** every finder has returned, you've deduped identical claims into one candidate each, and you've folded candidates that name the same class into one candidate carrying the union of their sites. Two candidates name the same class when one class search finds both mistakes.
 
 ### 3. Validate
 
-For each candidate, spawn a standard-tier validator with the pointers **Subagents pull their own facts** lists. Launch them in waves, each wave returning before the next starts. Each tries to **refute** its candidate on the defaults in the brief's [_If you are a validator_](REVIEW-BRIEF.md) section; only a code-grounded CONFIRMED survives.
+For each candidate, spawn a standard-tier validator with the pointers **Subagents pull their own facts** lists. Launch them in waves, each wave returning before the next starts. Each tries to **refute** its candidate on the defaults in the brief's [_If you are a validator_](REVIEW-BRIEF.md) section; only a code-grounded CONFIRMED survives. A class candidate's validator confirms or drops each listed site by reading it, and only the confirmed sites reach the report.
 
-**Done when:** every candidate carries a CONFIRMED or REFUTED verdict with its evidence.
+**Done when:** every candidate carries a CONFIRMED or REFUTED verdict with its evidence, and every site a class candidate listed is confirmed or dropped.
 
 ### 4. Reconcile against prior review
 
@@ -76,6 +76,9 @@ Render the review in this shape, findings ordered by severity; the Refuted list 
 
 ### Findings (<n>)
 1. `<file:line>` — <what's wrong> · _<contract | deletion | edge>_ · **fix:** <smallest fix>
+   - class: <the mistake in one phrase> · search: `<the class search>`
+   - sites: `<file:line>`, `<file:line>`
+   <!-- the class and sites lines only on a class finding, listing every confirmed site -->
    <!-- tie a deletion finding to the deletion test or the code-judo move -->
 <!-- if none: "No high-confidence findings." -->
 
@@ -87,7 +90,7 @@ Render the review in this shape, findings ordered by severity; the Refuted list 
 - `<file:line>` — <why the validator killed it, or "already covered in PR thread">
 ```
 
-Then suggest the user run `/crank plan` to turn the surviving findings into a fix plan.
+Then suggest the user run `/crank plan` to turn the surviving findings into a fix plan; a class finding's fix covers every site it lists.
 
 **Done when:** the report is rendered in this shape and the handoff is offered.
 

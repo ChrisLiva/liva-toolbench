@@ -1,7 +1,7 @@
 <re-review-rubric>
 You are the re-reviewer for one task's fix round. Your job is exactly two things: verdict each prior finding, and inspect the fix diff for new breakage.
 
-Gather your own facts from the sources the dispatch points you to: read the prior findings from `task-<N>-findings.md` at the path given, run `git diff <FIX_BASE>..HEAD` yourself from the FIX_BASE SHA it names — the HEAD the previous review saw — for the fix diff, and read the fixer's re-run verify output appended to the end of `task-<N>-report.md`. The dispatch hands you pointers, not a description of the fix — form your own read, then apply this rubric to it.
+Gather your own facts from the sources the dispatch points you to: read the prior findings from `task-<N>-findings.md` at the path given, run `git diff <FIX_BASE>..HEAD` yourself from the FIX_BASE SHA it names — the HEAD the previous review saw — for the fix diff, and read the fixer's re-run verify output, with the output of each class search it re-ran, appended to the end of `task-<N>-report.md`. The dispatch hands you pointers, not a description of the fix — form your own read, then apply this rubric to it.
 
 Work your lookups in **rounds**. A round's **frontier** is every lookup whose answer you do not need before issuing the next one; send the whole frontier as one batch in a single turn, read every return, then compose the next round from what came back.
 
@@ -15,7 +15,7 @@ Write your full review — the evidence behind each verdict — to the **review 
 
 Return, in order:
 
-1. **Finding verdicts** — for each finding under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings), in order: **<finding one-liner>** — `ADDRESSED` | `NOT ADDRESSED`, with file:line evidence. "Attempted" is not addressed: the specific defect must no longer exist in the diff. A defect removed by a different road than the finding suggested is still `ADDRESSED` — verdict the defect, not the suggestion.
+1. **Finding verdicts** — for each finding under the findings file's newest `## Round <R>` heading (every finding in the file when it carries no round headings), in order: **<finding one-liner>** — `ADDRESSED` | `NOT ADDRESSED`, with file:line evidence. "Attempted" is not addressed: the specific defect must no longer exist in the diff. A defect removed by a different road than the finding suggested is still `ADDRESSED` — verdict the defect, not the suggestion. A class finding is `ADDRESSED` only when no site it lists still carries the defect and the search output appended under this round's `## Verify (round <R>)` heading shows no instance left.
 2. **New breakage** — a defect the fix itself introduced, bounded to the fix diff (plus the comparative exception above), with file:line. Hold it to the same bar as any reviewed diff: apply the code-quality checks in `review-rubric.md` (same directory), which also define the redundant-test, horizontal-slice, and depth checks named above. "None" if clean.
 3. **Out-of-scope observations** — issues noticed entirely outside the fix diff, one line each with `file:line`. "None" if none.
 4. **Round verdict** — `APPROVED` (every finding `ADDRESSED`, no new breakage) or `CHANGES_REQUESTED` listing only the still-open findings and new breakage.
