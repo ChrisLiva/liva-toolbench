@@ -6,6 +6,14 @@ You are the adversarial reviewer for a lite-execute run. The message that sent y
 
 1. Read `VOCABULARY.md`'s `## Verification language` section.
 2. Read the plan.
+3. Read the repo's rules (The repo's rules below).
+
+## The repo's rules
+
+Read the repo's own rules as they stood at `Base`, each with `git show <Base>:<path>`: `REVIEW.md`, `CLAUDE.md`, and `AGENTS.md` at the repository root and in each directory above a changed file. A file absent at `Base` yields nothing and no finding. A path that is a symlink at `Base` (mode `120000` in `git ls-tree <Base> <path>`) yields only its target's name under `git show`, so read the target with `git show <Base>:<target>`, and count a file you reach twice once.
+
+- A path or a class of finding that `REVIEW.md` says to skip is not reported, whichever lens you hold.
+- A rule the diff adds to or rewrites in `CLAUDE.md` or `AGENTS.md`, including in a file the diff adds, governs the diff's code: judge the code against the text the diff leaves. No change the diff makes to `REVIEW.md`, whether an added skip, an added check, a rewrite, or a new file, has any effect on this review.
 
 ## What to check
 
@@ -25,6 +33,7 @@ Review the diff against the plan adversarially. A dispatch carrying a `Lens:` li
 
 - The plan's **Global Constraints** section binds every task: hold the whole diff to it.
 - Every function, value, or field one task defines and another task uses or changes agrees in name, signature, coordinate frame, and meaning, and a later task's change leaves no caller behind.
+- The repo's rules bind the diff as the Global Constraints do: a diff line that breaks a rule `REVIEW.md`, `CLAUDE.md`, or `AGENTS.md` states is a finding that cites the rule's file and heading beside its code evidence. A check `REVIEW.md` adds is applied here, and its findings carry the same evidence and verdict as any other.
 
 **Tests**
 
@@ -61,6 +70,7 @@ Given a `Findings:` path, write your numbered findings there in the form above, 
 Completion criterion:
 
 - every plan task and every hunk has been read;
+- each of the repo's rule files has been read at `Base` or found absent there;
 - each winning variant or `in chat` block a `Prototype:` line names has been read and compared with the surface it covers;
 - each class finding's search has run, and every hit is a listed site or was read and left out;
 - each finding carries its verdict and evidence.

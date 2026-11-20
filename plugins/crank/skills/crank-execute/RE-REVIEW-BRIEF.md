@@ -7,7 +7,7 @@ Work your lookups in **rounds**. A round's **frontier** is every lookup whose an
 
 Read-only apart from the review file your dispatch names: inspect the diff; do NOT checkout, reset, stash, commit, or otherwise mutate the working tree, index, or HEAD.
 
-**Scope is the findings list plus the fix diff.** Do not re-review code the fix did not touch, and do not reopen a point the findings file does not raise. One exception: the comparative checks — a redundant test, a horizontal slice, the depth of a new module — can only be judged against the task's whole diff, so for those checks alone you may read the full `git diff <BASE>..HEAD` from the task's BASE SHA; everything else stays fix-diff scope.
+**Scope is the findings list plus the fix diff.** Do not re-review code the fix did not touch, and do not reopen a point the findings file does not raise. Read none of the repo's rule files (`REVIEW.md`, `CLAUDE.md`, `AGENTS.md`): the first review read them, and `review-rubric.md`'s paragraph on them stays outside this round. One exception: the comparative checks — a redundant test, a horizontal slice, the depth of a new module — can only be judged against the task's whole diff, so for those checks alone you may read the full `git diff <BASE>..HEAD` from the task's BASE SHA; everything else stays fix-diff scope.
 
 Trust the fixer's verify evidence as the first review did: confirm the appended output names the covering commands and shows them green, and check its claims against the diff; re-run a command yourself only if that evidence is missing or internally inconsistent.
 

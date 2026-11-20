@@ -24,7 +24,7 @@ Precision over coverage. Each nit spends trust the real findings need.
 - **Not a linter.** A nit, anything a compiler, type-checker, formatter, or linter catches, or a matter of taste (naming preference, ordering, "consider maybe"), never ships.
 - **Bias toward deletion and consolidation, never past required behavior.** Collapsing parallel structures into one counts as deletion. The brief's [_Never cut required behavior_](REVIEW-BRIEF.md) section lists what required behavior covers.
 - **Read-only.** Never edit, stage, commit, or otherwise mutate the tree; fixes are a separate, approved step after the report.
-- **Subagents pull their own facts.** A dispatch carries pointers only: the brief's path, the BASE SHA, the diff command with any untracked-files list, and either the finder's lens or the validator's one candidate, given as `file:line` and the claim as the finder worded it, with its class phrase, search command, and sites when the finder returned a class, and its `pre-existing` mark when it carries one. Never add the rubric's text, your characterization of the diff, or a defense of a finding.
+- **Subagents pull their own facts.** A dispatch carries pointers only: the brief's path, the BASE SHA, the diff command with any untracked-files list, and either the finder's lens or the validator's one candidate, given as `file:line` and the claim as the finder worded it, with its class phrase, search command, and sites when the finder returned a class, and its `pre-existing` mark when it carries one. Never add the rubric's text, a rule file's path or text, your characterization of the diff, or a defense of a finding: each subagent reads the repo's `REVIEW.md`, `CLAUDE.md`, and `AGENTS.md` itself, as the brief's [_The repo's rules_](REVIEW-BRIEF.md) section tells it to. (per project decision: reviewers read `REVIEW.md` as it stood at BASE and apply none of the diff's changes to it, so a diff cannot change its own review, while a rule the diff rewrites in `CLAUDE.md` or `AGENTS.md` governs the diff's code, because a convention and the code that follows it often change in one diff, 2026-11-19.)
 
 ## Flow
 
@@ -48,7 +48,7 @@ Spawn one standard-tier finder per lens, each with the pointers **Subagents pull
 - **Simplicity and deletion.** The brief's question 2 and the sections it points to.
 - **Security.** The brief's question 4. (per project decision: security is a fourth question with its own finder, in place of security findings filed under question 1, because a leaked secret or an unpinned fetch answers none of the first three questions and the attacker's read is a different pass from the contract read, 2026-11-19.)
 
-A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding or a confirmed security finding. A security candidate passes the same validation as any other.
+A focus in the argument, such as "especially simplicity", weights the lenses, but a focus never suppresses a high-confidence correctness finding or a confirmed security finding; only a skip in the repo's `REVIEW.md`, read as it stood at BASE, does. A security candidate passes the same validation as any other.
 
 **Done when:** every finder has returned, you've deduped identical claims into one candidate each, and you've folded candidates that name the same class into one candidate carrying the union of their sites. Two candidates name the same class when one class search finds both mistakes.
 
