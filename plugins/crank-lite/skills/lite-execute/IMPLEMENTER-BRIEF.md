@@ -31,13 +31,13 @@ Before you start:
 
 ## Return
 
-- Leave your changes uncommitted. The orchestrator runs the check again and commits each task.
+- Leave your changes uncommitted. The orchestrator runs the check's tests again, reads a gate or full-suite command's result from your `Check:` line, and commits each task.
 - Return only when every command you started has finished, and read each command's output in the same turn you report it. Run a long command in the foreground with a timeout, or in the background with one blocking wait on its completion notification, never a polling loop.
 - Run the task's check after your last edit, then return every line of this shape:
 
   ```
   Files: <each file you changed>
-  Check: <its output>
+  Check: <each command it ran, with its output and exit status>
   Detours: <each detour with its corrected fact and evidence, or none>
   Off-path bugs: <each, or none>
   Unfixed elsewhere: <each failure in a file your message does not name, and each single-case error-family choice, or none>
