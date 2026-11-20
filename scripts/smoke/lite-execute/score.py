@@ -527,9 +527,18 @@ PLANT_CATCHES = [
                                       r"export_csv|ledger=|`ledger`|data_dir|store_path")),
     ("zero_amount_caught", lambda t: near(t, ZERO_AMOUNT, r"drop|skip|omit|missing|los[et]|exclud|filter|silently|not written|never written"
                                                          r"|disappear|vanish|left out")),
-    # The class finding lists the baseline site: the list command in ledger/cli.py, which the diff never touches.
-    ("zero_amount_baseline_site_listed", lambda t: near(t, r"cli\.py|\blist\b[^.\n]{0,40}(?:command|branch|subcommand)|`list`", ZERO_AMOUNT, 300)),
+    ("zero_amount_baseline_site_listed", lambda t: baseline_site_listed(t)),
 ]
+
+
+def baseline_site_listed(t):
+    """Whether a zero-amount finding's Sites list names the list command's line in ledger/cli.py, the
+    class's site in the baseline. The line number comes from the seed's last cli.py overlay, and a
+    hit the reviewer read and left out sits past the words that end the list."""
+    lines = (HERE / "fixture/review/4/ledger/cli.py").read_text(encoding="utf-8").splitlines()
+    n = next(i for i, line in enumerate(lines, 1) if "if e.amount_cents:" in line)
+    listed = rf"sites?\b(?:(?!left out|not a site|exclud|\n\s*\n|\n#)[\s\S]){{0,300}}?cli\.py:(?:{n}|{n + 1})\b"
+    return any(re.search(ZERO_AMOUNT, t[max(0, m.start() - 800):m.end() + 200]) for m in re.finditer(listed, t))
 
 
 def hash_payee_named(t):
@@ -600,7 +609,7 @@ LARGE_DEFECTS = [
     ("import_locks_statement", "cross-cut", lambda t: near(t, r"ledger_lock\(args\.statement|lock(?:s|ing)? (?:the )?statement|statement(?:'s)? (?:path|file)\b",
                                                            r"lock")),
     ("categorize_drops_ref", "cross-cut", lambda t: near(t, r"categori[sz]", r"\bref\b|reference")
-                                                    and near(t, r"\bref\b|reference", r"drop|lost|lose|discard|blank|empty|clear|wipe|re-?import|duplicat")),
+                                                    and near(t, r"\bref\b|reference", r"drop|lost|lose|discard|blank|empty|clear|wipe|re-?import|duplicat|without (?:its|the|a) |again")),
     ("report_sign", "cross-cut", lambda t: near(t, r"sign convention|\bsign\b|negative|money out|inverted",
                                                 r"spent|spending|monthly_report|\bover\b|test_report")),
     ("limit_through_float", "cross-cut", lambda t: near(t, r"float", r"limit|budget|19\.99|1998")),

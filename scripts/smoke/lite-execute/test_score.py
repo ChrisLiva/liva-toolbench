@@ -58,6 +58,13 @@ class PlantMatcherTest(unittest.TestCase):
         text = "confirmed — `ledger/csv_export.py` · `to_csv` · a zero-amount entry is silently skipped"
         self.assertEqual(self.catches(text), {"zero_amount_caught"})
 
+    def test_a_baseline_site_the_reviewer_read_and_left_out_is_not_listed(self):
+        same_line = self.CLASS_FINDING.replace(", `ledger/cli.py:39`", ". read and left out: `ledger/cli.py:39` (a display filter)")
+        bullets = self.CLASS_FINDING.replace(", `ledger/cli.py:39`", "\n   hits i read and left out:\n   - `ledger/cli.py:39`: the list filter")
+        other_site = self.CLASS_FINDING.replace("`ledger/cli.py:39`", "`ledger/cli.py:44`")
+        for text in (same_line, bullets, other_site):
+            self.assertEqual(self.catches(text), {"zero_amount_caught"}, text)
+
     def test_the_hash_bug_is_named_only_by_a_finding_about_it(self):
         self.assertTrue(score.hash_payee_named("`ledger/store.py` · `load_entries` · a payee containing '#' is dropped with its line"))
         self.assertFalse(score.hash_payee_named("### 4. confirmed — `ledger/api.py` · `export_csv` calls load_entries and skips the route table"))
