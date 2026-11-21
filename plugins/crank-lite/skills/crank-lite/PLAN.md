@@ -9,7 +9,7 @@ Resolve every implementation decision, and plan the smallest change that ships t
 Before the first question, read:
 
 - The incoming artifact in full, with the winning variant its `Prototype:` line names and any other mock it records.
-- `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
+- The glossary and any ADRs, each at its home per [DOMAIN-DOCS.md](DOMAIN-DOCS.md) → Homes, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
 - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding. Rewrite a drifted entry where it lives and carry the drift into the plan's updates since spec.
 - Each earlier effort's `grounding.md` and `retro.md` under `.crank/` that names a file the incoming artifact names (one grep), verified the same way. Carry what bears on this plan into the updates since spec, in scope or out with its reason.
 

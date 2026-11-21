@@ -15,6 +15,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 import extract  # noqa: E402
 
 NEXT_PHASE = {"brainstorm": "SPEC.md", "spec": "PLAN.md", "plan": "lite-execute/SKILL.md"}
+# The tracked docs DOMAIN-DOCS.md -> Homes lets an interview write: a glossary or its map at any depth, and an ADR directory.
+DOMAIN_DOC = re.compile(r"(?:^|/)(?:GLOSSARY|CONTEXT)(?:-MAP)?\.md$|(?:^|/)docs/(?:adr|decisions)/")
 CATALOGUE = [r"absen", r"permission|EACCES|EPERM", r"stale", r"destr|delet", r"limit|large|size", r"interrupt|concurren|partial|crash", r"trust|valid|ownership"]
 # PLAN.md hands a reviewer each pointer as an absolute path, so a lookup that names the brief in prose is no review
 REVIEW_BRIEF_RE = re.compile(r"(?:^|[\s`\"'(=:])/[^\s`\"')]*PLAN-REVIEW-BRIEF\.md")
@@ -78,8 +80,8 @@ def score(run):
     written_at = next((i for i, tl in enumerate(tools) if artifact_name in tl and re.search(r"\[(Write|Edit)\]|cat >|tee ", tl)), len(turns))
     before = range(min(written_at + 1, len(turns)))
     pre_text = "\n".join(texts[i] for i in before)
-    # per project decision: SPEC.md offers an ADR when the user rejects a recommendation, so a file under docs/adr/ is no source change
-    status = [l for l in (run / "status.txt").read_text().splitlines() if l.strip() and not l[3:].startswith("docs/adr/")]
+    # per project decision: an interview writes glossary entries and ADRs on the user's yes (DOMAIN-DOCS.md), so neither is a source change
+    status = [l for l in (run / "status.txt").read_text().splitlines() if l.strip() and not DOMAIN_DOC.search(l[3:])]
     s = {
         "turns": len(turns),
         "artifact_written": int(artifact is not None),

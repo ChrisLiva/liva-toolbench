@@ -18,7 +18,7 @@ The run is: scope → parallel explorers → a visual HTML report of the candida
 
 ## Hard Rules
 
-- **The target repo is read-only.** This run scans, it doesn't refactor. The report goes to the OS temp dir; the brief goes to the ignored `.crank/` directory at the repository root; the only things that may land in the tracked tree are the two deliberate side effects the user approves during the grill — a term written into `CONTEXT.md`, and an offered ADR. Nothing else.
+- **The target repo is read-only.** This run scans, it doesn't refactor. The report goes to the OS temp dir; the brief goes to the ignored `.crank/` directory at the repository root; the only things that may land in the tracked tree are the two deliberate side effects the user approves during the grill — a glossary entry and an ADR, each per [DOMAIN-DOCS.md](DOMAIN-DOCS.md). Nothing else.
 - **The report is presentation only.** It exists to let the user *see* the candidates and pick one. It is never re-read as a source of truth. Everything downstream needs travels in the brief, or in the effort's grounding file ([ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding); the brief stays sufficient alone.
 - **One candidate per grill loop.** The user picks one card; the grill walks that one to ground. Re-entry is cheap for as long as the report file survives — when a loop ends, offer to reopen the report and pick another card rather than rescanning by reflex.
 - **No interfaces before the grill.** Explorers don't propose them and cards don't commit to them. The single permitted exception is a card's **structural** pseudo-code panel — what a module exposes and what it hides — with no parameter lists, no return types, and no names anyone will be held to. Signatures are earned in the grill, not before it.
@@ -33,7 +33,7 @@ Scope before you scan. Deepening pays off by making future changes to a module e
 - **The user's direction wins.** If they named a module, a subsystem, or a pain point, take it and skip the inference below.
 - **Otherwise infer from churn.** Walk back a good stretch of history with `git log --name-only` and find the hot spots — the files and areas that keep coming up — and let those paths pull your attention first. If the changes are scattered with no clear hot spot, widen the net.
 
-Before exploring, read the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you're about to scan — commonly `docs/adr/`. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate.
+Before exploring, read the target repo's glossary and any ADRs touching the area you're about to scan, each at its home per [DOMAIN-DOCS.md](DOMAIN-DOCS.md) → Homes. Both are optional; skip whichever isn't there. ADRs record decisions this run should not re-litigate.
 
 Then do the explorer arithmetic — how many explorers, and what each one owns:
 
@@ -80,7 +80,7 @@ Synthesis happens **here, on this thread** — each explorer saw one territory; 
 
 Dedupe and rank the returns yourself: merge overlapping candidates into the strongest version of the same idea, drop anything you can't back with an anchor, and keep the **3–6** the evidence actually supports, strongest first. Then pick the one you'd tackle first and say why in a sentence — that's the report's top recommendation.
 
-Read [VOCABULARY.md](VOCABULARY.md) before you write a card: architecture nouns from the glossary, domain nouns from the target repo's `CONTEXT.md` (the never-substitute table is at References → Vocabulary).
+Read [VOCABULARY.md](VOCABULARY.md) before you write a card: architecture nouns from that file, domain nouns from the target repo's glossary (the never-substitute table is at References → Vocabulary).
 
 Render the report per [HTML-REPORT.md](HTML-REPORT.md) — read that file here — as a single self-contained HTML file in the OS temp dir: `${TMPDIR:-/tmp}/deepen-report-<timestamp>.html`, a fresh file per run so an earlier report is never overwritten. Nothing lands in the repo.
 
@@ -102,10 +102,10 @@ Run the grilling per [GRILLING.md](GRILLING.md) — read it before your first qu
 
 Pseudo-code earns signatures here. As the shape firms up, sketch the interface at signature level so the user can veto a parameter or a return value rather than a paragraph. Keep it small and keep it in chat.
 
-Two side effects land on the target repo during the grill. Offer each inline as the decision crystallizes — offer, never perform silently:
+Two side effects land on the target repo during the grill, each offered and written per [DOMAIN-DOCS.md](DOMAIN-DOCS.md), never performed silently:
 
-- **New or sharpened terms go to `CONTEXT.md`.** When the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term, offer to write it into the target's `CONTEXT.md` right then. Create the file lazily if it doesn't exist.
-- **A rejected recommendation earns an ADR** — only when the user rejects a load-bearing recommendation for a reason a future scan would need in order not to re-suggest it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
+- **New or sharpened terms go to the glossary**, when the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term.
+- **A rejected recommendation earns an ADR**, when the user rejects a load-bearing recommendation for a reason a future scan would need in order not to re-suggest it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 
 **Design it twice — offer, never auto-run.** When the deepened module's **interface** turns out to be the contested node of the grill — the shape keeps moving, or two framings each look defensible — offer to settle it by building both: dispatch **2–3 heavy**-tier subagents in parallel (References → Subagents), each briefed to propose a *radically different* interface for that one module, not three shades of the same idea. Compare the returns in glossary terms — which is **deeper**, which buys more **leverage** at the call sites, which concentrates **locality** — and put the comparison to the user, who picks one, asks for a hybrid, or declines.
 
@@ -166,4 +166,4 @@ Near-synonyms blur the distinction each word carries. Never substitute:
 | interface | API, signature |
 | seam | boundary |
 
-That is the *architecture* vocabulary. The *domain* vocabulary comes from the target repo's own glossary: if its `CONTEXT.md` defines "Order", say "the Order intake module" — not "the FooBarHandler", and not "the Order service".
+That is the *architecture* vocabulary. The *domain* vocabulary comes from the target repo's own glossary: if it defines "Order", say "the Order intake module" — not "the FooBarHandler", and not "the Order service".

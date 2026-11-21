@@ -59,6 +59,8 @@ Completion criterion: the frontier is empty — every consequential design quest
 
 Propose **2–3 approaches, each optimizing for a different thing**, conversationally, naming the axis each wins on and its trade-offs (e.g. fewest moving parts, most flexible for the likely next ask, closest to the existing idiom); two that optimize for the same thing are one approach. If two combine, recommend the hybrid. Lead with your recommendation and why. Prefer the approach whose central piece is **deeper**, and name the **leverage** and **locality** it buys over the alternatives. If an approach's key piece fails the **deletion test**, say so; that's a reason to drop it.
 
+When the pick passes the three tests at [DOMAIN-DOCS.md](DOMAIN-DOCS.md) → ADRs, offer its ADR before drafting.
+
 Completion criterion: the user has explicitly picked an approach (or your recommended hybrid) — having heard the options isn't a pick.
 
 ### 6. Draft the high-level brief

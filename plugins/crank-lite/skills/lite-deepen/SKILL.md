@@ -26,7 +26,7 @@ Never substitute a near-synonym:
 | interface | API, signature |
 | seam | boundary |
 
-Domain nouns come from the target repo's own glossary: if its `CONTEXT.md` defines "Order", say "the Order intake module", not "the FooBarHandler" or "the Order service".
+Domain nouns come from the target repo's own glossary: if it defines "Order", say "the Order intake module", not "the FooBarHandler" or "the Order service".
 
 ## Scope
 
@@ -35,7 +35,7 @@ Scope before you scan; deepening pays off on code that keeps changing.
 - **The user's direction wins.** If they named a module, subsystem, or pain point, take it.
 - **Otherwise infer from churn.** Rank paths by how often they appear in a good stretch of `git log --name-only` history and scan the top of the list first; if churn is scattered with no clear hot spot, widen the net.
 
-Before exploring, read, where they exist, the target repo's `CONTEXT.md` (its domain glossary) and any ADRs touching the area you'll scan (commonly `docs/adr/`), whose decisions this run does not re-litigate. Read too the Grounding section of any crank-lite artifact the run was handed, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
+Before exploring, read, where they exist, the target repo's glossary and any ADRs touching the area you'll scan, each at its home per [DOMAIN-DOCS.md](DOMAIN-DOCS.md) → Homes. This run does not re-litigate an ADR's decision. Read too the Grounding section of any crank-lite artifact the run was handed, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 
 ## Explore
 
@@ -116,10 +116,10 @@ Run the grilling per [INTERVIEW.md](INTERVIEW.md) — read it before your first 
 
 Pseudo-code earns signatures here: as the shape firms up, sketch the interface at signature level, small and in chat, so the user can veto a parameter or a return value rather than a paragraph.
 
-Offer each of the grill's two target-repo side effects inline as its decision crystallizes; never perform one silently:
+Offer and write each of the grill's two target-repo side effects per [DOMAIN-DOCS.md](DOMAIN-DOCS.md); never perform one silently:
 
-- **New or sharpened terms go to `CONTEXT.md`** — when the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term. Create the file if it doesn't exist.
-- **A rejected recommendation earns an ADR** — only when the user rejects a load-bearing recommendation for a reason a future scan needs to avoid re-suggesting it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
+- **New or sharpened terms go to the glossary**, when the deepened module is named after a concept the glossary doesn't carry, or the conversation sharpens a fuzzy term.
+- **A rejected recommendation earns an ADR**, when the user rejects a load-bearing recommendation for a reason a future scan needs to avoid re-suggesting it. Frame it: *"Want me to record this as an ADR so future scans don't re-suggest it?"* Skip ephemeral reasons ("not worth it right now") and self-evident ones.
 
 ## Brief
 

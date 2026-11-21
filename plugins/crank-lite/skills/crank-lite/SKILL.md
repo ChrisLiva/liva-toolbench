@@ -37,5 +37,5 @@ Every phase ends in this order:
 
 1. **Write the artifact** when the interview's frontier is empty (the plan phase then reviews it per [PLAN.md](PLAN.md) → Review). Read [ARTIFACT-HOME.md](ARTIFACT-HOME.md) first when this is the effort's first artifact, when `.crank/<slug>/` already holds a different effort, or outside a git repo; a later artifact writes straight into its existing `.crank/<slug>/`. Either way, create a missing `.crank/` with a `.gitignore` containing `*`, and tell the user the path once.
 2. **Read it back** per [READBACK.md](READBACK.md).
-3. **Offer to continue** once the readback is done: the phase file's next-step line, then one sentence saying the artifact can be copied elsewhere, printed inline, or deleted on request. After a long or compacted session, recommend a fresh session invoked with the artifact.
+3. **Offer to continue** once the readback is done: one line naming each glossary and ADR file the phase wrote, uncommitted in the working tree, when it wrote any, then the phase file's next-step line, then one sentence saying the artifact can be copied elsewhere, printed inline, or deleted on request. After a long or compacted session, recommend a fresh session invoked with the artifact.
 4. **Stop.** Load the next phase file only on an explicit "continue".

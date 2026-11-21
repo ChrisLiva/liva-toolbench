@@ -124,6 +124,9 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)"],
     "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "one heavy-tier reviewer"],
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)"],
+    # each plugin's interview protocol is the one hook that makes a phase keep the glossary and ADRs
+    "plugins/crank/skills/crank/GRILLING.md": ["](DOMAIN-DOCS.md)"],
+    "plugins/crank-lite/skills/crank-lite/INTERVIEW.md": ["](DOMAIN-DOCS.md)"],
     "plugins/crank-lite/skills/crank-lite/SPEC.md": [
         "](PROTOTYPE.md)",
         # per project decision: crank-lite-slim's eval would pass this step's removal, so the gate holds it byte for byte
@@ -167,6 +170,7 @@ CANONICAL = {
     "SUBAGENT-TIERS": "plugins/crank/skills/crank",
     "VOCABULARY": "plugins/crank/skills/crank",
     "GRILLING": "plugins/crank/skills/crank",
+    "DOMAIN-DOCS": "plugins/crank/skills/crank",
     "READBACK": "plugins/crank/skills/crank",
     "ARTIFACT-HOME": "plugins/crank/skills/crank",
     "STAGES": "plugins/crank/skills/crank",

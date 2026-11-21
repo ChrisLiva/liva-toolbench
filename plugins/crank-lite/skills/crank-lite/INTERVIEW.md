@@ -18,6 +18,10 @@ Map what's open as a decision tree. Its **frontier** is every question whose pre
 - **Ends when:** the frontier is empty, every branch visited and nothing left silently assumed.
 - **Escalate when:** never; a hedge or a "we'll see" is not a resolution, so its question stays on the frontier.
 
+### Domain docs
+
+Read [DOMAIN-DOCS.md](DOMAIN-DOCS.md) with this file. The rounds challenge the user's terms against the repo's glossary, and each glossary entry or ADR an answer earns goes to the user as a question in the next round.
+
 ## Subagent tiers
 
 Resolve the tiers once per run and reuse the mapping at every dispatch:

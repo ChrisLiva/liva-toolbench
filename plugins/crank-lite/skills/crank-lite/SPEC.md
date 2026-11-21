@@ -7,7 +7,7 @@ Interview the user at a PRD/Spec level about every aspect of their idea — the 
 Resolve the key technical decisions: data structures, interfaces/seams, test methodology, validation strategies, and the general shape an implementation might take.
 
 1. **Before the first question, read:**
-   - `CONTEXT.md`, any ADRs, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
+   - The glossary and any ADRs, each at its home per [DOMAIN-DOCS.md](DOMAIN-DOCS.md) → Homes, and the conventions in `CLAUDE.md`/`AGENTS.md`, where they exist.
    - The incoming artifact's Grounding section, or the `grounding.md` its `Grounding:` header names, verify-then-trusted per [ARTIFACT-HOME.md](ARTIFACT-HOME.md) → Grounding.
 2. **Before the design and test-methodology questions, read [VOCABULARY.md](VOCABULARY.md)**: this phase leans on **depth**, **leverage / locality**, **deletion test**, **seam**, **rewrite test**, **journey test**, and **spaghetti growth**.
 3. **Walk the frontier in rounds:**
@@ -29,7 +29,6 @@ Resolve the key technical decisions: data structures, interfaces/seams, test met
 - Sketch the module two ways under different constraints (smallest interface vs. most flexible) and take the **deeper** shape; when they tie, the one a test at its seam proves with fewer stand-ins.
 - Where the analogous features disagree on convention, follow the one the repo converged on most recently.
 - **Spaghetti growth** is a spec bug: reframe it here.
-- When the user rejects a load-bearing recommendation for a reason a future spec would need, offer to record it as an ADR in the repo.
 
 ## Spec
 
@@ -44,7 +43,7 @@ The spec's file is `spec.md`, in the effort's directory ([ARTIFACT-HOME.md](ARTI
 - a Grounding section holding the interview's banked entries (ARTIFACT-HOME.md → Grounding);
 - out of scope.
 
-Every spec carries user stories. A story's actor is whoever meets the change: a role the product or `CONTEXT.md` names, a caller of an API or CLI, or, for an internal change such as a refactor or migration, the maintainer or operator who lives with it. State the feature as what that actor does or sees, with no module, schema, or library named, and the benefit as the outcome the problem says they lack. Take each story from the user's words in the interview or the incoming artifact; an actor or goal they left unnamed takes a targeted question before its story is written. At least one acceptance criterion proves each story.
+Every spec carries user stories. A story's actor is whoever meets the change: a role the product or the glossary names, a caller of an API or CLI, or, for an internal change such as a refactor or migration, the maintainer or operator who lives with it. State the feature as what that actor does or sees, with no module, schema, or library named, and the benefit as the outcome the problem says they lack. Take each story from the user's words in the interview or the incoming artifact; an actor or goal they left unnamed takes a targeted question before its story is written. At least one acceptance criterion proves each story.
 
 Every claim about the code as it stands carries its **anchor** ([VOCABULARY.md](VOCABULARY.md) → Verification language), or a command and what it printed.
 
