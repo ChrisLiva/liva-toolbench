@@ -82,6 +82,8 @@ List the technical decisions that are both **material** (they change the shape o
 
 Interview the user on each per [GRILLING.md](GRILLING.md) (read it here): a targeted round on only what the codebase can't answer, not a fresh interview. When a brainstorm brief came in, its **Open questions** list is your agenda; walk it. Resolve every material item: one left open becomes an `Assumption:` line downstream re-litigates.
 
+When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, put each round on the page per [PILOT.md](PILOT.md).
+
 Before declaring the frontier empty, walk the **failure catalogue**, giving each item a settled answer or a question in the round:
 
 - **absence** — the stored resource is missing, deleted, or empty
@@ -110,8 +112,12 @@ Read [SPEC-REVIEW-BRIEF.md](SPEC-REVIEW-BRIEF.md) and dispatch it per [SKILL.md]
 
 Read back the reviewed spec per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the acceptance criteria as a numbered list and the answer the spec lands for each of the incoming brief's **Open questions**.
 
+When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, send the readback to the page per [PILOT.md](PILOT.md).
+
 ### 6. Hand back
 
 Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 - **Next:** continue to the plan now — say "continue" and you'll read [PLAN.md](PLAN.md) and run its flow on the approved spec — or in a fresh session: `/crank plan .crank/<slug>/spec.md`.
+
+When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, finish the hand-off per [PILOT.md](PILOT.md) → Hand-off.

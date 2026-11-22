@@ -1,7 +1,7 @@
 ---
 name: crank
 description: Front door to the crank design pipeline — routes the ask to brainstorm, spec, or plan and runs that phase.
-argument-hint: "[brainstorm|spec|plan] [idea, topic, or artifact path]"
+argument-hint: "[brainstorm|spec|plan] [idea, topic, or artifact path] [--pilot]"
 disable-model-invocation: true
 ---
 
@@ -29,6 +29,8 @@ The first rule that applies wins:
 4. **Torn between two routes.** Only when two routes are *genuinely* arguable — a formed idea touching unfamiliar architecture, a "small" ask hiding an open product question — ask one question naming both routes, a one-line case for each, your recommendation first.
 5. **Nothing to route.** Invoked bare with no usable conversation context: ask what the user wants to work on, then triage the answer from rule 1 and against the sibling entry points named in the Goal.
 
+Wherever they sit in the arguments, `--pilot` and `--no-pilot` are mode words: set them aside before applying the rules above, never reading one as a route or as part of the idea. When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, read [PILOT.md](PILOT.md) when the phase reaches its first question round, readback, or prototype review.
+
 ## Phase gates
 
 - **Load one phase at a time.** Read a phase file only when routing into it; the reference docs and templates beside it load when that phase file says, never at triage, except the artifact-home read in triage rule 2.
@@ -40,5 +42,5 @@ The first rule that applies wins:
   Completion criterion: the merger's or the single reviewer's edits are in the artifact file.
 - **Read back after the review.** Each phase writes its artifact, runs its adversarial review where its flow has one, then reads the artifact back per [READBACK.md](READBACK.md), which fixes what the one readback message shows, how feedback lands, and when the readback is done.
 - **Hand off the same way in every phase.** Once the readback is done, state the filing without asking: one line saying the artifact stays at its `.crank/` path, with the path, one line naming each glossary and ADR file the phase wrote, uncommitted in the working tree, when it wrote any, then the step's **Next:** line. Close with one prose sentence, not a numbered question, noting the artifact can instead be copied elsewhere, printed inline, or deleted on request, then stop.
-- **Advancing is the user's call.** Load the next phase file only on an explicit "continue".
+- **Advancing is the user's call.** Load the next phase file only on an explicit "continue". A phase loaded on "continue" keeps the interactive mode the phase before it ran in.
 - **Continuing is also a context call.** "Continue" carries this conversation's reasoning verbatim into the next phase, so recommend it while this session has run at most one phase and has not been compacted. Once a second phase would follow a compaction, recommend the **Next:** line's fresh-session command instead: each artifact is self-contained, and `.crank/<slug>/grounding.md` is an optional cache, read when present, that no artifact depends on.
