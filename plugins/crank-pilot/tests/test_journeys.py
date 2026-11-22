@@ -1,5 +1,6 @@
 """The HTTP seam: what a page sees of the server `show` started."""
 
+import datetime
 import json
 import os
 import socket
@@ -62,6 +63,31 @@ class StateRouteTest(EffortCase):
         status, body, _ = Client(effort).request("GET", "/", token=False)
         self.assertEqual(status, 200)
         self.assertEqual(body, (PLUGIN / "page" / "index.html").read_bytes())
+
+
+class QuestionRoundJourneyTest(EffortCase):
+    def test_a_round_is_drafted_submitted_once_and_read_back(self):
+        effort = self.effort()
+        self.assertEqual(show(effort, QUESTIONS), 1)
+        client = Client(effort)
+        pilot = effort.path / "pilot"
+        status, _, _ = client.request("PUT", "/api/draft/1", json.dumps({"q1": {"choice": "b"}}).encode())
+        self.assertEqual(status, 204)
+        self.assertEqual(client.state()["draft"], {"q1": {"choice": "b"}})
+        answers = [
+            {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "why", "attachments": []},
+            {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []},
+        ]
+        status, body, _ = client.request("POST", "/api/response/1", json.dumps({"answers": answers}).encode())
+        self.assertEqual((status, json.loads(body)), (201, {"path": "pilot/responses/001.json"}))
+        saved = json.loads((pilot / "responses" / "001.json").read_text())
+        self.assertEqual({key: saved[key] for key in ("interaction", "kind", "via", "answers")},
+                         {"interaction": 1, "kind": "questions", "via": "page", "answers": answers})
+        datetime.datetime.fromisoformat(saved["submitted_at"])
+        state = client.state()
+        self.assertEqual(state["response"], {"via": "page"})
+        self.assertIsNone(state["draft"])
+        self.assertFalse((pilot / "drafts" / "001.json").exists())
 
 
 if __name__ == "__main__":

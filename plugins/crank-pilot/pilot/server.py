@@ -2,14 +2,21 @@
 
 import json
 import os
+import re
 import secrets
 import sys
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from pilot.store import Store, write_atomic
+from pilot.validate import response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
+INTERACTION_ROUTE = re.compile(r"/api/(?P<what>draft|response)/(?P<n>\d+)")
+
+
+_NotJson = object()
 
 
 class Server(ThreadingHTTPServer):
@@ -40,9 +47,63 @@ class Handler(BaseHTTPRequestHandler):
     def state(self) -> dict:
         store = self.server.store
         latest = store.latest()
+        response = store.response(latest) if latest else None
+        draft = store.draft(latest) if latest and response is None else None
         return {"ended": False, "effort": store.effort.name,
                 "interaction": store.interaction(latest) if latest else None,
-                "response": None, "draft": None, "versions": [], "prior": None}
+                "response": {"via": response["via"]} if response else None,
+                "draft": draft, "versions": [], "prior": None}
+
+    def require_pending(self, n: int) -> bool:
+        """True when `n` is the pending interaction; otherwise answer 409 and return False."""
+        if self.server.store.pending() == n:
+            return True
+        self.reply_json(409, {"error": "that interaction is not pending"})
+        return False
+
+    def read_json(self) -> object:
+        """The request body parsed as JSON, or a problem line standing in for it when it is not."""
+        raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
+        try:
+            return json.loads(raw)
+        except ValueError:
+            return _NotJson
+
+    def do_PUT(self) -> None:
+        self.write_route()
+
+    def do_POST(self) -> None:
+        self.write_route()
+
+    def write_route(self) -> None:
+        route = INTERACTION_ROUTE.fullmatch(self.path)
+        if not route or route["what"] != {"PUT": "draft", "POST": "response"}.get(self.command):
+            self.reply_json(404, {"error": "not found"})
+        elif not self.has_token():
+            self.reply_json(403, {"error": "forbidden"})
+        else:
+            body = self.read_json()
+            n = int(route["n"])
+            if self.require_pending(n):
+                (self.put_draft if route["what"] == "draft" else self.post_response)(n, body)
+
+    def put_draft(self, n: int, body: object) -> None:
+        if not isinstance(body, dict):
+            return self.reply_json(400, {"problems": ["draft: must be a JSON object"]})
+        self.server.store.write_draft(n, body)
+        self.reply(204, b"", "application/json")
+
+    def post_response(self, n: int, body: object) -> None:
+        store = self.server.store
+        interaction = store.interaction(n)
+        problems = ["body: must be valid JSON"] if body is _NotJson else response_problems(interaction, body, store.effort)
+        if problems:
+            return self.reply_json(400, {"problems": problems})
+        saved = {**body, "interaction": n, "kind": interaction["kind"], "via": "page",
+                 "submitted_at": datetime.now(timezone.utc).isoformat()}
+        if not store.write_response(n, saved):
+            return self.reply_json(409, {"error": "that interaction is not pending"})
+        self.reply_json(201, {"path": f"pilot/responses/{n:03d}.json"})
 
     def do_GET(self) -> None:
         if self.path == "/":

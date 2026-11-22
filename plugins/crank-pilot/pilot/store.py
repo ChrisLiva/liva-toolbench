@@ -14,16 +14,26 @@ def scaled(seconds: float) -> float:
     return seconds / float(os.environ.get("CRANK_PILOT_TIME_SCALE", "1"))
 
 
-def write_atomic(path: Path, data: bytes, mode: int = 0o644) -> None:
-    """Write beside the target, then move into place, so a reader never sees half a file."""
+def _write_beside(path: Path, data: bytes, mode: int) -> Path:
+    """Write `data` to a temporary file in the target's directory and return its path."""
     descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
     try:
         with os.fdopen(descriptor, "wb") as handle:
             os.fchmod(handle.fileno(), mode)
             handle.write(data)
-        os.replace(temporary, path)
     except BaseException:
         Path(temporary).unlink(missing_ok=True)
+        raise
+    return Path(temporary)
+
+
+def write_atomic(path: Path, data: bytes, mode: int = 0o644) -> None:
+    """Write beside the target, then move into place, so a reader never sees half a file."""
+    temporary = _write_beside(path, data, mode)
+    try:
+        os.replace(temporary, path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
         raise
 
 
@@ -61,6 +71,37 @@ class Store:
 
     def interaction(self, number: int) -> dict:
         return json.loads((self.interactions / f"{number:03d}.json").read_text())
+
+    def response(self, number: int) -> dict | None:
+        return self._json(self.responses / f"{number:03d}.json")
+
+    def draft(self, number: int) -> dict | None:
+        return self._json(self.drafts / f"{number:03d}.json")
+
+    def write_draft(self, number: int, draft: dict) -> None:
+        self.drafts.mkdir(parents=True, exist_ok=True)
+        write_atomic(self.drafts / f"{number:03d}.json", json.dumps(draft).encode())
+
+    def write_response(self, number: int, data: dict) -> bool:
+        """Create the response only if none exists, and the draft goes with it; False when another submission won."""
+        self.responses.mkdir(parents=True, exist_ok=True)
+        target = self.responses / f"{number:03d}.json"
+        temporary = _write_beside(target, json.dumps(data).encode(), 0o644)
+        try:
+            os.link(temporary, target)
+        except FileExistsError:
+            return False
+        finally:
+            temporary.unlink(missing_ok=True)
+        (self.drafts / f"{number:03d}.json").unlink(missing_ok=True)
+        return True
+
+    @staticmethod
+    def _json(path: Path) -> dict | None:
+        try:
+            return json.loads(path.read_text())
+        except (OSError, ValueError):
+            return None
 
     def record(self) -> dict | None:
         """The server record, or None when server.json is missing, unreadable, or not a record."""
