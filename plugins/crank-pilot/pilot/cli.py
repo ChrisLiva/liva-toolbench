@@ -19,6 +19,10 @@ POLL = 0.1
 SERVER_START = 5
 OPEN_TIMEOUT = 30
 GRACE = 90
+CLOSING = 5
+SUSPEND_GAP = 10
+WAIT_POLL = 1
+WAIT_TIMEOUT = 540
 
 
 def fail(message: str, code: int) -> int:
@@ -116,9 +120,26 @@ def cmd_wait(args: argparse.Namespace) -> int:
     store = open_store(args)
     if store is None:
         return fail(f"no such effort directory: {args.effort}", 2)
-    if store.pending() is None:
-        return fail("nothing pending", 2)
-    return fail("a pending interaction needs the server, which is not built yet", 1)
+    start = grace_from = last_poll = time.time()
+    while True:
+        now = time.time()
+        latest = store.latest()
+        if latest is None:
+            return fail("nothing pending", 2)
+        if store.pending() is None:
+            print(store.responses.resolve() / f"{latest:03d}.json")
+            return 0
+        if now - last_poll > scaled(SUSPEND_GAP):
+            grace_from = now
+        last_poll = now
+        ensure_server(store)
+        beat, bye = store.heartbeat()
+        since = max(beat, grace_from)
+        if (bye and now - since > scaled(CLOSING)) or now - since > scaled(GRACE):
+            return fail("page closed", 4)
+        if now - start >= scaled(args.timeout):
+            return fail("still waiting", 3)
+        time.sleep(scaled(WAIT_POLL))
 
 
 def cmd_resolve(args: argparse.Namespace) -> int:
@@ -148,6 +169,7 @@ def parser() -> argparse.ArgumentParser:
     show.set_defaults(run=cmd_show)
     wait = verbs.add_parser("wait", help="block until the pending interaction is answered")
     wait.add_argument("effort", type=Path)
+    wait.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds to wait before exiting 3")
     wait.set_defaults(run=cmd_wait)
     resolve = verbs.add_parser("resolve", help="settle the pending interaction")
     resolve.add_argument("effort", type=Path)

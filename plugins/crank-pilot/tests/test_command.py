@@ -4,6 +4,7 @@ import contextlib
 import copy
 import json
 import os
+import signal
 import subprocess
 import tempfile
 import time
@@ -271,6 +272,127 @@ class ShowWaitTest(EffortCase):
         self.assertTrue((effort.path / "pilot" / "interactions" / "001.json").exists())
         self.assertEqual(list((effort.path / "pilot" / "responses").glob("*")), [])
         self.assertFalse(opened.exists())
+
+
+ANSWERS = json.dumps({"answers": [
+    {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []},
+    {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []},
+]}).encode()
+
+
+class WaitResponseTest(EffortCase):
+    def test_wait_prints_the_response_path_when_it_arrives_while_waiting(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        with client.beating():
+            process = effort.spawn("wait", effort.path)
+            time.sleep(0.2)
+            self.assertIsNone(process.poll())
+            self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
+            out, err = process.communicate(timeout=5)
+        self.assertEqual((process.returncode, out, err), (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
+
+
+class WaitBoundTest(EffortCase):
+    def test_wait_exits_3_at_the_bound_and_a_second_wait_resumes_the_same_interaction(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        with client.beating():
+            started = time.time()
+            done = effort.run("wait", effort.path, "--timeout", 20)
+            elapsed = time.time() - started
+            self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (3, "", "still waiting"))
+            self.assertGreater(elapsed, 0.2)
+            self.assertLess(elapsed, 1.5)
+            self.assertEqual(len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1)
+            self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
+            done = effort.run("wait", effort.path)
+        self.assertEqual((done.returncode, done.stderr), (0, ""))
+        self.assertEqual(len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1)
+
+    def test_the_default_bound_is_540_seconds_and_outlasts_the_90_second_grace(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        with Client(effort).beating():
+            started = time.time()
+            done = effort.run("wait", effort.path, scale=2000)
+            elapsed = time.time() - started
+        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (3, "", "still waiting"))
+        self.assertGreater(elapsed, 0.27)
+        self.assertLess(elapsed, 1.5)
+
+
+class WaitClosedPageTest(EffortCase):
+    def test_wait_exits_4_when_90_scaled_seconds_pass_with_no_heartbeat(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        Client(effort)
+        heartbeat = effort.path / "pilot" / "heartbeat"
+        os.utime(heartbeat, (time.time() - 2, time.time() - 2))
+        started = time.time()
+        done = effort.run("wait", effort.path)
+        elapsed = time.time() - started
+        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed"))
+        self.assertGreater(elapsed, 0.85)
+        self.assertLess(elapsed, 1.5)
+
+
+class WaitClosingBeaconTest(EffortCase):
+    def test_wait_exits_4_after_a_closing_beacon_with_no_beat_following_it(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        self.assertEqual(client.request("POST", "/api/bye", token=False)[0], 204)
+        self.assertEqual((effort.path / "pilot" / "heartbeat").read_bytes(), b"bye")
+        started = time.time()
+        done = effort.run("wait", effort.path)
+        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed"))
+        self.assertLess(time.time() - started, 0.5)
+
+    def test_a_beat_after_the_closing_beacon_clears_it(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        self.assertEqual(client.request("POST", "/api/bye", token=False)[0], 204)
+        client.state()
+        self.assertEqual((effort.path / "pilot" / "heartbeat").stat().st_size, 0)
+        with client.beating():
+            done = effort.run("wait", effort.path, "--timeout", 30)
+        self.assertEqual((done.returncode, done.stderr.strip()), (3, "still waiting"))
+
+
+class WaitContactTest(EffortCase):
+    def test_wait_polls_touch_the_contact_file(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        contact = effort.path / "pilot" / "contact"
+        contact.unlink(missing_ok=True)
+        with Client(effort).beating():
+            done = effort.run("wait", effort.path, "--timeout", 20)
+        self.assertEqual((done.returncode, done.stderr.strip()), (3, "still waiting"))
+        self.assertTrue(contact.exists())
+
+
+class WaitSuspendTest(EffortCase):
+    def test_a_suspend_restarts_the_90_second_count(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        Client(effort)
+        contact = effort.path / "pilot" / "contact"
+        contact.unlink(missing_ok=True)
+        process = effort.spawn("wait", effort.path)
+        give_up = time.time() + 5
+        while not contact.exists() and time.time() < give_up:
+            time.sleep(0.01)
+        os.kill(process.pid, signal.SIGSTOP)
+        time.sleep(1.2)
+        os.kill(process.pid, signal.SIGCONT)
+        resumed = time.time()
+        out, err = process.communicate(timeout=5)
+        self.assertEqual((process.returncode, out, err.strip()), (4, "", "page closed"))
+        self.assertGreater(time.time() - resumed, 0.85)
 
 
 if __name__ == "__main__":

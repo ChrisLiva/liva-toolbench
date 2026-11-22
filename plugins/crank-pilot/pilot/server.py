@@ -73,7 +73,12 @@ class Handler(BaseHTTPRequestHandler):
         self.write_route()
 
     def do_POST(self) -> None:
-        self.write_route()
+        if self.path == "/api/bye":
+            self.read_json()
+            write_atomic(self.server.store.heartbeat_file, b"bye")
+            self.reply(204, b"", "application/json")
+        else:
+            self.write_route()
 
     def write_route(self) -> None:
         route = INTERACTION_ROUTE.fullmatch(self.path)
@@ -111,6 +116,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path in ("/api/ping", "/api/state") and not self.has_token():
             self.reply_json(403, {"error": "forbidden"})
         elif self.path == "/api/ping":
+            write_atomic(self.server.store.contact, b"")
             self.reply_json(200, {"pid": os.getpid()})
         elif self.path == "/api/state":
             write_atomic(self.server.store.heartbeat_file, b"")

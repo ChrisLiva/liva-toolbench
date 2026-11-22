@@ -88,6 +88,9 @@ class QuestionRoundJourneyTest(EffortCase):
         self.assertEqual(state["response"], {"via": "page"})
         self.assertIsNone(state["draft"])
         self.assertFalse((pilot / "drafts" / "001.json").exists())
+        done = effort.run("wait", effort.path)
+        self.assertEqual((done.returncode, done.stdout, done.stderr),
+                         (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
 
 
 if __name__ == "__main__":
