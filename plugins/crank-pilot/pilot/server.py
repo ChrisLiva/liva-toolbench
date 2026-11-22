@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import unquote
 
-from pilot.store import Store, write_atomic
+from pilot.store import Store, image_extension, write_atomic
 from pilot.validate import inside, response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
@@ -34,8 +34,10 @@ class Route(NamedTuple):
     handler: str
     public: bool = False
     cap: int | None = None
+    raw: bool = False
 
 JSON_CAP = 1 << 20
+IMAGE_CAP = 10 << 20
 DRAIN_LIMIT = 4 << 20
 ROUTES = (
     Route("GET", re.compile(r"/"), "index", public=True),
@@ -46,6 +48,8 @@ ROUTES = (
     Route("PUT", re.compile(r"/api/draft/(?P<n>\d+)"), "put_draft", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/response/(?P<n>\d+)"), "post_response", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/bye"), "bye", public=True, cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/attachment/(?P<n>\d+)"), "post_attachment", cap=IMAGE_CAP, raw=True),
+    Route("DELETE", re.compile(r"/api/attachment/(?P<n>\d+)/(?P<k>\d+)"), "delete_attachment"),
 )
 
 
@@ -93,11 +97,11 @@ class Handler(BaseHTTPRequestHandler):
         self.reply_json(409, {"error": "that interaction is not pending"})
         return False
 
-    def read_body(self, cap: int) -> object:
-        """The request body as JSON (`_NotJson` when it is not), or `_Refused` after answering a refusal: 411 with no
-        `Content-Length`, 400 when it is not a plain number of at most 15 digits, 413 over `cap`, all on the header
-        alone. A 413's body is discarded after the reply, up to `DRAIN_LIMIT`, so a client still sending reads the 413
-        instead of a reset."""
+    def read_body(self, cap: int) -> bytes | object:
+        """The request body bytes, or `_Refused` after answering a refusal: 411 with no `Content-Length`, 400 when it
+        is not a plain number of at most 15 digits, 413 over `cap`, all on the header alone. A 413's body is discarded
+        after the reply, up to `DRAIN_LIMIT`, so a client still sending reads the 413 instead of a reset. A body the
+        client cut short is dropped without a reply."""
         length = self.headers.get("Content-Length")
         if length is None:
             self.reply_json(411, {"error": "length required"})
@@ -107,10 +111,10 @@ class Handler(BaseHTTPRequestHandler):
             self.reply_json(413, {"error": "body too large"})
             self.rfile.read(min(int(length), DRAIN_LIMIT))
         else:
-            try:
-                return json.loads(self.rfile.read(int(length)))
-            except ValueError:
-                return _NotJson
+            body = self.rfile.read(int(length))
+            if len(body) == int(length):
+                return body
+            self.close_connection = True
         return _Refused
 
     def home(self) -> tuple[str, str]:
@@ -134,8 +138,14 @@ class Handler(BaseHTTPRequestHandler):
         if not (route.public or self.has_token()):
             return self.reply_json(403, {"error": "forbidden"})
         body = None
-        if route.cap is not None and (body := self.read_body(route.cap)) is _Refused:
-            return
+        if route.cap is not None:
+            if (body := self.read_body(route.cap)) is _Refused:
+                return
+            if not route.raw:
+                try:
+                    body = json.loads(body)
+                except ValueError:
+                    body = _NotJson
         getattr(self, route.handler)(match, body)
 
     do_GET = do_PUT = do_POST = do_DELETE = dispatch
@@ -184,6 +194,26 @@ class Handler(BaseHTTPRequestHandler):
         if not store.write_response(n, saved):
             return self.reply_json(409, {"error": "that interaction is not pending"})
         self.reply_json(201, {"path": f"pilot/responses/{n:03d}.json"})
+
+    def post_attachment(self, match: re.Match, body: bytes) -> None:
+        n = int(match["n"])
+        if not self.require_pending(n):
+            return
+        extension = image_extension(body)
+        if extension is None:
+            return self.reply_json(415, {"error": "unsupported image type: accepted types are PNG, JPEG, GIF, WebP"})
+        k = self.server.store.add_attachment(n, body, extension)
+        if k is None:
+            return self.reply_json(409, {"error": "ten images are already attached"})
+        self.reply_json(201, {"path": f"pilot/attachments/{n:03d}-{k}.{extension}", "k": k})
+
+    def delete_attachment(self, match: re.Match, body: object) -> None:
+        n = int(match["n"])
+        if not self.require_pending(n):
+            return
+        if not self.server.store.remove_attachment(n, int(match["k"])):
+            return self.reply_json(404, {"error": "no such attachment"})
+        self.reply(204, b"", "application/json")
 
     def serve_file(self, root: Path, rel: str, types: dict[str, str]) -> None:
         """Answer with the file `rel` names inside `root`, or 404 when `inside` refuses it."""

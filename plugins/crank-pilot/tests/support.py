@@ -46,6 +46,14 @@ PROTOTYPE = {
                  {"key": "B", "name": "Menu item", "file": "prototype/variant-B.html"}],
 }
 
+IMAGES = {
+    "png": b"\x89PNG\r\n\x1a\n" + b"\0" * 32,
+    "jpg": b"\xff\xd8\xff\xe0" + b"\0" * 32,
+    "gif": b"GIF89a" + b"\0" * 32,
+    "webp": b"RIFF\x24\0\0\0WEBPVP8 " + b"\0" * 32,
+    "svg": b"<svg xmlns='http://www.w3.org/2000/svg'/>",
+}
+
 
 class Effort:
     def __init__(self, bin: Path = BIN) -> None:

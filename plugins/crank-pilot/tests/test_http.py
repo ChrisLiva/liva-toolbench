@@ -4,10 +4,11 @@ import json
 import shutil
 import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 
-from support import PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, Effort, EffortCase, show
+from support import IMAGES, PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, Effort, EffortCase, show
 
 Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
 Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
@@ -368,6 +369,90 @@ class GuardTest(HttpCase):
         effort, client = self.round()
         self.assertEqual(client.request("GET", "/api/nope")[0], 404)
         self.assertEqual(client.request("DELETE", "/api/state")[0], 405)
+
+
+class AttachmentTest(HttpCase):
+    def upload(self, client: Client, body: bytes, number: int = 1, content_type: str = "text/plain") -> tuple[int, bytes]:
+        status, reply, _ = client.request("POST", f"/api/attachment/{number}", body, {"Content-Type": content_type})
+        return status, reply
+
+    def stored(self, effort: Effort) -> list[str]:
+        directory = effort.path / "pilot" / "attachments"
+        return sorted(p.name for p in directory.iterdir()) if directory.is_dir() else []
+
+    def test_png_jpeg_gif_and_webp_are_accepted_by_their_leading_bytes_whatever_the_content_type_says(self):
+        effort, client = self.round()
+        for k, (kind, ext) in enumerate((("png", "png"), ("jpg", "jpg"), ("gif", "gif"), ("webp", "webp")), start=1):
+            with self.subTest(kind):
+                status, reply = self.upload(client, IMAGES[kind])
+                path = f"pilot/attachments/001-{k}.{ext}"
+                self.assertEqual((status, json.loads(reply)), (201, {"path": path, "k": k}))
+                self.assertEqual((effort.path / path).read_bytes(), IMAGES[kind])
+
+    def test_anything_that_is_not_one_of_the_four_image_types_gets_415_naming_them_and_writes_nothing(self):
+        effort, client = self.round()
+        cases = {"svg claiming png": (IMAGES["svg"], "image/png"), "empty": (b"", "image/png"),
+                 "plain text": (b"plain text", "text/plain"), "riff that is not webp": (b"RIFF\0\0\0\0WAVEfmt ", "image/webp")}
+        for name, (body, content_type) in cases.items():
+            with self.subTest(name):
+                status, reply = self.upload(client, body, content_type=content_type)
+                self.assertEqual(status, 415)
+                self.assertIn("PNG, JPEG, GIF, WebP", reply.decode())
+        self.assertEqual(self.stored(effort), [])
+
+    def test_an_image_over_10_mib_gets_413_before_it_is_read(self):
+        effort, client = self.round()
+        cap = 10 << 20
+        png = IMAGES["png"]
+        self.assertEqual(raw_request(client, "POST", "/api/attachment/1", body=png, length=str(cap + 1))[0], 413)
+        self.assertEqual(self.stored(effort), [])
+        status, reply = self.upload(client, png + b"\0" * (cap - len(png)))
+        self.assertEqual((status, json.loads(reply)["path"]), (201, "pilot/attachments/001-1.png"))
+        self.assertEqual((effort.path / "pilot" / "attachments" / "001-1.png").stat().st_size, cap)
+
+    def test_an_eleventh_image_gets_409_and_a_new_image_is_numbered_one_above_the_highest_present(self):
+        effort, client = self.round()
+        png = IMAGES["png"]
+        for expected in range(1, 11):
+            self.assertEqual(json.loads(self.upload(client, png)[1])["k"], expected)
+        self.assertEqual(self.upload(client, png)[0], 409)
+        self.assertEqual(client.request("DELETE", "/api/attachment/1/3")[0], 204)
+        self.assertNotIn("001-3.png", self.stored(effort))
+        status, reply = self.upload(client, png)
+        self.assertEqual((status, json.loads(reply)["k"]), (201, 11))
+        self.assertEqual(self.upload(client, png)[0], 409)
+        self.assertEqual(len(self.stored(effort)), 10)
+
+    def test_removing_deletes_the_file_an_absent_one_gets_404_and_a_round_that_is_not_pending_gets_409(self):
+        effort, client = self.round()
+        self.assertEqual(self.upload(client, IMAGES["png"])[0], 201)
+        self.assertEqual(client.request("DELETE", "/api/attachment/1/99")[0], 404)
+        self.assertEqual(self.stored(effort), ["001-1.png"])
+        self.assertEqual(client.request("DELETE", "/api/attachment/1/1")[0], 204)
+        self.assertEqual(self.stored(effort), [])
+        self.assertEqual(self.upload(client, IMAGES["png"])[0], 201)
+        self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, Q2]})[0], 201)
+        self.assertEqual(self.upload(client, IMAGES["png"])[0], 409)
+        self.assertEqual(client.request("DELETE", "/api/attachment/1/1")[0], 409)
+        self.assertEqual(self.stored(effort), ["001-1.png"])
+
+    def test_a_response_names_a_stored_image_by_its_path(self):
+        effort, client = self.round()
+        path = json.loads(self.upload(client, IMAGES["png"])[1])["path"]
+        self.assertEqual(path, "pilot/attachments/001-1.png")
+        answer = {**Q1_A, "attachments": [path]}
+        self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [answer, Q2]})[0], 201)
+        self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"][0]["attachments"], [path])
+
+    def test_an_upload_cut_off_mid_body_leaves_no_file_at_the_final_path(self):
+        effort, client = self.round()
+        head = (f"POST /api/attachment/1 HTTP/1.1\r\nHost: 127.0.0.1:{client.port}\r\n"
+                f"X-Pilot-Token: {client.token}\r\nContent-Length: 5000\r\n\r\n").encode()
+        client.raw(head + IMAGES["png"] + b"\0" * (100 - len(IMAGES["png"])), wait=0.2)
+        time.sleep(0.3)
+        self.assertEqual([name for name in self.stored(effort) if name.startswith("001-")], [])
+        status, reply = self.upload(client, IMAGES["png"])
+        self.assertEqual((status, json.loads(reply)["k"]), (201, 1))
 
 
 if __name__ == "__main__":

@@ -4,9 +4,25 @@ import json
 import os
 import re
 import tempfile
+import threading
 from pathlib import Path
 
+ATTACHMENT = re.compile(r"(?P<n>\d{3})-(?P<k>\d+)\.(?:png|jpg|gif|webp)")
+MAX_ATTACHMENTS = 10
 NUMBER = re.compile(r"(?P<n>\d{3})\.(?P<suffix>json|md)")
+
+
+def image_extension(data: bytes) -> str | None:
+    """The extension of the image type `data`'s leading bytes name (png, jpg, gif, webp), or None."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return None
 
 
 def scaled(seconds: float) -> float:
@@ -49,6 +65,7 @@ class Store:
         self.drafts = self.root / "drafts"
         self.versions = self.root / "versions"
         self.attachments = self.root / "attachments"
+        self._attachment_lock = threading.Lock()
 
     def latest(self) -> int | None:
         """The highest-numbered stored interaction, or None."""
@@ -121,6 +138,33 @@ class Store:
             temporary.unlink(missing_ok=True)
         (self.drafts / f"{number:03d}.json").unlink(missing_ok=True)
         return True
+
+    def add_attachment(self, number: int, data: bytes, extension: str) -> int | None:
+        """Store `data` as interaction `number`'s next image and return its `k`; None when ten are already present."""
+        self.attachments.mkdir(parents=True, exist_ok=True)
+        with self._attachment_lock:
+            present = self._attachment_ks(number)
+            if len(present) >= MAX_ATTACHMENTS:
+                return None
+            k = max(present, default=0) + 1
+            write_atomic(self.attachments / f"{number:03d}-{k}.{extension}", data)
+        return k
+
+    def remove_attachment(self, number: int, k: int) -> bool:
+        """Delete interaction `number`'s image `k`; False when there is none."""
+        entries = self.attachments.iterdir() if self.attachments.is_dir() else ()
+        for entry in entries:
+            if (match := ATTACHMENT.fullmatch(entry.name)) and (int(match["n"]), int(match["k"])) == (number, k):
+                entry.unlink()
+                return True
+        return False
+
+    def _attachment_ks(self, number: int) -> list[int]:
+        """The `k` of every image stored for interaction `number`."""
+        if not self.attachments.is_dir():
+            return []
+        matches = (ATTACHMENT.fullmatch(entry.name) for entry in self.attachments.iterdir())
+        return [int(match["k"]) for match in matches if match and int(match["n"]) == number]
 
     @staticmethod
     def _json(path: Path) -> dict | None:
