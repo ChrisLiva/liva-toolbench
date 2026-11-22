@@ -227,7 +227,7 @@ class ShowBrowserTest(EffortCase):
         browser, opened = recording_browser(effort)
         env = {**browser, "CRANK_PILOT_NO_OPEN": None}
         source = effort.write("interaction.json", json.dumps(QUESTIONS))
-        self.assertEqual(show(effort, QUESTIONS, scale=10, env=env), 1)
+        self.assertEqual(show(effort, QUESTIONS, scale=10, env=env, opened=opened), 1)
         self.assertRegex(opened.read_text(), r"\Ahttp://127\.0\.0\.1:\d+/\?t=[0-9a-f]{64}\n\Z")
         done = effort.run("show", effort.path, source, scale=10, env=env)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "2\n", ""))

@@ -201,12 +201,19 @@ class Client:
             thread.join()
 
 
-def show(effort: Effort, interaction: dict, scale: int = 100, env: dict[str, str | None] | None = None) -> int:
-    """Run `show` on the interaction with a page beating once the server is up; return the printed number."""
+def show(effort: Effort, interaction: dict, scale: int = 100, env: dict[str, str | None] | None = None,
+         opened: Path | None = None) -> int:
+    """Run `show` on the interaction with a page beating once the server is up; return the printed number.
+
+    With `opened`, the page beats only once that file records a browser launch: a beat that lands before `show`
+    checks for a live page means a page is already open, and `show` then opens none."""
     source = effort.write("interaction.json", json.dumps(interaction))
     process = effort.spawn("show", effort.path, source, scale=scale, env=env)
     client = None
     while process.poll() is None:
+        if opened is not None and not (opened.exists() and opened.read_text().strip()):
+            time.sleep(0.01)
+            continue
         try:
             client = client or Client(effort)
             client.state()
