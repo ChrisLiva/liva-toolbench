@@ -1,5 +1,6 @@
 import { token, getState, getFile, putDraft, postResponse } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
+import { surface as questions } from "/page/questions.js";
 
 const POLL_MS = 2000;
 const surfaces = new Map();
@@ -156,6 +157,8 @@ document.addEventListener("keydown", (event) => {
     sendButton.click();
   }
 });
+
+registerSurface("questions", questions);
 
 // Interim: the readback task replaces this surface with the full one.
 registerSurface("readback", {
