@@ -168,3 +168,27 @@ input::placeholder { color: #5b584f; opacity: 1; }
 .ver input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; margin-top: -8px; border-radius: 50%; background: var(--ink); border: 0; }
 .ver input::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--ink); border: 0; }
 .ver input:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+.pq { font: 700 24px/30px var(--sans); letter-spacing: -.02em; max-width: 560px; margin: 4px 0 14px; text-wrap: balance; }
+.vstage { min-height: 120px; }
+.vstage.picking { outline: 3px solid var(--accent); }
+.vmsg { padding: 12px 0; }
+iframe.pframe { display: block; width: 100%; height: 480px; border: 1px solid var(--ink); background: var(--paper); }
+.vsw { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; border-bottom: 1px solid var(--rule); padding: 10px 0; }
+.vsw .l { flex: 1 1 180px; text-align: center; }
+.vsw button { padding: 6px 12px; font-size: 14px; }
+.vmode { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 0; }
+.vmode button { padding: 6px 12px; font-size: 14px; }
+button[aria-pressed=true] { background: var(--ink); color: var(--paper); }
+.pinask:empty { display: none; }
+.pinform { border-top: 1px solid var(--ink); padding: 10px 0; max-width: 560px; }
+.pinform .ar { display: flex; flex-wrap: wrap; gap: 8px; }
+.pins li { display: grid; gap: 2px; font-size: 14px; line-height: 20px; padding: 8px 0; border-top: 1px solid var(--rule); overflow-wrap: anywhere; }
+.pins .pt { font-weight: 500; }
+.pins .sel { font: 12px/16px var(--mono); }
+.vfoot { margin-top: 0; border-top: 0; padding-top: 16px; }
+fieldset.win { border: 0; margin: 0 0 14px; padding: 0; min-width: 0; }
+fieldset.win legend { padding: 0; margin-bottom: 2px; }
+.win label { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--rule); font-size: 15px; }
+.win input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); flex: none; }
+textarea { font: 400 15px/22px var(--sans); width: 100%; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 0; padding: 6px; resize: vertical; }

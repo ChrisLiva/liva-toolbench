@@ -125,3 +125,48 @@ export function diffBlocks(oldSources, newSources) {
   while (j < cols) changed.push(j++);
   return { changed, removed };
 }
+
+// The prototype review. A pin is {variant, selector, leading_text, text, attachments}; a verdict is
+// {winner: key | null, take, leave_out, attachments}. `n` is a pin's number within its variant, in the order pins were made.
+
+export function numberPins(pins) {
+  const counts = new Map();
+  return pins.map((pin) => {
+    const n = (counts.get(pin.variant) ?? 0) + 1;
+    counts.set(pin.variant, n);
+    return { ...pin, n };
+  });
+}
+
+export const verdictRefusal = (verdict) => (verdict.winner ? null : "Choose a winner.");
+
+const orNothing = (text) => text.trim() || "nothing";
+
+export function prototypeResponse(verdict, pins) {
+  return {
+    winner: verdict.winner,
+    take: orNothing(verdict.take),
+    leave_out: orNothing(verdict.leave_out),
+    attachments: verdict.attachments,
+    comments: numberPins(pins).map(({ n, variant, selector, leading_text, text, attachments }) => ({ n, variant, selector, leading_text, text, attachments })),
+  };
+}
+
+// The verdict and pins a saved draft holds, read defensively: a draft is whatever an earlier page wrote.
+export function prototypeFrom(variants, draft) {
+  const given = draft?.verdict && typeof draft.verdict === "object" ? draft.verdict : {};
+  const text = (value) => (typeof value === "string" ? value : "");
+  const keys = new Set(variants.map((v) => v.key));
+  const pins = Array.isArray(draft?.pins) ? draft.pins : [];
+  return {
+    verdict: {
+      winner: keys.has(given.winner) ? given.winner : null,
+      take: text(given.take),
+      leave_out: text(given.leave_out),
+      attachments: strings(given.attachments),
+    },
+    pins: pins
+      .filter((pin) => pin && typeof pin === "object" && keys.has(pin.variant))
+      .map((pin) => ({ variant: pin.variant, selector: text(pin.selector), leading_text: text(pin.leading_text), text: text(pin.text), attachments: strings(pin.attachments) })),
+  };
+}

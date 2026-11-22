@@ -1,6 +1,7 @@
 import { token, getState, putDraft, postResponse } from "/page/api.js";
 import { surface as questions } from "/page/questions.js";
 import { surface as readback } from "/page/readback.js";
+import { surface as prototype } from "/page/prototype.js";
 
 const POLL_MS = 2000;
 const surfaces = new Map();
@@ -160,6 +161,7 @@ document.addEventListener("keydown", (event) => {
 
 registerSurface("questions", questions);
 registerSurface("readback", readback);
+registerSurface("prototype", prototype);
 
 window.addEventListener("pagehide", () => token() && navigator.sendBeacon("/api/bye"));
 
