@@ -2,6 +2,7 @@
 
 import contextlib
 import copy
+import http.server
 import json
 import os
 import signal
@@ -575,6 +576,22 @@ class CloseWindowTest(EffortCase):
         self.assertNotEqual(json.loads(record.read_text())["pid"], old)
 
 
+class SecondCloseTest(EffortCase):
+    def test_a_second_close_partway_through_the_window_does_not_move_the_server_exit_later(self):
+        effort = self.effort()
+        show(effort, QUESTIONS, scale=10)
+        client = Client(effort)
+        pid = json.loads((effort.path / "pilot" / "server.json").read_text())["pid"]
+        self.assertEqual(effort.run("close", effort.path, scale=10).returncode, 0)
+        closed = time.time()
+        time.sleep(0.35)
+        self.assertEqual(client.request("POST", "/api/close", b"")[0], 202)
+        while not is_dead(pid) and time.time() - closed < 2:
+            time.sleep(0.01)
+        self.assertLessEqual(time.time() - closed, 0.75)
+        self.assertTrue(is_dead(pid))
+
+
 class SelfExitTest(EffortCase):
     def test_the_server_exits_when_its_record_is_gone_or_names_another_process(self):
         gone = self.effort()
@@ -591,6 +608,61 @@ class SelfExitTest(EffortCase):
         done = other.run("close", other.path)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
         self.assertFalse(record.exists())
+
+
+class ForeignPidListener:
+    """A stdlib server that answers `GET /api/ping` as pid 1 and records every POST it receives."""
+
+    def __init__(self) -> None:
+        self.posts: list[str] = []
+        posts = self.posts
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                body = json.dumps({"pid": 1}).encode()
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_POST(self) -> None:
+                posts.append(self.path)
+                self.send_response(202)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *args) -> None:
+                pass
+
+        self.httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.port = self.httpd.server_address[1]
+        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.httpd.shutdown()
+        self.httpd.server_close()
+        self.thread.join()
+
+
+class ForeignPidTest(EffortCase):
+    def test_close_sends_nothing_to_a_recorded_pid_the_os_refuses_to_signal(self):
+        try:
+            os.kill(1, 0)
+        except PermissionError:
+            pass
+        except OSError:
+            self.skipTest("pid 1 is not another user's process here")
+        else:
+            self.skipTest("pid 1 is signalable here")
+        effort = self.effort()
+        listener = ForeignPidListener()
+        self.addCleanup(listener.stop)
+        record = effort.write("pilot/server.json", json.dumps({"pid": 1, "port": listener.port, "token": "t"}))
+        done = effort.run("close", effort.path)
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
+        self.assertFalse(record.exists())
+        self.assertEqual(listener.posts, [])
 
 
 class IdleExitTest(EffortCase):
