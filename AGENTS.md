@@ -2,7 +2,7 @@
 
 This repo is a **plugin marketplace and development sandbox** for Claude Code and Codex. Each subdirectory under `plugins/` is a self-contained plugin you can install via the marketplace catalogs or load directly for fast iteration.
 
-When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin, `crank-wizard` for a skill that ships a compilable code template, `crank-health` for a skill that ships a script its steps run, `agent-effort` for a Claude Code mod written as function hooks).
+When working in this repo, you are usually creating, editing, or testing plugin components. Optimize for fast feedback (`--plugin-dir` + `/reload-plugins` for Claude Code; reinstall from the local Codex marketplace after manifest/version changes). There is no `hello-world/` reference plugin anymore; use the existing plugin nearest your task as the reference (`crank` for the full cross-harness workflow, `crank-lite` for a small multi-skill plugin, `effective-html` for a single-skill plugin, `crank-wizard` for a skill that ships a compilable code template, `crank-health` for a skill that ships a script its steps run, `agent-effort` for a Claude Code mod written as function hooks, `crank-pilot` for a plugin that ships a command on PATH with its own tests).
 
 ---
 
@@ -47,7 +47,7 @@ When working in this repo, you are usually creating, editing, or testing plugin 
         └── scripts/               # arbitrary helper scripts (referenced via ${CLAUDE_PLUGIN_ROOT})
 ```
 
-The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship as cross-harness plugins and contain manifests plus `skills/`. The mod `agent-effort` is Claude-only because Claude Code alone runs function hooks, so it has no `.codex-plugin/` manifest and no Codex index entry. Its `hooks/hooks.json` names one hooks module under `modules` (`hooks/register.tsx`), `types/index.d.ts` declares the `$.state` values it keeps, and `tests/` holds the tests `claude plugin test plugins/<name>` runs; `claude plugin validate plugins/<name>` checks the module the way the engine loads it. The engine writes `.claude-plugin/types/` and `tsconfig.json` into the plugin folder on each load, and git ignores both. Other component directories shown above are supported by the plugin format when a plugin needs them.
+The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship as cross-harness plugins and contain manifests plus `skills/`. The mod `agent-effort` is Claude-only because Claude Code alone runs function hooks, so it has no `.codex-plugin/` manifest and no Codex index entry. Its `hooks/hooks.json` names one hooks module under `modules` (`hooks/register.tsx`), `types/index.d.ts` declares the `$.state` values it keeps, and `tests/` holds the tests `claude plugin test plugins/<name>` runs; `claude plugin validate plugins/<name>` checks the module the way the engine loads it. The engine writes `.claude-plugin/types/` and `tsconfig.json` into the plugin folder on each load, and git ignores both. `crank-pilot` is Claude-only because a plugin's `bin/` reaches PATH only in Claude Code, so it has no `.codex-plugin/` manifest and no Codex index entry; it is tested with `python3 -m unittest discover -s plugins/crank-pilot/tests`. Other component directories shown above are supported by the plugin format when a plugin needs them.
 
 `plugins/crank/skills/crank-health/scripts/health.py` is the scanner crank-health's steps run (per project decision: the mechanical half of a health run is a script, not prose an agent follows; across six agent-run scans on this machine about 15% of the shell calls ran an analyzer and the rest went to shell quirks, hand-written output parsers and re-derived denominators, and no two runs wrote findings the same way). It inventories a repo, chooses each project's analyzers, runs them, and writes every finding in one schema; `healthlib/` holds one module per language reference (`jsts.py` beside `references/jsts.md`), plus `common.py`, `properties.py`, `inventory.py` and `grade.py` for their references and the shared `cli`, `runner`, `settle` and `report` modules. A quick-profile command, an ownership rule's implementation and a severity lookup live in that code only, and each reference says how to read the rows the code writes: stating a command in both places is how the earlier `detect.sh` drifted from the references until it was deleted. The skill prose addresses the script relative to the skill's own directory, never through `${CLAUDE_PLUGIN_ROOT}`. It needs Python 3.11 and the standard library alone. Test it with `python3 -m unittest discover -s plugins/crank/skills/crank-health/scripts/tests`, which the gate also runs. To check that a scanner change keeps its output, scan one fixed `git worktree add` checkout with the old and the new scanner and diff the run dirs: scanning `.` also diffs the edit's own dirty-path count and Python line count (health-deslop Task 2, 2026-11-10).
 
@@ -114,7 +114,7 @@ The skill plugins (`crank`, `crank-lite`, `crank-wizard`, `effective-html`) ship
 
 Cross-harness plugins ship for **both** Claude Code and Codex — they carry a
 `.codex-plugin/plugin.json` beside `.claude-plugin/plugin.json`, and both manifests
-read the same `skills/` tree. Every current marketplace plugin except the Claude-only mod
+read the same `skills/` tree. Every current marketplace plugin except the two Claude-only plugins (`agent-effort` and `crank-pilot`)
 is cross-harness, and *Repo layout* names each one.
 
 **The Codex manifest** mirrors the Claude one for `name`, `version`, `description`,
@@ -244,7 +244,8 @@ pointers that name it. It compiles `crank-wizard`'s Go template (`go vet`,
 then `go build` natively and with `GOOS=windows`), so a template edit that breaks
 either shipped OS fails the gate on this darwin machine instead of on a teammate's.
 It runs the tests of `crank-health`'s scanner, which need no network and no
-analyzer on PATH. Finally it runs `claude plugin validate plugins/agent-effort --strict`
+analyzer on PATH. It runs the tests of `crank-pilot`, which start loopback servers on
+OS-assigned ports and need no network. Finally it runs `claude plugin validate plugins/agent-effort --strict`
 and `claude plugin test plugins/agent-effort` on the installed Claude Code (per project
 decision: the gate depends on the `claude` CLI, because the mod's API changes between
 releases; 2.1.323 added a required `isCollapsed` prop to the band, and the mod's tests

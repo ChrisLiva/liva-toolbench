@@ -18,6 +18,7 @@ Once added, install any plugin by name:
 /plugin install crank-lite
 /plugin install effective-html
 /plugin install agent-effort
+/plugin install crank-pilot
 ```
 
 For Codex, the repo doubles as a local marketplace (`.agents/plugins/marketplace.json`):
@@ -38,7 +39,7 @@ Then `/reload-plugins` after any edits.
 
 ## Plugins
 
-Every skill plugin ships **cross-harness**: the same `skills/` tree runs under both Claude Code and Codex, and each carries a `.claude-plugin/` and a `.codex-plugin/` manifest. `agent-effort` is the exception. It is a Claude Code mod written as function hooks, which only Claude Code runs.
+Every skill plugin ships **cross-harness**: the same `skills/` tree runs under both Claude Code and Codex, and each carries a `.claude-plugin/` and a `.codex-plugin/` manifest. Two plugins are exceptions. `agent-effort` is a Claude Code mod written as function hooks, which only Claude Code runs. `crank-pilot` is the second: it is Claude-only because a plugin's `bin/` reaches PATH only in Claude Code.
 
 ### `crank` — design-first development pipeline
 
@@ -100,6 +101,10 @@ This Claude Code mod shows the model and effort each spawned subagent actually r
 
 A model id outside the `claude-<family>-<major>-<minor>` form shows as the engine sent it, and a model sent without an effort shows its name alone.
 
+### `crank-pilot` puts crank's questions and reviews on a local web page
+
+This Claude Code plugin ships a `crank-pilot` command, which a plugin's `bin/` puts on PATH. It opens a page in a local browser tab where you answer crank and crank-lite's question rounds, mark up readbacks, and review prototypes. Each answer is saved as a file in the effort directory, so the agent reads it back, and the session continues in chat if the page fails. Its tests run with `python3 -m unittest discover -s plugins/crank-pilot/tests`.
+
 ---
 
 ## Repository layout
@@ -143,6 +148,12 @@ plugins/
     hooks/register.tsx          # the hooks module hooks/hooks.json names
     types/index.d.ts            # the $.state values it keeps
     tests/                      # run by `claude plugin test`
+  crank-pilot/                  # Claude-only: a command on PATH and its page
+    .claude-plugin/plugin.json
+    bin/crank-pilot             # the command's entry
+    pilot/                      # the command, the store, the page server
+    page/                       # the browser page
+    tests/                      # run by `python3 -m unittest discover`
 ```
 
 See `CLAUDE.md` for authoring conventions, the cross-harness rules, and the version-bump checklist.

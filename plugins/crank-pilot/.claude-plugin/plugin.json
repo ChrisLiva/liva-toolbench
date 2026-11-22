@@ -1,0 +1,6 @@
+{
+  "name": "crank-pilot",
+  "version": "0.1.0",
+  "description": "Interactive page for crank and crank-lite: answer question rounds, mark up readbacks, and review prototypes in a local browser tab. Claude Code only.",
+  "author": { "name": "Chris" }
+}

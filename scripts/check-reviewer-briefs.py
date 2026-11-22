@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Gate the adversarial-review sites, the orchestrator skills' promised
 literals, the hand-synced reference copies, the prose pointers to sections,
-the wizard template, crank-health's scanner, and the agent-effort mod.
+the wizard template, crank-health's scanner, crank-pilot's tests, and the
+agent-effort mod.
 
 Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
@@ -196,6 +197,10 @@ TEMPLATE_DIR = "plugins/crank-wizard/skills/crank-wizard/template"
 # and no analyzer, so a broken scanner fails here instead of in a user's repo.
 HEALTH_TESTS = "plugins/crank/skills/crank-health/scripts/tests"
 
+# The crank-pilot plugin's tests start loopback servers on OS-assigned ports and
+# need no network, so a broken command or page server fails here.
+PILOT_TESTS = "plugins/crank-pilot/tests"
+
 # The agent-effort mod runs against an engine API that changes between Claude
 # Code releases, so the installed engine checks it on every gate run.
 MOD_DIR = "plugins/agent-effort"
@@ -351,6 +356,16 @@ def check_health(failures):
         failures.append(f"FAIL {HEALTH_TESTS}: " + " | ".join(tail))
 
 
+def check_pilot(failures):
+    proc = subprocess.run(
+        [sys.executable, "-m", "unittest", "discover", "-s", PILOT_TESTS],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        tail = [line for line in proc.stderr.strip().splitlines() if line.strip()][-6:]
+        failures.append(f"FAIL {PILOT_TESTS}: " + " | ".join(tail))
+
+
 def validate_findings(stdout):
     """Each error and warning in a `claude plugin validate --json` report."""
     try:
@@ -396,6 +411,7 @@ def main():
     check_pointers(failures)
     check_template(failures)
     check_health(failures)
+    check_pilot(failures)
     check_mod(failures)
     for line in failures:
         print(line)

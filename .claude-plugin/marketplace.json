@@ -46,6 +46,14 @@
       "version": "0.3.1",
       "category": "tools",
       "tags": ["subagent", "effort", "mod", "hooks"]
+    },
+    {
+      "name": "crank-pilot",
+      "source": "./plugins/crank-pilot",
+      "description": "Interactive page for crank and crank-lite: answer question rounds, mark up readbacks, and review prototypes in a local browser tab. Claude Code only.",
+      "version": "0.1.0",
+      "category": "tools",
+      "tags": ["crank", "interactive", "browser", "page"]
     }
   ]
 }
