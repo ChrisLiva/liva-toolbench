@@ -94,6 +94,10 @@ class InvalidResponseTest(HttpCase):
     def test_accepted_follows_the_rule_so_an_own_text_on_a_question_with_no_options_is_not_accepted(self):
         effort, client = self.round()
         own_text = {**Q2, "accepted": False, "text": "x"}
+        for name, answers in {"empty text not accepted": [Q1_A, {**Q2, "accepted": False}],
+                              "recommended option not accepted": [{**Q1_A, "accepted": False}, Q2]}.items():
+            with self.subTest(name):
+                self.assertEqual(send(client, "POST", "/api/response/1", {"answers": answers})[0], 400)
         self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, {**own_text, "accepted": True}]})[0], 400)
         self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, own_text]})[0], 201)
         self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"][1], own_text)
