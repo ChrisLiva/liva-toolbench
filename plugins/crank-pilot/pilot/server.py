@@ -1,18 +1,21 @@
 """The effort's HTTP server: `python -m pilot.server <effort-dir>`. It holds no state beyond the files."""
 
+import contextlib
 import hmac
 import json
 import os
 import re
 import secrets
 import sys
+import threading
+import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import unquote
 
-from pilot.store import Store, image_extension, write_atomic
+from pilot.store import Store, image_extension, scaled, write_atomic
 from pilot.validate import inside, response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
@@ -36,6 +39,11 @@ class Route(NamedTuple):
     cap: int | None = None
     raw: bool = False
 
+TOKEN = re.compile(r"[0-9a-f]{64}")
+ENDED = 5
+IDLE = 30 * 60
+MIN_TICK = 0.01
+WATCH = 1
 JSON_CAP = 1 << 20
 IMAGE_CAP = 10 << 20
 DRAIN_LIMIT = 4 << 20
@@ -48,18 +56,53 @@ ROUTES = (
     Route("PUT", re.compile(r"/api/draft/(?P<n>\d{1,9})"), "put_draft", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/response/(?P<n>\d{1,9})"), "post_response", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/bye"), "bye", public=True, cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/close"), "close", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/attachment/(?P<n>\d{1,9})"), "post_attachment", cap=IMAGE_CAP, raw=True),
     Route("DELETE", re.compile(r"/api/attachment/(?P<n>\d{1,9})/(?P<k>\d{1,9})"), "delete_attachment"),
 )
 
 
+def modified(path: Path) -> float:
+    """When `path` was last written, or 0 when it does not exist."""
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
 class Server(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, store: Store, token: str) -> None:
-        super().__init__(("127.0.0.1", 0), Handler)
+    def __init__(self, store: Store, token: str, port: int = 0) -> None:
+        super().__init__(("127.0.0.1", port), Handler)
         self.store = store
         self.token = token
+        self.closing_until: float | None = None
+        self._closing_lock = threading.Lock()
+
+    def start_closing(self) -> None:
+        """Open the `ended` window once; a second call leaves it as it was."""
+        with self._closing_lock:
+            if self.closing_until is None:
+                self.closing_until = time.time() + scaled(ENDED)
+
+    def watch(self) -> None:
+        """Stop serving when the `ended` window has passed (after removing the heartbeat and the record), or when the
+        record is gone or names another process or nothing has touched `heartbeat` or `contact` for 30 scaled
+        minutes (leaving it as it is)."""
+        started = time.time()
+        while True:
+            time.sleep(max(scaled(WATCH), MIN_TICK))
+            record = self.store.record()
+            if record is None or record["pid"] != os.getpid():
+                return self.shutdown()
+            touched = (self.store.heartbeat()[0], modified(self.store.contact))
+            if time.time() - max(started, *touched) > scaled(IDLE):
+                return self.shutdown()
+            if self.closing_until is not None and time.time() >= self.closing_until:
+                self.store.heartbeat_file.unlink(missing_ok=True)
+                self.store.server_json.unlink(missing_ok=True)
+                return self.shutdown()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -85,7 +128,7 @@ class Handler(BaseHTTPRequestHandler):
         draft = store.draft(latest) if latest and response is None else None
         interaction = store.interaction(latest) if latest else None
         readback = interaction is not None and interaction["kind"] == "readback"
-        return {"ended": False, "effort": store.effort.name, "interaction": interaction,
+        return {"ended": self.server.closing_until is not None, "effort": store.effort.name, "interaction": interaction,
                 "response": {"via": response["via"]} if response else None, "draft": draft,
                 "versions": store.kept_versions(interaction["artifact"]) if readback else [],
                 "prior": store.prior(latest) if readback else None}
@@ -161,15 +204,21 @@ class Handler(BaseHTTPRequestHandler):
 
     def ping(self, match: re.Match, body: object) -> None:
         write_atomic(self.server.store.contact, b"")
-        self.reply_json(200, {"pid": os.getpid()})
+        closing = {"closing": True} if self.server.closing_until is not None else {}
+        self.reply_json(200, {"pid": os.getpid(), **closing})
 
     def poll(self, match: re.Match, body: object) -> None:
-        write_atomic(self.server.store.heartbeat_file, b"")
+        if self.server.closing_until is None:
+            write_atomic(self.server.store.heartbeat_file, b"")
         self.reply_json(200, self.state())
 
     def bye(self, match: re.Match, body: object) -> None:
         write_atomic(self.server.store.heartbeat_file, b"bye")
         self.reply(204, b"", "application/json")
+
+    def close(self, match: re.Match, body: object) -> None:
+        self.server.start_closing()
+        self.reply(202, b"", "application/json")
 
     def put_draft(self, match: re.Match, body: object) -> None:
         n = int(match["n"])
@@ -228,11 +277,18 @@ class Handler(BaseHTTPRequestHandler):
 
 def main(argv: list[str]) -> int:
     store = Store(Path(argv[1]))
-    server = Server(store, secrets.token_hex(32))
     store.root.mkdir(parents=True, exist_ok=True)
+    server = None
+    if (earlier := store.record()) and 0 < earlier["port"] < 1 << 16 and TOKEN.fullmatch(earlier["token"]):
+        with contextlib.suppress(OSError):
+            server = Server(store, earlier["token"], earlier["port"])
+    if server is None:
+        store.heartbeat_file.unlink(missing_ok=True)
+        server = Server(store, secrets.token_hex(32))
     record = {"pid": os.getpid(), "port": server.server_address[1], "token": server.token}
     write_atomic(store.server_json, json.dumps(record).encode(), 0o600)
-    server.serve_forever()
+    threading.Thread(target=server.watch, daemon=True).start()
+    server.serve_forever(poll_interval=MIN_TICK)
     return 0
 
 

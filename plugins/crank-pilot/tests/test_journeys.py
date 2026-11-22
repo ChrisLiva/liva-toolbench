@@ -2,13 +2,16 @@
 
 import datetime
 import json
+import contextlib
 import os
+import signal
 import socket
 import stat
+import threading
 import time
 import unittest
 
-from support import PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, show
+from support import PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, is_dead, recording_browser, show
 
 
 def non_loopback_address() -> str | None:
@@ -188,6 +191,89 @@ class PrototypeJourneyTest(EffortCase):
         self.assertEqual((status, json.loads(reply)), (201, {"path": "pilot/responses/001.json"}))
         saved = json.loads((effort.path / "pilot" / "responses" / "001.json").read_text())
         self.assertEqual({key: saved[key] for key in ("kind", "via", *VERDICT)}, {"kind": "prototype", "via": "page", **VERDICT})
+
+
+DRAFT = {"q1": {"choice": "b"}}
+ANSWERS = [
+    {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []},
+    {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []},
+]
+
+
+class RestartAfterKillJourneyTest(EffortCase):
+    def killed_with_a_draft(self):
+        """An effort whose server was killed with interaction 1 pending and a draft saved; the old client, its record."""
+        effort = self.effort()
+        self.assertEqual(show(effort, QUESTIONS, scale=20), 1)
+        client = Client(effort)
+        self.assertEqual(client.request("PUT", "/api/draft/1", json.dumps(DRAFT).encode())[0], 204)
+        record = json.loads((effort.path / "pilot" / "server.json").read_text())
+        os.kill(record["pid"], signal.SIGKILL)
+        while not is_dead(record["pid"]):
+            time.sleep(0.005)
+        return effort, client, record
+
+    def restarted(self, effort, old: dict) -> dict:
+        """The record once a spawned `wait` has started a new server, within a second."""
+        give_up = time.time() + 1
+        while time.time() < give_up:
+            with contextlib.suppress(OSError, ValueError):
+                record = json.loads((effort.path / "pilot" / "server.json").read_text())
+                if record["pid"] != old["pid"]:
+                    Client(effort)
+                    return record
+            time.sleep(0.01)
+        self.fail("no new server record within a second")
+
+    def test_the_next_wait_restarts_the_server_on_the_same_port_and_token_with_the_draft_intact(self):
+        effort, client, old = self.killed_with_a_draft()
+        waiting = effort.spawn("wait", effort.path, scale=20)
+        new = self.restarted(effort, old)
+        self.assertEqual((new["port"], new["token"]), (old["port"], old["token"]))
+        state = client.state()
+        self.assertEqual((state["interaction"]["number"], state["draft"]), (1, DRAFT))
+        self.assertEqual(client.request("POST", "/api/response/1", json.dumps({"answers": ANSWERS}).encode())[0], 201)
+        out, err = waiting.communicate(timeout=5)
+        self.assertEqual((waiting.returncode, err), (0, ""))
+
+    def test_a_taken_port_gets_a_new_port_and_token_with_no_heartbeat_and_the_next_show_opens_a_tab(self):
+        effort, client, old = self.killed_with_a_draft()
+        pilot = effort.path / "pilot"
+        with socket.socket() as squatter:
+            squatter.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            squatter.bind(("127.0.0.1", old["port"]))
+            squatter.listen()
+            waiting = effort.spawn("wait", effort.path, scale=20)
+            self.addCleanup(waiting.communicate)
+            self.addCleanup(waiting.terminate)
+            new = self.restarted(effort, old)
+            self.assertNotEqual(new["port"], old["port"])
+            self.assertNotEqual(new["token"], old["token"])
+            self.assertFalse((pilot / "heartbeat").exists())
+            fresh = Client(effort)
+            client.port = new["port"]
+            self.assertEqual(client.request("GET", "/api/ping")[0], 403)
+            status, body, _ = fresh.request("GET", "/api/file/pilot/drafts/001.json")
+            self.assertEqual((status, json.loads(body)), (200, DRAFT))
+            browser, opened = recording_browser(effort)
+            env = {**browser, "CRANK_PILOT_NO_OPEN": None}
+            source = effort.write("interaction.json", json.dumps(QUESTIONS))
+            stop = threading.Event()
+
+            def beat_once_opened() -> None:
+                while not stop.wait(0.01):
+                    if opened.exists() and opened.read_text().strip():
+                        with contextlib.suppress(OSError, ValueError):
+                            fresh.state()
+
+            beater = threading.Thread(target=beat_once_opened, daemon=True)
+            beater.start()
+            self.addCleanup(beater.join)
+            self.addCleanup(stop.set)
+            shown = effort.run("show", effort.path, source, scale=20, env=env)
+            self.assertEqual((shown.returncode, shown.stdout, shown.stderr), (0, "2\n", ""))
+            self.assertEqual(opened.read_text().splitlines(),
+                             [f"http://127.0.0.1:{new['port']}/?t={new['token']}"])
 
 
 if __name__ == "__main__":

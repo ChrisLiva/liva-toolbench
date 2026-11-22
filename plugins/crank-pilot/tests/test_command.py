@@ -12,7 +12,7 @@ import time
 import unittest
 from pathlib import Path
 
-from support import BIN, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, show
+from support import BIN, IMAGES, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, is_dead, recording_browser, show
 
 NO_SUCH_DIR = "/nonexistent-xyz"
 
@@ -63,13 +63,6 @@ class EntryTest(EffortCase):
             )
         self.assertEqual(done.returncode, 2)
         self.assertIn("no such effort directory", done.stderr)
-
-
-def recording_browser(effort) -> tuple[dict[str, str | None], Path]:
-    """An environment whose BROWSER appends its arguments to a file, and that file; it also writes to stdout."""
-    script = effort.write("browser.sh", '#!/bin/sh\necho "$@" >> "$(dirname "$0")/opened.txt"\necho noise\n')
-    script.chmod(0o755)
-    return {"BROWSER": str(script)}, effort.path / "opened.txt"
 
 
 class ShowRejectionTest(EffortCase):
@@ -502,6 +495,121 @@ class ResolveRaceTest(EffortCase):
                     self.assertEqual(status, 201)
                 else:
                     self.assertEqual((saved["via"], status), ("superseded", 409))
+
+
+class CloseTest(EffortCase):
+    def test_close_ends_the_server_after_its_window_and_keeps_every_stored_file(self):
+        effort = self.effort()
+        pilot = effort.path / "pilot"
+        effort.write("spec.md", "# Spec\n")
+        self.assertEqual(show(effort, READBACK, scale=20), 1)
+        client = Client(effort)
+        self.assertEqual(client.request("POST", "/api/attachment/1", IMAGES["png"])[0], 201)
+        approve = {"verdict": "approve", "version": 1, "answers": [], "marks": []}
+        self.assertEqual(client.request("POST", "/api/response/1", json.dumps(approve).encode())[0], 201)
+        self.assertEqual(show(effort, QUESTIONS, scale=20), 2)
+        draft = json.dumps({"q1": {"choice": "b"}}).encode()
+        self.assertEqual(client.request("PUT", "/api/draft/2", draft)[0], 204)
+        pid = json.loads((pilot / "server.json").read_text())["pid"]
+        done = effort.run("close", effort.path, scale=20)
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
+        self.assertTrue(client.state()["ended"])
+        with client.beating(0.001):
+            time.sleep(0.6)
+        self.assertTrue(is_dead(pid))
+        for gone in ("server.json", "heartbeat"):
+            self.assertFalse((pilot / gone).exists(), gone)
+        for kept in ("interactions/001.json", "interactions/002.json", "responses/001.json",
+                     "versions/spec.md/001.md", "attachments/001-1.png", "drafts/002.json"):
+            self.assertTrue((pilot / kept).exists(), kept)
+
+    def test_close_removes_the_record_of_a_server_that_was_killed(self):
+        effort = self.effort()
+        self.assertEqual(show(effort, QUESTIONS), 1)
+        record = effort.path / "pilot" / "server.json"
+        os.kill(json.loads(record.read_text())["pid"], signal.SIGKILL)
+        done = effort.run("close", effort.path)
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
+        self.assertFalse(record.exists())
+
+
+class CloseWindowTest(EffortCase):
+    def test_a_second_close_is_accepted_and_the_ping_says_the_server_is_closing(self):
+        effort = self.effort()
+        show(effort, QUESTIONS, scale=20)
+        client = Client(effort)
+        pid = json.loads((effort.path / "pilot" / "server.json").read_text())["pid"]
+        self.assertEqual(effort.run("close", effort.path, scale=20).returncode, 0)
+        closed = time.time()
+        time.sleep(0.05)
+        status, body, _ = client.request("GET", "/api/ping")
+        self.assertEqual((status, json.loads(body)), (200, {"pid": pid, "closing": True}))
+        self.assertEqual(client.request("POST", "/api/close", b"")[0], 202)
+        time.sleep(max(0, closed + 0.6 - time.time()))
+        self.assertTrue(is_dead(pid))
+
+    def test_a_show_during_the_window_waits_for_the_record_to_go_and_starts_a_new_server(self):
+        effort = self.effort()
+        show(effort, QUESTIONS, scale=20)
+        Client(effort)
+        record = effort.path / "pilot" / "server.json"
+        old = json.loads(record.read_text())["pid"]
+        stop = threading.Event()
+
+        def beat() -> None:
+            while not stop.is_set():
+                with contextlib.suppress(OSError, ValueError):
+                    Client(effort).state()
+                stop.wait(0.02)
+
+        beater = threading.Thread(target=beat, daemon=True)
+        beater.start()
+        self.addCleanup(beater.join)
+        self.addCleanup(stop.set)
+        self.assertEqual(effort.run("close", effort.path, scale=20).returncode, 0)
+        time.sleep(0.05)
+        source = effort.write("interaction.json", json.dumps(QUESTIONS))
+        done = effort.spawn("show", effort.path, source, scale=20)
+        out, err = done.communicate(timeout=10)
+        self.assertEqual((done.returncode, out, err), (0, "2\n", ""))
+        self.assertNotEqual(json.loads(record.read_text())["pid"], old)
+
+
+class SelfExitTest(EffortCase):
+    def test_the_server_exits_when_its_record_is_gone_or_names_another_process(self):
+        gone = self.effort()
+        process = gone.start_server(100)
+        (gone.path / "pilot" / "server.json").unlink()
+        self.assertEqual(process.wait(timeout=0.5), 0)
+        other = self.effort()
+        process = other.start_server(100)
+        record = other.path / "pilot" / "server.json"
+        rewritten = json.dumps({**json.loads(record.read_text()), "pid": 1})
+        record.write_text(rewritten)
+        self.assertEqual(process.wait(timeout=0.5), 0)
+        self.assertEqual(record.read_text(), rewritten)
+        done = other.run("close", other.path)
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
+        self.assertFalse(record.exists())
+
+
+class IdleExitTest(EffortCase):
+    def test_the_server_exits_after_30_scaled_minutes_with_no_beat_or_contact_and_keeps_its_record(self):
+        effort = self.effort()
+        process = effort.start_server(3600)
+        client = Client(effort)
+        self.assertEqual(client.request("GET", "/api/ping")[0], 200)
+        last = time.time()
+        self.assertEqual(process.wait(timeout=1.5), 0)
+        self.assertGreater(time.time() - last, 0.4)
+        self.assertTrue((effort.path / "pilot" / "server.json").exists())
+
+    def test_a_page_beating_every_tenth_of_a_second_keeps_it_alive(self):
+        effort = self.effort()
+        process = effort.start_server(3600)
+        with Client(effort).beating(0.1):
+            time.sleep(1.2)
+            self.assertIsNone(process.poll())
 
 
 if __name__ == "__main__":

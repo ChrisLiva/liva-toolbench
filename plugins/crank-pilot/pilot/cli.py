@@ -35,27 +35,32 @@ def open_store(args: argparse.Namespace) -> Store | None:
     return Store(args.effort) if args.effort.is_dir() else None
 
 
-def is_running(record: dict) -> bool:
-    """True when the record's process exists and the server on its port answers with that pid."""
+def ping(record: dict) -> dict | None:
+    """The reply of the server on the record's port when it is the record's process, else None. A pid that
+    `os.kill` refuses belongs to another user, so it is never this effort's server."""
     try:
         os.kill(record["pid"], 0)
-    except PermissionError:
-        pass
     except OSError:
-        return False
-    ping = urllib.request.Request(f"http://127.0.0.1:{record['port']}/api/ping", headers={"X-Pilot-Token": record["token"]})
+        return None
+    request = urllib.request.Request(f"http://127.0.0.1:{record['port']}/api/ping", headers={"X-Pilot-Token": record["token"]})
     try:
-        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(ping, timeout=2) as reply:
-            return reply.status == 200 and json.load(reply).get("pid") == record["pid"]
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=2) as reply:
+            answer = json.load(reply)
     except (OSError, ValueError, http.client.HTTPException):
-        return False
+        return None
+    return answer if isinstance(answer, dict) and answer.get("pid") == record["pid"] else None
 
 
 def ensure_server(store: Store) -> dict:
-    """Return the running server's record, starting the server first when none runs; exit 1 when it does not start."""
-    record = store.record()
-    if record and is_running(record):
-        return record
+    """Return the running server's record, starting the server first when none runs; exit 1 when it does not start.
+    A server in its closing window counts as gone: wait for its record to be removed, then start a new one."""
+    while (record := store.record()) is not None:
+        answer = ping(record)
+        if answer is None:
+            break
+        if not answer.get("closing"):
+            return record
+        time.sleep(scaled(WAIT_POLL))
     process = subprocess.Popen(
         [sys.executable, "-m", "pilot.server", str(store.effort.resolve())], cwd=PLUGIN_ROOT,
         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True,
@@ -169,9 +174,20 @@ def cmd_close(args: argparse.Namespace) -> int:
     store = open_store(args)
     if store is None:
         return fail(f"no such effort directory: {args.effort}", 2)
-    if store.record() is None:
+    record = store.record()
+    if record is None:
         return 0
-    return fail("closing a running server is not built yet", 1)
+    if ping(record) is None:
+        store.server_json.unlink(missing_ok=True)
+        return 0
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{record['port']}/api/close", data=b"", method="POST", headers={"X-Pilot-Token": record["token"]},
+    )
+    try:
+        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=2):
+            return 0
+    except (OSError, http.client.HTTPException):
+        return fail("could not close the server", 1)
 
 
 def parser() -> argparse.ArgumentParser:

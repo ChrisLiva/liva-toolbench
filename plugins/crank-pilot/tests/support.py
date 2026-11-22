@@ -61,6 +61,7 @@ class Effort:
         self._holder = tempfile.TemporaryDirectory()
         self.path = Path(self._holder.name)
         self.pids: set[int] = set()
+        self.children: list[subprocess.Popen] = []
 
     def write(self, rel: str, text: str) -> Path:
         target = self.path / rel
@@ -89,6 +90,21 @@ class Effort:
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._env(scale, env),
         )
 
+    def start_server(self, scale: int = 100) -> subprocess.Popen:
+        """Start the server directly, with no `show`, and return it once `server.json` names it."""
+        process = subprocess.Popen(
+            [sys.executable, "-m", "pilot.server", str(self.path)], cwd=PLUGIN,
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=self._env(scale, None),
+        )
+        self.children.append(process)
+        give_up = time.time() + 5
+        while time.time() < give_up:
+            with contextlib.suppress(OSError, ValueError):
+                if json.loads((self.path / "pilot" / "server.json").read_text())["pid"] == process.pid:
+                    return process
+            time.sleep(0.005)
+        raise AssertionError("the server wrote no record")
+
     def cleanup(self) -> None:
         self.run("close", self.path)
         for pid in self.pids:
@@ -96,7 +112,26 @@ class Effort:
                 os.kill(pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
+        for child in self.children:
+            child.kill()
+            child.wait()
         self._holder.cleanup()
+
+
+def recording_browser(effort: Effort) -> tuple[dict[str, str | None], Path]:
+    """An environment whose BROWSER appends its arguments to a file, and that file; it also writes to stdout."""
+    script = effort.write("browser.sh", '#!/bin/sh\necho "$@" >> "$(dirname "$0")/opened.txt"\necho noise\n')
+    script.chmod(0o755)
+    return {"BROWSER": str(script)}, effort.path / "opened.txt"
+
+
+def is_dead(pid: int) -> bool:
+    """True when no process has `pid`; a server `show` started has no parent left to reap it, so this is exact."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return True
+    return False
 
 
 class EffortCase(unittest.TestCase):
