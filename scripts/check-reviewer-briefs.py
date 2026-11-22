@@ -349,24 +349,14 @@ def check_template(failures):
             failures.append(f"FAIL {TEMPLATE_DIR}: {label}: " + " | ".join(tail))
 
 
-def check_health(failures):
+def check_unittests(failures, directory):
     proc = subprocess.run(
-        [sys.executable, "-m", "unittest", "discover", "-s", HEALTH_TESTS],
+        [sys.executable, "-m", "unittest", "discover", "-s", directory],
         cwd=ROOT, capture_output=True, text=True,
     )
     if proc.returncode != 0:
         tail = [line for line in proc.stderr.strip().splitlines() if line.strip()][-6:]
-        failures.append(f"FAIL {HEALTH_TESTS}: " + " | ".join(tail))
-
-
-def check_pilot(failures):
-    proc = subprocess.run(
-        [sys.executable, "-m", "unittest", "discover", "-s", PILOT_TESTS],
-        cwd=ROOT, capture_output=True, text=True,
-    )
-    if proc.returncode != 0:
-        tail = [line for line in proc.stderr.strip().splitlines() if line.strip()][-6:]
-        failures.append(f"FAIL {PILOT_TESTS}: " + " | ".join(tail))
+        failures.append(f"FAIL {directory}: " + " | ".join(tail))
 
 
 def validate_findings(stdout):
@@ -413,8 +403,8 @@ def main():
     check_sync(failures)
     check_pointers(failures)
     check_template(failures)
-    check_health(failures)
-    check_pilot(failures)
+    check_unittests(failures, HEALTH_TESTS)
+    check_unittests(failures, PILOT_TESTS)
     check_mod(failures)
     for line in failures:
         print(line)
