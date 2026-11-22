@@ -365,6 +365,16 @@ class GuardTest(HttpCase):
             with self.subTest(length=length):
                 self.assertEqual(raw_request(client, "PUT", "/api/draft/1", length=length)[0], 400)
 
+    def test_a_5000_digit_interaction_or_attachment_number_gets_a_4xx_reply_not_a_dropped_connection(self):
+        effort, client = self.round()
+        digits = "9" * 5000
+        for method, path in (("POST", f"/api/attachment/{digits}"), ("DELETE", f"/api/attachment/1/{digits}"),
+                             ("DELETE", f"/api/attachment/{digits}/1"), ("PUT", f"/api/draft/{digits}"),
+                             ("POST", f"/api/response/{digits}")):
+            with self.subTest(method=method, path=path[:24]):
+                status, _ = raw_request(client, method, path, body=b"{}")
+                self.assertTrue(400 <= status < 500, status)
+
     def test_an_unknown_route_gets_404_and_an_unsupported_method_on_a_known_route_gets_405(self):
         effort, client = self.round()
         self.assertEqual(client.request("GET", "/api/nope")[0], 404)

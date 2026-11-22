@@ -45,11 +45,11 @@ ROUTES = (
     Route("GET", re.compile(r"/api/file/(?P<rel>.*)"), "effort_file"),
     Route("GET", re.compile(r"/api/ping"), "ping"),
     Route("GET", re.compile(r"/api/state"), "poll"),
-    Route("PUT", re.compile(r"/api/draft/(?P<n>\d+)"), "put_draft", cap=JSON_CAP),
-    Route("POST", re.compile(r"/api/response/(?P<n>\d+)"), "post_response", cap=JSON_CAP),
+    Route("PUT", re.compile(r"/api/draft/(?P<n>\d{1,9})"), "put_draft", cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/response/(?P<n>\d{1,9})"), "post_response", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/bye"), "bye", public=True, cap=JSON_CAP),
-    Route("POST", re.compile(r"/api/attachment/(?P<n>\d+)"), "post_attachment", cap=IMAGE_CAP, raw=True),
-    Route("DELETE", re.compile(r"/api/attachment/(?P<n>\d+)/(?P<k>\d+)"), "delete_attachment"),
+    Route("POST", re.compile(r"/api/attachment/(?P<n>\d{1,9})"), "post_attachment", cap=IMAGE_CAP, raw=True),
+    Route("DELETE", re.compile(r"/api/attachment/(?P<n>\d{1,9})/(?P<k>\d{1,9})"), "delete_attachment"),
 )
 
 
