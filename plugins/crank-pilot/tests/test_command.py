@@ -1,6 +1,7 @@
 """The command seam: `bin/crank-pilot` run as a process."""
 
 import contextlib
+import copy
 import json
 import os
 import subprocess
@@ -9,7 +10,7 @@ import time
 import unittest
 from pathlib import Path
 
-from support import BIN, QUESTIONS, Client, EffortCase, show
+from support import BIN, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, show
 
 NO_SUCH_DIR = "/nonexistent-xyz"
 
@@ -101,6 +102,89 @@ class ShowRejectionTest(EffortCase):
                 self.assertEqual(list((effort.path / "pilot" / "interactions").glob("*")), [])
                 if name == "cut off":
                     self.assertIn("not valid JSON", done.stderr)
+
+
+def derived(base: dict, change) -> dict:
+    """A copy of a fixture with `change` applied to it."""
+    copy_ = copy.deepcopy(base)
+    change(copy_)
+    return copy_
+
+
+def variant_file(name: str) -> dict:
+    return derived(PROTOTYPE, lambda d: d["variants"][0].update(file=name))
+
+
+REJECTED = (
+    ("unknown kind", derived(QUESTIONS, lambda d: d.update(kind="poll")), "kind"),
+    ("bad phase", derived(QUESTIONS, lambda d: d.update(phase="execute")), "phase"),
+    ("missing field", derived(QUESTIONS, lambda d: d.pop("title")), "title"),
+    ("wrong type", derived(QUESTIONS, lambda d: d.update(questions="q1")), "questions"),
+    ("wrong agenda type", derived(QUESTIONS, lambda d: d.update(agenda=[])), "agenda"),
+    ("duplicate question id", derived(QUESTIONS, lambda d: d["questions"][1].update(id="q1")), "duplicate"),
+    ("duplicate option id", derived(QUESTIONS, lambda d: d["questions"][0]["options"][1].update(id="a")), "duplicate"),
+    ("options, no recommended", derived(QUESTIONS, lambda d: d["questions"][0].pop("recommended")), "recommended"),
+    ("recommended, no options", derived(QUESTIONS, lambda d: d["questions"][1].update(recommended="a")), "options"),
+    ("recommended names no option", derived(QUESTIONS, lambda d: d["questions"][0].update(recommended="z")), "recommended"),
+    ("no recommendation", derived(QUESTIONS, lambda d: d["questions"][0].pop("recommendation")), "recommendation"),
+    ("absolute artifact", derived(READBACK, lambda d: d.update(artifact="/etc/hosts")), "artifact"),
+    ("artifact leaves the directory", derived(READBACK, lambda d: d.update(artifact="../spec.md")), "artifact"),
+    ("artifact names no file", derived(READBACK, lambda d: d.update(artifact="missing.md")), "artifact"),
+    ("artifact not markdown", derived(READBACK, lambda d: d.update(artifact="notes.txt")), ".md"),
+    ("artifact in a subdirectory", derived(READBACK, lambda d: d.update(artifact="sub/spec.md")), "artifact"),
+    ("bad decision", derived(READBACK, lambda d: d.update(decisions=[{"id": "d1"}])), "decisions[0]"),
+    ("absolute variant", variant_file("/etc/hosts"), "file"),
+    ("variant leaves the directory", variant_file("../x.html"), "file"),
+    ("variant through a symlink", variant_file("prototype/link.html"), "file"),
+    ("variant names no file", variant_file("prototype/none.html"), "file"),
+    ("one variant", derived(PROTOTYPE, lambda d: d["variants"].pop()), "variants"),
+    ("duplicate variant key", derived(PROTOTYPE, lambda d: d["variants"][1].update(key="A")), "duplicate"),
+)
+
+
+class ValidationCase(EffortCase):
+    def effort_with_files(self):
+        """An effort directory holding the files the fixtures name, plus a symlink to a file outside it."""
+        effort = self.effort()
+        for rel in ("spec.md", "notes.txt", "sub/spec.md", "prototype/variant-A.html", "prototype/variant-B.html"):
+            effort.write(rel, "x")
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        target = Path(outside.name) / "outside.html"
+        target.write_text("x")
+        (effort.path / "prototype" / "link.html").symlink_to(target)
+        return effort
+
+    def run_show(self, effort, interaction: dict) -> subprocess.CompletedProcess:
+        return effort.run("show", effort.path, effort.write("interaction.json", json.dumps(interaction)))
+
+    def assert_nothing_stored(self, effort) -> None:
+        self.assertEqual(list((effort.path / "pilot" / "interactions").glob("*")), [])
+        self.assertFalse((effort.path / "pilot" / "server.json").exists())
+
+
+class ShowValidationTest(ValidationCase):
+    def test_show_rejects_each_invalid_interaction_with_exit_2_and_stores_nothing(self):
+        effort = self.effort_with_files()
+        for name, interaction, keyword in REJECTED:
+            with self.subTest(case=name):
+                done = self.run_show(effort, interaction)
+                self.assertEqual(done.returncode, 2)
+                self.assertEqual(done.stdout, "")
+                self.assertIn(keyword, done.stderr)
+                self.assert_nothing_stored(effort)
+
+    def test_a_file_with_two_problems_prints_two_lines(self):
+        effort = self.effort_with_files()
+        interaction = derived(QUESTIONS, lambda d: (d.update(phase="execute"), d.pop("title")))
+        done = self.run_show(effort, interaction)
+        self.assertEqual(done.returncode, 2)
+        self.assertEqual(len([line for line in done.stderr.splitlines() if line.strip()]), 2)
+        self.assert_nothing_stored(effort)
+
+    def test_each_fixture_is_accepted_as_written(self):
+        effort = self.effort_with_files()
+        self.assertEqual([show(effort, item) for item in (QUESTIONS, READBACK, PROTOTYPE)], [1, 2, 3])
 
 
 class ShowTest(EffortCase):

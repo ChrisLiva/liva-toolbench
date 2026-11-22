@@ -29,6 +29,22 @@ QUESTIONS = {
     ],
 }
 
+READBACK = {
+    "kind": "readback", "phase": "spec", "title": "Spec: dark mode toggle",
+    "agenda": {"settled": [], "open": ["Readback of the spec"], "current": "Readback of the spec"},
+    "artifact": "spec.md", "lead": "Commits to a three-state toggle.",
+    "judgment_calls": ["Per device, not per account."], "review_landed": ["The key is named."],
+    "decisions": [], "edits": [],
+}
+
+PROTOTYPE = {
+    "kind": "prototype", "phase": "spec", "title": "Toggle prototype",
+    "agenda": {"settled": [], "open": ["Toggle look"], "current": "Toggle look"},
+    "question": "Where should the toggle sit?",
+    "variants": [{"key": "A", "name": "Header switch", "file": "prototype/variant-A.html"},
+                 {"key": "B", "name": "Menu item", "file": "prototype/variant-B.html"}],
+}
+
 
 class Effort:
     def __init__(self) -> None:

@@ -12,6 +12,7 @@ import webbrowser
 from pathlib import Path
 
 from pilot.store import Store, scaled
+from pilot.validate import interaction_problems
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 POLL = 0.1
@@ -88,8 +89,9 @@ def cmd_show(args: argparse.Namespace) -> int:
         return fail(f"cannot read {args.interaction}: {error.strerror}", 2)
     except ValueError:
         return fail(f"{args.interaction} is not valid JSON", 2)
-    if not isinstance(interaction, dict):
-        return fail(f"{args.interaction} is not a JSON object", 2)
+    problems = interaction_problems(interaction, args.effort)
+    if problems:
+        return fail("\n".join(problems), 2)
     started = time.time()
     number = store.add_interaction(interaction)
     record = ensure_server(store)
