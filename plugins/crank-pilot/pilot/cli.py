@@ -35,6 +35,13 @@ def open_store(args: argparse.Namespace) -> Store | None:
     return Store(args.effort) if args.effort.is_dir() else None
 
 
+def call(record: dict, path: str, method: str = "GET", data: bytes | None = None) -> bytes:
+    """The body of the reply the server on the record's port gives `path`; raises `OSError` or `HTTPException` when it fails."""
+    request = urllib.request.Request(f"http://127.0.0.1:{record['port']}{path}", data=data, method=method, headers={"X-Pilot-Token": record["token"]})
+    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=2) as reply:
+        return reply.read()
+
+
 def ping(record: dict) -> dict | None:
     """The reply of the server on the record's port when it is the record's process, else None. A pid that
     `os.kill` refuses belongs to another user, so it is never this effort's server."""
@@ -42,10 +49,8 @@ def ping(record: dict) -> dict | None:
         os.kill(record["pid"], 0)
     except OSError:
         return None
-    request = urllib.request.Request(f"http://127.0.0.1:{record['port']}/api/ping", headers={"X-Pilot-Token": record["token"]})
     try:
-        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=2) as reply:
-            answer = json.load(reply)
+        answer = json.loads(call(record, "/api/ping"))
     except (OSError, ValueError, http.client.HTTPException):
         return None
     return answer if isinstance(answer, dict) and answer.get("pid") == record["pid"] else None
@@ -180,12 +185,9 @@ def cmd_close(args: argparse.Namespace) -> int:
     if ping(record) is None:
         store.server_json.unlink(missing_ok=True)
         return 0
-    request = urllib.request.Request(
-        f"http://127.0.0.1:{record['port']}/api/close", data=b"", method="POST", headers={"X-Pilot-Token": record["token"]},
-    )
     try:
-        with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=2):
-            return 0
+        call(record, "/api/close", "POST", b"")
+        return 0
     except (OSError, http.client.HTTPException):
         return fail("could not close the server", 1)
 

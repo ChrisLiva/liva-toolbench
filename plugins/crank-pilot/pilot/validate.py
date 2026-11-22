@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+from pilot.store import IMAGE_TYPES
+
 KINDS = ("questions", "readback", "prototype")
 PHASES = ("brainstorm", "spec", "plan")
 
@@ -185,7 +187,7 @@ def _attachments(holder: dict, number: int, effort: Path, path: str) -> list[str
     attachments = holder.get("attachments")
     if not isinstance(attachments, list) or any(not isinstance(a, str) for a in attachments):
         return [f"{path}.attachments: must be a list of paths"]
-    ours = re.compile(rf"pilot/attachments/{number:03d}-\d+\.(png|jpe?g|gif|webp)")
+    ours = re.compile(rf"pilot/attachments/{number:03d}-\d+\.(?:{IMAGE_TYPES})")
     return [f"{path}.attachments[{index}]: not an image stored for this interaction"
             for index, name in enumerate(attachments) if not ours.fullmatch(name) or inside(effort, name) is None]
 

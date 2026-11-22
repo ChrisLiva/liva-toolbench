@@ -7,7 +7,8 @@ import tempfile
 import threading
 from pathlib import Path
 
-ATTACHMENT = re.compile(r"(?P<n>\d{3})-(?P<k>\d+)\.(?:png|jpg|gif|webp)")
+IMAGE_TYPES = "png|jpg|gif|webp"
+ATTACHMENT = re.compile(rf"(?P<n>\d{{3}})-(?P<k>\d+)\.(?:{IMAGE_TYPES})")
 MAX_ATTACHMENTS = 10
 NUMBER = re.compile(r"(?P<n>\d{3})\.(?P<suffix>json|md)")
 
