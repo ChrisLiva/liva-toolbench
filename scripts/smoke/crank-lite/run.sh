@@ -2,8 +2,9 @@
 # run.sh <plugin-dir> <scenario> <model> <seed-dir> <run-dir>
 # Drives one headless crank-lite phase session against a clone of the ledger seed and saves
 # each turn's stream, the git state, and the .crank/ artifacts under <run-dir>.
-# Scenarios: brainstorm-ui, brainstorm-backend, spec-ui, spec-ui-verdict, spec-backend, plan,
-# plan-large.
+# Scenarios: brainstorm-ui, brainstorm-backend, spec-ui, spec-ui-verdict, spec-backend,
+# spec-backend-pilot, plan, plan-large.
+# spec-backend-pilot runs spec with --pilot and has a scripted client answer the page.
 # The scripted user agrees with each round, says "done" once the phase's artifact exists,
 # and the run ends one turn later, so a phase that loads the next one on its own shows there.
 set -u
@@ -12,6 +13,7 @@ PD=$(cd "$1" && pwd); scenario=$2; model=$3; seeds=$(cd "$4" && pwd)
 rm -rf "$5"; mkdir -p "$5/turns"; run=$(cd "$5" && pwd)
 REPLY="Agreed with your recommendations on these questions."
 inv=/crank-lite:crank-lite
+unset SMOKE_PILOT_DIR  # only the pilot scenario turns the wrapper's pilot switch on
 git clone -q "$seeds/seed-fresh" "$run/repo"
 cd "$run/repo"
 case $scenario in
@@ -26,6 +28,14 @@ case $scenario in
     cp -R "$here/fixture/$scenario/"* .crank/
     slug=$(ls "$here/fixture/$scenario")
     artifact=spec.md ASK="$inv spec .crank/$slug/brainstorm.md" ;;
+  spec-backend-pilot)
+    mkdir -p .crank && printf '*\n' > .crank/.gitignore
+    cp -R "$here/fixture/spec-backend/"* .crank/
+    slug=$(ls "$here/fixture/spec-backend")
+    artifact=spec.md ASK="$inv spec .crank/$slug/brainstorm.md --pilot"
+    SMOKE_PILOT_DIR=$(cd "$here/../../../plugins/crank-pilot" && pwd); export SMOKE_PILOT_DIR
+    python3 "$here/pilot_client.py" "$run/repo/.crank/$slug" > /dev/null 2>&1 &
+    client=$! ;;
   plan)
     mkdir -p .crank/csv-export && printf '*\n' > .crank/.gitignore
     cp "$here/../lite-execute/fixture/crank/spec.md" .crank/csv-export/
@@ -40,6 +50,8 @@ cp -R .crank "$run/crank-before" 2> /dev/null || true
 echo "$scenario $model" > "$run/arm"
 echo "$artifact" > "$run/artifact"
 sid=$(uuidgen | tr 'A-Z' 'a-z')
+plugins=(--plugin-dir "$PD")
+if [ "$scenario" = spec-backend-pilot ]; then plugins+=(--plugin-dir "$SMOKE_PILOT_DIR"); fi
 start=$(date +%s)
 cap=${SMOKE_CAP:-12}; written=0
 for n in $(seq 1 "$cap"); do
@@ -47,11 +59,15 @@ for n in $(seq 1 "$cap"); do
   echo "$msg" > "$run/turns/$n.sent"
   if [ "$n" = 1 ]; then first=(--session-id "$sid"); else first=(--resume "$sid"); fi
   python3 "$here/../sandboxed_claude.py" "$run" "$PD" -p "${first[@]}" --model "$model" --output-format stream-json --verbose \
-    --dangerously-skip-permissions --strict-mcp-config --plugin-dir "$PD" \
+    --dangerously-skip-permissions --strict-mcp-config "${plugins[@]}" \
     "$msg" < /dev/null > "$run/turns/$n.jsonl" 2> "$run/turns/$n.err"
   if [ "$written" = 1 ]; then break; fi
   if ls .crank/*/"$artifact" > /dev/null 2>&1; then written=1; fi
 done
+if [ "$scenario" = spec-backend-pilot ]; then
+  kill "$client" 2> /dev/null; wait "$client" 2> /dev/null
+  "$SMOKE_PILOT_DIR/bin/crank-pilot" close "$run/repo/.crank/$slug" > /dev/null 2>&1
+fi
 echo $(( $(date +%s) - start )) > "$run/seconds"
 echo "$n" > "$run/turn-count"
 echo "$sid" > "$run/session-id"

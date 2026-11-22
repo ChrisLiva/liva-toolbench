@@ -277,7 +277,7 @@ a score. `python3 -m unittest discover -s scripts/smoke/lite-execute` tests how 
 
 `scripts/smoke/crank-lite/` does the same for crank-lite's brainstorm, spec, and plan
 phases, driving each interview with a scripted user that agrees with every round. Its
-README lists the six scenarios and which behaviors its `score.py` counts and which need
+README lists the scenarios and which behaviors its `score.py` counts and which need
 a blind transcript read.
 
 `scripts/skill-eval.sh [skill-name ...]` runs NVIDIA SkillEvaluator over the skills and
@@ -556,6 +556,7 @@ environment allowlist, and the tool allowlist (per project decision: shell comma
 only package registries, and a session gets only the tools the skills use). The sandbox
 covers shell commands only, so `Read`, `Edit`, `Write`, and `WebFetch` stay outside it;
 a harness that needs those bounded adds a `PreToolUse` hook, as `crank-lite-slim` does.
+The `spec-backend-pilot` scenario alone runs with `allowLocalBinding` on and the `crank-pilot` directory readable, through the wrapper's `SMOKE_PILOT_DIR`.
 
 Inside the session:
 - `/reload-plugins` — picks up edits to plugin files

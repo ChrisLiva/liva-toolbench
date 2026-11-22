@@ -67,6 +67,13 @@ def review_shape(dispatches):
     return int(len(dispatches) == 1)
 
 
+def pilot_counts(after):
+    """How many interactions the run showed on the page and how many of the responses came from the page."""
+    responses = (json.loads(p.read_text()) for p in after.glob("*/pilot/responses/*.json"))
+    return {"pilot_shown": len(list(after.glob("*/pilot/interactions/*.json"))),
+            "pilot_page_responses": sum(r.get("via") == "page" for r in responses)}
+
+
 def score(run):
     scenario = (run / "arm").read_text().split()[0]
     phase = scenario.split("-")[0]
@@ -98,6 +105,7 @@ def score(run):
         "vocabulary_read": int(any("VOCABULARY.md" in tl for tl in tools)) if phase in ("spec", "plan") else None,
         "failure_catalogue": sum(bool(re.search(p, body, re.I)) for p in CATALOGUE) if phase == "spec" else None,
     }
+    s.update(pilot_counts(after) if scenario.endswith("-pilot") and after.exists() else {"pilot_shown": None, "pilot_page_responses": None})
     if phase == "plan":
         dispatches = plan_review_dispatches(run)
         stages = plan_stages(body)
@@ -136,7 +144,7 @@ def main(args):
                     row += "--json".rjust(14)
                 elif not vals:
                     row += "n/a".rjust(14)
-                elif set(vals) <= {0, 1} and k not in ("turns", "question_rounds", "questions_asked", "recommend_lines", "lookup_dispatches", "prototype_mentions", "artifact_sections", "failure_catalogue", "plan_stages"):
+                elif set(vals) <= {0, 1} and k not in ("turns", "question_rounds", "questions_asked", "pilot_shown", "pilot_page_responses", "recommend_lines", "lookup_dispatches", "prototype_mentions", "artifact_sections", "failure_catalogue", "plan_stages"):
                     row += f"{sum(vals)}/{len(vals)}".rjust(14)
                 else:
                     row += f"{sum(vals) / len(vals):.1f}".rjust(14)

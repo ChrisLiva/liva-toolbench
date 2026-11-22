@@ -27,8 +27,8 @@ def clean_env():
     return {k: os.environ[k] for k in SESSION_ENV if k in os.environ}
 
 
-def session_env(root):
-    """The environment a sandboxed session runs in.
+def session_env(root, pilot=None):
+    """The environment a sandboxed session runs in. `pilot` names a crank-pilot plugin directory whose `bin/` leads PATH, with the browser launch off.
 
     Seatbelt denies with EPERM, which git treats as fatal on ~/.gitconfig and npm on ~/.npm, and which stops pnpm reaching
     the version a project pins, so all three keep their state under the run root. Losing ~/.gitconfig loses the identity a
@@ -36,21 +36,28 @@ def session_env(root):
     """
     identity = {f"GIT_{who}_{field}": value for who in ("AUTHOR", "COMMITTER")
                 for field, value in (("NAME", "Headless session"), ("EMAIL", "session@localhost"))}
-    return {**clean_env(), **identity, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "XDG_CONFIG_HOME": f"{root}/xdg",
-            "npm_config_cache": f"{root}/npm", "PNPM_HOME": f"{root}/pnpm"}
+    env = {**clean_env(), **identity, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1", "XDG_CONFIG_HOME": f"{root}/xdg",
+           "npm_config_cache": f"{root}/npm", "PNPM_HOME": f"{root}/pnpm"}
+    if pilot:
+        env["PATH"] = os.pathsep.join([f"{pilot}/bin", *filter(None, [env.get("PATH")])])
+        env["CRANK_PILOT_NO_OPEN"] = "1"
+    return env
 
 
-def settings(root, repo, *readable):
-    """The `--settings` a session runs under. `readable` names paths a shell command reads beyond the run root."""
+def settings(root, repo, *readable, local_binding=False):
+    """The `--settings` a session runs under. `readable` names paths a shell command reads beyond the run root; `local_binding` lets a shell command bind and reach loopback ports."""
     spill = re.sub(r"[^A-Za-z0-9]", "-", str(Path(repo).resolve()))  # Claude Code spills a large tool result here and hands the agent the path
     allow = [f"~/.claude/projects/{spill}", "~/.claude/shell-snapshots", str(Path(root).resolve()), *map(str, readable)]
     return {"enabledPlugins": OWN_PLUGINS_OFF,
             "sandbox": {"enabled": True, "failIfUnavailable": True, "allowUnsandboxedCommands": False,
                         "filesystem": {"denyRead": ["~/"], "allowRead": allow, "allowWrite": [str(Path(root).resolve())]},
-                        "network": {"allowedDomains": PUBLIC_HOSTS, "strictAllowlist": True}}}
+                        "network": {"allowedDomains": PUBLIC_HOSTS, "strictAllowlist": True, **({"allowLocalBinding": True} if local_binding else {})}}}
 
 
 if __name__ == "__main__":
     run_root, plugin, *args = sys.argv[1:]
+    # SMOKE_PILOT_DIR is the wrapper's own switch, read here and never passed on: the pilot scenario alone binds a loopback port and reads the crank-pilot directory
+    pilot = os.environ.get("SMOKE_PILOT_DIR")
+    readable = [plugin, pilot] if pilot else [plugin]
     # --tools takes a list, so another flag has to follow it
-    os.execvpe("claude", ["claude", *TOOL_FLAGS, "--settings", json.dumps(settings(run_root, Path.cwd(), plugin)), *args], session_env(run_root))
+    os.execvpe("claude", ["claude", *TOOL_FLAGS, "--settings", json.dumps(settings(run_root, Path.cwd(), *readable, local_binding=bool(pilot))), *args], session_env(run_root, pilot))
