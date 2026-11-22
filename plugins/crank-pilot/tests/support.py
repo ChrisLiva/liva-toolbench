@@ -5,6 +5,7 @@ import http.client
 import json
 import os
 import signal
+import socket
 import subprocess
 import sys
 import tempfile
@@ -115,6 +116,24 @@ class Client:
                 return reply.status, reply.read(), reply.headers
         except urllib.error.HTTPError as refusal:
             return refusal.code, refusal.read(), refusal.headers
+
+    def raw(self, request: bytes, wait: float = 1.0) -> tuple[int, bytes]:
+        """Send `request` to the server unchanged and read until it closes or `wait` seconds pass; the status and body."""
+        deadline = time.monotonic() + wait
+        reply = b""
+        with socket.create_connection(("127.0.0.1", self.port), timeout=wait) as connection:
+            connection.sendall(request)
+            while (left := deadline - time.monotonic()) > 0:
+                connection.settimeout(left)
+                try:
+                    chunk = connection.recv(65536)
+                except TimeoutError:
+                    break
+                if not chunk:
+                    break
+                reply += chunk
+        head, _, body = reply.partition(b"\r\n\r\n")
+        return (int(head.split(b" ", 2)[1]) if head else 0), body
 
     def state(self) -> dict:
         return json.loads(self.request("GET", "/api/state")[1])

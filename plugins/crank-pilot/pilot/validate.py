@@ -263,12 +263,47 @@ def _readback_response(interaction: dict, body: dict, effort: Path) -> list[str]
     return problems
 
 
+def _pin(pin: object, keys: set[str], seen: dict[str, int], number: int, effort: Path, path: str) -> list[str]:
+    """One comment of a verdict; `seen` counts each variant's comments so far, so `n` follows the order the pins were made."""
+    if not isinstance(pin, dict):
+        return [f"{path}: must be an object"]
+    problems = _strings(pin, ("selector", "leading_text", "text"), f"{path}.")
+    for name in ("selector", "text"):
+        if pin.get(name) == "":
+            problems.append(f"{path}.{name}: must not be empty")
+    variant = pin.get("variant")
+    if not isinstance(variant, str) or variant not in keys:
+        return problems + [f"{path}.variant: must be one of {', '.join(sorted(keys))}"]
+    seen[variant] = seen.get(variant, 0) + 1
+    if pin.get("n") != seen[variant] or not _integer(pin["n"]):
+        problems.append(f"{path}.n: must be {seen[variant]}, the next number for variant {variant}")
+    return problems + _attachments(pin, number, effort, path)
+
+
+def _prototype_response(interaction: dict, body: dict, effort: Path) -> list[str]:
+    keys = {v["key"] for v in interaction["variants"]}
+    problems = []
+    if not isinstance(body.get("winner"), str) or body["winner"] not in keys:
+        problems.append(f"winner: must be one of {', '.join(sorted(keys))}")
+    for name in ("take", "leave_out"):
+        if not isinstance(body.get(name), str) or not body[name]:
+            problems.append(f"{name}: must be a non-empty string")
+    problems += _attachments(body, interaction["number"], effort, "body")
+    comments = body.get("comments")
+    if not isinstance(comments, list):
+        return problems + ["comments: required, a list"]
+    seen: dict[str, int] = {}
+    for index, pin in enumerate(comments):
+        problems += _pin(pin, keys, seen, interaction["number"], effort, f"comments[{index}]")
+    return problems
+
+
 def response_problems(interaction: dict, body: object, effort: Path) -> list[str]:
     """Every way `body` fails the response contract for the stored `interaction`; empty when valid."""
     if not isinstance(body, dict):
         return ["body: must be a JSON object"]
     if interaction["kind"] == "prototype":
-        return [f"kind: responses to a {interaction['kind']} are not accepted yet"]
+        return _prototype_response(interaction, body, effort)
     if interaction["kind"] == "readback":
         return _readback_response(interaction, body, effort)
     return _answers(body, interaction["questions"], interaction["number"], effort)

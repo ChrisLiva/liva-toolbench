@@ -4,7 +4,7 @@ import json
 import threading
 import unittest
 
-from support import QUESTIONS, READBACK, Client, Effort, EffortCase, show
+from support import PROTOTYPE, QUESTIONS, READBACK, Client, Effort, EffortCase, show
 
 Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
 Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
@@ -161,6 +161,93 @@ class ReadbackAcceptedTest(ReadbackHttpCase):
         self.assertFalse(self.response_file(effort).exists())
         self.assertEqual(send(client, "POST", "/api/response/1", approve)[0], 201)
         self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"], [q1])
+
+
+class InvalidVerdictTest(HttpCase):
+    def test_a_prototype_verdict_that_fails_validation_gets_400_and_writes_nothing(self):
+        effort = self.effort()
+        effort.write("prototype/variant-A.html", "<p>A</p>")
+        effort.write("prototype/variant-B.html", "<p>B</p>")
+        show(effort, PROTOTYPE)
+        client = Client(effort)
+        a1 = {"n": 1, "variant": "A", "selector": "p", "leading_text": "A", "text": "Too small.", "attachments": []}
+        b1 = {"n": 1, "variant": "B", "selector": "p", "leading_text": "B", "text": "Good.", "attachments": []}
+        a2 = {**a1, "n": 2, "text": "Still small."}
+        verdict = {"winner": "B", "take": "nothing", "leave_out": "nothing", "attachments": [], "comments": [a1, b1, a2]}
+        cases = {
+            "winner not a variant": {**verdict, "winner": "Z"},
+            "winner missing": {k: v for k, v in verdict.items() if k != "winner"},
+            "winner not a string": {**verdict, "winner": ["B"]},
+            "comments missing": {k: v for k, v in verdict.items() if k != "comments"},
+            "take empty": {**verdict, "take": ""},
+            "leave_out not a string": {**verdict, "leave_out": 3},
+            "comment on no variant": {**verdict, "comments": [{**a1, "variant": "Z"}, b1, a2]},
+            "extra comment on no variant": {**verdict, "comments": [a1, b1, a2, {**a1, "variant": "Z"}]},
+            "comment without text": {**verdict, "comments": [{**a1, "text": ""}, b1, a2]},
+            "comment without selector": {**verdict, "comments": [{**a1, "selector": ""}, b1, a2]},
+            "variant A numbered with a gap": {**verdict, "comments": [a1, b1, {**a2, "n": 3}]},
+        }
+        for name, body in cases.items():
+            with self.subTest(name):
+                status, reply = send(client, "POST", "/api/response/1", body)
+                self.assertEqual(status, 400)
+                self.assertTrue(reply["problems"])
+                self.assertFalse(self.response_file(effort).exists())
+        self.assertEqual(send(client, "POST", "/api/response/1", verdict)[0], 201)
+
+
+class FileRoutesTest(HttpCase):
+    def test_only_the_page_files_and_the_effort_directory_are_served(self):
+        effort = self.effort()
+        effort.write("prototype/variant-A.html", "<p>A</p>")
+        effort.write("prototype/variant-B.html", "<p>B</p>")
+        effort.write("notes/two words.md", "ok")
+        outside = effort.path.parent / "outside.txt"
+        outside.write_text("secret")
+        self.addCleanup(outside.unlink, missing_ok=True)
+        (effort.path / "link.txt").symlink_to(outside)
+        show(effort, PROTOTYPE)
+        client = Client(effort)
+
+        def raw_get(path: str) -> int:
+            request = f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{client.port}\r\nX-Pilot-Token: {client.token}\r\n\r\n"
+            return client.raw(request.encode())[0]
+
+        refused = {
+            "dot-dot sent raw": lambda: raw_get("/api/file/../outside.txt"),
+            "encoded dot-dot": lambda: client.request("GET", "/api/file/%2e%2e/outside.txt")[0],
+            "absolute path": lambda: client.request("GET", "/api/file//etc/hosts")[0],
+            "symlink out of the effort": lambda: client.request("GET", "/api/file/link.txt")[0],
+            "a directory": lambda: client.request("GET", "/api/file/prototype")[0],
+            "a missing file": lambda: client.request("GET", "/api/file/missing.md")[0],
+            "page dot-dot sent raw": lambda: raw_get("/page/../pilot/cli.py"),
+            "page encoded dot-dot": lambda: client.request("GET", "/page/%2e%2e/bin/crank-pilot")[0],
+            "a missing page file": lambda: client.request("GET", "/page/none.js")[0],
+        }
+        for name, get in refused.items():
+            with self.subTest(name):
+                self.assertEqual(get(), 404)
+        self.assertEqual(client.request("GET", "/page/index.html", token=False)[0], 200)
+        self.assertEqual(client.request("GET", "/api/file/notes/two%20words.md")[:2], (200, b"ok"))
+
+
+class ContentTypeTest(HttpCase):
+    def test_a_file_is_typed_by_its_extension(self):
+        effort = self.effort()
+        names = ["note.md", "view.html", "a.png", "a.jpg", "a.jpeg", "a.gif", "a.webp", "blob.bin"]
+        for name in names:
+            effort.write(f"files/{name}", "x")
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        expected = {"note.md": "text/plain; charset=utf-8", "view.html": "text/plain; charset=utf-8",
+                    "a.png": "image/png", "a.jpg": "image/jpeg", "a.jpeg": "image/jpeg", "a.gif": "image/gif",
+                    "a.webp": "image/webp", "blob.bin": "application/octet-stream"}
+        for name in names:
+            with self.subTest(name):
+                status, _, headers = client.request("GET", f"/api/file/files/{name}")
+                self.assertEqual((status, headers["Content-Type"]), (200, expected[name]))
+        _, _, headers = client.request("GET", "/page/index.html", token=False)
+        self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
 
 
 class DraftTest(HttpCase):

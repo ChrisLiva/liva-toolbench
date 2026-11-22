@@ -8,12 +8,19 @@ import sys
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import unquote
 
 from pilot.store import Store, write_atomic
-from pilot.validate import response_problems
+from pilot.validate import inside, response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
 INTERACTION_ROUTE = re.compile(r"/api/(?P<what>draft|response)/(?P<n>\d+)")
+FILE_PREFIX, PAGE_PREFIX = "/api/file/", "/page/"
+OCTET_STREAM = "application/octet-stream"
+EFFORT_TYPES = {".md": "text/plain; charset=utf-8", ".html": "text/plain; charset=utf-8", ".png": "image/png",
+                ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
+PAGE_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
+              ".js": "text/javascript; charset=utf-8"}
 
 
 _NotJson = object()
@@ -112,9 +119,23 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply_json(409, {"error": "that interaction is not pending"})
         self.reply_json(201, {"path": f"pilot/responses/{n:03d}.json"})
 
+    def serve_file(self, root: Path, rel: str, types: dict[str, str]) -> None:
+        """Answer with the file `rel` names inside `root`, or 404 when `inside` refuses it."""
+        target = inside(root, unquote(rel))
+        if target is None:
+            return self.reply_json(404, {"error": "not found"})
+        self.reply(200, target.read_bytes(), types.get(target.suffix.lower(), OCTET_STREAM))
+
     def do_GET(self) -> None:
         if self.path == "/":
             self.reply(200, (PAGE / "index.html").read_bytes(), "text/html; charset=utf-8")
+        elif self.path.startswith(PAGE_PREFIX):
+            self.serve_file(PAGE, self.path[len(PAGE_PREFIX):], PAGE_TYPES)
+        elif self.path.startswith(FILE_PREFIX):
+            if self.has_token():
+                self.serve_file(self.server.store.effort, self.path[len(FILE_PREFIX):], EFFORT_TYPES)
+            else:
+                self.reply_json(403, {"error": "forbidden"})
         elif self.path in ("/api/ping", "/api/state") and not self.has_token():
             self.reply_json(403, {"error": "forbidden"})
         elif self.path == "/api/ping":

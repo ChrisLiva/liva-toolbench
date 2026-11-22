@@ -8,7 +8,7 @@ import stat
 import time
 import unittest
 
-from support import PLUGIN, QUESTIONS, READBACK, Client, EffortCase, show
+from support import PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, show
 
 
 def non_loopback_address() -> str | None:
@@ -162,6 +162,32 @@ class ReadbackVersionsJourneyTest(EffortCase):
         respond(3, "approve", [])
         self.assertEqual(show(effort, READBACK), 4)
         self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})
+
+
+VERDICT = {
+    "winner": "B", "take": "nothing", "leave_out": "nothing", "attachments": [],
+    "comments": [
+        {"n": 1, "variant": "A", "selector": "p", "leading_text": "A", "text": "Too small.", "attachments": []},
+        {"n": 1, "variant": "B", "selector": "p", "leading_text": "B", "text": "Good.", "attachments": []},
+        {"n": 2, "variant": "A", "selector": "p", "leading_text": "A", "text": "Still small.", "attachments": []},
+    ],
+}
+
+
+class PrototypeJourneyTest(EffortCase):
+    def test_a_variant_is_read_from_the_effort_and_a_verdict_is_stored(self):
+        effort = self.effort()
+        effort.write("prototype/variant-A.html", "<p>A</p>")
+        effort.write("prototype/variant-B.html", "<p>B</p>")
+        self.assertEqual(show(effort, PROTOTYPE), 1)
+        client = Client(effort)
+        status, body, headers = client.request("GET", "/api/file/prototype/variant-A.html")
+        self.assertEqual((status, body), (200, b"<p>A</p>"))
+        self.assertTrue(headers["Content-Type"].startswith("text/plain"))
+        status, reply, _ = client.request("POST", "/api/response/1", json.dumps(VERDICT).encode())
+        self.assertEqual((status, json.loads(reply)), (201, {"path": "pilot/responses/001.json"}))
+        saved = json.loads((effort.path / "pilot" / "responses" / "001.json").read_text())
+        self.assertEqual({key: saved[key] for key in ("kind", "via", *VERDICT)}, {"kind": "prototype", "via": "page", **VERDICT})
 
 
 if __name__ == "__main__":
