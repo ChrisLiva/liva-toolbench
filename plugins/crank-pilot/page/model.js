@@ -97,3 +97,31 @@ export function readbackResponse(verdict, version, questions, form, marks) {
   const sent = verdict === "approve" ? [] : numberMarks(marks).map(markRecord);
   return { verdict, version, answers: answersFor(questions, form), marks: sent };
 }
+
+// Blocks compared by source text with a longest common subsequence: the indexes into `newSources` that are added or
+// changed, and the indexes into `oldSources` that are removed.
+export function diffBlocks(oldSources, newSources) {
+  const rows = oldSources.length;
+  const cols = newSources.length;
+  // tail[i][j] is the length of the longest common subsequence of oldSources.slice(i) and newSources.slice(j).
+  const tail = Array.from({ length: rows + 1 }, () => new Array(cols + 1).fill(0));
+  for (let i = rows - 1; i >= 0; i--) {
+    for (let j = cols - 1; j >= 0; j--) {
+      tail[i][j] = oldSources[i] === newSources[j] ? tail[i + 1][j + 1] + 1 : Math.max(tail[i + 1][j], tail[i][j + 1]);
+    }
+  }
+  const changed = [];
+  const removed = [];
+  let i = 0;
+  let j = 0;
+  while (i < rows && j < cols) {
+    if (oldSources[i] === newSources[j]) {
+      i++;
+      j++;
+    } else if (tail[i + 1][j] >= tail[i][j + 1]) removed.push(i++);
+    else changed.push(j++);
+  }
+  while (i < rows) removed.push(i++);
+  while (j < cols) changed.push(j++);
+  return { changed, removed };
+}
