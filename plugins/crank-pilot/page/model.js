@@ -55,3 +55,43 @@ export function recommendedForm(questions, form) {
     }),
   );
 }
+
+// The readback's marks. A page-side mark is {id, type, text, quote, lines, heading, occurrence, start, attachments}:
+// `id` is the creation counter and `start` the selection's offset in its first block's text; neither is sent.
+
+// Anchored marks in document order (first line, then offset, then creation), general notes last in creation order.
+export function numberMarks(marks) {
+  const anchored = marks.filter((m) => m.type !== "note").sort((a, b) => a.lines[0] - b.lines[0] || a.start - b.start || a.id - b.id);
+  const notes = marks.filter((m) => m.type === "note").sort((a, b) => a.id - b.id);
+  return [...anchored, ...notes].map((m, i) => ({ ...m, n: i + 1 }));
+}
+
+// Which occurrence of `quote` in the block's rendered `text` the one at offset `start` is, counting overlapping matches.
+export function occurrenceOf(text, quote, start) {
+  let count = 0;
+  for (let at = text.indexOf(quote); at !== -1 && at <= start; at = text.indexOf(quote, at + 1)) count++;
+  return Math.max(count, 1);
+}
+
+// The nearest heading at or above block `index`: a heading block is under itself.
+export function headingAbove(blocks, index) {
+  for (let i = Math.min(index, blocks.length - 1); i >= 0; i--) {
+    if (/^h[1-6]$/.test(blocks[i].tag)) return blocks[i].text ?? "";
+  }
+  return "";
+}
+
+export function markRecord(mark) {
+  const { n, type, text, attachments } = mark;
+  if (type === "note") return { n, type, text, attachments };
+  const { quote, lines, heading, occurrence } = mark;
+  return { n, type, text, quote, lines, heading, occurrence, attachments };
+}
+
+export const canSendChanges = (marks, questions, form) => marks.length > 0 || differCount(questions, form) > 0;
+
+// An approve sends no marks, whatever marks exist.
+export function readbackResponse(verdict, version, questions, form, marks) {
+  const sent = verdict === "approve" ? [] : numberMarks(marks).map(markRecord);
+  return { verdict, version, answers: answersFor(questions, form), marks: sent };
+}

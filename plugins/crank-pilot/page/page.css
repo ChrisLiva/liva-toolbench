@@ -107,3 +107,44 @@ input::placeholder { color: #5b584f; opacity: 1; }
 .err { font-size: 14px; line-height: 20px; font-weight: 700; border-left: 3px solid var(--accent); padding-left: 10px; margin: 12px 0 0; }
 .err:empty { display: none; }
 .lact kbd { flex: none; }
+
+.lead { font-size: 18px; line-height: 26px; font-weight: 500; max-width: 560px; }
+.calls { font-size: 14px; line-height: 22px; max-width: 560px; margin-top: 8px; }
+.calls li + li { margin-top: 2px; }
+.decisions { margin-top: 20px; }
+.decisions > .l { margin-bottom: 6px; }
+.status { margin: 20px 0 6px; min-height: 16px; }
+.art [data-lines]:focus-visible { outline-offset: 4px; }
+.mk.comment { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 3px; text-underline-offset: 4px; }
+.mk.strike { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+
+#pop { position: absolute; z-index: 30; background: var(--paper); border: 1px solid var(--ink); padding: 6px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; max-width: calc(100vw - 16px); }
+#pop button { font-size: 14px; line-height: 20px; padding: 4px 10px; border-width: 1px; }
+#pop input { font: 400 15px/22px var(--sans); width: 220px; max-width: 100%; border: 0; border-bottom: 1px solid var(--ink); background: transparent; padding: 4px 2px; color: var(--ink); border-radius: 0; }
+#pop .perr { flex-basis: 100%; font-size: 14px; line-height: 20px; }
+
+.lmarks { position: relative; border-top: 1px solid var(--rule); margin-top: 8px; }
+.lmarks.abs { border-top-color: transparent; }
+.note { border-left: 1px solid var(--ink); padding: 0 0 12px 12px; font-size: 14px; line-height: 20px; overflow-wrap: anywhere; }
+.lmarks:not(.abs) .note { margin-top: 12px; }
+.lmarks.abs .note { position: absolute; left: 0; right: 0; padding-bottom: 0; }
+.note .nh { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.note .acts { display: flex; gap: 6px; }
+.note button { font-size: 14px; line-height: 20px; padding: 2px 8px; border-width: 1px; }
+.note .q { margin: 2px 0 0; }
+.note .q.s { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.note .t { margin: 2px 0 0; font-weight: 500; }
+.note input[type=text] { font-size: 14px; line-height: 20px; padding: 2px; }
+.cn { position: absolute; border: 0; border-top: 1px solid var(--ink); height: 0; pointer-events: none; }
+.cn.v { border-top: 0; border-left: 1px solid var(--ink); width: 0; }
+.empty { font-size: 14px; line-height: 20px; padding: 12px 0; }
+.lfoot { padding-top: 12px; border-top: 1px solid var(--rule); margin-top: 12px; }
+.lfoot .gen { margin: 6px 0 12px; }
+.lfoot .gen .note { margin-top: 0; padding-top: 6px; padding-bottom: 6px; margin-bottom: 8px; }
+.addrow { display: flex; gap: 8px; align-items: flex-end; }
+.addrow .field { flex: 1; margin: 0; }
+.addrow button { padding: 6px 10px; font-size: 14px; white-space: nowrap; }
+.confirm { border: 2px solid var(--ink); padding: 10px 12px; font-size: 14px; line-height: 20px; }
+.confirm p { margin: 0 0 8px; font-weight: 700; }
+.confirm .ar { display: flex; flex-wrap: wrap; gap: 8px; }
+.confirm button { flex: 1 1 140px; text-align: left; }
