@@ -1,5 +1,6 @@
 """The effort's HTTP server: `python -m pilot.server <effort-dir>`. It holds no state beyond the files."""
 
+import hmac
 import json
 import os
 import re
@@ -8,14 +9,14 @@ import sys
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import NamedTuple
 from urllib.parse import unquote
 
 from pilot.store import Store, write_atomic
 from pilot.validate import inside, response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
-INTERACTION_ROUTE = re.compile(r"/api/(?P<what>draft|response)/(?P<n>\d+)")
-FILE_PREFIX, PAGE_PREFIX = "/api/file/", "/page/"
+WRITES = ("POST", "PUT", "DELETE")
 OCTET_STREAM = "application/octet-stream"
 EFFORT_TYPES = {".md": "text/plain; charset=utf-8", ".html": "text/plain; charset=utf-8", ".png": "image/png",
                 ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
@@ -24,6 +25,28 @@ PAGE_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=ut
 
 
 _NotJson = object()
+_Refused = object()
+
+
+class Route(NamedTuple):
+    method: str
+    pattern: re.Pattern
+    handler: str
+    public: bool = False
+    cap: int | None = None
+
+JSON_CAP = 1 << 20
+DRAIN_LIMIT = 4 << 20
+ROUTES = (
+    Route("GET", re.compile(r"/"), "index", public=True),
+    Route("GET", re.compile(r"/page/(?P<rel>.*)"), "page_file", public=True),
+    Route("GET", re.compile(r"/api/file/(?P<rel>.*)"), "effort_file"),
+    Route("GET", re.compile(r"/api/ping"), "ping"),
+    Route("GET", re.compile(r"/api/state"), "poll"),
+    Route("PUT", re.compile(r"/api/draft/(?P<n>\d+)"), "put_draft", cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/response/(?P<n>\d+)"), "post_response", cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/bye"), "bye", public=True, cap=JSON_CAP),
+)
 
 
 class Server(ThreadingHTTPServer):
@@ -49,7 +72,7 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(status, json.dumps(payload).encode(), "application/json")
 
     def has_token(self) -> bool:
-        return secrets.compare_digest(self.headers.get("X-Pilot-Token", ""), self.server.token)
+        return hmac.compare_digest(self.headers.get("X-Pilot-Token", "").encode(), self.server.token.encode())
 
     def state(self) -> dict:
         store = self.server.store
@@ -70,44 +93,86 @@ class Handler(BaseHTTPRequestHandler):
         self.reply_json(409, {"error": "that interaction is not pending"})
         return False
 
-    def read_json(self) -> object:
-        """The request body parsed as JSON, or a problem line standing in for it when it is not."""
-        raw = self.rfile.read(int(self.headers.get("Content-Length") or 0))
-        try:
-            return json.loads(raw)
-        except ValueError:
-            return _NotJson
-
-    def do_PUT(self) -> None:
-        self.write_route()
-
-    def do_POST(self) -> None:
-        if self.path == "/api/bye":
-            self.read_json()
-            write_atomic(self.server.store.heartbeat_file, b"bye")
-            self.reply(204, b"", "application/json")
+    def read_body(self, cap: int) -> object:
+        """The request body as JSON (`_NotJson` when it is not), or `_Refused` after answering a refusal: 411 with no
+        `Content-Length`, 400 when it is not a plain number, 413 over `cap`, all on the header alone. A 413's body is
+        discarded after the reply, up to `DRAIN_LIMIT`, so a client still sending reads the 413 instead of a reset."""
+        length = self.headers.get("Content-Length")
+        if length is None:
+            self.reply_json(411, {"error": "length required"})
+        elif not re.fullmatch(r"[0-9]+", length):
+            self.reply_json(400, {"error": "bad content-length"})
+        elif int(length) > cap:
+            self.reply_json(413, {"error": "body too large"})
+            self.rfile.read(min(int(length), DRAIN_LIMIT))
         else:
-            self.write_route()
+            try:
+                return json.loads(self.rfile.read(int(length)))
+            except ValueError:
+                return _NotJson
+        return _Refused
 
-    def write_route(self) -> None:
-        route = INTERACTION_ROUTE.fullmatch(self.path)
-        if not route or route["what"] != {"PUT": "draft", "POST": "response"}.get(self.command):
-            self.reply_json(404, {"error": "not found"})
-        elif not self.has_token():
-            self.reply_json(403, {"error": "forbidden"})
-        else:
-            body = self.read_json()
-            n = int(route["n"])
-            if self.require_pending(n):
-                (self.put_draft if route["what"] == "draft" else self.post_response)(n, body)
+    def home(self) -> tuple[str, str]:
+        """The two `Host` values this server answers to."""
+        port = self.server.server_address[1]
+        return f"127.0.0.1:{port}", f"localhost:{port}"
 
-    def put_draft(self, n: int, body: object) -> None:
+    def dispatch(self) -> None:
+        """Every request's one path: Host, Origin on a write, the route, the token, then the body."""
+        if self.headers.get("Host") not in self.home():
+            return self.reply_json(403, {"error": "forbidden"})
+        origin = self.headers.get("Origin")
+        if self.command in WRITES and origin is not None and origin not in map("http://{}".format, self.home()):
+            return self.reply_json(403, {"error": "forbidden"})
+        path = self.path.partition("?")[0]
+        matches = [(route, match) for route in ROUTES if (match := route.pattern.fullmatch(path))]
+        found = next(((route, match) for route, match in matches if route.method == self.command), None)
+        if not found:
+            return self.reply_json(405 if matches else 404, {"error": "not allowed" if matches else "not found"})
+        route, match = found
+        if not (route.public or self.has_token()):
+            return self.reply_json(403, {"error": "forbidden"})
+        body = None
+        if route.cap is not None and (body := self.read_body(route.cap)) is _Refused:
+            return
+        getattr(self, route.handler)(match, body)
+
+    do_GET = do_PUT = do_POST = do_DELETE = dispatch
+
+    def index(self, match: re.Match, body: object) -> None:
+        self.reply(200, (PAGE / "index.html").read_bytes(), "text/html; charset=utf-8")
+
+    def page_file(self, match: re.Match, body: object) -> None:
+        self.serve_file(PAGE, match["rel"], PAGE_TYPES)
+
+    def effort_file(self, match: re.Match, body: object) -> None:
+        self.serve_file(self.server.store.effort, match["rel"], EFFORT_TYPES)
+
+    def ping(self, match: re.Match, body: object) -> None:
+        write_atomic(self.server.store.contact, b"")
+        self.reply_json(200, {"pid": os.getpid()})
+
+    def poll(self, match: re.Match, body: object) -> None:
+        write_atomic(self.server.store.heartbeat_file, b"")
+        self.reply_json(200, self.state())
+
+    def bye(self, match: re.Match, body: object) -> None:
+        write_atomic(self.server.store.heartbeat_file, b"bye")
+        self.reply(204, b"", "application/json")
+
+    def put_draft(self, match: re.Match, body: object) -> None:
+        n = int(match["n"])
+        if not self.require_pending(n):
+            return
         if not isinstance(body, dict):
             return self.reply_json(400, {"problems": ["draft: must be a JSON object"]})
         self.server.store.write_draft(n, body)
         self.reply(204, b"", "application/json")
 
-    def post_response(self, n: int, body: object) -> None:
+    def post_response(self, match: re.Match, body: object) -> None:
+        n = int(match["n"])
+        if not self.require_pending(n):
+            return
         store = self.server.store
         interaction = store.interaction(n)
         problems = ["body: must be valid JSON"] if body is _NotJson else response_problems(interaction, body, store.effort)
@@ -125,27 +190,6 @@ class Handler(BaseHTTPRequestHandler):
         if target is None:
             return self.reply_json(404, {"error": "not found"})
         self.reply(200, target.read_bytes(), types.get(target.suffix.lower(), OCTET_STREAM))
-
-    def do_GET(self) -> None:
-        if self.path == "/":
-            self.reply(200, (PAGE / "index.html").read_bytes(), "text/html; charset=utf-8")
-        elif self.path.startswith(PAGE_PREFIX):
-            self.serve_file(PAGE, self.path[len(PAGE_PREFIX):], PAGE_TYPES)
-        elif self.path.startswith(FILE_PREFIX):
-            if self.has_token():
-                self.serve_file(self.server.store.effort, self.path[len(FILE_PREFIX):], EFFORT_TYPES)
-            else:
-                self.reply_json(403, {"error": "forbidden"})
-        elif self.path in ("/api/ping", "/api/state") and not self.has_token():
-            self.reply_json(403, {"error": "forbidden"})
-        elif self.path == "/api/ping":
-            write_atomic(self.server.store.contact, b"")
-            self.reply_json(200, {"pid": os.getpid()})
-        elif self.path == "/api/state":
-            write_atomic(self.server.store.heartbeat_file, b"")
-            self.reply_json(200, self.state())
-        else:
-            self.reply_json(404, {"error": "not found"})
 
     def log_message(self, format: str, *args: object) -> None:
         pass

@@ -277,5 +277,98 @@ class DraftTest(HttpCase):
         self.assertFalse((effort.path / "pilot" / "drafts" / "001.json").exists())
 
 
+def raw_request(client: Client, method: str, path: str, *, host: str | None = None, token: bool = True,
+                headers: dict[str, str] | None = None, body: bytes = b"", length: str | None = "auto") -> tuple[int, bytes]:
+    """One request written by hand through `Client.raw`: the Host line, the token header, and the length are each settable."""
+    lines = [f"{method} {path} HTTP/1.1", f"Host: {host or f'127.0.0.1:{client.port}'}"]
+    if token:
+        lines.append(f"X-Pilot-Token: {client.token}")
+    lines += [f"{name}: {value}" for name, value in (headers or {}).items()]
+    if length == "auto":
+        length = str(len(body))
+    if length is not None:
+        lines.append(f"Content-Length: {length}")
+    return client.raw("\r\n".join(lines).encode() + b"\r\n\r\n" + body)
+
+
+class GuardTest(HttpCase):
+    def test_a_request_whose_host_is_not_this_server_gets_403_static_files_included(self):
+        effort, client = self.round()
+        home = f"localhost:{client.port}"
+        cases = {
+            "state with a foreign host": ("GET", "/api/state", "evil.example", 403),
+            "state with a wrong port": ("GET", "/api/state", "127.0.0.1:1", 403),
+            "the page with a foreign host": ("GET", "/", "evil.example", 403),
+            "a page file with a foreign host": ("GET", "/page/index.html", "evil.example", 403),
+            "state as localhost": ("GET", "/api/state", home, 200),
+        }
+        for name, (method, path, host, expected) in cases.items():
+            with self.subTest(name):
+                self.assertEqual(raw_request(client, method, path, host=host)[0], expected)
+
+    def test_a_write_from_a_foreign_origin_gets_403_the_closing_beacon_included(self):
+        effort, client = self.round()
+        draft, heartbeat = effort.path / "pilot" / "drafts" / "001.json", effort.path / "pilot" / "heartbeat"
+        evil = {"Origin": "http://evil.example"}
+        for method, path in (("PUT", "/api/draft/1"), ("POST", "/api/response/1"), ("DELETE", "/api/draft/1")):
+            with self.subTest(method=method, path=path):
+                self.assertEqual(raw_request(client, method, path, headers=evil, body=b"{}")[0], 403)
+        self.assertFalse(draft.exists())
+        self.assertFalse(self.response_file(effort).exists())
+        self.assertEqual(raw_request(client, "POST", "/api/bye", token=False, headers=evil)[0], 403)
+        self.assertNotEqual(heartbeat.read_bytes() if heartbeat.exists() else b"", b"bye")
+        for origin in (f"http://127.0.0.1:{client.port}", f"http://localhost:{client.port}", None):
+            with self.subTest(origin=origin):
+                headers = {"Origin": origin} if origin else {}
+                self.assertEqual(raw_request(client, "PUT", "/api/draft/1", headers=headers, body=b"{}")[0], 204)
+        self.assertTrue(draft.exists())
+
+    def test_a_request_without_the_right_token_gets_403_except_the_pages_static_files_and_the_beacon(self):
+        effort, client = self.round()
+        effort.write("prototype/variant-A.html", "<p>A</p>")
+        cases = {
+            "state": ("GET", "/api/state", {}),
+            "ping": ("GET", "/api/ping", {}),
+            "draft": ("PUT", "/api/draft/1", {}),
+            "response": ("POST", "/api/response/1", {}),
+            "an effort file": ("GET", "/api/file/prototype/variant-A.html", {}),
+            "state with a wrong token": ("GET", "/api/state", {"X-Pilot-Token": "wrong"}),
+            "state with the token in the query string": ("GET", f"/api/state?t={client.token}", {}),
+        }
+        for name, (method, path, headers) in cases.items():
+            with self.subTest(name):
+                status, _ = raw_request(client, method, path, token=False, headers=headers, body=b"{}")
+                self.assertEqual(status, 403)
+        self.assertEqual(client.request("GET", "/api/file/prototype/variant-A.html")[:2], (200, b"<p>A</p>"))
+        self.assertFalse(self.response_file(effort).exists())
+
+    def test_a_state_poll_without_the_token_does_not_count_as_a_beat(self):
+        effort, client = self.round()
+        heartbeat = effort.path / "pilot" / "heartbeat"
+        heartbeat.unlink(missing_ok=True)
+        self.assertEqual(client.request("GET", "/api/state", token=False)[0], 403)
+        self.assertFalse(heartbeat.exists())
+
+    def test_a_json_body_over_1_mib_gets_413_before_it_is_read_and_a_body_with_no_length_gets_411(self):
+        effort, client = self.round()
+        draft = effort.path / "pilot" / "drafts" / "001.json"
+        cap = 1 << 20
+        padded = lambda size: b'{"pad":"' + b"x" * (size - 10) + b'"}'
+        self.assertEqual(client.request("PUT", "/api/draft/1", padded(cap + 1))[0], 413)
+        self.assertFalse(draft.exists())
+        self.assertEqual(raw_request(client, "POST", "/api/response/1", length="2000000")[0], 413)
+        self.assertEqual(client.request("PUT", "/api/draft/1", padded(cap))[0], 204)
+        self.assertEqual(len(json.loads(draft.read_bytes())["pad"]), cap - 10)
+        self.assertEqual(raw_request(client, "PUT", "/api/draft/1", length=None)[0], 411)
+        for length in ("abc", "-5", "1.5", "0x10", "1_0"):
+            with self.subTest(length=length):
+                self.assertEqual(raw_request(client, "PUT", "/api/draft/1", length=length)[0], 400)
+
+    def test_an_unknown_route_gets_404_and_an_unsupported_method_on_a_known_route_gets_405(self):
+        effort, client = self.round()
+        self.assertEqual(client.request("GET", "/api/nope")[0], 404)
+        self.assertEqual(client.request("DELETE", "/api/state")[0], 405)
+
+
 if __name__ == "__main__":
     unittest.main()
