@@ -360,7 +360,7 @@ class GuardTest(HttpCase):
         self.assertEqual(client.request("PUT", "/api/draft/1", padded(cap))[0], 204)
         self.assertEqual(len(json.loads(draft.read_bytes())["pad"]), cap - 10)
         self.assertEqual(raw_request(client, "PUT", "/api/draft/1", length=None)[0], 411)
-        for length in ("abc", "-5", "1.5", "0x10", "1_0"):
+        for length in ("abc", "-5", "1.5", "0x10", "1_0", "9" * 5000):
             with self.subTest(length=length):
                 self.assertEqual(raw_request(client, "PUT", "/api/draft/1", length=length)[0], 400)
 

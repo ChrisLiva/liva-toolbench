@@ -95,12 +95,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def read_body(self, cap: int) -> object:
         """The request body as JSON (`_NotJson` when it is not), or `_Refused` after answering a refusal: 411 with no
-        `Content-Length`, 400 when it is not a plain number, 413 over `cap`, all on the header alone. A 413's body is
-        discarded after the reply, up to `DRAIN_LIMIT`, so a client still sending reads the 413 instead of a reset."""
+        `Content-Length`, 400 when it is not a plain number of at most 15 digits, 413 over `cap`, all on the header
+        alone. A 413's body is discarded after the reply, up to `DRAIN_LIMIT`, so a client still sending reads the 413
+        instead of a reset."""
         length = self.headers.get("Content-Length")
         if length is None:
             self.reply_json(411, {"error": "length required"})
-        elif not re.fullmatch(r"[0-9]+", length):
+        elif not re.fullmatch(r"[0-9]{1,15}", length):
             self.reply_json(400, {"error": "bad content-length"})
         elif int(length) > cap:
             self.reply_json(413, {"error": "body too large"})
