@@ -1,17 +1,9 @@
 import { renderMarkdown } from "/page/render.js";
 import { answersFor, attachedCount, differCount, formFrom, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
-import { BUSY, attaching, mountAttach } from "/page/attach.js";
+import { el, mac } from "/page/dom.js";
+import { mountAttach } from "/page/attach.js";
 
 const OWN = "own";
-const DRAFT_MS = 1000;
-export const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
-
-export function el(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
-  node.append(...children);
-  return node;
-}
 
 function markdown(source, into) {
   renderMarkdown(source, into).catch(() => {
@@ -127,8 +119,6 @@ export function mountQuestions(root, questions, initial, onChange, { interaction
   };
 }
 
-let live = null;
-
 function summaryItem(q, i, answer) {
   let said;
   let tag;
@@ -165,11 +155,6 @@ export const surface = {
       el("div", { class: "lact" }, accept, el("div", { class: "ar" }, send, hint)),
     );
 
-    let timer = null;
-    const saveNow = () => {
-      timer = null;
-      Promise.resolve(ctx.saveDraft(ui.form())).catch(() => {});
-    };
     const refresh = (form) => {
       const count = differCount(questions, form);
       big.textContent = String(count);
@@ -180,8 +165,7 @@ export const surface = {
     };
     const changed = (form) => {
       refresh(form);
-      clearTimeout(timer);
-      timer = setTimeout(saveNow, DRAFT_MS);
+      ctx.saveDraftSoon(form);
     };
     const ui = mountQuestions(stage.querySelector("#reading"), questions, state.draft, changed, { interaction: state.interaction.number });
     refresh(ui.form());
@@ -195,29 +179,12 @@ export const surface = {
         ui.focusQuestion(open.id);
         return;
       }
-      if (attaching()) {
-        err.textContent = BUSY;
-        return;
-      }
       err.textContent = "";
       send.disabled = true;
-      try {
-        const res = await ctx.send({ answers: answersFor(questions, form) });
-        // 201 and 409 are app.js's: it shows the wait, or the interaction that replaced this one.
-        if (res.status === 400) {
-          const body = await res.json().catch(() => ({}));
-          err.textContent = body.problems?.[0] ?? "The answers were refused.";
-        }
-      } catch {
-        err.textContent = "Could not send. Try again.";
-      }
+      err.textContent = await ctx.send({ answers: answersFor(questions, form) }, "The answers were refused.");
       send.disabled = false;
     });
     ctx.setSend(send);
-    live = { stop: () => clearTimeout(timer) };
   },
-  unmount() {
-    live?.stop();
-    live = null;
-  },
+  unmount() {},
 };

@@ -1,10 +1,9 @@
 import { getFile } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
-import { el, mac } from "/page/questions.js";
+import { el, mac } from "/page/dom.js";
 import { attachedCount, numberPins, prototypeFrom, prototypeResponse, verdictRefusal } from "/page/model.js";
-import { BUSY, attaching, holderControl, mountAttach } from "/page/attach.js";
+import { holderControl, mountAttach } from "/page/attach.js";
 
-const DRAFT_MS = 1000;
 const LEADING = 80;
 
 // Runs inside the variant's frame. With comment mode on it swallows the click and reports the element it landed on;
@@ -35,7 +34,6 @@ export const surface = {
     let frame = null;
     let shown = 0;
     let alive = true;
-    let timer = null;
     const texts = new Map();
     // One attach control per pin, kept across the list's redraws (see `holderControl`).
     const controls = new Map();
@@ -100,15 +98,10 @@ export const surface = {
       el("div", { class: "lact" }, el("div", { class: "ar" }, send, el("kbd", {}, mac ? "⌘↵" : "Ctrl+Enter"))),
     );
 
-    const saveNow = () => {
-      timer = null;
-      Promise.resolve(ctx.saveDraft({ verdict, pins })).catch(() => {});
-    };
     const changed = () => {
       err.textContent = "";
       paintPins();
-      clearTimeout(timer);
-      timer = setTimeout(saveNow, DRAFT_MS);
+      ctx.saveDraftSoon({ verdict, pins });
     };
 
     function paintPins() {
@@ -223,22 +216,10 @@ export const surface = {
         win.querySelector("input").focus();
         return;
       }
-      if (attaching()) {
-        err.textContent = BUSY;
-        return;
-      }
       err.textContent = "";
       send.disabled = true;
-      try {
-        const res = await ctx.send(prototypeResponse(verdict, pins));
-        // 201 and 409 are app.js's: it shows the wait, or the interaction that replaced this one.
-        if (res.status === 400 && alive) {
-          const body = await res.json().catch(() => ({}));
-          err.textContent = body.problems?.[0] ?? "The verdict was refused.";
-        }
-      } catch {
-        if (alive) err.textContent = "Could not send. Try again.";
-      }
+      const problem = await ctx.send(prototypeResponse(verdict, pins), "The verdict was refused.");
+      if (alive) err.textContent = problem;
       send.disabled = false;
     });
     ctx.setSend(send);
@@ -248,7 +229,6 @@ export const surface = {
     live = {
       stop() {
         alive = false;
-        clearTimeout(timer);
         window.removeEventListener("message", onMessage);
       },
     };

@@ -1,6 +1,6 @@
 import { deleteAttachment, postAttachment } from "/page/api.js";
 import { ATTACH_MESSAGES, attachRefusal, sniffImage } from "/page/model.js";
-import { el } from "/page/questions.js";
+import { el } from "/page/dom.js";
 
 const FAILED = "Could not attach the image. Try again.";
 const NOT_REMOVED = "Could not remove the image. Try again.";

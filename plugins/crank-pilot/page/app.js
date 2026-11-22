@@ -2,14 +2,12 @@ import { token, getState, putDraft, postResponse } from "/page/api.js";
 import { surface as questions } from "/page/questions.js";
 import { surface as readback } from "/page/readback.js";
 import { surface as prototype } from "/page/prototype.js";
+import { BUSY, attaching } from "/page/attach.js";
 
 const POLL_MS = 2000;
-const surfaces = new Map();
+const DRAFT_MS = 1000;
+const surfaces = { questions, readback, prototype };
 const $ = (id) => document.getElementById(id);
-
-export function registerSurface(kind, surface) {
-  surfaces.set(kind, surface);
-}
 
 let view = null;
 let mounted = null;
@@ -18,6 +16,7 @@ let answered = null;
 let latest = null;
 let agendaKey = "";
 let timer = null;
+let draftTimer = null;
 let stopped = false;
 let chain = Promise.resolve();
 
@@ -48,6 +47,7 @@ function renderAgenda(interaction) {
 }
 
 function clear() {
+  clearTimeout(draftTimer);
   if (mounted) mounted.surface.unmount();
   mounted = null;
   sendButton = null;
@@ -77,16 +77,29 @@ function message(text) {
 
 function contextFor(n) {
   return {
-    saveDraft: (obj) => putDraft(n, obj),
-    async send(body) {
-      const res = await postResponse(n, body);
-      if (res.status === 201) {
-        answered = n;
-        show(latest);
-      } else if (res.status === 409) {
-        poll();
+    saveDraftSoon(obj) {
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(() => Promise.resolve(putDraft(n, obj)).catch(() => {}), DRAFT_MS);
+    },
+    // Resolves to the line the surface shows by its send button, empty when the send needs none: a 201 shows the wait
+    // and a 409 the interaction that replaced this one, so neither is the surface's to report.
+    async send(body, refusal) {
+      if (attaching()) return BUSY;
+      try {
+        const res = await postResponse(n, body);
+        if (res.status === 201) {
+          answered = n;
+          show(latest);
+        } else if (res.status === 409) {
+          poll();
+        } else if (res.status === 400) {
+          const refused = await res.json().catch(() => ({}));
+          return refused.problems?.[0] ?? refusal;
+        }
+        return "";
+      } catch {
+        return "Could not send. Try again.";
       }
-      return res;
     },
     setSend(button) {
       sendButton = button;
@@ -108,7 +121,7 @@ function show(state) {
   }
   settle(`interaction:${interaction.number}`, () => {
     $("reading").append(heading(interaction.title));
-    const surface = surfaces.get(interaction.kind);
+    const surface = surfaces[interaction.kind];
     if (!surface) return;
     $("ledger").hidden = false;
     $("stage").classList.remove("solo");
@@ -158,10 +171,6 @@ document.addEventListener("keydown", (event) => {
     sendButton.click();
   }
 });
-
-registerSurface("questions", questions);
-registerSurface("readback", readback);
-registerSurface("prototype", prototype);
 
 window.addEventListener("pagehide", () => token() && navigator.sendBeacon("/api/bye"));
 

@@ -1,10 +1,10 @@
 import { getFile } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
-import { el, mac, mountQuestions } from "/page/questions.js";
+import { el, mac } from "/page/dom.js";
+import { mountQuestions } from "/page/questions.js";
 import { attachedCount, canSendChanges, diffBlocks, headingAbove, numberMarks, occurrenceOf, readbackResponse, refusalMessage, roundRefusal, unansweredOwn } from "/page/model.js";
 import { BUSY, attaching, discardImages, holderControl } from "/page/attach.js";
 
-const DRAFT_MS = 1000;
 const HINT = "Select text, or focus a block and press Enter, to comment on it or strike it.";
 const OLDER_HINT = (shown, current) => `Version ${shown} is read-only. Move the version control to v${current} to mark.`;
 const LABEL = { comment: "Comment", strike: "Strike", note: "Note" };
@@ -92,7 +92,6 @@ export const surface = {
     let editing = null;
     let sending = false;
     let alive = true;
-    let timer = null;
     let requested = 0;
     // One attach control per mark, kept across the ledger's redraws (see `holderControl`).
     const controls = new Map();
@@ -159,11 +158,7 @@ export const surface = {
     );
 
     function saveSoon() {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        timer = null;
-        Promise.resolve(ctx.saveDraft({ form: form(), marks })).catch(() => {});
-      }, DRAFT_MS);
+      ctx.saveDraftSoon({ form: form(), marks });
     }
 
     function refreshButtons() {
@@ -590,23 +585,11 @@ export const surface = {
 
     async function submit(verdict) {
       closeConfirm();
-      if (attaching()) {
-        err.textContent = BUSY;
-        return;
-      }
       sending = true;
       err.textContent = "";
       refreshButtons();
-      try {
-        const res = await ctx.send(readbackResponse(verdict, version, decisions, form(), marks));
-        // 201 and 409 are app.js's: it shows the wait, or the interaction that replaced this one.
-        if (res.status === 400 && alive) {
-          const body = await res.json().catch(() => ({}));
-          err.textContent = body.problems?.[0] ?? "The response was refused.";
-        }
-      } catch {
-        if (alive) err.textContent = "Could not send. Try again.";
-      }
+      const problem = await ctx.send(readbackResponse(verdict, version, decisions, form(), marks), "The response was refused.");
+      if (alive) err.textContent = problem;
       sending = false;
       if (alive) refreshButtons();
     }
@@ -731,7 +714,6 @@ export const surface = {
     live = {
       stop() {
         alive = false;
-        clearTimeout(timer);
         document.removeEventListener("keydown", onKey);
         document.removeEventListener("selectionchange", onSelectionChange);
         window.removeEventListener("resize", layout);
