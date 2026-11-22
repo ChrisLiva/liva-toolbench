@@ -1,4 +1,5 @@
-import { token, getState, putDraft, postResponse } from "/page/api.js";
+import { token, getState, getFile, putDraft, postResponse } from "/page/api.js";
+import { renderMarkdown } from "/page/render.js";
 
 const POLL_MS = 2000;
 const surfaces = new Map();
@@ -154,6 +155,22 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     sendButton.click();
   }
+});
+
+// Interim: the readback task replaces this surface with the full one.
+registerSurface("readback", {
+  async mount(stage, state) {
+    const { artifact, version } = state.interaction;
+    this.live = true;
+    const art = document.createElement("div");
+    art.className = "art";
+    $("reading").append(art);
+    const res = await getFile(`pilot/versions/${artifact}/${String(version).padStart(3, "0")}.md`);
+    if (res.ok && this.live) await renderMarkdown(await res.text(), art);
+  },
+  unmount() {
+    this.live = false;
+  },
 });
 
 window.addEventListener("pagehide", () => token() && navigator.sendBeacon("/api/bye"));

@@ -65,3 +65,18 @@ h1.msg { font-size: 32px; line-height: 38px; letter-spacing: -.025em; max-width:
 @media (min-width: 720px) and (max-width: 860px) {
   h1 { font-size: 38px; }
 }
+
+.art { max-width: 560px; padding: 8px 0 8px 14px; border-top: 1px solid var(--rule); }
+.art h1 { font-size: 28px; line-height: 32px; margin: 12px 0 8px; }
+.art h2, .art h3 { font: 500 12px/16px var(--mono); text-transform: uppercase; letter-spacing: .08em; margin: 22px 0 4px; }
+.art p, .art ol, .art ul { margin: 0 0 8px; }
+.art ol { counter-reset: c; }
+.art ol > li { counter-increment: c; padding-left: 30px; position: relative; }
+.art ol > li::before { content: counter(c, decimal-leading-zero); position: absolute; left: 0; font: 500 12px/24px var(--mono); }
+.art ul > li { padding-left: 18px; position: relative; }
+.art ul > li::before { content: ""; position: absolute; left: 0; top: 12px; width: 8px; border-top: 1px solid var(--ink); }
+.art code { font: 14px/20px var(--mono); }
+.art pre { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/20px var(--mono); }
+.art .fig { margin: 8px 0; padding: 8px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); overflow-x: auto; }
+.art .fig svg { max-width: 100%; height: auto; }
+.art iframe.frag { display: block; width: 100%; height: 40px; border: 0; background: var(--paper); }
