@@ -11,7 +11,8 @@ import threading
 import time
 import unittest
 
-from support import PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, is_dead, recording_browser, show
+from support import (MARKS, PROTOTYPE, Q1_A, Q2, QUESTIONS, READBACK, SPEC, VERDICT, Client, EffortCase, is_dead,
+                     recording_browser, show)
 
 
 def non_loopback_address() -> str | None:
@@ -60,13 +61,6 @@ class StateRouteTest(EffortCase):
         self.assertEqual(heartbeat.stat().st_size, 0)
         self.assertGreater(heartbeat.stat().st_mtime, time.time() - 5)
 
-    def test_the_root_serves_the_page_file(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        status, body, _ = Client(effort).request("GET", "/", token=False)
-        self.assertEqual(status, 200)
-        self.assertEqual(body, (PLUGIN / "page" / "index.html").read_bytes())
-
 
 class QuestionRoundJourneyTest(EffortCase):
     def test_a_round_is_drafted_submitted_once_and_read_back(self):
@@ -94,14 +88,6 @@ class QuestionRoundJourneyTest(EffortCase):
         done = effort.run("wait", effort.path)
         self.assertEqual((done.returncode, done.stdout, done.stderr),
                          (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
-
-
-SPEC = "# Spec\n\n## Criteria\n\nFollows the OS within one second.\n"
-MARKS = [
-    {"n": 1, "type": "comment", "text": "Why a second?", "quote": "within one second", "lines": [5, 5],
-     "heading": "Criteria", "occurrence": 1, "attachments": []},
-    {"n": 2, "type": "note", "text": "Add a shortcut criterion.", "attachments": []},
-]
 
 
 class ReadbackVersionsJourneyTest(EffortCase):
@@ -167,16 +153,6 @@ class ReadbackVersionsJourneyTest(EffortCase):
         self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})
 
 
-VERDICT = {
-    "winner": "B", "take": "nothing", "leave_out": "nothing", "attachments": [],
-    "comments": [
-        {"n": 1, "variant": "A", "selector": "p", "leading_text": "A", "text": "Too small.", "attachments": []},
-        {"n": 1, "variant": "B", "selector": "p", "leading_text": "B", "text": "Good.", "attachments": []},
-        {"n": 2, "variant": "A", "selector": "p", "leading_text": "A", "text": "Still small.", "attachments": []},
-    ],
-}
-
-
 class PrototypeJourneyTest(EffortCase):
     def test_a_variant_is_read_from_the_effort_and_a_verdict_is_stored(self):
         effort = self.effort()
@@ -194,10 +170,6 @@ class PrototypeJourneyTest(EffortCase):
 
 
 DRAFT = {"q1": {"choice": "b"}}
-ANSWERS = [
-    {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []},
-    {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []},
-]
 
 
 class RestartAfterKillJourneyTest(EffortCase):
@@ -232,7 +204,7 @@ class RestartAfterKillJourneyTest(EffortCase):
         self.assertEqual((new["port"], new["token"]), (old["port"], old["token"]))
         state = client.state()
         self.assertEqual((state["interaction"]["number"], state["draft"]), (1, DRAFT))
-        self.assertEqual(client.request("POST", "/api/response/1", json.dumps({"answers": ANSWERS}).encode())[0], 201)
+        self.assertEqual(client.request("POST", "/api/response/1", json.dumps({"answers": [Q1_A, Q2]}).encode())[0], 201)
         out, err = waiting.communicate(timeout=5)
         self.assertEqual((waiting.returncode, err), (0, ""))
 

@@ -13,7 +13,7 @@ import time
 import unittest
 from pathlib import Path
 
-from support import BIN, IMAGES, PROTOTYPE, QUESTIONS, READBACK, Client, EffortCase, is_dead, recording_browser, show
+from support import BIN, IMAGES, PROTOTYPE, Q1_B, Q2, QUESTIONS, READBACK, Client, EffortCase, is_dead, recording_browser, show
 
 NO_SUCH_DIR = "/nonexistent-xyz"
 
@@ -269,10 +269,7 @@ class ShowWaitTest(EffortCase):
         self.assertFalse(opened.exists())
 
 
-ANSWERS = json.dumps({"answers": [
-    {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []},
-    {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []},
-]}).encode()
+ANSWERS = json.dumps({"answers": [Q1_B, Q2]}).encode()
 
 
 class WaitResponseTest(EffortCase):

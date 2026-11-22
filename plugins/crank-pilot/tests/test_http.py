@@ -9,22 +9,13 @@ import time
 import unittest
 from pathlib import Path
 
-from support import IMAGES, PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, Effort, EffortCase, show
-
-Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
-Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
-Q2 = {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []}
+from support import (CHANGES, COMMENT, IMAGES, NOTE, PLUGIN, PROTOTYPE, Q1_A, Q1_B, Q2, QUESTIONS, READBACK, SPEC, VERDICT,
+                     Client, Effort, EffortCase, show)
 
 
 def send(client: Client, method: str, path: str, payload: object) -> tuple[int, object]:
     status, body, _ = client.request(method, path, json.dumps(payload).encode())
     return status, (json.loads(body) if body else None)
-
-SPEC = "# Spec\n\n## Criteria\n\nFollows the OS within one second.\n"
-COMMENT = {"n": 1, "type": "comment", "text": "Why a second?", "quote": "within one second", "lines": [5, 5],
-           "heading": "Criteria", "occurrence": 1, "attachments": []}
-NOTE = {"n": 2, "type": "note", "text": "Add a shortcut criterion.", "attachments": []}
-CHANGES = {"verdict": "changes", "version": 1, "answers": [], "marks": [COMMENT, NOTE]}
 
 
 class HttpCase(EffortCase):
@@ -175,10 +166,8 @@ class InvalidVerdictTest(HttpCase):
         effort.write("prototype/variant-B.html", "<p>B</p>")
         show(effort, PROTOTYPE)
         client = Client(effort)
-        a1 = {"n": 1, "variant": "A", "selector": "p", "leading_text": "A", "text": "Too small.", "attachments": []}
-        b1 = {"n": 1, "variant": "B", "selector": "p", "leading_text": "B", "text": "Good.", "attachments": []}
-        a2 = {**a1, "n": 2, "text": "Still small."}
-        verdict = {"winner": "B", "take": "nothing", "leave_out": "nothing", "attachments": [], "comments": [a1, b1, a2]}
+        a1, b1, a2 = VERDICT["comments"]
+        verdict = VERDICT
         cases = {
             "winner not a variant": {**verdict, "winner": "Z"},
             "winner missing": {k: v for k, v in verdict.items() if k != "winner"},
@@ -282,6 +271,7 @@ class PageShellTest(HttpCase):
                 self.assertEqual(client.request("GET", path, token=False)[0], 200)
         status, body, _ = client.request("GET", "/", token=False)
         self.assertEqual(status, 200)
+        self.assertEqual(body, (PLUGIN / "page" / "index.html").read_bytes())
         named = re.findall(rb'(?:src|href)="([^"]*)"', body)
         self.assertTrue(named)
         self.assertEqual([path for path in named if not path.startswith(b"/page/")], [])

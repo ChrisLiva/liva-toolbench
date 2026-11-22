@@ -54,6 +54,27 @@ IMAGES = {
     "svg": b"<svg xmlns='http://www.w3.org/2000/svg'/>",
 }
 
+# The records the HTTP and journey tests send: answers to QUESTIONS, a readback's spec and marks, a prototype's verdict.
+Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
+Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
+Q2 = {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []}
+
+SPEC = "# Spec\n\n## Criteria\n\nFollows the OS within one second.\n"
+COMMENT = {"n": 1, "type": "comment", "text": "Why a second?", "quote": "within one second", "lines": [5, 5],
+           "heading": "Criteria", "occurrence": 1, "attachments": []}
+NOTE = {"n": 2, "type": "note", "text": "Add a shortcut criterion.", "attachments": []}
+MARKS = [COMMENT, NOTE]
+CHANGES = {"verdict": "changes", "version": 1, "answers": [], "marks": MARKS}
+
+VERDICT = {
+    "winner": "B", "take": "nothing", "leave_out": "nothing", "attachments": [],
+    "comments": [
+        {"n": 1, "variant": "A", "selector": "p", "leading_text": "A", "text": "Too small.", "attachments": []},
+        {"n": 1, "variant": "B", "selector": "p", "leading_text": "B", "text": "Good.", "attachments": []},
+        {"n": 2, "variant": "A", "selector": "p", "leading_text": "A", "text": "Still small.", "attachments": []},
+    ],
+}
+
 
 class Effort:
     def __init__(self, bin: Path = BIN) -> None:
