@@ -3,7 +3,8 @@
 
 A headless session skips permission prompts on the user's machine, so nothing here relies on the agent staying put.
 Seatbelt holds every shell command and its children to the run root, with home unreadable and the network limited to
-package registries. Seatbelt covers shell commands only, so the tool allowlist closes the tools that act on the user's
+package registries. With SMOKE_PILOT_DIR set, shell commands also bind and reach loopback ports and read the crank-pilot
+directory. Seatbelt covers shell commands only, so the tool allowlist closes the tools that act on the user's
 account from outside it. The file tools and WebFetch stay outside it too; a harness that needs them bounded adds a hook.
 """
 import json
