@@ -45,6 +45,8 @@ export function unansweredOwn(questions, form) {
 
 export const roundRefusal = (questions, form) => unansweredOwn(questions, form)?.title ?? null;
 
+export const refusalMessage = (title) => `Type your answer to "${title}" or pick an option.`;
+
 export const differCount = (questions, form) => answersFor(questions, form).filter((a) => !a.accepted).length;
 
 export function recommendedForm(questions, form) {

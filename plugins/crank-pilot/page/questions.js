@@ -1,11 +1,11 @@
 import { renderMarkdown } from "/page/render.js";
-import { answersFor, differCount, formFrom, recommendedForm, unansweredOwn } from "/page/model.js";
+import { answersFor, differCount, formFrom, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
 
 const OWN = "own";
 const DRAFT_MS = 1000;
-const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
+export const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
 
-function el(tag, attrs = {}, ...children) {
+export function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
   node.append(...children);
@@ -177,7 +177,7 @@ export const surface = {
       const form = ui.form();
       const open = unansweredOwn(questions, form);
       if (open) {
-        err.textContent = `Type your answer to "${open.title}" or pick an option.`;
+        err.textContent = refusalMessage(open.title);
         ui.focusQuestion(open.id);
         return;
       }

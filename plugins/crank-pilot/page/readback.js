@@ -1,22 +1,14 @@
 import { getFile } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
-import { mountQuestions } from "/page/questions.js";
-import { canSendChanges, headingAbove, numberMarks, occurrenceOf, readbackResponse, roundRefusal, unansweredOwn } from "/page/model.js";
+import { el, mac, mountQuestions } from "/page/questions.js";
+import { canSendChanges, headingAbove, numberMarks, occurrenceOf, readbackResponse, refusalMessage, roundRefusal, unansweredOwn } from "/page/model.js";
 
 const DRAFT_MS = 1000;
 const HINT = "Select text, or focus a block and press Enter, to comment on it or strike it.";
 const LABEL = { comment: "Comment", strike: "Strike", note: "Note" };
-const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
 const pad = (n) => String(n).padStart(2, "0");
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-const linesOf = (el) => el.getAttribute("data-lines").split("-").map(Number);
-
-function el(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [name, value] of Object.entries(attrs)) node.setAttribute(name, value);
-  node.append(...children);
-  return node;
-}
+const linesOf = (node) => node.getAttribute("data-lines").split("-").map(Number);
 
 // A draft is whatever an earlier page wrote: keep the marks that are whole and fill what a mark may lack.
 function restore(raw) {
@@ -529,14 +521,14 @@ export const surface = {
 
     // Sending.
     function refused() {
-      const open = unansweredOwn(decisions, form());
-      const name = roundRefusal(decisions, form());
+      const current = form();
+      const name = roundRefusal(decisions, current);
       if (name === null) {
         err.textContent = "";
         return false;
       }
-      err.textContent = `Type your answer to "${name}" or pick an option.`;
-      ui.focusQuestion(open.id);
+      err.textContent = refusalMessage(name);
+      ui.focusQuestion(unansweredOwn(decisions, current).id);
       return true;
     }
 
