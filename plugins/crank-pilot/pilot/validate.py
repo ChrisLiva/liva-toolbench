@@ -177,26 +177,25 @@ def _answer(answer: object, question: dict, number: int, effort: Path, path: str
         accepted = option == question.get("recommended") if offered else not text
         if answer["accepted"] != accepted:
             problems.append(f"{path}.accepted: must be {str(accepted).lower()} for this answer")
-    attachments = answer.get("attachments")
+    return problems + _attachments(answer, number, effort, path)
+
+
+def _attachments(holder: dict, number: int, effort: Path, path: str) -> list[str]:
+    """The `attachments` list of an answer or a mark: paths of images stored for interaction `number`."""
+    attachments = holder.get("attachments")
     if not isinstance(attachments, list) or any(not isinstance(a, str) for a in attachments):
-        return problems + [f"{path}.attachments: must be a list of paths"]
+        return [f"{path}.attachments: must be a list of paths"]
     ours = re.compile(rf"pilot/attachments/{number:03d}-\d+\.(png|jpe?g|gif|webp)")
-    for index, name in enumerate(attachments):
-        if not ours.fullmatch(name) or inside(effort, name) is None:
-            problems.append(f"{path}.attachments[{index}]: not an image stored for this interaction")
-    return problems
+    return [f"{path}.attachments[{index}]: not an image stored for this interaction"
+            for index, name in enumerate(attachments) if not ours.fullmatch(name) or inside(effort, name) is None]
 
 
-def response_problems(interaction: dict, body: object, effort: Path) -> list[str]:
-    """Every way `body` fails the response contract for the stored `interaction`; empty when valid."""
-    if not isinstance(body, dict):
-        return ["body: must be a JSON object"]
-    if interaction["kind"] != "questions":
-        return [f"kind: responses to a {interaction['kind']} are not accepted yet"]
+def _answers(body: dict, asked: list[dict], number: int, effort: Path) -> list[str]:
+    """The answers of a question round, or of a readback's open decisions: one valid answer for each question asked."""
     answers = body.get("answers")
     if not isinstance(answers, list):
         return ["answers: required, a list"]
-    questions = {q["id"]: q for q in interaction["questions"]}
+    questions = {q["id"]: q for q in asked}
     problems = _unique(answers, "answers")
     for index, answer in enumerate(answers):
         name = answer.get("id") if isinstance(answer, dict) else None
@@ -204,6 +203,72 @@ def response_problems(interaction: dict, body: object, effort: Path) -> list[str
         if known is None:
             problems.append(f"answers[{index}].id: names no question of this interaction")
         else:
-            problems += _answer(answer, known, interaction["number"], effort, f"answers[{index}]")
+            problems += _answer(answer, known, number, effort, f"answers[{index}]")
     answered = {a["id"] for a in answers if isinstance(a, dict) and isinstance(a.get("id"), str)}
     return problems + [f"answers: no answer for {qid!r}" for qid in questions if qid not in answered]
+
+
+def _integer(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _anchor(mark: dict, lines: int, path: str) -> list[str]:
+    """The quote, source lines, heading, and occurrence a comment or a strike carries, in a version of `lines` lines."""
+    problems = []
+    if not isinstance(mark.get("quote"), str) or not mark["quote"]:
+        problems.append(f"{path}.quote: must be the non-empty selected text")
+    span = mark.get("lines")
+    if not (isinstance(span, list) and len(span) == 2 and all(_integer(n) for n in span) and 1 <= span[0] <= span[1] <= lines):
+        problems.append(f"{path}.lines: must be [first, last] within 1 and {lines}, first not after last")
+    if not isinstance(mark.get("heading"), str):
+        problems.append(f"{path}.heading: must be a string")
+    if not _integer(mark.get("occurrence")) or mark["occurrence"] < 1:
+        problems.append(f"{path}.occurrence: must be an integer from 1")
+    return problems
+
+
+def _mark(mark: object, expected: int, lines: int, number: int, effort: Path, path: str) -> list[str]:
+    if not isinstance(mark, dict):
+        return [f"{path}: must be an object"]
+    problems = [] if mark.get("n") == expected and _integer(mark["n"]) else [f"{path}.n: must be {expected}"]
+    kind = mark.get("type")
+    if kind not in ("comment", "strike", "note"):
+        return problems + [f"{path}.type: must be one of comment, strike, note"]
+    if not isinstance(mark.get("text"), str):
+        problems.append(f"{path}.text: must be a string")
+    elif not mark["text"] and kind != "strike":
+        problems.append(f"{path}.text: a {kind} needs text")
+    if kind == "note":
+        problems += [f"{path}.{name}: a note has none" for name in ("quote", "lines", "heading", "occurrence") if name in mark]
+    else:
+        problems += _anchor(mark, lines, path)
+    return problems + _attachments(mark, number, effort, path)
+
+
+def _readback_response(interaction: dict, body: dict, effort: Path) -> list[str]:
+    problems = _answers(body, interaction["decisions"], interaction["number"], effort)
+    verdict, marks = body.get("verdict"), body.get("marks")
+    if verdict not in ("approve", "changes"):
+        problems.append("verdict: must be approve or changes")
+    if body.get("version") != interaction["version"] or not _integer(body.get("version")):
+        problems.append(f"version: must be {interaction['version']}, the version shown")
+    if not isinstance(marks, list):
+        return problems + ["marks: required, a list"]
+    if verdict == "approve" and marks:
+        problems.append("marks: an approve carries none")
+    kept = effort / "pilot" / "versions" / interaction["artifact"] / f"{interaction['version']:03d}.md"
+    lines = len(kept.read_text().splitlines())
+    for index, mark in enumerate(marks):
+        problems += _mark(mark, index + 1, lines, interaction["number"], effort, f"marks[{index}]")
+    return problems
+
+
+def response_problems(interaction: dict, body: object, effort: Path) -> list[str]:
+    """Every way `body` fails the response contract for the stored `interaction`; empty when valid."""
+    if not isinstance(body, dict):
+        return ["body: must be a JSON object"]
+    if interaction["kind"] == "prototype":
+        return [f"kind: responses to a {interaction['kind']} are not accepted yet"]
+    if interaction["kind"] == "readback":
+        return _readback_response(interaction, body, effort)
+    return _answers(body, interaction["questions"], interaction["number"], effort)

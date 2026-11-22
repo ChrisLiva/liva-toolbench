@@ -97,6 +97,8 @@ def cmd_show(args: argparse.Namespace) -> int:
     if problems:
         return fail("\n".join(problems), 2)
     started = time.time()
+    if interaction["kind"] == "readback":
+        interaction = {**interaction, "version": store.keep_version(interaction["artifact"])}
     number = store.add_interaction(interaction)
     record = ensure_server(store)
     beat, bye = store.heartbeat()

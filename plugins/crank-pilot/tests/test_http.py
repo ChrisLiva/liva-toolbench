@@ -4,7 +4,7 @@ import json
 import threading
 import unittest
 
-from support import QUESTIONS, Client, Effort, EffortCase, show
+from support import QUESTIONS, READBACK, Client, Effort, EffortCase, show
 
 Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
 Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
@@ -14,6 +14,12 @@ Q2 = {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "att
 def send(client: Client, method: str, path: str, payload: object) -> tuple[int, object]:
     status, body, _ = client.request(method, path, json.dumps(payload).encode())
     return status, (json.loads(body) if body else None)
+
+SPEC = "# Spec\n\n## Criteria\n\nFollows the OS within one second.\n"
+COMMENT = {"n": 1, "type": "comment", "text": "Why a second?", "quote": "within one second", "lines": [5, 5],
+           "heading": "Criteria", "occurrence": 1, "attachments": []}
+NOTE = {"n": 2, "type": "note", "text": "Add a shortcut criterion.", "attachments": []}
+CHANGES = {"verdict": "changes", "version": 1, "answers": [], "marks": [COMMENT, NOTE]}
 
 
 class HttpCase(EffortCase):
@@ -101,6 +107,60 @@ class InvalidResponseTest(HttpCase):
         self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, {**own_text, "accepted": True}]})[0], 400)
         self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, own_text]})[0], 201)
         self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"][1], own_text)
+
+
+class ReadbackHttpCase(HttpCase):
+    def readback(self, interaction: dict = READBACK) -> tuple[Effort, Client]:
+        """An effort whose pending interaction 1 is a readback of the 5-line spec, kept as version 1."""
+        effort = self.effort()
+        effort.write("spec.md", SPEC)
+        show(effort, interaction)
+        return effort, Client(effort)
+
+
+class InvalidReadbackResponseTest(ReadbackHttpCase):
+    def test_a_readback_response_that_fails_validation_gets_400_and_writes_nothing(self):
+        effort, client = self.readback()
+        strike = {**COMMENT, "type": "strike", "text": ""}
+        cases = {
+            "verdict not offered": {**CHANGES, "verdict": "maybe"},
+            "version not the one shown": {**CHANGES, "version": 9},
+            "approve with marks": {**CHANGES, "verdict": "approve"},
+            "mark type not offered": {**CHANGES, "marks": [{**COMMENT, "type": "highlight"}, NOTE]},
+            "comment without text": {**CHANGES, "marks": [{**COMMENT, "text": ""}, NOTE]},
+            "strike without quote": {**CHANGES, "marks": [{k: v for k, v in strike.items() if k != "quote"}, NOTE]},
+            "lines start at zero": {**CHANGES, "marks": [{**COMMENT, "lines": [0, 1]}, NOTE]},
+            "lines run backwards": {**CHANGES, "marks": [{**COMMENT, "lines": [5, 4]}, NOTE]},
+            "lines past the version": {**CHANGES, "marks": [{**COMMENT, "lines": [5, 99]}, NOTE]},
+            "occurrence below one": {**CHANGES, "marks": [{**COMMENT, "occurrence": 0}, NOTE]},
+            "marks numbered with a gap": {**CHANGES, "marks": [COMMENT, {**NOTE, "n": 3}]},
+            "note carrying a quote": {**CHANGES, "marks": [COMMENT, {**NOTE, "quote": "within one second"}]},
+        }
+        for name, body in cases.items():
+            with self.subTest(name):
+                status, reply = send(client, "POST", "/api/response/1", body)
+                self.assertEqual(status, 400)
+                self.assertTrue(reply["problems"])
+                self.assertFalse(self.response_file(effort).exists())
+        self.assertEqual(send(client, "POST", "/api/response/1", CHANGES)[0], 201)
+
+
+class ReadbackAcceptedTest(ReadbackHttpCase):
+    def test_a_strike_needs_no_text(self):
+        effort, client = self.readback()
+        strike = {**COMMENT, "type": "strike", "text": ""}
+        self.assertEqual(send(client, "POST", "/api/response/1", {**CHANGES, "marks": [strike]})[0], 201)
+        self.assertEqual(json.loads(self.response_file(effort).read_text())["marks"], [strike])
+
+    def test_an_approve_with_empty_marks_answers_an_open_decision_as_a_question_does(self):
+        effort, client = self.readback({**READBACK, "decisions": [QUESTIONS["questions"][0]]})
+        q1 = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
+        approve = {"verdict": "approve", "version": 1, "answers": [q1], "marks": []}
+        self.assertEqual(send(client, "POST", "/api/response/1", {**approve, "answers": []})[0], 400)
+        self.assertEqual(send(client, "POST", "/api/response/1", {**approve, "answers": [{**q1, "accepted": False}]})[0], 400)
+        self.assertFalse(self.response_file(effort).exists())
+        self.assertEqual(send(client, "POST", "/api/response/1", approve)[0], 201)
+        self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"], [q1])
 
 
 class DraftTest(HttpCase):

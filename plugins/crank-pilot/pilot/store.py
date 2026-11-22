@@ -6,7 +6,7 @@ import re
 import tempfile
 from pathlib import Path
 
-NUMBER = re.compile(r"(?P<n>\d{3})\.json")
+NUMBER = re.compile(r"(?P<n>\d{3})\.(?P<suffix>json|md)")
 
 
 def scaled(seconds: float) -> float:
@@ -69,6 +69,32 @@ class Store:
         write_atomic(self.interactions / f"{number:03d}.json", stored)
         return number
 
+    def keep_version(self, artifact: str) -> int:
+        """The kept-version number of the effort's `artifact`: the latest copy's when its text is identical, else a new copy's."""
+        text = (self.effort / artifact).read_bytes()
+        directory = self.versions / artifact
+        directory.mkdir(parents=True, exist_ok=True)
+        latest = max(self.kept_versions(artifact), default=0)
+        if latest and (directory / f"{latest:03d}.md").read_bytes() == text:
+            return latest
+        write_atomic(directory / f"{latest + 1:03d}.md", text)
+        return latest + 1
+
+    def kept_versions(self, artifact: str) -> list[int]:
+        """The numbers of the kept versions of `artifact`, ascending."""
+        return sorted(self._numbers(self.versions / artifact, "md"))
+
+    def prior(self, number: int) -> dict | None:
+        """The version and marks of the latest earlier `changes` response for the same artifact as interaction `number`."""
+        artifact = self.interaction(number).get("artifact")
+        for earlier in sorted(self._numbers(self.interactions), reverse=True):
+            if earlier >= number or self.interaction(earlier).get("artifact") != artifact:
+                continue
+            response = self.response(earlier)
+            if response and response.get("verdict") == "changes":
+                return {"version": response["version"], "marks": response["marks"]}
+        return None
+
     def interaction(self, number: int) -> dict:
         return json.loads((self.interactions / f"{number:03d}.json").read_text())
 
@@ -122,8 +148,8 @@ class Store:
             return 0.0, False
 
     @staticmethod
-    def _numbers(directory: Path) -> list[int]:
+    def _numbers(directory: Path, suffix: str = "json") -> list[int]:
         if not directory.is_dir():
             return []
         matches = (NUMBER.fullmatch(entry.name) for entry in directory.iterdir())
-        return [int(match["n"]) for match in matches if match]
+        return [int(match["n"]) for match in matches if match and match["suffix"] == suffix]

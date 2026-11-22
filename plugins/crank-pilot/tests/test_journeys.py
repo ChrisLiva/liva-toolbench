@@ -8,7 +8,7 @@ import stat
 import time
 import unittest
 
-from support import PLUGIN, QUESTIONS, Client, EffortCase, show
+from support import PLUGIN, QUESTIONS, READBACK, Client, EffortCase, show
 
 
 def non_loopback_address() -> str | None:
@@ -91,6 +91,77 @@ class QuestionRoundJourneyTest(EffortCase):
         done = effort.run("wait", effort.path)
         self.assertEqual((done.returncode, done.stdout, done.stderr),
                          (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
+
+
+SPEC = "# Spec\n\n## Criteria\n\nFollows the OS within one second.\n"
+MARKS = [
+    {"n": 1, "type": "comment", "text": "Why a second?", "quote": "within one second", "lines": [5, 5],
+     "heading": "Criteria", "occurrence": 1, "attachments": []},
+    {"n": 2, "type": "note", "text": "Add a shortcut criterion.", "attachments": []},
+]
+
+
+class ReadbackVersionsJourneyTest(EffortCase):
+    def test_a_revision_keeps_a_second_version_and_serves_the_marks_that_asked_for_it(self):
+        effort = self.effort()
+        spec = effort.write("spec.md", SPEC)
+        kept = effort.path / "pilot" / "versions" / "spec.md"
+        stored = lambda n: json.loads((effort.path / "pilot" / "interactions" / f"{n:03d}.json").read_text())
+        self.assertEqual(show(effort, READBACK), 1)
+        client = Client(effort)
+        self.assertEqual((kept / "001.md").read_text(), SPEC)
+        self.assertEqual(stored(1)["version"], 1)
+        state = client.state()
+        self.assertEqual((state["versions"], state["prior"]), ([1], None))
+        self.assertEqual(show(effort, READBACK), 2)
+        self.assertEqual(sorted(p.name for p in kept.iterdir()), ["001.md"])
+        self.assertEqual(stored(2)["version"], 1)
+        body = {"verdict": "changes", "version": 1, "answers": [], "marks": MARKS}
+        status, _, _ = client.request("POST", "/api/response/2", json.dumps(body).encode())
+        self.assertEqual(status, 201)
+        revised = SPEC.replace("within one second", "at once")
+        spec.write_text(revised)
+        self.assertEqual(show(effort, READBACK), 3)
+        self.assertEqual((kept / "002.md").read_text(), revised)
+        self.assertEqual(stored(3)["version"], 2)
+        state = client.state()
+        self.assertEqual(state["versions"], [1, 2])
+        self.assertEqual(state["prior"], {"version": 1, "marks": MARKS})
+
+    def test_versions_are_numbered_per_artifact_file_name(self):
+        effort = self.effort()
+        effort.write("spec.md", SPEC)
+        effort.write("plan.md", "# Plan\n")
+        self.assertEqual(show(effort, READBACK), 1)
+        self.assertEqual(show(effort, {**READBACK, "artifact": "plan.md"}), 2)
+        client = Client(effort)
+        versions = effort.path / "pilot" / "versions"
+        self.assertEqual((versions / "plan.md" / "001.md").read_text(), "# Plan\n")
+        self.assertEqual(sorted(p.name for p in (versions / "spec.md").iterdir()), ["001.md"])
+        state = client.state()
+        self.assertEqual((state["versions"], state["prior"]), ([1], None))
+
+    def test_prior_is_the_latest_changes_response_for_the_same_artifact(self):
+        effort = self.effort()
+        effort.write("spec.md", SPEC)
+        effort.write("plan.md", "# Plan\n")
+        plan = {**READBACK, "artifact": "plan.md"}
+        self.assertEqual(show(effort, READBACK), 1)
+        client = Client(effort)
+
+        def respond(n: int, verdict: str, marks: list[dict]) -> None:
+            body = {"verdict": verdict, "version": 1, "answers": [], "marks": marks}
+            self.assertEqual(client.request("POST", f"/api/response/{n}", json.dumps(body).encode())[0], 201)
+
+        respond(1, "changes", MARKS)
+        self.assertIsNone(client.state()["prior"])
+        self.assertEqual(show(effort, plan), 2)
+        respond(2, "changes", [{**MARKS[1], "n": 1}])
+        self.assertEqual(show(effort, READBACK), 3)
+        self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})
+        respond(3, "approve", [])
+        self.assertEqual(show(effort, READBACK), 4)
+        self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})
 
 
 if __name__ == "__main__":

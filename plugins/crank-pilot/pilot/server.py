@@ -49,10 +49,12 @@ class Handler(BaseHTTPRequestHandler):
         latest = store.latest()
         response = store.response(latest) if latest else None
         draft = store.draft(latest) if latest and response is None else None
-        return {"ended": False, "effort": store.effort.name,
-                "interaction": store.interaction(latest) if latest else None,
-                "response": {"via": response["via"]} if response else None,
-                "draft": draft, "versions": [], "prior": None}
+        interaction = store.interaction(latest) if latest else None
+        readback = interaction is not None and interaction["kind"] == "readback"
+        return {"ended": False, "effort": store.effort.name, "interaction": interaction,
+                "response": {"via": response["via"]} if response else None, "draft": draft,
+                "versions": store.kept_versions(interaction["artifact"]) if readback else [],
+                "prior": store.prior(latest) if readback else None}
 
     def require_pending(self, n: int) -> bool:
         """True when `n` is the pending interaction; otherwise answer 409 and return False."""
