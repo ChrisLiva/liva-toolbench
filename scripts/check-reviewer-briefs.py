@@ -123,13 +123,15 @@ PRESENCE_LITERALS = {
     "plugins/crank/skills/crank/SKILL.md": ["](MERGE-BRIEF.md)", "one stage or no Stages table", "](PILOT.md)"],
     "plugins/crank/skills/crank/PLAN-TEMPLATE.md": ["\nPrototype: <"],
     "plugins/crank/skills/crank/SPEC.md": ["Cite what you assert", "](PROTOTYPE.md)", "](PILOT.md)"],
-    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "one heavy-tier reviewer"],
+    "plugins/crank-lite/skills/crank-lite/PLAN.md": ["long plan", "](PROTOTYPE.md)", "](PLAN-REVIEW-BRIEF.md)", "one heavy-tier reviewer", "](PILOT.md)"],
+    "plugins/crank-lite/skills/crank-lite/SKILL.md": ["](PILOT.md)"],
     "plugins/crank/skills/crank/BRAINSTORM.md": ["](PROTOTYPE.md)", "](PILOT.md)"],
     # each plugin's interview protocol is the one hook that makes a phase keep the glossary and ADRs
     "plugins/crank/skills/crank/GRILLING.md": ["](DOMAIN-DOCS.md)"],
     "plugins/crank-lite/skills/crank-lite/INTERVIEW.md": ["](DOMAIN-DOCS.md)"],
     "plugins/crank-lite/skills/crank-lite/SPEC.md": [
         "](PROTOTYPE.md)",
+        "](PILOT.md)",
         # per project decision: crank-lite-slim's eval would pass this step's removal, so the gate holds it byte for byte
         "4. **Before closing the interview, walk the failure catalogue**, settling each item by a fact lookup, a policy question, or an acceptance criterion:\n"
         "   - absence;\n"
@@ -140,9 +142,9 @@ PRESENCE_LITERALS = {
         "   - interruption (concurrent callers, retry after partial failure, crash midway);\n"
         "   - trust boundary (who may call, what is validated, which access checks ownership).\n",
     ],
-    "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)"],
+    "plugins/crank-lite/skills/crank-lite/BRAINSTORM.md": ["](PROTOTYPE.md)", "](PILOT.md)"],
     "plugins/crank/skills/crank/PROTOTYPE.md": ["until the plan's execution finishes", "](PILOT.md)"],
-    "plugins/crank-lite/skills/crank-lite/PROTOTYPE.md": ["until the plan's execution finishes"],
+    "plugins/crank-lite/skills/crank-lite/PROTOTYPE.md": ["until the plan's execution finishes", "](PILOT.md)"],
     "plugins/crank/skills/crank/ARTIFACT-HOME.md": ["until the plan's execution finishes"],
     # crank-health's steps run its bundled scanner; a rewrite that drops a command strands the script
     "plugins/crank/skills/crank-health/SKILL.md": [

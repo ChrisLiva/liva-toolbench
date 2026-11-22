@@ -10,7 +10,7 @@ Interview the user at a high level about every aspect of their idea — every se
    - for an existing project, how the idea fits the current code and how much that code has to change to take it.
 
    If the agenda comes out empty, meaning every decision you can name has one defensible answer, say so, list what you considered and why each is settled, and recommend jumping straight to the spec phase.
-3. **Walk the agenda in rounds**, at a high level, until it and the frontier are both empty. Keep the agenda live: add decisions as answers surface them, strike ones they moot.
+3. **Walk the agenda in rounds**, at a high level, until it and the frontier are both empty. Keep the agenda live: add decisions as answers surface them, strike ones they moot. When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, put each round on the page per [PILOT.md](PILOT.md).
 
 When a question is experiential, about how something should look, behave, or read, offer a mock to react to instead of another prose question: a sketch, a sample output, a single self-contained HTML file the user double-clicks when the behavior is the question, or 3 to 5 variants behind one switcher when the look is the question. On a yes to variants, read [PROTOTYPE.md](PROTOTYPE.md) and follow it. Write any mock file under `.crank/<slug>/` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), and keep it on disk until the plan's execution finishes.
 

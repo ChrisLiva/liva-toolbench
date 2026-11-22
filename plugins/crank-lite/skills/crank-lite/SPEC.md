@@ -14,6 +14,7 @@ Resolve the key technical decisions: data structures, interfaces/seams, test met
    - Apply the design rules below as each module comes up.
    - Settle the test methodology as a minimalist: every test the spec calls for pins a distinct observable behavior through a **seam** and passes the **rewrite test**; acceptance criteria along one workflow share one **journey test**.
    - When a round would ask a layout, hierarchy, or interaction question with more than one defensible answer about a page, screen, component, CLI output, flags, help text, or TUI the change adds or reshapes, lead that round with a prototype offer, 3 to 5 variants behind one switcher, in place of the question, once per effort. When `.crank/<slug>/prototype/` already holds files, offer to reopen them in place of a build. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it, and its verdict replaces those questions. On a no, record `Prototype: declined` among the key technical decisions.
+   - When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, put each round on the page per [PILOT.md](PILOT.md).
 4. **Before closing the interview, walk the failure catalogue**, settling each item by a fact lookup, a policy question, or an acceptance criterion:
    - absence;
    - permission family (which sibling failures get the same treatment — EPERM beside EACCES);

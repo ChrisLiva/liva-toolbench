@@ -51,7 +51,7 @@ Return the paths you wrote and one sentence per variant on its structure.
 
 ## 3. Hand over
 
-Give the user the path and the run command: double-click `index.html`, `go run ./.crank/<slug>/prototype`, or the project's equivalent. Do not open the prototype yourself.
+Give the user the path and the run command: double-click `index.html`, `go run ./.crank/<slug>/prototype`, or the project's equivalent. Do not open the prototype yourself. When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, and the rung wrote HTML variant files, hand the variants over as a prototype review per [PILOT.md](PILOT.md) in place of the path and run command, and take step 4's verdict from its response.
 
 ## 4. Verdict
 
