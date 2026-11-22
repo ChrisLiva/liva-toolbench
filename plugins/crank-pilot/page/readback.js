@@ -1,7 +1,8 @@
 import { getFile } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
 import { el, mac, mountQuestions } from "/page/questions.js";
-import { canSendChanges, diffBlocks, headingAbove, numberMarks, occurrenceOf, readbackResponse, refusalMessage, roundRefusal, unansweredOwn } from "/page/model.js";
+import { attachedCount, canSendChanges, diffBlocks, headingAbove, numberMarks, occurrenceOf, readbackResponse, refusalMessage, roundRefusal, unansweredOwn } from "/page/model.js";
+import { BUSY, attaching, discardImages, holderControl } from "/page/attach.js";
 
 const DRAFT_MS = 1000;
 const HINT = "Select text, or focus a block and press Enter, to comment on it or strike it.";
@@ -73,7 +74,7 @@ let live = null;
 
 export const surface = {
   mount(stage, state, ctx) {
-    const { title, artifact, version, lead, judgment_calls: calls, review_landed: landed, edits, decisions } = state.interaction;
+    const { number, title, artifact, version, lead, judgment_calls: calls, review_landed: landed, edits, decisions } = state.interaction;
     const known = Array.isArray(state.versions) && state.versions.length ? state.versions : [version];
     const prior = state.prior && typeof state.prior === "object" ? state.prior : null;
     // A revision: the version on offer is not the one the user last marked up.
@@ -93,6 +94,8 @@ export const surface = {
     let alive = true;
     let timer = null;
     let requested = 0;
+    // One attach control per mark, kept across the ledger's redraws (see `holderControl`).
+    const controls = new Map();
     const hashed = Number(new URLSearchParams(location.hash.slice(1)).get("version"));
     let shown = known.includes(hashed) ? hashed : version;
     const older = () => shown !== version;
@@ -111,11 +114,17 @@ export const surface = {
     if (decisions.length) {
       const open = el("div", { class: "decisions" }, el("p", { class: "l" }, `Open decisions ${decisions.length}`));
       reading.append(open);
-      ui = mountQuestions(open, decisions, draft.form, () => {
-        refreshButtons();
-        err.textContent = "";
-        saveSoon();
-      });
+      ui = mountQuestions(
+        open,
+        decisions,
+        draft.form,
+        () => {
+          refreshButtons();
+          err.textContent = "";
+          saveSoon();
+        },
+        { interaction: number, others: () => attachedCount(marks) },
+      );
     }
     const removedBox = el("div", { class: "removed", hidden: "" });
     reading.append(hint, removedBox, art, pop);
@@ -434,8 +443,21 @@ export const surface = {
       const item = el(m.type === "note" && !done ? "li" : "div", { class: "note", ...(done ? {} : { "data-id": String(m.id) }) }, el("p", { class: "l nh" }, el("span", {}, `${pad(m.n)} ${LABEL[m.type]}${done ? " · Addressed" : ""}`), acts));
       if (m.type !== "note") item.append(el("p", { class: m.type === "strike" ? "q s" : "q" }, `“${m.quote}”`));
       if (m.type !== "strike") item.append(!done && editing === m.id ? editor(m) : el("p", { class: "t" }, m.text));
+      if (!done) holderControl(controls, m.id, item, attachOptions(m.id));
       return item;
     }
+
+    const markOf = (id) => marks.find((m) => m.id === id);
+    const attachOptions = (id) => ({
+      interaction: number,
+      paths: markOf(id).attachments,
+      count: () => attachedCount(marks) + attachedCount(Object.values(form())),
+      onChange(next) {
+        markOf(id).attachments = next;
+        saveSoon();
+        layout();
+      },
+    });
 
     function editor(m) {
       const mark = marks.find((x) => x.id === m.id);
@@ -468,9 +490,20 @@ export const surface = {
       return input;
     }
 
-    function removeMark(id) {
+    async function removeMark(id) {
+      if (!markOf(id)) return;
+      if (attaching()) {
+        err.textContent = BUSY;
+        return;
+      }
+      // A mark leaves with its images, so the page and the server keep the same count.
+      if (!(await discardImages(number, markOf(id).attachments))) {
+        err.textContent = "Could not remove that mark's images. Try again.";
+        return;
+      }
       const index = marks.findIndex((m) => m.id === id);
       if (index < 0) return;
+      controls.delete(id);
       closePop(false);
       unwrap(id);
       marks.splice(index, 1);
@@ -557,6 +590,10 @@ export const surface = {
 
     async function submit(verdict) {
       closeConfirm();
+      if (attaching()) {
+        err.textContent = BUSY;
+        return;
+      }
       sending = true;
       err.textContent = "";
       refreshButtons();

@@ -1,6 +1,37 @@
 // The question round's data rules. No DOM here: every function takes questions and a form and returns data.
 // A form is {[questionId]: {choice: <option id> | "own" | null, text, note, attachments}}.
 
+// Attachments. The server stores only the four types sniffImage names and at most ten images per response.
+export const MAX_IMAGES = 10;
+export const MAX_BYTES = 10 * 1024 * 1024;
+export const ATTACH_MESSAGES = {
+  type: "Only PNG, JPEG, GIF, WebP images can be attached.",
+  size: "That image is over 10 MiB.",
+  count: `A response can carry at most ${MAX_IMAGES} images.`,
+};
+
+const startsWith = (bytes, signature, at = 0) => signature.every((byte, i) => bytes[at + i] === byte);
+const ascii = (text) => [...text].map((c) => c.charCodeAt(0));
+
+// The image type a file's leading bytes name, or null: a name, a MIME type, and an SVG's markup are not evidence.
+export function sniffImage(bytes) {
+  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return "png";
+  if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "jpg";
+  if (startsWith(bytes, ascii("GIF87a")) || startsWith(bytes, ascii("GIF89a"))) return "gif";
+  if (startsWith(bytes, ascii("RIFF")) && startsWith(bytes, ascii("WEBP"), 8)) return "webp";
+  return null;
+}
+
+export function attachRefusal({ kind, size, count }) {
+  if (kind === null) return ATTACH_MESSAGES.type;
+  if (size > MAX_BYTES) return ATTACH_MESSAGES.size;
+  if (count >= MAX_IMAGES) return ATTACH_MESSAGES.count;
+  return null;
+}
+
+// The images attached to every holder (a form's entries, marks, a verdict and its pins) on one response.
+export const attachedCount = (...holders) => holders.flat().reduce((total, holder) => total + holder.attachments.length, 0);
+
 const hasOptions = (question) => Array.isArray(question.options) && question.options.length > 0;
 const strings = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === "string") : []);
 

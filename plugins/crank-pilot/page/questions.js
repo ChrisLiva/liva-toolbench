@@ -1,5 +1,6 @@
 import { renderMarkdown } from "/page/render.js";
-import { answersFor, differCount, formFrom, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
+import { answersFor, attachedCount, differCount, formFrom, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
+import { BUSY, attaching, mountAttach } from "/page/attach.js";
 
 const OWN = "own";
 const DRAFT_MS = 1000;
@@ -22,7 +23,8 @@ function markdown(source, into) {
 const hasOptions = (q) => Array.isArray(q.options) && q.options.length > 0;
 
 // Draws the questions into `root` and keeps their form; `onChange(form)` runs after every change the user makes.
-export function mountQuestions(root, questions, initial, onChange) {
+// `attach` names the interaction the images belong to and `others()`, how many images the response carries outside this form.
+export function mountQuestions(root, questions, initial, onChange, { interaction, others = () => 0 }) {
   let state = formFrom(questions, initial);
   const parts = new Map();
   const round = el("div", { class: "round" });
@@ -57,7 +59,18 @@ export function mountQuestions(root, questions, initial, onChange) {
       set.append(el("label", { class: "field" }, el("span", { class: "l" }, "Your answer"), part.text));
     }
     part.note = el("input", { type: "text", placeholder: "Anything the agent should know" });
-    set.append(el("div", { class: "qx" }, el("label", { class: "field" }, el("span", { class: "l" }, "Note (optional)"), part.note)));
+    const extras = el("div", { class: "qx" }, el("label", { class: "field" }, el("span", { class: "l" }, "Note (optional)"), part.note));
+    part.attach = mountAttach(extras, {
+      interaction,
+      paths: state[q.id].attachments,
+      count: () => attachedCount(Object.values(state)) + others(),
+      onChange: (next) => {
+        state[q.id].attachments = next;
+        emit();
+      },
+      zone: set,
+    });
+    set.append(extras);
 
     part.radios.forEach((radio, choice) => {
       radio.addEventListener("change", () => {
@@ -96,6 +109,7 @@ export function mountQuestions(root, questions, initial, onChange) {
       for (const [choice, radio] of part.radios) radio.defaultChecked = radio.checked = choice === entry.choice;
       part.text.value = entry.text;
       part.note.value = entry.note;
+      part.attach.set(entry.attachments);
     }
   }
   paint();
@@ -169,7 +183,7 @@ export const surface = {
       clearTimeout(timer);
       timer = setTimeout(saveNow, DRAFT_MS);
     };
-    const ui = mountQuestions(stage.querySelector("#reading"), questions, state.draft, changed);
+    const ui = mountQuestions(stage.querySelector("#reading"), questions, state.draft, changed, { interaction: state.interaction.number });
     refresh(ui.form());
 
     accept.addEventListener("click", () => ui.setForm(recommendedForm(questions, ui.form())));
@@ -179,6 +193,10 @@ export const surface = {
       if (open) {
         err.textContent = refusalMessage(open.title);
         ui.focusQuestion(open.id);
+        return;
+      }
+      if (attaching()) {
+        err.textContent = BUSY;
         return;
       }
       err.textContent = "";

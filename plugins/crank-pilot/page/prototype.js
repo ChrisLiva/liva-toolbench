@@ -1,7 +1,8 @@
 import { getFile } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
 import { el, mac } from "/page/questions.js";
-import { numberPins, prototypeFrom, prototypeResponse, verdictRefusal } from "/page/model.js";
+import { attachedCount, numberPins, prototypeFrom, prototypeResponse, verdictRefusal } from "/page/model.js";
+import { BUSY, attaching, holderControl, mountAttach } from "/page/attach.js";
 
 const DRAFT_MS = 1000;
 const LEADING = 80;
@@ -27,7 +28,7 @@ let live = null;
 
 export const surface = {
   mount(stage, state, ctx) {
-    const { question, variants } = state.interaction;
+    const { number, question, variants } = state.interaction;
     let { verdict, pins } = prototypeFrom(variants, state.draft);
     let index = Math.max(0, variants.findIndex((v) => v.key === hashKey()));
     let picking = false;
@@ -36,6 +37,9 @@ export const surface = {
     let alive = true;
     let timer = null;
     const texts = new Map();
+    // One attach control per pin, kept across the list's redraws (see `holderControl`).
+    const controls = new Map();
+    const count = () => attachedCount(verdict, pins);
 
     const prev = el("button", { type: "button" }, "Previous");
     const next = el("button", { type: "button" }, "Next");
@@ -76,12 +80,22 @@ export const surface = {
       return el("label", { class: "field" }, el("span", { class: "l" }, title), input);
     };
     const send = el("button", { type: "button", class: "go", "aria-keyshortcuts": "Control+Enter Meta+Enter" }, "Send verdict");
+    const foot = el("div", { class: "lfoot vfoot" }, win, area("take", "What to take from the others"), area("leave_out", "What to leave out"));
+    mountAttach(foot, {
+      interaction: number,
+      paths: verdict.attachments,
+      count,
+      onChange(next) {
+        verdict.attachments = next;
+        changed();
+      },
+    });
     stage.querySelector("#ledger").append(
       el("p", { class: "l" }, "Variant"),
       big,
       sub,
       list,
-      el("div", { class: "lfoot vfoot" }, win, area("take", "What to take from the others"), area("leave_out", "What to leave out")),
+      foot,
       err,
       el("div", { class: "lact" }, el("div", { class: "ar" }, send, el("kbd", {}, mac ? "⌘↵" : "Ctrl+Enter"))),
     );
@@ -100,9 +114,19 @@ export const surface = {
     function paintPins() {
       sub.textContent = `of ${variants.length} variants · ${pins.length} pinned comment${pins.length === 1 ? "" : "s"}`;
       list.replaceChildren(
-        ...numberPins(pins).map((pin) =>
-          el("li", {}, el("span", { class: "l" }, `Variant ${pin.variant} · Pin ${pin.n}`), el("span", { class: "pt" }, pin.text), el("span", { class: "sel" }, pin.selector)),
-        ),
+        ...numberPins(pins).map((pin, i) => {
+          const item = el("li", {}, el("span", { class: "l" }, `Variant ${pin.variant} · Pin ${pin.n}`), el("span", { class: "pt" }, pin.text), el("span", { class: "sel" }, pin.selector));
+          holderControl(controls, i, item, {
+            interaction: number,
+            paths: pins[i].attachments,
+            count,
+            onChange(next) {
+              pins[i].attachments = next;
+              changed();
+            },
+          });
+          return item;
+        }),
       );
     }
 
@@ -197,6 +221,10 @@ export const surface = {
       if (refusal) {
         err.textContent = refusal;
         win.querySelector("input").focus();
+        return;
+      }
+      if (attaching()) {
+        err.textContent = BUSY;
         return;
       }
       err.textContent = "";

@@ -192,3 +192,16 @@ fieldset.win legend { padding: 0; margin-bottom: 2px; }
 .win label { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--rule); font-size: 15px; }
 .win input { width: 18px; height: 18px; margin: 0; accent-color: var(--ink); flex: none; }
 textarea { font: 400 15px/22px var(--sans); width: 100%; color: var(--ink); background: transparent; border: 1px solid var(--ink); border-radius: 0; padding: 6px; resize: vertical; }
+
+.att { max-width: 560px; }
+.atp { display: inline-flex; position: relative; cursor: pointer; margin: 4px 0; }
+.atp input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.atp .bt { font: 600 14px/20px var(--sans); text-decoration: underline; text-underline-offset: 3px; }
+.atp:hover .bt { text-decoration-thickness: 2px; }
+.atp:focus-within .bt { outline: 2px solid var(--ink); outline-offset: 3px; }
+.attlist:empty { display: none; }
+.attlist li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--rule); }
+.attlist .fn { font: 500 12px/16px var(--mono); overflow-wrap: anywhere; }
+.attlist button { font-size: 14px; line-height: 20px; padding: 2px 8px; border-width: 1px; }
+.att .err { margin-top: 4px; }
+.drop { outline: 2px solid var(--accent); outline-offset: 4px; }
