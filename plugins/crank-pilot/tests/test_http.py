@@ -1,10 +1,13 @@
 """The HTTP seam: what the server answers a page that drafts and submits a round."""
 
 import json
+import shutil
+import tempfile
 import threading
 import unittest
+from pathlib import Path
 
-from support import PROTOTYPE, QUESTIONS, READBACK, Client, Effort, EffortCase, show
+from support import PLUGIN, PROTOTYPE, QUESTIONS, READBACK, Client, Effort, EffortCase, show
 
 Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
 Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
@@ -248,6 +251,23 @@ class ContentTypeTest(HttpCase):
                 self.assertEqual((status, headers["Content-Type"]), (200, expected[name]))
         _, _, headers = client.request("GET", "/page/index.html", token=False)
         self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
+
+
+class PageTypeTest(HttpCase):
+    def test_a_page_stylesheet_and_script_are_typed_by_their_extension(self):
+        copy = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, copy, ignore_errors=True)
+        for part in ("bin", "pilot", "page"):
+            shutil.copytree(PLUGIN / part, copy / part, ignore=shutil.ignore_patterns("__pycache__"))
+        (copy / "page" / "x.css").write_text("p{}")
+        (copy / "page" / "x.js").write_text("1")
+        effort = self.effort(copy / "bin" / "crank-pilot")
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        for name, expected in {"x.css": "text/css; charset=utf-8", "x.js": "text/javascript; charset=utf-8"}.items():
+            with self.subTest(name):
+                status, _, headers = client.request("GET", f"/page/{name}", token=False)
+                self.assertEqual((status, headers["Content-Type"]), (200, expected))
 
 
 class DraftTest(HttpCase):
