@@ -7,6 +7,7 @@ import os
 import signal
 import subprocess
 import tempfile
+import threading
 import time
 import unittest
 from pathlib import Path
@@ -393,6 +394,114 @@ class WaitSuspendTest(EffortCase):
         out, err = process.communicate(timeout=5)
         self.assertEqual((process.returncode, out, err.strip()), (4, "", "page closed"))
         self.assertGreater(time.time() - resumed, 0.85)
+
+
+RESPONSE_KEYS = ["interaction", "kind", "submitted_at", "via"]
+RACE_DELAYS = [0.02 + 0.005 * step for step in range(10)]
+
+
+def response_file(effort, number: int = 1) -> Path:
+    return effort.path / "pilot" / "responses" / f"{number:03d}.json"
+
+
+class SupersedeTest(EffortCase):
+    def test_a_new_show_closes_the_pending_interaction_as_superseded_and_moves_the_state_on(self):
+        effort = self.effort()
+        self.assertEqual(show(effort, QUESTIONS), 1)
+        client = Client(effort)
+        self.assertEqual(show(effort, QUESTIONS), 2)
+        saved = json.loads(response_file(effort).read_text())
+        self.assertEqual(sorted(saved), RESPONSE_KEYS)
+        self.assertEqual((saved["via"], saved["interaction"], saved["kind"]), ("superseded", 1, "questions"))
+        state = client.state()
+        self.assertEqual((state["interaction"]["number"], state["response"]), (2, None))
+        self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 409)
+
+
+class ResolveChatTest(EffortCase):
+    def test_resolve_chat_writes_a_chat_response_for_the_pending_interaction(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        done = effort.run("resolve", effort.path, "--chat")
+        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
+        saved = json.loads(response_file(effort).read_text())
+        self.assertEqual(sorted(saved), RESPONSE_KEYS)
+        self.assertEqual((saved["via"], saved["interaction"], saved["kind"]), ("chat", 1, "questions"))
+        self.assertEqual(client.state()["response"], {"via": "chat"})
+
+    def test_a_running_wait_exits_0_with_the_chat_response_path(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        with client.beating():
+            process = effort.spawn("wait", effort.path)
+            time.sleep(0.2)
+            self.assertIsNone(process.poll())
+            self.assertEqual(effort.run("resolve", effort.path, "--chat").returncode, 0)
+            out, err = process.communicate(timeout=5)
+        self.assertEqual((process.returncode, out, err), (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
+
+    def test_resolve_chat_never_replaces_an_existing_response_and_needs_the_flag(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
+        before = response_file(effort).read_bytes()
+        done = effort.run("resolve", effort.path, "--chat")
+        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (2, "", "nothing pending"))
+        self.assertEqual(response_file(effort).read_bytes(), before)
+        done = effort.run("resolve", effort.path)
+        self.assertEqual(done.returncode, 2)
+        self.assertIn("usage", done.stderr)
+        self.assertEqual(response_file(effort).read_bytes(), before)
+
+
+class ResolveRaceTest(EffortCase):
+    def race(self, effort, client, *argv, delay: float):
+        """Start the command, post a valid response `delay` seconds later; the post's status and the finished command."""
+        process = effort.spawn(*argv)
+        posted = []
+
+        def post() -> None:
+            time.sleep(delay)
+            posted.append(client.request("POST", "/api/response/1", ANSWERS)[0])
+
+        thread = threading.Thread(target=post)
+        thread.start()
+        out, err = process.communicate(timeout=10)
+        thread.join()
+        return posted[0], process.returncode, out, err
+
+    def test_resolve_chat_and_a_page_submission_leave_one_response_and_one_winner(self):
+        for delay in RACE_DELAYS:
+            with self.subTest(delay=delay):
+                effort = self.effort()
+                show(effort, QUESTIONS)
+                client = Client(effort)
+                status, code, _, err = self.race(effort, client, "resolve", effort.path, "--chat", delay=delay)
+                self.assertIn((status, code), ((201, 2), (409, 0)), err)
+                saved = json.loads(response_file(effort).read_text())
+                self.assertEqual(saved["via"], "page" if status == 201 else "chat")
+                self.assertEqual(len(list(response_file(effort).parent.glob("*.json"))), 1)
+
+    def test_show_treats_a_lost_supersede_race_as_an_answered_interaction(self):
+        for delay in RACE_DELAYS:
+            with self.subTest(delay=delay):
+                effort = self.effort()
+                show(effort, QUESTIONS)
+                client = Client(effort)
+                source = effort.write("second.json", json.dumps(QUESTIONS))
+                status, code, out, err = self.race(effort, client, "show", effort.path, source, delay=delay)
+                self.assertEqual((code, out.strip()), (0, "2"), err)
+                self.assertTrue((effort.path / "pilot" / "interactions" / "002.json").exists())
+                self.assertEqual(len(list(response_file(effort).parent.glob("*.json"))), 1)
+                saved = json.loads(response_file(effort).read_text())
+                if saved["via"] == "page":
+                    self.assertEqual(saved["answers"], json.loads(ANSWERS)["answers"])
+                    self.assertEqual(status, 201)
+                else:
+                    self.assertEqual((saved["via"], status), ("superseded", 409))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import sys
 import time
 import urllib.request
 import webbrowser
+from datetime import datetime, timezone
 from pathlib import Path
 
 from pilot.store import Store, scaled
@@ -83,6 +84,14 @@ def open_page(record: dict) -> None:
             os.close(saved)
 
 
+def settle(store: Store, number: int, via: str) -> bool:
+    """Close interaction `number` with a response that carries no answers; False when a response already exists."""
+    kind = store.interaction(number)["kind"]
+    return store.write_response(number, {
+        "interaction": number, "kind": kind, "via": via, "submitted_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 def cmd_show(args: argparse.Namespace) -> int:
     store = open_store(args)
     if store is None:
@@ -99,6 +108,8 @@ def cmd_show(args: argparse.Namespace) -> int:
     started = time.time()
     if interaction["kind"] == "readback":
         interaction = {**interaction, "version": store.keep_version(interaction["artifact"])}
+    if (earlier := store.pending()) is not None:
+        settle(store, earlier, "superseded")
     number = store.add_interaction(interaction)
     record = ensure_server(store)
     beat, bye = store.heartbeat()
@@ -148,9 +159,10 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     store = open_store(args)
     if store is None:
         return fail(f"no such effort directory: {args.effort}", 2)
-    if store.pending() is None:
+    pending = store.pending()
+    if pending is None or not settle(store, pending, "chat"):
         return fail("nothing pending", 2)
-    return fail("resolving a pending interaction is not built yet", 1)
+    return 0
 
 
 def cmd_close(args: argparse.Namespace) -> int:
