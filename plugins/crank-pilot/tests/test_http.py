@@ -1,6 +1,7 @@
 """The HTTP seam: what the server answers a page that drafts and submits a round."""
 
 import json
+import re
 import shutil
 import tempfile
 import threading
@@ -269,6 +270,21 @@ class PageTypeTest(HttpCase):
             with self.subTest(name):
                 status, _, headers = client.request("GET", f"/page/{name}", token=False)
                 self.assertEqual((status, headers["Content-Type"]), (200, expected))
+
+
+class PageShellTest(HttpCase):
+    def test_the_page_and_its_files_load_with_no_token_and_the_page_names_only_its_own_paths(self):
+        effort = self.effort()
+        show(effort, QUESTIONS)
+        client = Client(effort)
+        for path in ("/page/page.css", "/page/app.js", "/page/api.js", "/page/vendor/markdown-it.min.js"):
+            with self.subTest(path):
+                self.assertEqual(client.request("GET", path, token=False)[0], 200)
+        status, body, _ = client.request("GET", "/", token=False)
+        self.assertEqual(status, 200)
+        named = re.findall(rb'(?:src|href)="([^"]*)"', body)
+        self.assertTrue(named)
+        self.assertEqual([path for path in named if not path.startswith(b"/page/")], [])
 
 
 class DraftTest(HttpCase):

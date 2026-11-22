@@ -1,0 +1,67 @@
+:root {
+  --paper: #f7f6f2;
+  --ink: #0d0d0d;
+  --accent: #ff4f00;
+  --rule: #cfccc2;
+  --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scrollbar-color: var(--ink) var(--paper); }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/24px var(--sans); caret-color: var(--ink); padding-bottom: 32px; }
+::selection { background: var(--ink); color: var(--paper); }
+h1, h2, h3, p, ol, ul, fieldset, legend { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+a, button, input, textarea, summary { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.l { font: 500 12px/16px var(--mono); text-transform: uppercase; letter-spacing: .08em; margin: 0; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+kbd { font: 500 12px/16px var(--mono); letter-spacing: .02em; white-space: nowrap; }
+
+button { font: 600 15px/22px var(--sans); padding: 9px 14px; border: 2px solid var(--ink); background: transparent; color: var(--ink); border-radius: 0; cursor: pointer; }
+button:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+button:disabled { cursor: default; opacity: .45; }
+button.go { background: var(--accent); border-color: var(--accent); }
+button.go:hover:not(:disabled) { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+.chrome { display: flex; flex-wrap: wrap; gap: 4px 24px; align-items: baseline; padding-top: 14px; padding-bottom: 12px; }
+.chrome .brand { font-weight: 700; }
+#status { margin-left: auto; min-height: 16px; }
+
+.agenda { position: sticky; top: 0; z-index: 10; background: var(--paper); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 10px 0; }
+.arow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 20px; padding: 2px 0; }
+.arow .ag { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; flex: 1 1 380px; min-width: 0; }
+.sbtn { border: 0; padding: 4px 0; font: 500 12px/16px var(--mono); text-transform: uppercase; letter-spacing: .08em; background: none; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.sbtn:hover:not(:disabled) { background: none; color: var(--ink); text-decoration-thickness: 2px; }
+.open { display: flex; flex-wrap: wrap; gap: 0 14px; font-size: 14px; line-height: 22px; }
+.open li.cur { font-weight: 700; }
+.open li + li::before { content: "·"; margin-right: 14px; font-weight: 400; }
+#settledList { display: flex; flex-wrap: wrap; gap: 0 16px; font-size: 14px; line-height: 22px; padding: 10px 0 0; }
+#settledList li + li::before { content: "·"; margin-right: 16px; }
+#agendaTools:not(:empty) { margin-left: auto; }
+
+.grid { display: grid; grid-template-columns: 1fr; column-gap: 32px; align-items: stretch; padding-top: 20px; }
+@media (min-width: 720px) {
+  .grid { grid-template-columns: minmax(0, 1fr) 280px; }
+  .grid.solo { grid-template-columns: minmax(0, 1fr); }
+}
+.grid > article { min-width: 0; }
+h1 { font: 800 44px/1.06 var(--sans); letter-spacing: -.035em; margin: 4px 0 14px; text-wrap: balance; }
+h1.msg { font-size: 32px; line-height: 38px; letter-spacing: -.025em; max-width: 560px; padding: 72px 0 48px; margin: 0; }
+
+.ledger { display: flex; flex-direction: column; min-width: 0; }
+.ledger .big { font: 800 120px/104px var(--sans); letter-spacing: -.04em; color: var(--accent); margin: 8px 0 4px -6px; }
+.ledger .lsub { margin-bottom: 12px; }
+.lact { margin-top: auto; position: sticky; bottom: 0; background: var(--paper); border-top: 1px solid var(--ink); padding: 12px 0 14px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+.lact .ar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.lact .ar button { flex: 1 1 150px; text-align: left; }
+
+@media (max-width: 719px) {
+  .ledger .big { font-size: 96px; line-height: 84px; }
+  h1 { font-size: 34px; }
+}
+@media (min-width: 720px) and (max-width: 860px) {
+  h1 { font-size: 38px; }
+}
