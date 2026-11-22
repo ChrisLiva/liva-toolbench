@@ -25,6 +25,9 @@ md.renderer.rules.fence = (tokens, i, options, env, self) => {
   return `<pre${self.renderAttrs(token)}${fence}><code>${md.utils.escapeHtml(token.content)}</code></pre>\n`;
 };
 
+// An image would make the browser request a URL the artifact chose, so the alt text stands in.
+md.renderer.rules.image = (tokens, i) => md.utils.escapeHtml(tokens[i].content);
+
 export function sandboxFrame(html, options = {}) {
   const frame = document.createElement("iframe");
   frame.setAttribute("sandbox", "allow-scripts");
