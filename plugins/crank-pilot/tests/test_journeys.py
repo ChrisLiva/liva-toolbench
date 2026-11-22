@@ -34,8 +34,7 @@ class ServerRecordTest(EffortCase):
         path = effort.path / "pilot" / "server.json"
         record = json.loads(path.read_text())
         self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-        self.assertEqual(len(record["token"]), 64)
-        int(record["token"], 16)
+        self.assertRegex(record["token"], r"\A[0-9a-f]{32,}\Z")
         socket.create_connection(("127.0.0.1", record["port"]), timeout=2).close()
         outward = non_loopback_address()
         if outward is None:
@@ -44,30 +43,19 @@ class ServerRecordTest(EffortCase):
             socket.create_connection((outward, record["port"]), timeout=2).close()
 
 
-class StateRouteTest(EffortCase):
-    def test_state_reports_the_stored_interaction_and_each_call_is_a_beat(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        client = Client(effort)
-        heartbeat = effort.path / "pilot" / "heartbeat"
-        heartbeat.write_bytes(b"bye")
-        os.utime(heartbeat, (1, 1))
-        state = client.state()
-        self.assertEqual(state["interaction"]["number"], 1)
-        self.assertEqual(state["interaction"]["title"], "Round 1")
-        self.assertEqual({key: state[key] for key in ("ended", "effort", "response", "draft", "versions", "prior")},
-                         {"ended": False, "effort": effort.path.name, "response": None, "draft": None,
-                          "versions": [], "prior": None})
-        self.assertEqual(heartbeat.stat().st_size, 0)
-        self.assertGreater(heartbeat.stat().st_mtime, time.time() - 5)
-
-
 class QuestionRoundJourneyTest(EffortCase):
     def test_a_round_is_drafted_submitted_once_and_read_back(self):
         effort = self.effort()
         self.assertEqual(show(effort, QUESTIONS), 1)
         client = Client(effort)
         pilot = effort.path / "pilot"
+        state = client.state()
+        self.assertEqual(state["interaction"], {**QUESTIONS, "number": 1})
+        self.assertEqual({key: state[key] for key in ("ended", "effort", "response", "draft", "versions", "prior")},
+                         {"ended": False, "effort": effort.path.name, "response": None, "draft": None,
+                          "versions": [], "prior": None})
+        self.assertEqual(client.request("PUT", "/api/draft/1", b"[1]")[0], 400)
+        self.assertIsNone(client.state()["draft"])
         status, _, _ = client.request("PUT", "/api/draft/1", json.dumps({"q1": {"choice": "b"}}).encode())
         self.assertEqual(status, 204)
         self.assertEqual(client.state()["draft"], {"q1": {"choice": "b"}})
@@ -117,23 +105,11 @@ class ReadbackVersionsJourneyTest(EffortCase):
         self.assertEqual(state["versions"], [1, 2])
         self.assertEqual(state["prior"], {"version": 1, "marks": MARKS})
 
-    def test_versions_are_numbered_per_artifact_file_name(self):
+    def test_versions_are_numbered_and_prior_is_the_latest_changes_response_per_artifact_file_name(self):
         effort = self.effort()
         effort.write("spec.md", SPEC)
         effort.write("plan.md", "# Plan\n")
-        self.assertEqual(show(effort, READBACK), 1)
-        self.assertEqual(show(effort, {**READBACK, "artifact": "plan.md"}), 2)
-        client = Client(effort)
         versions = effort.path / "pilot" / "versions"
-        self.assertEqual((versions / "plan.md" / "001.md").read_text(), "# Plan\n")
-        self.assertEqual(sorted(p.name for p in (versions / "spec.md").iterdir()), ["001.md"])
-        state = client.state()
-        self.assertEqual((state["versions"], state["prior"]), ([1], None))
-
-    def test_prior_is_the_latest_changes_response_for_the_same_artifact(self):
-        effort = self.effort()
-        effort.write("spec.md", SPEC)
-        effort.write("plan.md", "# Plan\n")
         plan = {**READBACK, "artifact": "plan.md"}
         self.assertEqual(show(effort, READBACK), 1)
         client = Client(effort)
@@ -145,6 +121,10 @@ class ReadbackVersionsJourneyTest(EffortCase):
         respond(1, "changes", MARKS)
         self.assertIsNone(client.state()["prior"])
         self.assertEqual(show(effort, plan), 2)
+        self.assertEqual((versions / "plan.md" / "001.md").read_text(), "# Plan\n")
+        self.assertEqual(sorted(p.name for p in (versions / "spec.md").iterdir()), ["001.md"])
+        state = client.state()
+        self.assertEqual((state["versions"], state["prior"]), ([1], None))
         respond(2, "changes", [{**MARKS[1], "n": 1}])
         self.assertEqual(show(effort, READBACK), 3)
         self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})

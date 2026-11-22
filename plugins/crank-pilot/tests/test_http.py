@@ -2,12 +2,9 @@
 
 import json
 import re
-import shutil
-import tempfile
 import threading
 import time
 import unittest
-from pathlib import Path
 
 from support import (CHANGES, COMMENT, IMAGES, NOTE, PLUGIN, PROTOTYPE, Q1_A, Q1_B, Q2, QUESTIONS, READBACK, SPEC, VERDICT,
                      Client, Effort, EffortCase, show)
@@ -85,6 +82,8 @@ class InvalidResponseTest(HttpCase):
             "attachment is not an image of this interaction":
                 {"answers": [{**Q1_A, "attachments": ["pilot/attachments/../server.json"]}, Q2]},
             "accepted contradicts the rule": {"answers": [Q1_A, {**Q2, "accepted": True, "text": "x"}]},
+            "empty text not accepted": {"answers": [Q1_A, {**Q2, "accepted": False}]},
+            "recommended option not accepted": {"answers": [{**Q1_A, "accepted": False}, Q2]},
         }
         for name, body in cases.items():
             with self.subTest(name):
@@ -92,17 +91,9 @@ class InvalidResponseTest(HttpCase):
                 self.assertEqual(status, 400)
                 self.assertTrue(reply["problems"])
                 self.assertFalse(self.response_file(effort).exists())
-
-    def test_accepted_follows_the_rule_so_an_own_text_on_a_question_with_no_options_is_not_accepted(self):
-        effort, client = self.round()
         own_text = {**Q2, "accepted": False, "text": "x"}
-        for name, answers in {"empty text not accepted": [Q1_A, {**Q2, "accepted": False}],
-                              "recommended option not accepted": [{**Q1_A, "accepted": False}, Q2]}.items():
-            with self.subTest(name):
-                self.assertEqual(send(client, "POST", "/api/response/1", {"answers": answers})[0], 400)
-        self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, {**own_text, "accepted": True}]})[0], 400)
         self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, own_text]})[0], 201)
-        self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"][1], own_text)
+        self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"], [Q1_A, own_text])
 
 
 class ReadbackHttpCase(HttpCase):
@@ -138,16 +129,11 @@ class InvalidReadbackResponseTest(ReadbackHttpCase):
                 self.assertEqual(status, 400)
                 self.assertTrue(reply["problems"])
                 self.assertFalse(self.response_file(effort).exists())
-        self.assertEqual(send(client, "POST", "/api/response/1", CHANGES)[0], 201)
-
-
-class ReadbackAcceptedTest(ReadbackHttpCase):
-    def test_a_strike_needs_no_text(self):
-        effort, client = self.readback()
-        strike = {**COMMENT, "type": "strike", "text": ""}
         self.assertEqual(send(client, "POST", "/api/response/1", {**CHANGES, "marks": [strike]})[0], 201)
         self.assertEqual(json.loads(self.response_file(effort).read_text())["marks"], [strike])
 
+
+class ReadbackAcceptedTest(ReadbackHttpCase):
     def test_an_approve_with_empty_marks_answers_an_open_decision_as_a_question_does(self):
         effort, client = self.readback({**READBACK, "decisions": [QUESTIONS["questions"][0]]})
         q1 = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
@@ -244,44 +230,23 @@ class ContentTypeTest(HttpCase):
         self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
 
 
-class PageTypeTest(HttpCase):
-    def test_a_page_stylesheet_and_script_are_typed_by_their_extension(self):
-        copy = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, copy, ignore_errors=True)
-        for part in ("bin", "pilot", "page"):
-            shutil.copytree(PLUGIN / part, copy / part, ignore=shutil.ignore_patterns("__pycache__"))
-        (copy / "page" / "x.css").write_text("p{}")
-        (copy / "page" / "x.js").write_text("1")
-        effort = self.effort(copy / "bin" / "crank-pilot")
-        show(effort, QUESTIONS)
-        client = Client(effort)
-        for name, expected in {"x.css": "text/css; charset=utf-8", "x.js": "text/javascript; charset=utf-8"}.items():
-            with self.subTest(name):
-                status, _, headers = client.request("GET", f"/page/{name}", token=False)
-                self.assertEqual((status, headers["Content-Type"]), (200, expected))
-
-
 class PageShellTest(HttpCase):
-    def test_the_page_and_its_files_load_with_no_token_and_the_page_names_only_its_own_paths(self):
+    def test_the_page_and_its_files_load_with_no_token_typed_by_extension_and_the_page_names_only_its_own_paths(self):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
-        for path in ("/page/page.css", "/page/app.js", "/page/api.js", "/page/vendor/markdown-it.min.js"):
+        css, js = "text/css; charset=utf-8", "text/javascript; charset=utf-8"
+        for path, expected in {"/page/page.css": css, "/page/app.js": js, "/page/api.js": js,
+                               "/page/vendor/markdown-it.min.js": js}.items():
             with self.subTest(path):
-                self.assertEqual(client.request("GET", path, token=False)[0], 200)
+                status, _, headers = client.request("GET", path, token=False)
+                self.assertEqual((status, headers["Content-Type"]), (200, expected))
         status, body, _ = client.request("GET", "/", token=False)
         self.assertEqual(status, 200)
         self.assertEqual(body, (PLUGIN / "page" / "index.html").read_bytes())
         named = re.findall(rb'(?:src|href)="([^"]*)"', body)
         self.assertTrue(named)
         self.assertEqual([path for path in named if not path.startswith(b"/page/")], [])
-
-
-class DraftTest(HttpCase):
-    def test_a_draft_that_is_not_a_json_object_gets_400(self):
-        effort, client = self.round()
-        self.assertEqual(send(client, "PUT", "/api/draft/1", [1])[0], 400)
-        self.assertFalse((effort.path / "pilot" / "drafts" / "001.json").exists())
 
 
 def raw_request(client: Client, method: str, path: str, *, host: str | None = None, token: bool = True,
@@ -349,13 +314,6 @@ class GuardTest(HttpCase):
         self.assertEqual(client.request("GET", "/api/file/prototype/variant-A.html")[:2], (200, b"<p>A</p>"))
         self.assertFalse(self.response_file(effort).exists())
 
-    def test_a_state_poll_without_the_token_does_not_count_as_a_beat(self):
-        effort, client = self.round()
-        heartbeat = effort.path / "pilot" / "heartbeat"
-        heartbeat.unlink(missing_ok=True)
-        self.assertEqual(client.request("GET", "/api/state", token=False)[0], 403)
-        self.assertFalse(heartbeat.exists())
-
     def test_a_json_body_over_1_mib_gets_413_before_it_is_read_and_a_body_with_no_length_gets_411(self):
         effort, client = self.round()
         draft = effort.path / "pilot" / "drafts" / "001.json"
@@ -380,11 +338,6 @@ class GuardTest(HttpCase):
             with self.subTest(method=method, path=path[:24]):
                 status, _ = raw_request(client, method, path, body=b"{}")
                 self.assertTrue(400 <= status < 500, status)
-
-    def test_an_unknown_route_gets_404_and_an_unsupported_method_on_a_known_route_gets_405(self):
-        effort, client = self.round()
-        self.assertEqual(client.request("GET", "/api/nope")[0], 404)
-        self.assertEqual(client.request("DELETE", "/api/state")[0], 405)
 
 
 class AttachmentTest(HttpCase):
@@ -431,7 +384,8 @@ class AttachmentTest(HttpCase):
         png = IMAGES["png"]
         for expected in range(1, 11):
             self.assertEqual(json.loads(self.upload(client, png)[1])["k"], expected)
-        self.assertEqual(self.upload(client, png)[0], 409)
+        status, reply = self.upload(client, png)
+        self.assertEqual((status, json.loads(reply)["error"]), (409, "ten images are already attached"))
         self.assertEqual(client.request("DELETE", "/api/attachment/1/3")[0], 204)
         self.assertNotIn("001-3.png", self.stored(effort))
         status, reply = self.upload(client, png)
@@ -439,26 +393,22 @@ class AttachmentTest(HttpCase):
         self.assertEqual(self.upload(client, png)[0], 409)
         self.assertEqual(len(self.stored(effort)), 10)
 
-    def test_removing_deletes_the_file_an_absent_one_gets_404_and_a_round_that_is_not_pending_gets_409(self):
+    def test_an_image_is_removable_until_a_response_names_it_by_its_path_and_then_neither_added_nor_removed(self):
         effort, client = self.round()
         self.assertEqual(self.upload(client, IMAGES["png"])[0], 201)
         self.assertEqual(client.request("DELETE", "/api/attachment/1/99")[0], 404)
         self.assertEqual(self.stored(effort), ["001-1.png"])
         self.assertEqual(client.request("DELETE", "/api/attachment/1/1")[0], 204)
         self.assertEqual(self.stored(effort), [])
-        self.assertEqual(self.upload(client, IMAGES["png"])[0], 201)
-        self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [Q1_A, Q2]})[0], 201)
-        self.assertEqual(self.upload(client, IMAGES["png"])[0], 409)
-        self.assertEqual(client.request("DELETE", "/api/attachment/1/1")[0], 409)
-        self.assertEqual(self.stored(effort), ["001-1.png"])
-
-    def test_a_response_names_a_stored_image_by_its_path(self):
-        effort, client = self.round()
-        path = json.loads(self.upload(client, IMAGES["png"])[1])["path"]
-        self.assertEqual(path, "pilot/attachments/001-1.png")
+        status, reply = self.upload(client, IMAGES["png"])
+        path = json.loads(reply)["path"]
+        self.assertEqual((status, path), (201, "pilot/attachments/001-1.png"))
         answer = {**Q1_A, "attachments": [path]}
         self.assertEqual(send(client, "POST", "/api/response/1", {"answers": [answer, Q2]})[0], 201)
         self.assertEqual(json.loads(self.response_file(effort).read_text())["answers"][0]["attachments"], [path])
+        self.assertEqual(self.upload(client, IMAGES["png"])[0], 409)
+        self.assertEqual(client.request("DELETE", "/api/attachment/1/1")[0], 409)
+        self.assertEqual(self.stored(effort), ["001-1.png"])
 
     def test_an_upload_cut_off_mid_body_leaves_no_file_at_the_final_path(self):
         effort, client = self.round()

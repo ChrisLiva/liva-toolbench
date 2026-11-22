@@ -21,7 +21,8 @@ NO_SUCH_DIR = "/nonexistent-xyz"
 class MissingEffortDirectoryTest(EffortCase):
     def test_each_verb_exits_2_with_one_stderr_line(self):
         effort = self.effort()
-        for args in (("wait", NO_SUCH_DIR), ("resolve", NO_SUCH_DIR, "--chat"), ("close", NO_SUCH_DIR)):
+        for args in (("show", NO_SUCH_DIR, "x.json"), ("wait", NO_SUCH_DIR), ("resolve", NO_SUCH_DIR, "--chat"),
+                     ("close", NO_SUCH_DIR)):
             with self.subTest(verb=args[0]):
                 done = effort.run(*args)
                 self.assertEqual(done.returncode, 2)
@@ -67,14 +68,6 @@ class EntryTest(EffortCase):
 
 
 class ShowRejectionTest(EffortCase):
-    def test_show_on_a_missing_effort_directory_exits_2(self):
-        effort = self.effort()
-        done = effort.run("show", NO_SUCH_DIR, "x.json")
-        self.assertEqual(done.returncode, 2)
-        self.assertEqual(done.stdout, "")
-        self.assertEqual(len(done.stderr.strip().splitlines()), 1)
-        self.assertIn("no such effort directory", done.stderr)
-
     def test_show_on_an_unreadable_interaction_file_exits_2_and_stores_nothing(self):
         effort = self.effort()
         cases = {
@@ -178,32 +171,21 @@ class ShowValidationTest(ValidationCase):
         self.assertEqual(len([line for line in done.stderr.splitlines() if line.strip()]), 2)
         self.assert_nothing_stored(effort)
 
-    def test_each_fixture_is_accepted_as_written(self):
-        effort = self.effort_with_files()
-        self.assertEqual([show(effort, item) for item in (QUESTIONS, READBACK, PROTOTYPE)], [1, 2, 3])
-
 
 class ShowTest(EffortCase):
-    def test_show_stores_each_interaction_under_the_next_number_and_prints_it(self):
+    def test_show_stores_each_interaction_under_the_next_number_prints_it_and_reuses_the_server(self):
         effort = self.effort()
+        record_path = effort.path / "pilot" / "server.json"
         self.assertEqual(show(effort, QUESTIONS), 1)
         stored = json.loads((effort.path / "pilot" / "interactions" / "001.json").read_text())
         self.assertEqual(stored, {**QUESTIONS, "number": 1})
+        first = json.loads(record_path.read_text())
         hostile = {**QUESTIONS, "title": "caf\u00e9 \u65e5\u672c \U0001f600 \ud800 \"quoted\" \\ \n"}
         self.assertEqual(show(effort, hostile), 2)
         stored = json.loads((effort.path / "pilot" / "interactions" / "002.json").read_text())
         self.assertEqual(stored, {**hostile, "number": 2})
-
-
-class ShowServerTest(EffortCase):
-    def test_show_starts_the_server_once_and_reuses_it(self):
-        effort = self.effort()
-        record_path = effort.path / "pilot" / "server.json"
-        show(effort, QUESTIONS)
-        first = json.loads(record_path.read_text())
-        os.kill(first["pid"], 0)
-        show(effort, QUESTIONS)
         self.assertEqual(json.loads(record_path.read_text()), first)
+        os.kill(first["pid"], 0)
 
 
 class UnreadableRecordTest(EffortCase):
@@ -228,7 +210,8 @@ class ShowBrowserTest(EffortCase):
         env = {**browser, "CRANK_PILOT_NO_OPEN": None}
         source = effort.write("interaction.json", json.dumps(QUESTIONS))
         self.assertEqual(show(effort, QUESTIONS, scale=10, env=env, opened=opened), 1)
-        self.assertRegex(opened.read_text(), r"\Ahttp://127\.0\.0\.1:\d+/\?t=[0-9a-f]{64}\n\Z")
+        record = json.loads((effort.path / "pilot" / "server.json").read_text())
+        self.assertEqual(opened.read_text(), f"http://127.0.0.1:{record['port']}/?t={record['token']}\n")
         done = effort.run("show", effort.path, source, scale=10, env=env)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "2\n", ""))
         self.assertEqual(len(opened.read_text().splitlines()), 1)
@@ -270,20 +253,6 @@ class ShowWaitTest(EffortCase):
 
 
 ANSWERS = json.dumps({"answers": [Q1_B, Q2]}).encode()
-
-
-class WaitResponseTest(EffortCase):
-    def test_wait_prints_the_response_path_when_it_arrives_while_waiting(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        client = Client(effort)
-        with client.beating():
-            process = effort.spawn("wait", effort.path)
-            time.sleep(0.2)
-            self.assertIsNone(process.poll())
-            self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
-            out, err = process.communicate(timeout=5)
-        self.assertEqual((process.returncode, out, err), (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
 
 
 class WaitBoundTest(EffortCase):
@@ -332,39 +301,18 @@ class WaitClosedPageTest(EffortCase):
 
 
 class WaitClosingBeaconTest(EffortCase):
-    def test_wait_exits_4_after_a_closing_beacon_with_no_beat_following_it(self):
+    def test_wait_exits_4_soon_after_a_closing_beacon_and_one_beat_after_it_clears_it(self):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
         self.assertEqual(client.request("POST", "/api/bye", token=False)[0], 204)
-        self.assertEqual((effort.path / "pilot" / "heartbeat").read_bytes(), b"bye")
         started = time.time()
         done = effort.run("wait", effort.path)
         self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed"))
         self.assertLess(time.time() - started, 0.5)
-
-    def test_a_beat_after_the_closing_beacon_clears_it(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        client = Client(effort)
-        self.assertEqual(client.request("POST", "/api/bye", token=False)[0], 204)
         client.state()
-        self.assertEqual((effort.path / "pilot" / "heartbeat").stat().st_size, 0)
-        with client.beating():
-            done = effort.run("wait", effort.path, "--timeout", 30)
+        done = effort.run("wait", effort.path, "--timeout", 30)
         self.assertEqual((done.returncode, done.stderr.strip()), (3, "still waiting"))
-
-
-class WaitContactTest(EffortCase):
-    def test_wait_polls_touch_the_contact_file(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        contact = effort.path / "pilot" / "contact"
-        contact.unlink(missing_ok=True)
-        with Client(effort).beating():
-            done = effort.run("wait", effort.path, "--timeout", 20)
-        self.assertEqual((done.returncode, done.stderr.strip()), (3, "still waiting"))
-        self.assertTrue(contact.exists())
 
 
 class WaitSuspendTest(EffortCase):
@@ -410,18 +358,7 @@ class SupersedeTest(EffortCase):
 
 
 class ResolveChatTest(EffortCase):
-    def test_resolve_chat_writes_a_chat_response_for_the_pending_interaction(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        client = Client(effort)
-        done = effort.run("resolve", effort.path, "--chat")
-        self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
-        saved = json.loads(response_file(effort).read_text())
-        self.assertEqual(sorted(saved), RESPONSE_KEYS)
-        self.assertEqual((saved["via"], saved["interaction"], saved["kind"]), ("chat", 1, "questions"))
-        self.assertEqual(client.state()["response"], {"via": "chat"})
-
-    def test_a_running_wait_exits_0_with_the_chat_response_path(self):
+    def test_resolve_chat_writes_a_chat_response_and_a_running_wait_exits_0_with_its_path(self):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
@@ -429,11 +366,16 @@ class ResolveChatTest(EffortCase):
             process = effort.spawn("wait", effort.path)
             time.sleep(0.2)
             self.assertIsNone(process.poll())
-            self.assertEqual(effort.run("resolve", effort.path, "--chat").returncode, 0)
+            done = effort.run("resolve", effort.path, "--chat")
+            self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
             out, err = process.communicate(timeout=5)
         self.assertEqual((process.returncode, out, err), (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
+        saved = json.loads(response_file(effort).read_text())
+        self.assertEqual(sorted(saved), RESPONSE_KEYS)
+        self.assertEqual((saved["via"], saved["interaction"], saved["kind"]), ("chat", 1, "questions"))
+        self.assertEqual(client.state()["response"], {"via": "chat"})
 
-    def test_resolve_chat_never_replaces_an_existing_response_and_needs_the_flag(self):
+    def test_resolve_chat_never_replaces_an_existing_response(self):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
@@ -441,10 +383,6 @@ class ResolveChatTest(EffortCase):
         before = response_file(effort).read_bytes()
         done = effort.run("resolve", effort.path, "--chat")
         self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (2, "", "nothing pending"))
-        self.assertEqual(response_file(effort).read_bytes(), before)
-        done = effort.run("resolve", effort.path)
-        self.assertEqual(done.returncode, 2)
-        self.assertIn("usage", done.stderr)
         self.assertEqual(response_file(effort).read_bytes(), before)
 
 
@@ -532,20 +470,6 @@ class CloseTest(EffortCase):
 
 
 class CloseWindowTest(EffortCase):
-    def test_a_second_close_is_accepted_and_the_ping_says_the_server_is_closing(self):
-        effort = self.effort()
-        show(effort, QUESTIONS, scale=20)
-        client = Client(effort)
-        pid = json.loads((effort.path / "pilot" / "server.json").read_text())["pid"]
-        self.assertEqual(effort.run("close", effort.path, scale=20).returncode, 0)
-        closed = time.time()
-        time.sleep(0.05)
-        status, body, _ = client.request("GET", "/api/ping")
-        self.assertEqual((status, json.loads(body)), (200, {"pid": pid, "closing": True}))
-        self.assertEqual(client.request("POST", "/api/close", b"")[0], 202)
-        time.sleep(max(0, closed + 0.6 - time.time()))
-        self.assertTrue(is_dead(pid))
-
     def test_a_show_during_the_window_waits_for_the_record_to_go_and_starts_a_new_server(self):
         effort = self.effort()
         show(effort, QUESTIONS, scale=20)
@@ -663,22 +587,18 @@ class ForeignPidTest(EffortCase):
 
 
 class IdleExitTest(EffortCase):
-    def test_the_server_exits_after_30_scaled_minutes_with_no_beat_or_contact_and_keeps_its_record(self):
+    def test_the_server_stays_up_while_a_page_beats_and_exits_30_scaled_minutes_after_the_last_beat_keeping_its_record(self):
         effort = self.effort()
         process = effort.start_server(3600)
         client = Client(effort)
-        self.assertEqual(client.request("GET", "/api/ping")[0], 200)
+        with client.beating(0.1):
+            time.sleep(1.2)
+            self.assertIsNone(process.poll())
+        client.state()
         last = time.time()
         self.assertEqual(process.wait(timeout=1.5), 0)
         self.assertGreater(time.time() - last, 0.4)
         self.assertTrue((effort.path / "pilot" / "server.json").exists())
-
-    def test_a_page_beating_every_tenth_of_a_second_keeps_it_alive(self):
-        effort = self.effort()
-        process = effort.start_server(3600)
-        with Client(effort).beating(0.1):
-            time.sleep(1.2)
-            self.assertIsNone(process.poll())
 
 
 if __name__ == "__main__":

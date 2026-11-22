@@ -77,8 +77,7 @@ VERDICT = {
 
 
 class Effort:
-    def __init__(self, bin: Path = BIN) -> None:
-        self.bin = bin
+    def __init__(self) -> None:
         self._holder = tempfile.TemporaryDirectory()
         self.path = Path(self._holder.name)
         self.pids: set[int] = set()
@@ -101,13 +100,13 @@ class Effort:
 
     def run(self, *args, scale: int = 100, env: dict[str, str | None] | None = None) -> subprocess.CompletedProcess:
         return subprocess.run(
-            [sys.executable, str(self.bin), *map(str, args)],
+            [sys.executable, str(BIN), *map(str, args)],
             capture_output=True, text=True, env=self._env(scale, env),
         )
 
     def spawn(self, *args, scale: int = 100, env: dict[str, str | None] | None = None) -> subprocess.Popen:
         return subprocess.Popen(
-            [sys.executable, str(self.bin), *map(str, args)],
+            [sys.executable, str(BIN), *map(str, args)],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._env(scale, env),
         )
 
@@ -156,8 +155,8 @@ def is_dead(pid: int) -> bool:
 
 
 class EffortCase(unittest.TestCase):
-    def effort(self, bin: Path = BIN) -> Effort:
-        effort = Effort(bin)
+    def effort(self) -> Effort:
+        effort = Effort()
         self.addCleanup(effort.cleanup)
         return effort
 
