@@ -122,12 +122,6 @@ def open_page(record: dict) -> None:
             os.close(saved)
 
 
-def settle(store: Store, number: int, via: str) -> bool:
-    """Close interaction `number` with a response that carries no answers; False when a
-    response already exists."""
-    return store.respond(number, {}, via)
-
-
 def cmd_show(args: argparse.Namespace) -> int:
     store = open_store(args)
     try:
@@ -146,7 +140,7 @@ def cmd_show(args: argparse.Namespace) -> int:
             "version": store.keep_version(interaction["artifact"]),
         }
     if (earlier := store.pending()) is not None:
-        settle(store, earlier, "superseded")
+        store.respond(earlier, {}, "superseded")
     number = store.add_interaction(interaction)
     record = ensure_server(store)
     beat, bye = store.heartbeat()
@@ -196,7 +190,7 @@ def cmd_wait(args: argparse.Namespace) -> int:
 def cmd_resolve(args: argparse.Namespace) -> int:
     store = open_store(args)
     pending = store.pending()
-    if pending is None or not settle(store, pending, "chat"):
+    if pending is None or not store.respond(pending, {}, "chat"):
         return fail("nothing pending", 2)
     return 0
 

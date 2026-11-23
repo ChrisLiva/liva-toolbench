@@ -36,7 +36,7 @@ export const plain = (range) => {
   return copy.textContent;
 };
 
-function trimmed(pieces) {
+export function trimmed(pieces) {
   const out = pieces.map((p) => ({ ...p }));
   while (out.length) {
     const p = out[0];
@@ -62,7 +62,7 @@ function trimmed(pieces) {
 }
 
 // Each selected text node gets its own wrapper, so a mark can cross inline elements without nesting them.
-function wrap(pieces, mark) {
+export function wrap(pieces, mark) {
   for (const { node, s, e } of pieces) {
     let target = node;
     if (e < node.length) node.splitText(e);
@@ -182,5 +182,5 @@ export function anchoring(art, getBlocks) {
     });
     return found;
   }
-  return { piecesIn, trimmed, anchorFor, wrap, draw, unwrap, blockIndex };
+  return { piecesIn, anchorFor, draw, unwrap, blockIndex };
 }

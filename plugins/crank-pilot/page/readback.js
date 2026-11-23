@@ -1,6 +1,6 @@
 import { fileReader } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
-import { anchoring, plain } from "/page/anchor.js";
+import { anchoring, plain, trimmed, wrap } from "/page/anchor.js";
 import {
   el,
   hashParam,
@@ -98,8 +98,10 @@ export const surface = {
       role: "group",
       "aria-label": `Artifact: ${title}. ${HINT}`,
     });
-    const { piecesIn, trimmed, anchorFor, wrap, draw, unwrap, blockIndex } =
-      anchoring(art, () => blocks);
+    const { piecesIn, anchorFor, draw, unwrap, blockIndex } = anchoring(
+      art,
+      () => blocks,
+    );
     const hint = el("p", { class: "l status", role: "status" }, HINT);
     const pop = el("div", {
       id: "pop",
@@ -477,7 +479,7 @@ export const surface = {
     });
 
     function editor(m) {
-      const mark = marks.find((x) => x.id === m.id);
+      const mark = markOf(m.id);
       const original = mark.text;
       const input = el("input", {
         type: "text",

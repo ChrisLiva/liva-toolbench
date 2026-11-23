@@ -58,8 +58,8 @@ function entry(question, raw) {
   }
   return {
     choice,
-    text: typeof given.text === "string" ? given.text : "",
-    note: typeof given.note === "string" ? given.note : "",
+    text: stringOrEmpty(given.text),
+    note: stringOrEmpty(given.note),
     attachments: strings(given.attachments),
   };
 }
@@ -150,7 +150,7 @@ function markFrom(m) {
     text: m.text,
     quote: m.quote,
     lines: m.lines,
-    heading: typeof m.heading === "string" ? m.heading : "",
+    heading: stringOrEmpty(m.heading),
     occurrence:
       Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
     start: m.start,

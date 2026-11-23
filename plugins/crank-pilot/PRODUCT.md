@@ -46,7 +46,7 @@ The name crank-pilot. Nothing else is binding.
 ## Evidence on Hand
 
 - The effort's brief, with the surfaces and decisions: `.crank/crank-pilot/brainstorm.md` (gitignored, effort-scoped).
-- The decisions that outlive the effort: `docs/adr/0001-own-interactive-page.md`, `docs/adr/0002-pilot-state-lives-in-files.md`, `docs/adr/0003-pilot-vendors-its-libraries.md`, `docs/adr/0004-pilot-channel-is-a-command.md`, `docs/adr/0005-pilot-page-token-by-one-time-code.md`, `docs/adr/0006-page-tests-run-on-node-and-jsdom.md`.
+- The decisions that outlive the effort: `docs/adr/0001-own-interactive-page.md`, `docs/adr/0002-pilot-state-lives-in-files.md`, `docs/adr/0003-pilot-vendors-its-libraries.md`, `docs/adr/0004-pilot-channel-is-a-command.md`, `docs/adr/0005-pilot-page-token-by-one-time-code.md`, `docs/adr/0006-page-tests-run-on-node-and-jsdom.md`, `docs/adr/0007-pilot-dev-tools-stay-out-of-the-plugin-manifest.md`.
 - No screenshots, logo, or existing interface exist. Sample content in a mock is synthetic.
 
 ## Product Principles
