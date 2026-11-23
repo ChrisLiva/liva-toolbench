@@ -13,7 +13,7 @@ With the mode off, stop reading this file, run the phase's chat flow, run no `cr
 Every interaction follows one sequence. `<effort-dir>` is the effort's `.crank/<slug>/` directory.
 
 1. Write the interaction as a JSON file inside the effort directory, such as `<effort-dir>/interaction.json`, replacing the last one.
-2. Run `crank-pilot show <effort-dir> <interaction-file>`. It validates the file, puts it on the page, opens the page when none is open, and exits 0 once the page is up. A non-zero exit is a fallback (see Fallback).
+2. Run `crank-pilot show <effort-dir> <interaction-file>`. It validates the file, puts it on the page, opens the page when none is open, and exits 0 once the page is up. On exit 2, `show` printed each problem in the file; fix them and run `show` once more. Any other non-zero exit, or a second exit 2, is a fallback (see Fallback).
 3. On exit 0, end the turn with the one line `On the page: <title>. Answer there, or reply here.` and run `crank-pilot wait <effort-dir>` so the session is told when it exits: as a background command where the harness reports a background command's exit, otherwise in the foreground.
 4. On `wait`'s exit 0, read the response file whose path it printed. On exit 3, run `wait` again without showing the interaction again. Exits 1, 2, and 4 are a fallback.
 5. After reading a response, write one short recap in chat of what was answered or marked and what happens next, and print no `❓` or `➡️` line for an interaction the page carried.
@@ -24,6 +24,8 @@ Every interaction carries four common fields:
 - `phase`: `brainstorm`, `spec`, or `plan`;
 - `title`: the page's heading and the `<title>` of the one line above;
 - `agenda`: the same agenda the phase's chat flow opens with, as `{"settled": [...], "open": [...], "current": "..."}`, each entry a decision in one short line, `current` the one this interaction asks.
+
+Every question also carries a `body`, the markdown the page shows under its title.
 
 Every response carries `interaction` (its number), `kind`, `via`, and `submitted_at`. `via` is `page`, `chat`, or `superseded`; a `chat` or `superseded` response holds nothing else.
 
@@ -118,7 +120,7 @@ A chat reply that arrives while an interaction is pending is the answer. Run `cr
 
 ## Fallback
 
-When `crank-pilot` is not found, `show` exits non-zero, or `wait` exits 1, 2, or 4, run the phase's chat flow for that interaction in the same turn. The first fallback in a phase prints the one line `The page is unavailable; continuing in chat.` and later ones in that phase print nothing about it. The next interaction tries the page again.
+When `crank-pilot` is not found, `show` exits 1 or 4 or exits 2 twice, or `wait` exits 1, 2, or 4, run the phase's chat flow for that interaction in the same turn. The first fallback in a phase prints the one line `The page is unavailable; continuing in chat.` and later ones in that phase print nothing about it. The next interaction tries the page again.
 
 ## Hand-off
 
