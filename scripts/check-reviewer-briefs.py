@@ -367,10 +367,14 @@ def check_node_tests(failures, directory):
     if not (ROOT / "node_modules" / "jsdom").is_dir():
         failures.append("FAIL page tests: run npm ci first")
         return
-    proc = subprocess.run(
-        ["node", "--import", f"./{directory}/hooks.js", "--test", "--test-force-exit", f"{directory}/*.test.js"],
-        cwd=ROOT, capture_output=True, text=True,
-    )
+    try:
+        proc = subprocess.run(
+            ["node", "--import", f"./{directory}/hooks.js", "--test", "--test-force-exit", f"{directory}/*.test.js"],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        failures.append(f"FAIL {directory}: node not found, page tests unverified")
+        return
     if proc.returncode != 0:
         tail = [line for line in proc.stdout.strip().splitlines() if line.strip()][-6:]
         failures.append(f"FAIL {directory}: " + " | ".join(tail))
