@@ -260,13 +260,10 @@ class ShowValidationTest(ValidationCase):
                 self.assertEqual(done.stdout, "")
                 self.assertIn(keyword, done.stderr)
                 self.assert_nothing_stored(effort)
-
-    def test_a_file_with_two_problems_prints_two_lines(self):
-        effort = self.effort_with_files()
-        interaction = derived(
+        two_problems = derived(
             QUESTIONS, lambda d: (d.update(phase="execute"), d.pop("title"))
         )
-        done = self.run_show(effort, interaction)
+        done = self.run_show(effort, two_problems)
         self.assertEqual(done.returncode, 2)
         self.assertEqual(
             len([line for line in done.stderr.splitlines() if line.strip()]), 2
@@ -353,25 +350,31 @@ class ShowBrowserTest(EffortCase):
         self.assertEqual(len(opened.read_text().splitlines()), 1)
 
     def test_a_stale_or_closing_heartbeat_does_not_count_as_a_live_page(self):
-        for name, content, age in (("stale", b"", 2), ("bye", b"bye", 0)):
+        # The server is up before the second show: a server that starts fresh deletes
+        # the heartbeat, so only a running one leaves a stale or closing beat to read.
+        for name in ("stale", "bye"):
             with self.subTest(heartbeat=name):
                 effort = self.effort()
+                show(effort, QUESTIONS)
+                client = Client(effort)
+                if name == "stale":
+                    heartbeat = effort.path / "pilot" / "heartbeat"
+                    os.utime(heartbeat, (time.time() - 2, time.time() - 2))
+                else:
+                    self.assertEqual(
+                        client.request("POST", "/api/bye", token=False)[0], 204
+                    )
                 browser, opened = recording_browser(effort)
-                heartbeat = effort.write("pilot/heartbeat", "")
-                heartbeat.write_bytes(content)
-                os.utime(heartbeat, (time.time() - age, time.time() - age))
                 source = effort.write("interaction.json", json.dumps(QUESTIONS))
                 done = effort.run(
                     "show",
                     effort.path,
                     source,
-                    scale=100,
                     env={**browser, "CRANK_PILOT_NO_OPEN": None},
                 )
-                with contextlib.suppress(FileNotFoundError, ValueError):
-                    Client(effort)
-                self.assertEqual(done.returncode, 4)
-                self.assertEqual(done.stderr.strip(), "page did not open")
+                self.assertEqual(
+                    (done.returncode, done.stderr.strip()), (4, "page did not open")
+                )
                 self.assertEqual(len(opened.read_text().splitlines()), 1)
 
 
@@ -400,9 +403,7 @@ ANSWERS = json.dumps({"answers": [Q1_B, Q2]}).encode()
 
 
 class WaitBoundTest(EffortCase):
-    def test_wait_exits_3_at_the_bound_and_a_second_wait_resumes_the_same_interaction(
-        self,
-    ):
+    def test_wait_exits_3_at_the_given_or_default_bound_and_a_later_wait_resumes(self):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
@@ -416,6 +417,15 @@ class WaitBoundTest(EffortCase):
             )
             self.assertGreater(elapsed, 0.2)
             self.assertLess(elapsed, 1.5)
+            started = time.time()
+            done = effort.run("wait", effort.path, scale=2000)
+            elapsed = time.time() - started
+            self.assertEqual(
+                (done.returncode, done.stdout, done.stderr.strip()),
+                (3, "", "still waiting"),
+            )
+            self.assertGreater(elapsed, 0.27)
+            self.assertLess(elapsed, 1.5)
             self.assertEqual(
                 len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1
             )
@@ -425,20 +435,6 @@ class WaitBoundTest(EffortCase):
         self.assertEqual(
             len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1
         )
-
-    def test_the_default_bound_is_540_seconds_and_outlasts_the_90_second_grace(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        with Client(effort).beating():
-            started = time.time()
-            done = effort.run("wait", effort.path, scale=2000)
-            elapsed = time.time() - started
-        self.assertEqual(
-            (done.returncode, done.stdout, done.stderr.strip()),
-            (3, "", "still waiting"),
-        )
-        self.assertGreater(elapsed, 0.27)
-        self.assertLess(elapsed, 1.5)
 
 
 class WaitClosedPageTest(EffortCase):
@@ -525,7 +521,7 @@ class SupersedeTest(EffortCase):
 
 
 class ResolveChatTest(EffortCase):
-    def test_resolve_chat_writes_a_chat_response_and_a_running_wait_exits_0_with_path(
+    def test_resolve_chat_writes_one_chat_response_and_a_running_wait_exits_0_with_path(
         self,
     ):
         effort = self.effort()
@@ -549,12 +545,6 @@ class ResolveChatTest(EffortCase):
             ("chat", 1, "questions"),
         )
         self.assertEqual(client.state()["response"], {"via": "chat"})
-
-    def test_resolve_chat_never_replaces_an_existing_response(self):
-        effort = self.effort()
-        show(effort, QUESTIONS)
-        client = Client(effort)
-        self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
         before = response_file(effort).read_bytes()
         done = effort.run("resolve", effort.path, "--chat")
         self.assertEqual(

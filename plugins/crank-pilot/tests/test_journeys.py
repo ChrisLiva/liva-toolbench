@@ -15,13 +15,11 @@ from typing import cast
 
 from support import (
     MARKS,
-    PROTOTYPE,
     Q1_A,
     Q2,
     QUESTIONS,
     READBACK,
     SPEC,
-    VERDICT,
     Client,
     EffortCase,
     is_dead,
@@ -200,33 +198,6 @@ class ReadbackVersionsJourneyTest(EffortCase):
         respond(3, "approve", [])
         self.assertEqual(show(effort, READBACK), 4)
         self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})
-
-
-class PrototypeJourneyTest(EffortCase):
-    def test_a_variant_is_read_from_the_effort_and_a_verdict_is_stored(self):
-        effort = self.effort()
-        effort.write("prototype/variant-A.html", "<p>A</p>")
-        effort.write("prototype/variant-B.html", "<p>B</p>")
-        self.assertEqual(show(effort, PROTOTYPE), 1)
-        client = Client(effort)
-        status, body, headers = client.request(
-            "GET", "/api/file/prototype/variant-A.html"
-        )
-        self.assertEqual((status, body), (200, b"<p>A</p>"))
-        self.assertTrue(headers["Content-Type"].startswith("text/plain"))
-        status, reply, _ = client.request(
-            "POST", "/api/response/1", json.dumps(VERDICT).encode()
-        )
-        self.assertEqual(
-            (status, json.loads(reply)), (201, {"path": "pilot/responses/001.json"})
-        )
-        saved = json.loads(
-            (effort.path / "pilot" / "responses" / "001.json").read_text()
-        )
-        self.assertEqual(
-            {key: saved[key] for key in ("kind", "via", *VERDICT)},
-            {"kind": "prototype", "via": "page", **VERDICT},
-        )
 
 
 DRAFT = {"q1": {"choice": "b"}}

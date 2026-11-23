@@ -368,7 +368,15 @@ class InvalidVerdictTest(HttpCase):
                 self.assertEqual(status, 400)
                 self.assertTrue(reply["problems"])
                 self.assertFalse(self.response_file(effort).exists())
-        self.assertEqual(send(client, "POST", "/api/response/1", verdict)[0], 201)
+        self.assertEqual(
+            send(client, "POST", "/api/response/1", verdict),
+            (201, {"path": "pilot/responses/001.json"}),
+        )
+        saved = json.loads(self.response_file(effort).read_text())
+        self.assertEqual(
+            {key: saved[key] for key in ("kind", "via", *verdict)},
+            {"kind": "prototype", "via": "page", **verdict},
+        )
 
 
 class FileRoutesTest(HttpCase):
