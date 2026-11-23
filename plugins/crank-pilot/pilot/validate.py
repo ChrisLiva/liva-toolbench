@@ -111,6 +111,8 @@ def _artifact(data: dict, effort: Path) -> list[str]:
         (effort / name).read_bytes().decode("utf-8")
     except UnicodeDecodeError:
         return ["artifact: must be UTF-8 text"]
+    except OSError:
+        return ["artifact: cannot be read"]
     return []
 
 
