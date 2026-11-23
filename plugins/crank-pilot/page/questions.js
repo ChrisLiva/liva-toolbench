@@ -185,8 +185,16 @@ export function mountQuestions(
       paint();
       emit();
     },
-    focusQuestion(qid) {
-      parts.get(qid).text.focus();
+    // Refuses a send while an own-answer choice has no text: says why in `err`, focuses that question, and returns true; otherwise clears `err`.
+    refuse(err) {
+      const open = unansweredOwn(questions, state);
+      if (!open) {
+        err.textContent = "";
+        return false;
+      }
+      err.textContent = refusalMessage(open.title);
+      parts.get(open.id).text.focus();
+      return true;
     },
   };
 }
@@ -285,14 +293,8 @@ export const surface = {
       ui.setForm(recommendedForm(questions, ui.form())),
     );
     send.addEventListener("click", async () => {
+      if (ui.refuse(err)) return;
       const form = ui.form();
-      const open = unansweredOwn(questions, form);
-      if (open) {
-        err.textContent = refusalMessage(open.title);
-        ui.focusQuestion(open.id);
-        return;
-      }
-      err.textContent = "";
       send.disabled = true;
       err.textContent = await ctx.send(
         { answers: answersFor(questions, form) },

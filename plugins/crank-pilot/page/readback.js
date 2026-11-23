@@ -19,8 +19,6 @@ import {
   numberMarks,
   occurrenceOf,
   readbackResponse,
-  refusalMessage,
-  unansweredOwn,
 } from "/page/model.js";
 import { BUSY, attaching, discardImages, holderControl } from "/page/attach.js";
 
@@ -607,14 +605,9 @@ export const surface = {
     watcher.observe(art);
 
     function refused() {
-      const open = unansweredOwn(decisions, form());
-      if (!open) {
-        err.textContent = "";
-        return false;
-      }
-      err.textContent = refusalMessage(open.title);
-      /** @type {NonNullable<typeof ui>} */ (ui).focusQuestion(open.id);
-      return true;
+      if (ui) return ui.refuse(err);
+      err.textContent = "";
+      return false;
     }
 
     async function submit(verdict) {
