@@ -57,6 +57,8 @@ ROUTES = (
     Route("POST", re.compile(r"/api/response/(?P<n>\d{1,9})"), "post_response", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/bye"), "bye", public=True, cap=JSON_CAP),
     Route("POST", re.compile(r"/api/close"), "close", cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/code"), "new_code", cap=JSON_CAP),
+    Route("POST", re.compile(r"/api/session"), "session", public=True, cap=JSON_CAP),
     Route("POST", re.compile(r"/api/attachment/(?P<n>\d{1,9})"), "post_attachment", cap=IMAGE_CAP, raw=True),
     Route("DELETE", re.compile(r"/api/attachment/(?P<n>\d{1,9})/(?P<k>\d{1,9})"), "delete_attachment"),
 )
@@ -79,12 +81,29 @@ class Server(ThreadingHTTPServer):
         self.token = token
         self.closing_until: float | None = None
         self._closing_lock = threading.Lock()
+        self.codes: set[str] = set()
+        self._codes_lock = threading.Lock()
 
     def start_closing(self) -> None:
         """Open the `ended` window once; a second call leaves it as it was."""
         with self._closing_lock:
             if self.closing_until is None:
                 self.closing_until = time.time() + scaled(ENDED)
+
+    def add_code(self) -> str:
+        """A new single-use code the page may exchange for the token."""
+        code = secrets.token_hex(16)
+        with self._codes_lock:
+            self.codes.add(code)
+        return code
+
+    def take_code(self, code: object) -> bool:
+        """True and the code is spent when it is a live code; two callers with one code never both get True."""
+        with self._codes_lock:
+            if isinstance(code, str) and code in self.codes:
+                self.codes.remove(code)
+                return True
+            return False
 
     def watch(self) -> None:
         """Stop serving when the `ended` window has passed (after removing the heartbeat and the record), or when the
@@ -219,6 +238,14 @@ class Handler(BaseHTTPRequestHandler):
     def close(self, match: re.Match, body: object) -> None:
         self.server.start_closing()
         self.reply(202, b"", "application/json")
+
+    def new_code(self, match: re.Match, body: object) -> None:
+        self.reply_json(201, {"code": self.server.add_code()})
+
+    def session(self, match: re.Match, body: object) -> None:
+        if isinstance(body, dict) and self.server.take_code(body.get("code")):
+            return self.reply_json(200, {"token": self.server.token})
+        self.reply_json(403, {"error": "forbidden"})
 
     def put_draft(self, match: re.Match, body: object) -> None:
         n = int(match["n"])

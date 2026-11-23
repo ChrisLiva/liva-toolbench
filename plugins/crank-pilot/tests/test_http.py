@@ -65,6 +65,25 @@ class SubmitOnceTest(HttpCase):
         self.assertEqual([p.name for p in self.response_file(effort).parent.iterdir()], ["001.json"])
 
 
+class CodeExchangeTest(HttpCase):
+    def test_two_exchanges_of_one_code_at_once_give_the_token_once(self):
+        _, client = self.round()
+        code = json.loads(client.request("POST", "/api/code", b"{}")[1])["code"]
+        barrier = threading.Barrier(2)
+        results: list[int] = []
+
+        def exchange() -> None:
+            barrier.wait()
+            results.append(client.request("POST", "/api/session", json.dumps({"code": code}).encode(), token=False)[0])
+
+        threads = [threading.Thread(target=exchange) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(sorted(results), [200, 403])
+
+
 class InvalidResponseTest(HttpCase):
     def test_a_response_that_fails_validation_gets_400_with_problems_and_writes_nothing(self):
         effort, client = self.round()
@@ -301,7 +320,7 @@ class GuardTest(HttpCase):
                 self.assertEqual(raw_request(client, "PUT", "/api/draft/1", headers=headers, body=b"{}")[0], 204)
         self.assertTrue(draft.exists())
 
-    def test_a_request_without_the_right_token_gets_403_except_the_pages_static_files_and_the_beacon(self):
+    def test_a_request_without_the_right_token_gets_403_except_the_pages_static_files_the_beacon_and_the_code_exchange(self):
         effort, client = self.round()
         effort.write("prototype/variant-A.html", "<p>A</p>")
         cases = {
@@ -309,6 +328,7 @@ class GuardTest(HttpCase):
             "ping": ("GET", "/api/ping", {}),
             "draft": ("PUT", "/api/draft/1", {}),
             "response": ("POST", "/api/response/1", {}),
+            "a new code": ("POST", "/api/code", {}),
             "an effort file": ("GET", "/api/file/prototype/variant-A.html", {}),
             "state with a wrong token": ("GET", "/api/state", {"X-Pilot-Token": "wrong"}),
             "state with the token in the query string": ("GET", f"/api/state?t={client.token}", {}),
@@ -319,6 +339,9 @@ class GuardTest(HttpCase):
                 self.assertEqual(status, 403)
         self.assertEqual(client.request("GET", "/api/file/prototype/variant-A.html")[:2], (200, b"<p>A</p>"))
         self.assertFalse(self.response_file(effort).exists())
+        for name, body in (("an unknown code", b'{"code": "0123"}'), ("no code", b"{}"), ("not JSON", b"x")):
+            with self.subTest(name):
+                self.assertEqual(raw_request(client, "POST", "/api/session", token=False, body=body)[0], 403)
 
     def test_a_json_body_over_1_mib_gets_413_before_it_is_read_and_a_body_with_no_length_gets_411(self):
         effort, client = self.round()

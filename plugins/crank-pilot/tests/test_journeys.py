@@ -4,6 +4,7 @@ import datetime
 import json
 import contextlib
 import os
+import re
 import signal
 import socket
 import stat
@@ -224,8 +225,11 @@ class RestartAfterKillJourneyTest(EffortCase):
             self.addCleanup(stop.set)
             shown = effort.run("show", effort.path, source, scale=20, env=env)
             self.assertEqual((shown.returncode, shown.stdout, shown.stderr), (0, "2\n", ""))
-            self.assertEqual(opened.read_text().splitlines(),
-                             [f"http://127.0.0.1:{new['port']}/?t={new['token']}"])
+            (url,) = opened.read_text().splitlines()
+            code = re.fullmatch(rf"http://127\.0\.0\.1:{new['port']}/\?c=([0-9a-f]{{32}})", url)
+            self.assertIsNotNone(code, url)
+            status, body, _ = fresh.request("POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False)
+            self.assertEqual((status, json.loads(body)), (200, {"token": new["token"]}))
 
 
 if __name__ == "__main__":

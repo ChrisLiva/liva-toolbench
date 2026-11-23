@@ -1,4 +1,4 @@
-import { token, getState, putDraft, postResponse } from "/page/api.js";
+import { start, token, getState, putDraft, postResponse } from "/page/api.js";
 import { surface as questions } from "/page/questions.js";
 import { surface as readback } from "/page/readback.js";
 import { surface as prototype } from "/page/prototype.js";
@@ -174,5 +174,4 @@ document.addEventListener("keydown", (event) => {
 
 window.addEventListener("pagehide", () => token() && navigator.sendBeacon("/api/bye"));
 
-if (token()) poll();
-else stop("Open this page from the session");
+start().then((t) => (t ? poll() : stop("Open this page from the session")));

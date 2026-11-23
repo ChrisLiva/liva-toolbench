@@ -85,13 +85,18 @@ def ensure_server(store: Store) -> dict:
 
 
 def open_page(record: dict) -> None:
-    """Open the page in a browser; whatever the launcher prints stays off stdout, which carries only the number."""
+    """Open the page in a browser with a one-time code in the URL, not the token; whatever the launcher prints stays
+    off stdout, which carries only the number. Opens nothing when the server gives no code."""
+    try:
+        code = json.loads(call(record, "/api/code", "POST", b"{}"))["code"]
+    except (OSError, http.client.HTTPException):
+        return
     sys.stdout.flush()
     saved = os.dup(1)
     with open(os.devnull, "w") as quiet:
         os.dup2(quiet.fileno(), 1)
         try:
-            webbrowser.open(f"http://127.0.0.1:{record['port']}/?t={record['token']}")
+            webbrowser.open(f"http://127.0.0.1:{record['port']}/?c={code}")
         finally:
             os.dup2(saved, 1)
             os.close(saved)

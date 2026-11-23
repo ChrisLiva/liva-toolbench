@@ -3,20 +3,39 @@ let held = "";
 
 export function token() {
   if (held) return held;
-  const url = new URL(location.href);
-  const given = url.searchParams.get("t");
   try {
-    if (given) sessionStorage.setItem(KEY, given);
-    else held = sessionStorage.getItem(KEY) || "";
+    held = sessionStorage.getItem(KEY) || "";
   } catch {
     // Storage is blocked: the token then lives only until this page is closed.
   }
-  if (given) {
-    held = given;
-    url.searchParams.delete("t");
-    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
-  }
   return held;
+}
+
+export async function start() {
+  const url = new URL(location.href);
+  const code = url.searchParams.get("c");
+  if (!code) return token();
+  url.searchParams.delete("c");
+  history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+  try {
+    const reply = await fetch("/api/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+      cache: "no-store",
+    });
+    if (reply.ok) {
+      held = (await reply.json()).token;
+      try {
+        sessionStorage.setItem(KEY, held);
+      } catch {
+        // Storage is blocked: the token then lives only until this page is closed.
+      }
+    }
+  } catch {
+    // The exchange failed: the page falls back to what token() holds.
+  }
+  return token();
 }
 
 function call(method, path, body) {

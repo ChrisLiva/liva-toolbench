@@ -5,6 +5,7 @@ import copy
 import http.server
 import json
 import os
+import re
 import signal
 import subprocess
 import tempfile
@@ -213,7 +214,14 @@ class ShowBrowserTest(EffortCase):
         source = effort.write("interaction.json", json.dumps(QUESTIONS))
         self.assertEqual(show(effort, QUESTIONS, scale=10, env=env, opened=opened), 1)
         record = json.loads((effort.path / "pilot" / "server.json").read_text())
-        self.assertEqual(opened.read_text(), f"http://127.0.0.1:{record['port']}/?t={record['token']}\n")
+        url = opened.read_text()
+        code = re.fullmatch(rf"http://127\.0\.0\.1:{record['port']}/\?c=([0-9a-f]{{32}})\n", url)
+        self.assertIsNotNone(code, url)
+        self.assertNotIn(record["token"], url)
+        client = Client(effort)
+        status, body, _ = client.request("POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False)
+        self.assertEqual((status, json.loads(body)), (200, {"token": record["token"]}))
+        self.assertEqual(client.request("POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False)[0], 403)
         done = effort.run("show", effort.path, source, scale=10, env=env)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "2\n", ""))
         self.assertEqual(len(opened.read_text().splitlines()), 1)

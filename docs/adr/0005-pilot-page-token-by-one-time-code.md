@@ -1,0 +1,3 @@
+# crank-pilot's page receives its token through a one-time code
+
+`show` opens the page with a single-use code in the URL, not the server's token, and the page exchanges that code once for the token. A URL is visible to other local users while the launcher runs on Linux and BSD, and it stays in browser history. A restarted server keeps its token so an open page and its draft survive a kill, so generating a new token at each start was rejected: it would break that reconnect. A code lives in the server's memory until it is used or the server exits. Whoever exchanges it first gets the token, so a local user who wins that sub-second race still gets in, and the user's page then shows "Open this page from the session".
