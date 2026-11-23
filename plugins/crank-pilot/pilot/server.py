@@ -63,6 +63,7 @@ ENDED = 5
 IDLE = 30 * 60
 MIN_TICK = 0.01
 WATCH = 1
+POLL = 0.5
 JSON_CAP = 1 << 20
 IMAGE_CAP = 10 << 20
 DRAIN_LIMIT = 4 << 20
@@ -427,7 +428,7 @@ def main(argv: list[str]) -> int:
     }
     write_atomic(store.server_json, json.dumps(record).encode(), 0o600)
     threading.Thread(target=server.watch, daemon=True).start()
-    server.serve_forever(poll_interval=MIN_TICK)
+    server.serve_forever(poll_interval=max(scaled(POLL), MIN_TICK))
     return 0
 
 
