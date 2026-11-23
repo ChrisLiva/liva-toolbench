@@ -1,6 +1,6 @@
 import { getFile } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
-import { el, sendControl } from "/page/dom.js";
+import { el, plural, sendControl } from "/page/dom.js";
 import { attachedCount, numberPins, prototypeFrom, prototypeResponse, verdictRefusal } from "/page/model.js";
 import { holderControl, mountAttach } from "/page/attach.js";
 
@@ -103,7 +103,7 @@ export const surface = {
     };
 
     function paintPins() {
-      sub.textContent = `of ${variants.length} variants · ${pins.length} pinned comment${pins.length === 1 ? "" : "s"}`;
+      sub.textContent = `of ${variants.length} variants · ${plural(pins.length, "pinned comment")}`;
       list.replaceChildren(
         ...numberPins(pins).map((pin, i) => {
           const item = el("li", {}, el("span", { class: "l" }, `Variant ${pin.variant} · Pin ${pin.n}`), el("span", { class: "pt" }, pin.text), el("span", { class: "sel" }, pin.selector));

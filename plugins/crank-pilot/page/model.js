@@ -1,5 +1,6 @@
-// The question round's data rules. No DOM here: every function takes questions and a form and returns data.
-// A form is {[questionId]: {choice: <option id> | "own" | null, text, note, attachments}}.
+// The page's data rules for all three surfaces: attachments, the question round, the readback's marks, the prototype review.
+// No DOM here: every function takes plain data and returns data.
+// A question form is {[questionId]: {choice: <option id> | "own" | null, text, note, attachments}}.
 
 // Attachments. The server stores only the four types sniffImage names and at most ten images per response.
 export const MAX_IMAGES = 10;
@@ -32,8 +33,8 @@ export function attachRefusal({ kind, size, count }) {
 // The images attached to every holder (a form's entries, marks, a verdict and its pins) on one response.
 export const attachedCount = (...holders) => holders.flat().reduce((total, holder) => total + holder.attachments.length, 0);
 
-const hasOptions = (question) => Array.isArray(question.options) && question.options.length > 0;
-const strings = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === "string") : []);
+export const hasOptions = (question) => Array.isArray(question.options) && question.options.length > 0;
+export const strings = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === "string") : []);
 
 // One question's entry, read defensively: a draft is whatever an earlier page wrote.
 function entry(question, raw) {
@@ -74,8 +75,6 @@ export function unansweredOwn(questions, form) {
   });
 }
 
-export const roundRefusal = (questions, form) => unansweredOwn(questions, form)?.title ?? null;
-
 export const refusalMessage = (title) => `Type your answer to "${title}" or pick an option.`;
 
 export const differCount = (questions, form) => answersFor(questions, form).filter((a) => !a.accepted).length;
@@ -91,6 +90,35 @@ export function recommendedForm(questions, form) {
 
 // The readback's marks. A page-side mark is {id, type, text, quote, lines, heading, occurrence, start, attachments}:
 // `id` is the creation counter and `start` the selection's offset in its first block's text; neither is sent.
+
+// A draft is whatever an earlier page wrote: keep the marks that are whole and fill what a mark may lack.
+export function marksFrom(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const m of raw) {
+    if (!m || typeof m !== "object" || !Number.isInteger(m.id) || typeof m.text !== "string") continue;
+    const attachments = strings(m.attachments);
+    if (m.type === "note") {
+      out.push({ id: m.id, type: "note", text: m.text, attachments });
+      continue;
+    }
+    const whole =
+      (m.type === "comment" || m.type === "strike") &&
+      typeof m.quote === "string" &&
+      Array.isArray(m.lines) && m.lines.length === 2 && m.lines.every(Number.isInteger) &&
+      Number.isInteger(m.start);
+    if (!whole) continue;
+    out.push({
+      id: m.id, type: m.type, text: m.text, quote: m.quote, lines: m.lines,
+      heading: typeof m.heading === "string" ? m.heading : "",
+      occurrence: Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
+      start: m.start,
+      ...(Number.isInteger(m.end) ? { end: m.end } : {}),
+      attachments,
+    });
+  }
+  return out;
+}
 
 // Anchored marks in document order (first line, then offset, then creation), general notes last in creation order.
 export function numberMarks(marks) {

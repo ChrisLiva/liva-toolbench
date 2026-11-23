@@ -1,6 +1,6 @@
 import { renderMarkdown } from "/page/render.js";
-import { answersFor, attachedCount, differCount, formFrom, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
-import { el, sendControl } from "/page/dom.js";
+import { answersFor, attachedCount, differCount, formFrom, hasOptions, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
+import { el, plural, sendControl } from "/page/dom.js";
 import { mountAttach } from "/page/attach.js";
 
 const OWN = "own";
@@ -11,8 +11,6 @@ function markdown(source, into) {
   });
   return into;
 }
-
-const hasOptions = (q) => Array.isArray(q.options) && q.options.length > 0;
 
 // Draws the questions into `root` and keeps their form; `onChange(form)` runs after every change the user makes.
 // `attach` names the interaction the images belong to and `others()`, how many images the response carries outside this form.
@@ -148,7 +146,7 @@ export const surface = {
     stage.querySelector("#ledger").append(
       el("p", { class: "l" }, "Differ from recommended"),
       big,
-      el("p", { class: "l lsub" }, `of ${questions.length} question${questions.length === 1 ? "" : "s"}`),
+      el("p", { class: "l lsub" }, `of ${plural(questions.length, "question")}`),
       sum,
       err,
       el("div", { class: "lact" }, accept, el("div", { class: "ar" }, send, hint)),

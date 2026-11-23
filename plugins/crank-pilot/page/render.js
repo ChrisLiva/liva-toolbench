@@ -88,6 +88,9 @@ async function drawDiagram(pre) {
   }
 }
 
+// The first and last source line a rendered block spans.
+export const linesOf = (node) => node.getAttribute("data-lines").split("-").map(Number);
+
 export async function renderMarkdown(source, root) {
   root.innerHTML = md.render(source);
   for (const pre of root.querySelectorAll("pre[data-fence]")) {
@@ -99,7 +102,7 @@ export async function renderMarkdown(source, root) {
   return [...root.querySelectorAll("[data-lines]")]
     .filter((el) => !el.querySelector("[data-lines]"))
     .map((el) => {
-      const [first, last] = el.getAttribute("data-lines").split("-").map(Number);
+      const [first, last] = linesOf(el);
       return { el, first, last, tag: el.tagName.toLowerCase(), text: el.textContent, source: lines.slice(first - 1, last).join("\n") };
     });
 }

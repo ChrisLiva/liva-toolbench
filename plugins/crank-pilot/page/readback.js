@@ -1,45 +1,14 @@
 import { getFile } from "/page/api.js";
-import { renderMarkdown } from "/page/render.js";
-import { el, mac, sendControl } from "/page/dom.js";
+import { linesOf, renderMarkdown } from "/page/render.js";
+import { el, mac, plural, sendControl } from "/page/dom.js";
 import { mountQuestions } from "/page/questions.js";
-import { attachedCount, canSendChanges, diffBlocks, headingAbove, numberMarks, occurrenceOf, readbackResponse, refusalMessage, roundRefusal, unansweredOwn } from "/page/model.js";
+import { attachedCount, canSendChanges, diffBlocks, headingAbove, marksFrom, numberMarks, occurrenceOf, readbackResponse, refusalMessage, unansweredOwn } from "/page/model.js";
 import { BUSY, attaching, discardImages, holderControl } from "/page/attach.js";
 
 const HINT = "Select text, or focus a block and press Enter, to comment on it or strike it.";
 const OLDER_HINT = (shown, current) => `Version ${shown} is read-only. Move the version control to v${current} to mark.`;
 const LABEL = { comment: "Comment", strike: "Strike", note: "Note" };
 const pad = (n) => String(n).padStart(2, "0");
-const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-const linesOf = (node) => node.getAttribute("data-lines").split("-").map(Number);
-
-// A draft is whatever an earlier page wrote: keep the marks that are whole and fill what a mark may lack.
-function restore(raw) {
-  if (!Array.isArray(raw)) return [];
-  const out = [];
-  for (const m of raw) {
-    if (!m || typeof m !== "object" || !Number.isInteger(m.id) || typeof m.text !== "string") continue;
-    const attachments = Array.isArray(m.attachments) ? m.attachments.filter((a) => typeof a === "string") : [];
-    if (m.type === "note") {
-      out.push({ id: m.id, type: "note", text: m.text, attachments });
-      continue;
-    }
-    const whole =
-      (m.type === "comment" || m.type === "strike") &&
-      typeof m.quote === "string" &&
-      Array.isArray(m.lines) && m.lines.length === 2 && m.lines.every(Number.isInteger) &&
-      Number.isInteger(m.start);
-    if (!whole) continue;
-    out.push({
-      id: m.id, type: m.type, text: m.text, quote: m.quote, lines: m.lines,
-      heading: typeof m.heading === "string" ? m.heading : "",
-      occurrence: Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
-      start: m.start,
-      ...(Number.isInteger(m.end) ? { end: m.end } : {}),
-      attachments,
-    });
-  }
-  return out;
-}
 
 // The text node and offset that sit `offset` characters into `block`'s rendered text.
 function locate(block, offset, atEnd) {
@@ -82,7 +51,7 @@ export const surface = {
     const reading = stage.querySelector("#reading");
     const ledger = stage.querySelector("#ledger");
 
-    let marks = restore(draft.marks);
+    let marks = marksFrom(draft.marks);
     let nextId = marks.reduce((high, m) => Math.max(high, m.id), 0) + 1;
     let blocks = [];
     let ui = null;
@@ -570,14 +539,13 @@ export const surface = {
 
     // Sending.
     function refused() {
-      const current = form();
-      const name = roundRefusal(decisions, current);
-      if (name === null) {
+      const open = unansweredOwn(decisions, form());
+      if (!open) {
         err.textContent = "";
         return false;
       }
-      err.textContent = refusalMessage(name);
-      ui.focusQuestion(unansweredOwn(decisions, current).id);
+      err.textContent = refusalMessage(open.title);
+      ui.focusQuestion(open.id);
       return true;
     }
 

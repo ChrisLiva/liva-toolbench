@@ -149,7 +149,6 @@ export function mountAttach(root, { interaction, paths, count, onChange, zone = 
   bind(zone);
 
   return {
-    node,
     set(next) {
       held = [...next];
       paint();
