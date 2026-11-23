@@ -31,8 +31,11 @@ def fail(message: str, code: int) -> int:
     return code
 
 
-def open_store(args: argparse.Namespace) -> Store | None:
-    return Store(args.effort) if args.effort.is_dir() else None
+def open_store(args: argparse.Namespace) -> Store:
+    """The store of the effort directory the command names; exit 2 when it is not a directory."""
+    if not args.effort.is_dir():
+        sys.exit(fail(f"no such effort directory: {args.effort}", 2))
+    return Store(args.effort)
 
 
 def call(record: dict, path: str, method: str = "GET", data: bytes | None = None) -> bytes:
@@ -104,8 +107,6 @@ def settle(store: Store, number: int, via: str) -> bool:
 
 def cmd_show(args: argparse.Namespace) -> int:
     store = open_store(args)
-    if store is None:
-        return fail(f"no such effort directory: {args.effort}", 2)
     try:
         interaction = json.loads(args.interaction.read_text())
     except OSError as error:
@@ -141,8 +142,6 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def cmd_wait(args: argparse.Namespace) -> int:
     store = open_store(args)
-    if store is None:
-        return fail(f"no such effort directory: {args.effort}", 2)
     start = grace_from = last_poll = time.time()
     while True:
         now = time.time()
@@ -167,8 +166,6 @@ def cmd_wait(args: argparse.Namespace) -> int:
 
 def cmd_resolve(args: argparse.Namespace) -> int:
     store = open_store(args)
-    if store is None:
-        return fail(f"no such effort directory: {args.effort}", 2)
     pending = store.pending()
     if pending is None or not settle(store, pending, "chat"):
         return fail("nothing pending", 2)
@@ -177,8 +174,6 @@ def cmd_resolve(args: argparse.Namespace) -> int:
 
 def cmd_close(args: argparse.Namespace) -> int:
     store = open_store(args)
-    if store is None:
-        return fail(f"no such effort directory: {args.effort}", 2)
     record = store.record()
     if record is None:
         return 0
