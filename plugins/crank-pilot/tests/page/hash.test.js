@@ -20,6 +20,9 @@ const readback = (number, version) => ({
   agenda: { settled: [], open: [], current: "" },
 });
 
+const versions = (...ns) =>
+  ns.map((n) => ({ n, file: `pilot/versions/spec.md/00${n}.md` }));
+
 const until = async (condition, what, limit = 6000) => {
   for (let waited = 0; !condition(); waited += 10) {
     assert.ok(waited < limit, `the page never showed ${what}`);
@@ -36,13 +39,16 @@ test("a version picked on one readback does not carry onto the next interaction"
   let state = {
     effort: "e",
     interaction: readback(2, 2),
-    versions: [1, 2],
+    versions: versions(1, 2),
     prior: null,
     draft: null,
   };
   routeFetch({
     "GET /api/state": () => json(state),
-    "GET /api/file/": () => new Response("# Title\n\nBody"),
+    "GET /api/file/": (path) =>
+      /^\/api\/file\/pilot\/versions\/spec\.md\/00[1-3]\.md$/.test(path)
+        ? new Response("# Title\n\nBody")
+        : new Response("", { status: 404 }),
   });
   await import("/page/app.js");
   await until(() => document.getElementById("ver"), "the version control");
@@ -55,7 +61,11 @@ test("a version picked on one readback does not carry onto the next interaction"
   slideTo(1);
   slideTo(2);
 
-  state = { ...state, interaction: readback(3, 3), versions: [1, 2, 3] };
+  state = {
+    ...state,
+    interaction: readback(3, 3),
+    versions: versions(1, 2, 3),
+  };
   await until(
     () => document.getElementById("ver")?.max === "3",
     "the next readback",

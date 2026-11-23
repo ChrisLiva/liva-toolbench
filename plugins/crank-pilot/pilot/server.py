@@ -21,6 +21,7 @@ from pilot.store import (
     image_extension,
     response_rel,
     scaled,
+    version_rel,
     write_atomic,
 )
 from pilot.validate import inside, response_problems
@@ -186,15 +187,20 @@ class Handler(BaseHTTPRequestHandler):
         draft = store.draft(latest) if latest and response is None else None
         interaction = store.interaction(latest) if latest else None
         readback = interaction is not None and interaction["kind"] == "readback"
+        versions = []
+        if readback:
+            artifact = cast(dict, interaction)["artifact"]
+            versions = [
+                {"n": n, "file": version_rel(artifact, n)}
+                for n in store.kept_versions(artifact)
+            ]
         return {
             "ended": self.pilot.closing_until is not None,
             "effort": store.effort.name,
             "interaction": interaction,
             "response": {"via": response["via"]} if response else None,
             "draft": draft,
-            "versions": store.kept_versions(cast(dict, interaction)["artifact"])
-            if readback
-            else [],
+            "versions": versions,
             "prior": store.prior(cast(int, latest)) if readback else None,
         }
 

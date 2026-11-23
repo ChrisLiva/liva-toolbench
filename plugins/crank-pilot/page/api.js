@@ -52,7 +52,7 @@ function call(method, path, body) {
 }
 
 export const getState = () => call("GET", "/api/state");
-export const getFile = (path) =>
+const getFile = (path) =>
   call("GET", "/api/file/" + path.split("/").map(encodeURIComponent).join("/"));
 export const putDraft = (n, obj) => call("PUT", `/api/draft/${n}`, obj);
 export const postResponse = (n, obj) => call("POST", `/api/response/${n}`, obj);
@@ -60,3 +60,16 @@ export const postAttachment = (n, blob) =>
   call("POST", `/api/attachment/${n}`, blob);
 export const deleteAttachment = (n, k) =>
   call("DELETE", `/api/attachment/${n}/${k}`);
+
+// One reader per mount: a file is fetched once per mount, and the next mount reads it again.
+export function fileReader() {
+  const texts = new Map();
+  return async (path) => {
+    if (!texts.has(path)) {
+      const res = await getFile(path);
+      if (!res.ok) throw new Error(`file ${res.status}`);
+      texts.set(path, await res.text());
+    }
+    return texts.get(path);
+  };
+}

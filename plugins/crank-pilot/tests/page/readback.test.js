@@ -20,7 +20,7 @@ const STATE = {
     decisions: [],
     agenda: { settled: [], open: [], current: "" },
   },
-  versions: [1],
+  versions: [{ n: 1, file: "pilot/versions/spec.md/001.md" }],
   prior: null,
   draft: null,
 };
@@ -28,7 +28,10 @@ const STATE = {
 test("readback: strike across blocks, comment, remount from the draft, remove", async () => {
   const window = pageWindow();
   routeFetch({
-    "GET /api/file/": async () => new Response(SOURCE, { status: 200 }),
+    "GET /api/file/": async (path) =>
+      /^\/api\/file\/pilot\/versions\/spec\.md\/00[12]\.md$/.test(path)
+        ? new Response(SOURCE, { status: 200 })
+        : new Response("", { status: 404 }),
   });
   const { surface } = await import("/page/readback.js");
   const { document } = window;
@@ -160,7 +163,10 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
       {
         ...STATE,
         interaction: { ...STATE.interaction, version: 2 },
-        versions: [1, 2],
+        versions: [
+          { n: 1, file: "pilot/versions/spec.md/001.md" },
+          { n: 2, file: "pilot/versions/spec.md/002.md" },
+        ],
       },
       ctx,
     );

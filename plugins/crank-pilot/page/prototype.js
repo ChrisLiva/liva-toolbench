@@ -1,4 +1,4 @@
-import { getFile } from "/page/api.js";
+import { fileReader } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
 import { el, hashParam, plural, sendControl, setHashParam } from "/page/dom.js";
 import {
@@ -42,7 +42,7 @@ export const surface = {
     let frame = null;
     let shown = 0;
     let alive = true;
-    const texts = new Map();
+    const read = fileReader();
     const controls = new Map();
     const count = () => attachedCount(verdict, pins);
 
@@ -223,15 +223,6 @@ export const surface = {
       input.focus();
     }
 
-    async function variantText(v) {
-      if (!texts.has(v.key)) {
-        const res = await getFile(v.file);
-        if (!res.ok) throw new Error(`file ${res.status}`);
-        texts.set(v.key, await res.text());
-      }
-      return texts.get(v.key);
-    }
-
     async function show(to) {
       index = (to + variants.length) % variants.length;
       const v = variants[index];
@@ -244,7 +235,7 @@ export const surface = {
       frame = null;
       box.replaceChildren(el("p", { class: "l vmsg" }, "Loading the variant"));
       try {
-        const html = await variantText(v);
+        const html = await read(v.file);
         if (!alive || mine !== shown) return;
         frame = /** @type {HTMLIFrameElement & { contentWindow: Window }} */ (
           sandboxFrame(html, { script: PICKER })

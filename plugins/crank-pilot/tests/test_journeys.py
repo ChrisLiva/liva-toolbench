@@ -145,7 +145,10 @@ class ReadbackVersionsJourneyTest(EffortCase):
         self.assertEqual((kept / "001.md").read_text(), SPEC)
         self.assertEqual(stored(1)["version"], 1)
         state = client.state()
-        self.assertEqual((state["versions"], state["prior"]), ([1], None))
+        self.assertEqual(
+            (state["versions"], state["prior"]),
+            ([{"n": 1, "file": "pilot/versions/spec.md/001.md"}], None),
+        )
         self.assertEqual(show(effort, READBACK), 2)
         self.assertEqual(sorted(p.name for p in kept.iterdir()), ["001.md"])
         self.assertEqual(stored(2)["version"], 1)
@@ -160,7 +163,13 @@ class ReadbackVersionsJourneyTest(EffortCase):
         self.assertEqual((kept / "002.md").read_text(), revised)
         self.assertEqual(stored(3)["version"], 2)
         state = client.state()
-        self.assertEqual(state["versions"], [1, 2])
+        self.assertEqual(
+            state["versions"],
+            [
+                {"n": 1, "file": "pilot/versions/spec.md/001.md"},
+                {"n": 2, "file": "pilot/versions/spec.md/002.md"},
+            ],
+        )
         self.assertEqual(state["prior"], {"version": 1, "marks": MARKS})
 
     def test_versions_are_numbered_and_prior_is_the_latest_changes_response_per_file(
@@ -191,7 +200,10 @@ class ReadbackVersionsJourneyTest(EffortCase):
             sorted(p.name for p in (versions / "spec.md").iterdir()), ["001.md"]
         )
         state = client.state()
-        self.assertEqual((state["versions"], state["prior"]), ([1], None))
+        self.assertEqual(
+            (state["versions"], state["prior"]),
+            ([{"n": 1, "file": "pilot/versions/plan.md/001.md"}], None),
+        )
         respond(2, "changes", [{**MARKS[1], "n": 1}])
         self.assertEqual(show(effort, READBACK), 3)
         self.assertEqual(client.state()["prior"], {"version": 1, "marks": MARKS})

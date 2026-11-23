@@ -165,7 +165,10 @@ test("summary rows, a draft's general note, an unloadable version, and what chan
   state = {
     effort: "e",
     interaction: READBACK,
-    versions: [1, 2, 3],
+    versions: [1, 2, 3].map((n) => ({
+      n,
+      file: `pilot/versions/spec.md/00${n}.md`,
+    })),
     prior: PRIOR,
     draft: DRAFT,
   };

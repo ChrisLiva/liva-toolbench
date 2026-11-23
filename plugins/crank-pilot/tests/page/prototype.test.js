@@ -1,5 +1,6 @@
 // The prototype surface's variant switch: the variant on show is remembered per interaction, so the next
-// prototype opens on its first variant. Mounted directly with a hand-built context, as readback.test.js does.
+// prototype opens on its first variant, and its files are read again. Mounted directly with a hand-built
+// context, as readback.test.js does.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { pageWindow, routeFetch, tick } from "./page.js";
@@ -17,8 +18,9 @@ const interaction = (number) => ({
 
 test("prototype: the variant shown does not carry onto the next interaction", async () => {
   const window = pageWindow();
+  let html = "<p>variant</p>";
   routeFetch({
-    "GET /api/file/": async () => new Response("<p>variant</p>"),
+    "GET /api/file/": async () => new Response(html),
   });
   const { surface } = await import("/page/prototype.js");
   const { document } = window;
@@ -46,8 +48,16 @@ test("prototype: the variant shown does not carry onto the next interaction", as
   document.getElementById("reading").replaceChildren();
   document.getElementById("ledger").replaceChildren();
 
+  // The agent rewrote the variant files between the interactions: the next mount reads them again.
+  html = "<p>rewritten</p>";
   teardown = mount(5);
   await tick(20);
   assert.match(label().textContent, /^A/);
+  assert.ok(
+    document
+      .querySelector("iframe.pframe")
+      .getAttribute("srcdoc")
+      .endsWith("<p>rewritten</p>"),
+  );
   teardown();
 });

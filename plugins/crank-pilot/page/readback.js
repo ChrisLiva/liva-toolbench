@@ -1,4 +1,4 @@
-import { getFile } from "/page/api.js";
+import { fileReader } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
 import { anchoring, plain } from "/page/anchor.js";
 import {
@@ -60,7 +60,6 @@ export const surface = {
     const {
       number,
       title,
-      artifact,
       version,
       lead,
       judgment_calls: calls,
@@ -68,10 +67,9 @@ export const surface = {
       edits,
       decisions,
     } = state.interaction;
-    const known =
-      Array.isArray(state.versions) && state.versions.length
-        ? state.versions
-        : [version];
+    const files = new Map(state.versions.map((v) => [v.n, v.file]));
+    const known = [...files.keys()];
+    const read = fileReader();
     const prior = state.prior ?? null;
     // A revision: the version on offer is not the one the user last marked up.
     const revised = prior !== null && prior.version !== version;
@@ -745,17 +743,7 @@ export const surface = {
       );
     }
 
-    const sources = new Map();
-    async function sourceOf(n) {
-      if (!sources.has(n)) {
-        const res = await getFile(
-          `pilot/versions/${artifact}/${String(n).padStart(3, "0")}.md`,
-        );
-        if (!res.ok) throw new Error(`file ${res.status}`);
-        sources.set(n, await res.text());
-      }
-      return sources.get(n);
-    }
+    const sourceOf = (n) => read(files.get(n));
 
     // The source text of each block of the version the user last marked up.
     /** @type {Promise<any[]> | null} */
