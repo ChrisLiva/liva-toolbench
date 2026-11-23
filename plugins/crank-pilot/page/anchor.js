@@ -145,5 +145,5 @@ export function anchoring(art, getBlocks) {
     });
     return found;
   }
-  return { blockOf, piecesIn, trimmed, anchorFor, rangeFor, wrap, draw, unwrap, blockIndex };
+  return { piecesIn, trimmed, anchorFor, wrap, draw, unwrap, blockIndex };
 }
