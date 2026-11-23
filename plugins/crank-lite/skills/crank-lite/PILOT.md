@@ -83,7 +83,7 @@ The readback goes up as a `readback` interaction, the same content the readback 
 }
 ```
 
-The response carries `verdict`, `version` (the version of the artifact the user read), `answers` (one per decision), and `marks`. Each mark has `n`, `type` (`comment`, `strike`, or `note`), `text`, and, except for a general `note`, `quote`, `lines`, `heading`, and `occurrence`.
+The response carries `verdict`, `version` (the version of the artifact the user read), `answers` (one per decision), and `marks`. Each mark has `n`, `type` (`comment`, `strike`, or `note`), `text`, and, except for a general `note`, `quote`, `lines`, `heading`, and `occurrence`. Each mark also carries `attachments`, image paths relative to the effort directory; read each as part of that mark.
 
 - On `verdict` `approve`, the readback is done, and each decision's answer lands as a stated change.
 - On `changes`, dispatch the feedback subagent of the readback protocol's Fold in feedback step (READBACK.md → Fold in feedback) with the response file's path in place of the verbatim feedback line, and add the sentence `Land each mark at the source lines it names in the version the response names, using its quote to find the text if the file has moved.` Each decision's answer lands as a stated change. Then write the returned edits into a new `readback` interaction for the same artifact and show it again.
@@ -106,7 +106,7 @@ A prototype built as HTML variant files is handed over as a `prototype` interact
 }
 ```
 
-Read the verdict from the response: `winner` (a variant key), `take` and `leave_out` (what to take from the others and what to leave out of the winner, `nothing` counting as an answer), and `comments`, each pinned to an element of a variant with `variant`, `selector`, `leading_text`, and `text`. The phase records them as its verdict step records an answer given in chat. The CLI and TUI rungs stay in chat. A user who will not choose replies in chat, and the phase records `no verdict`.
+Read the verdict from the response: `winner` (a variant key), `take` and `leave_out` (what to take from the others and what to leave out of the winner, `nothing` counting as an answer), and `comments`, each pinned to an element of a variant with `variant`, `selector`, `leading_text`, and `text`. The verdict and each comment carry `attachments` the same way; read each as part of what it is attached to. The phase records them as its verdict step records an answer given in chat. The CLI and TUI rungs stay in chat. A user who will not choose replies in chat, and the phase records `no verdict`.
 
 ## Chat replies
 
