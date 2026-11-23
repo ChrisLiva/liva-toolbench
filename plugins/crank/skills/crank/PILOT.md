@@ -2,12 +2,6 @@
 
 A phase in interactive mode puts its question rounds, its readback, and its prototype review on a local page and reads the user's answers back from files. The `crank-pilot` command, on PATH, is the only channel. Everything else in the phase runs as written.
 
-## The mode
-
-The mode is on when the invocation carried `--pilot`, or when a loaded instruction file carries the line `Run crank and crank-lite in interactive mode.` or a line with the same meaning. `--no-pilot` turns it off for the session even when both of those are present. A phase loaded on "continue" keeps the state the phase before it had.
-
-With the mode off, stop reading this file, run the phase's chat flow, run no `crank-pilot` command, and print nothing about the mode or the page.
-
 ## Show, wait, read
 
 Every interaction follows one sequence. `<effort-dir>` is the effort's `.crank/<slug>/` directory.
@@ -22,7 +16,7 @@ Every interaction carries four common fields:
 
 - `kind`: `questions`, `readback`, or `prototype`;
 - `phase`: `brainstorm`, `spec`, or `plan`;
-- `title`: the page's heading and the `<title>` of the one line above;
+- `title`: the page's heading and the `<title>` in step 3's `On the page: <title>.` line;
 - `agenda`: the same agenda the phase's chat flow opens with, as `{"settled": [...], "open": [...], "current": "..."}`, each entry a decision in one short line, `current` the one this interaction asks.
 
 Every question also carries a `body`, the markdown the page shows under its title.

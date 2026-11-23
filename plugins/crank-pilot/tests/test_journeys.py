@@ -1,4 +1,4 @@
-"""The HTTP seam: what a page sees of the server `show` started."""
+"""Multi-step journeys through the server and the command."""
 
 import datetime
 import json

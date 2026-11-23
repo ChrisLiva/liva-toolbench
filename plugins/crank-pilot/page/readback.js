@@ -34,7 +34,6 @@ export const surface = {
     let sending = false;
     let alive = true;
     let requested = 0;
-    // One attach control per mark, kept across the ledger's redraws (see `holderControl`).
     const controls = new Map();
     const hashed = Number(new URLSearchParams(location.hash.slice(1)).get("version"));
     let shown = known.includes(hashed) ? hashed : version;
@@ -72,7 +71,6 @@ export const surface = {
 
     const form = () => (ui ? ui.form() : {});
 
-    // The ledger.
     const big = el("p", { class: "big", role: "img" });
     const lmarks = el("div", { class: "lmarks" });
     const genHead = el("p", { class: "l" });
@@ -111,7 +109,6 @@ export const surface = {
       noteAdd.disabled = older();
     }
 
-    // The popover.
     function showButtons(problem) {
       pop.replaceChildren(
         el("button", { type: "button", "data-act": "comment" }, "Comment"),
@@ -240,7 +237,6 @@ export const surface = {
     };
     document.addEventListener("selectionchange", onSelectionChange);
 
-    // The ledger's list: each anchored mark sits beside the text it marks.
     function renderLedger() {
       const numbered = numberMarks(marks);
       big.textContent = String(numbered.length);
@@ -395,7 +391,6 @@ export const surface = {
     const watcher = new ResizeObserver(layout);
     watcher.observe(art);
 
-    // Sending.
     function refused() {
       const open = unansweredOwn(decisions, form());
       if (!open) {

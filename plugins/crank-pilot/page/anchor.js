@@ -1,6 +1,6 @@
 import { linesOf } from "/page/render.js";
 
-// Anchoring: a mark knows its first and last source line, its offset in the first block's rendered text, and, when it crosses blocks, its end offset in the last.
+// Anchoring: places a mark in the rendered text and reads a selection back as a mark's anchor.
 
 // The text node and offset that sit `offset` characters into `block`'s rendered text.
 function locate(block, offset, atEnd) {
@@ -36,7 +36,7 @@ export function anchoring(art, getBlocks) {
     return found && art.contains(found) ? found : null;
   };
 
-  // Each text node a selection covers, clipped to the selection, leaving out the blank text between blocks.
+  // Leaves out the blank text between blocks.
   function piecesIn(range) {
     const root = range.commonAncestorContainer;
     const out = [];

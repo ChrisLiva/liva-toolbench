@@ -27,7 +27,6 @@ async function deleteImage(interaction, path) {
   }
 }
 
-// Deletes every image in `paths`; true when none is left on the server.
 export async function discardImages(interaction, paths) {
   return (await Promise.all(paths.map((path) => deleteImage(interaction, path)))).every(Boolean);
 }

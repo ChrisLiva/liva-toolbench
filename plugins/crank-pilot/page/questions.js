@@ -13,7 +13,7 @@ function markdown(source, into) {
 }
 
 // Draws the questions into `root` and keeps their form; `onChange(form)` runs after every change the user makes.
-// `attach` names the interaction the images belong to and `others()`, how many images the response carries outside this form.
+// `interaction` is the number of the interaction the images belong to and `others()`, how many images the response carries outside this form.
 export function mountQuestions(root, questions, initial, onChange, { interaction, others = () => 0 }) {
   let state = formFrom(questions, initial);
   const parts = new Map();

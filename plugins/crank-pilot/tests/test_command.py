@@ -95,7 +95,6 @@ class ShowRejectionTest(EffortCase):
 
 
 def derived(base: dict, change) -> dict:
-    """A copy of a fixture with `change` applied to it."""
     copy_ = copy.deepcopy(base)
     change(copy_)
     return copy_

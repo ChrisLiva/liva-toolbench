@@ -2,7 +2,7 @@
 // No DOM here: every function takes plain data and returns data.
 // A question form is {[questionId]: {choice: <option id> | "own" | null, text, note, attachments}}.
 
-// Attachments. The server stores only the four types sniffImage names and at most ten images per response.
+// The server accepts only the types `sniffImage` names, up to `MAX_IMAGES` per response.
 export const MAX_IMAGES = 10;
 export const MAX_BYTES = 10 * 1024 * 1024;
 export const ATTACH_MESSAGES = {
@@ -91,7 +91,7 @@ export function recommendedForm(questions, form) {
 // The readback's marks. A page-side mark is {id, type, text, quote, lines, heading, occurrence, start, attachments}:
 // `id` is the creation counter and `start` the selection's offset in its first block's text; neither is sent.
 
-// A draft is whatever an earlier page wrote: keep the marks that are whole and fill what a mark may lack.
+// Keep the marks that are whole and fill what a mark may lack.
 export function marksFrom(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
@@ -211,7 +211,7 @@ export function prototypeResponse(verdict, pins) {
   };
 }
 
-// The verdict and pins a saved draft holds, read defensively: a draft is whatever an earlier page wrote.
+// The verdict and pins a saved draft holds.
 export function prototypeFrom(variants, draft) {
   const given = draft?.verdict && typeof draft.verdict === "object" ? draft.verdict : {};
   const text = (value) => (typeof value === "string" ? value : "");

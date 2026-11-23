@@ -1,4 +1,4 @@
-"""The effort's HTTP server: `python -m pilot.server <effort-dir>`. It holds no state beyond the files."""
+"""The effort's HTTP server: `python -m pilot.server <effort-dir>`. It keeps no session state beyond the files."""
 
 import contextlib
 import hmac
@@ -179,12 +179,10 @@ class Handler(BaseHTTPRequestHandler):
         return _Refused
 
     def home(self) -> tuple[str, str]:
-        """The two `Host` values this server answers to."""
         port = self.server.server_address[1]
         return f"127.0.0.1:{port}", f"localhost:{port}"
 
     def dispatch(self) -> None:
-        """Every request's one path: Host, Origin on a write, the route, the token, then the body."""
         if self.headers.get("Host") not in self.home():
             return self.reply_json(403, {"error": "forbidden"})
         origin = self.headers.get("Origin")
@@ -289,7 +287,6 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(204, b"", "application/json")
 
     def serve_file(self, root: Path, rel: str, types: dict[str, str]) -> None:
-        """Answer with the file `rel` names inside `root`, or 404 when `inside` refuses it."""
         target = inside(root, unquote(rel))
         if target is None:
             return self.reply_json(404, {"error": "not found"})

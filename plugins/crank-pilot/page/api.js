@@ -28,13 +28,9 @@ export async function start() {
       held = (await reply.json()).token;
       try {
         sessionStorage.setItem(KEY, held);
-      } catch {
-        // Storage is blocked: the token then lives only until this page is closed.
-      }
+      } catch {}
     }
-  } catch {
-    // The exchange failed: the page falls back to what token() holds.
-  }
+  } catch {}
   return token();
 }
 

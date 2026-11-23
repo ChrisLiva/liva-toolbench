@@ -1,5 +1,3 @@
-"""The command: argument parsing and one function per verb."""
-
 import argparse
 import http.client
 import json

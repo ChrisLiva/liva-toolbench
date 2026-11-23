@@ -40,7 +40,7 @@ def attachment_rel_pattern(n: int) -> re.Pattern:
 
 
 def image_extension(data: bytes) -> str | None:
-    """The extension of the image type `data`'s leading bytes name (png, jpg, gif, webp), or None."""
+    """The extension for the image type `data`'s leading bytes name, or None."""
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
         return "png"
     if data.startswith(b"\xff\xd8\xff"):
@@ -58,7 +58,6 @@ def scaled(seconds: float) -> float:
 
 
 def _write_beside(path: Path, data: bytes, mode: int) -> Path:
-    """Write `data` to a temporary file in the target's directory and return its path."""
     descriptor, temporary = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
     try:
         with os.fdopen(descriptor, "wb") as handle:
@@ -95,7 +94,6 @@ class Store:
         self._attachment_lock = threading.Lock()
 
     def latest(self) -> int | None:
-        """The highest-numbered stored interaction, or None."""
         return max(self._numbers(self.interactions), default=None)
 
     def pending(self) -> int | None:
@@ -106,7 +104,6 @@ class Store:
         return latest
 
     def add_interaction(self, interaction: dict) -> int:
-        """Store the interaction under the next number, with that number added, and return it."""
         number = (self.latest() or 0) + 1
         self.interactions.mkdir(parents=True, exist_ok=True)
         stored = json.dumps({**interaction, "number": number}).encode()
@@ -125,7 +122,6 @@ class Store:
         return latest + 1
 
     def kept_versions(self, artifact: str) -> list[int]:
-        """The numbers of the kept versions of `artifact`, ascending."""
         return sorted(self._numbers(self.versions / artifact, "md"))
 
     def prior(self, number: int) -> dict | None:
@@ -174,7 +170,7 @@ class Store:
         })
 
     def add_attachment(self, number: int, data: bytes, extension: str) -> int | None:
-        """Store `data` as interaction `number`'s next image and return its `k`; None when ten are already present."""
+        """Store `data` as interaction `number`'s next image and return its `k`; None at `MAX_ATTACHMENTS`."""
         self.attachments.mkdir(parents=True, exist_ok=True)
         with self._attachment_lock:
             present = self._attachment_ks(number)
@@ -185,7 +181,6 @@ class Store:
         return k
 
     def remove_attachment(self, number: int, k: int) -> bool:
-        """Delete interaction `number`'s image `k`; False when there is none."""
         entries = self.attachments.iterdir() if self.attachments.is_dir() else ()
         for entry in entries:
             if (match := ATTACHMENT.fullmatch(entry.name)) and (int(match["n"]), int(match["k"])) == (number, k):
@@ -194,7 +189,6 @@ class Store:
         return False
 
     def _attachment_ks(self, number: int) -> list[int]:
-        """The `k` of every image stored for interaction `number`."""
         if not self.attachments.is_dir():
             return []
         matches = (ATTACHMENT.fullmatch(entry.name) for entry in self.attachments.iterdir())

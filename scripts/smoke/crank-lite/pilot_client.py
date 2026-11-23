@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """pilot_client.py <effort-dir>: the page's side of crank-pilot for a headless run, answering what the server shows.
 
-Every 0.5 s it reads <effort-dir>/pilot/server.json and polls GET /api/state with the token. When an interaction has
+On each beat it reads <effort-dir>/pilot/server.json and polls GET /api/state with the token. When an interaction has
 no response yet, it posts the response that accepts it: each question's recommended option, a readback approved, a
 prototype's first variant. It runs until killed, so run.sh starts it before the first turn and kills it after the last.
 """
@@ -19,7 +19,6 @@ def answer(question):
 
 
 def accepting(interaction):
-    """The response body that accepts `interaction`."""
     if interaction["kind"] == "questions":
         return {"answers": [answer(q) for q in interaction["questions"]]}
     if interaction["kind"] == "readback":

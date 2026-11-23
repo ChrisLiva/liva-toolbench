@@ -1,4 +1,4 @@
-"""The HTTP seam: what the server answers a page that drafts and submits a round."""
+"""The server's HTTP contract, one behavior per request."""
 
 import json
 import re

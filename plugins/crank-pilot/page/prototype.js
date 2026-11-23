@@ -6,8 +6,7 @@ import { holderControl, mountAttach } from "/page/attach.js";
 
 const LEADING = 80;
 
-// Runs inside the variant's frame. With comment mode on it swallows the click and reports the element it landed on;
-// the frame's origin is opaque, so its postMessage must target every origin and the page checks event.source.
+// Runs inside the variant's frame. With comment mode on it swallows the click and reports the element it landed on.
 const PICKER =
   "(()=>{let on=false;" +
   "const css=document.createElement('style');css.textContent='html.pilot-pick,html.pilot-pick *{cursor:crosshair!important}';document.head.append(css);" +
@@ -33,7 +32,6 @@ export const surface = {
     let shown = 0;
     let alive = true;
     const texts = new Map();
-    // One attach control per pin, kept across the list's redraws (see `holderControl`).
     const controls = new Map();
     const count = () => attachedCount(verdict, pins);
 
