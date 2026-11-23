@@ -20,7 +20,7 @@ const STATE = {
     decisions: [],
     agenda: { settled: [], open: [], current: "" },
   },
-  versions: [{ n: 1, file: "pilot/versions/spec.md/001.md" }],
+  versions: [{ n: 1, file: "kept/spec-v1.md" }],
   prior: null,
   draft: null,
 };
@@ -29,7 +29,7 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
   const window = pageWindow();
   routeFetch({
     "GET /api/file/": async (path) =>
-      /^\/api\/file\/pilot\/versions\/spec\.md\/00[12]\.md$/.test(path)
+      /^\/api\/file\/kept\/spec-v[12]\.md$/.test(path)
         ? new Response(SOURCE, { status: 200 })
         : new Response("", { status: 404 }),
   });
@@ -164,8 +164,8 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
         ...STATE,
         interaction: { ...STATE.interaction, version: 2 },
         versions: [
-          { n: 1, file: "pilot/versions/spec.md/001.md" },
-          { n: 2, file: "pilot/versions/spec.md/002.md" },
+          { n: 1, file: "kept/spec-v1.md" },
+          { n: 2, file: "kept/spec-v2.md" },
         ],
       },
       ctx,

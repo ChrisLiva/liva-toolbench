@@ -21,7 +21,7 @@ const readback = (number, version) => ({
 });
 
 const versions = (...ns) =>
-  ns.map((n) => ({ n, file: `pilot/versions/spec.md/00${n}.md` }));
+  ns.map((n) => ({ n, file: `kept/spec-v${n}.md` }));
 
 const until = async (condition, what, limit = 6000) => {
   for (let waited = 0; !condition(); waited += 10) {
@@ -46,7 +46,7 @@ test("a version picked on one readback does not carry onto the next interaction"
   routeFetch({
     "GET /api/state": () => json(state),
     "GET /api/file/": (path) =>
-      /^\/api\/file\/pilot\/versions\/spec\.md\/00[1-3]\.md$/.test(path)
+      /^\/api\/file\/kept\/spec-v[1-3]\.md$/.test(path)
         ? new Response("# Title\n\nBody")
         : new Response("", { status: 404 }),
   });
