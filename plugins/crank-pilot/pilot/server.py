@@ -14,16 +14,33 @@ from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import unquote
 
-from pilot.store import Store, attachment_rel, image_extension, response_rel, scaled, write_atomic
+from pilot.store import (
+    Store,
+    attachment_rel,
+    image_extension,
+    response_rel,
+    scaled,
+    write_atomic,
+)
 from pilot.validate import inside, response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
 WRITES = ("POST", "PUT", "DELETE")
 OCTET_STREAM = "application/octet-stream"
-EFFORT_TYPES = {".md": "text/plain; charset=utf-8", ".html": "text/plain; charset=utf-8", ".png": "image/png",
-                ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
-PAGE_TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-              ".js": "text/javascript; charset=utf-8"}
+EFFORT_TYPES = {
+    ".md": "text/plain; charset=utf-8",
+    ".html": "text/plain; charset=utf-8",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+}
+PAGE_TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+}
 
 
 _NotJson = object()
@@ -37,6 +54,7 @@ class Route(NamedTuple):
     public: bool = False
     cap: int | None = None
     raw: bool = False
+
 
 TOKEN = re.compile(r"[0-9a-f]{64}")
 ENDED = 5
@@ -53,13 +71,28 @@ ROUTES = (
     Route("GET", re.compile(r"/api/ping"), "ping"),
     Route("GET", re.compile(r"/api/state"), "poll"),
     Route("PUT", re.compile(r"/api/draft/(?P<n>\d{1,9})"), "put_draft", cap=JSON_CAP),
-    Route("POST", re.compile(r"/api/response/(?P<n>\d{1,9})"), "post_response", cap=JSON_CAP),
+    Route(
+        "POST",
+        re.compile(r"/api/response/(?P<n>\d{1,9})"),
+        "post_response",
+        cap=JSON_CAP,
+    ),
     Route("POST", re.compile(r"/api/bye"), "bye", public=True, cap=JSON_CAP),
     Route("POST", re.compile(r"/api/close"), "close", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/code"), "new_code", cap=JSON_CAP),
     Route("POST", re.compile(r"/api/session"), "session", public=True, cap=JSON_CAP),
-    Route("POST", re.compile(r"/api/attachment/(?P<n>\d{1,9})"), "post_attachment", cap=IMAGE_CAP, raw=True),
-    Route("DELETE", re.compile(r"/api/attachment/(?P<n>\d{1,9})/(?P<k>\d{1,9})"), "delete_attachment"),
+    Route(
+        "POST",
+        re.compile(r"/api/attachment/(?P<n>\d{1,9})"),
+        "post_attachment",
+        cap=IMAGE_CAP,
+        raw=True,
+    ),
+    Route(
+        "DELETE",
+        re.compile(r"/api/attachment/(?P<n>\d{1,9})/(?P<k>\d{1,9})"),
+        "delete_attachment",
+    ),
 )
 
 
@@ -137,7 +170,9 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(status, json.dumps(payload).encode(), "application/json")
 
     def has_token(self) -> bool:
-        return hmac.compare_digest(self.headers.get("X-Pilot-Token", "").encode(), self.server.token.encode())
+        return hmac.compare_digest(
+            self.headers.get("X-Pilot-Token", "").encode(), self.server.token.encode()
+        )
 
     def state(self) -> dict:
         store = self.server.store
@@ -146,10 +181,17 @@ class Handler(BaseHTTPRequestHandler):
         draft = store.draft(latest) if latest and response is None else None
         interaction = store.interaction(latest) if latest else None
         readback = interaction is not None and interaction["kind"] == "readback"
-        return {"ended": self.server.closing_until is not None, "effort": store.effort.name, "interaction": interaction,
-                "response": {"via": response["via"]} if response else None, "draft": draft,
-                "versions": store.kept_versions(interaction["artifact"]) if readback else [],
-                "prior": store.prior(latest) if readback else None}
+        return {
+            "ended": self.server.closing_until is not None,
+            "effort": store.effort.name,
+            "interaction": interaction,
+            "response": {"via": response["via"]} if response else None,
+            "draft": draft,
+            "versions": store.kept_versions(interaction["artifact"])
+            if readback
+            else [],
+            "prior": store.prior(latest) if readback else None,
+        }
 
     def require_pending(self, n: int) -> bool:
         """True when `n` is the pending interaction; otherwise answer 409 and return False."""
@@ -186,13 +228,31 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get("Host") not in self.home():
             return self.reply_json(403, {"error": "forbidden"})
         origin = self.headers.get("Origin")
-        if self.command in WRITES and origin is not None and origin not in map("http://{}".format, self.home()):
+        if (
+            self.command in WRITES
+            and origin is not None
+            and origin not in map("http://{}".format, self.home())
+        ):
             return self.reply_json(403, {"error": "forbidden"})
         path = self.path.partition("?")[0]
-        matches = [(route, match) for route in ROUTES if (match := route.pattern.fullmatch(path))]
-        found = next(((route, match) for route, match in matches if route.method == self.command), None)
+        matches = [
+            (route, match)
+            for route in ROUTES
+            if (match := route.pattern.fullmatch(path))
+        ]
+        found = next(
+            (
+                (route, match)
+                for route, match in matches
+                if route.method == self.command
+            ),
+            None,
+        )
         if not found:
-            return self.reply_json(405 if matches else 404, {"error": "not allowed" if matches else "not found"})
+            return self.reply_json(
+                405 if matches else 404,
+                {"error": "not allowed" if matches else "not found"},
+            )
         route, match = found
         if not (route.public or self.has_token()):
             return self.reply_json(403, {"error": "forbidden"})
@@ -259,7 +319,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         store = self.server.store
         interaction = store.interaction(n)
-        problems = ["body: must be valid JSON"] if body is _NotJson else response_problems(interaction, body, store.effort)
+        problems = (
+            ["body: must be valid JSON"]
+            if body is _NotJson
+            else response_problems(interaction, body, store.effort)
+        )
         if problems:
             return self.reply_json(400, {"problems": problems})
         if not store.respond(n, body, "page"):
@@ -272,10 +336,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         extension = image_extension(body)
         if extension is None:
-            return self.reply_json(415, {"error": "unsupported image type: accepted types are PNG, JPEG, GIF, WebP"})
+            return self.reply_json(
+                415,
+                {
+                    "error": "unsupported image type: accepted types are PNG, JPEG, GIF, WebP"
+                },
+            )
         k = self.server.store.add_attachment(n, body, extension)
         if k is None:
-            return self.reply_json(409, {"error": "ten images are already attached", "code": "attachment_limit"})
+            return self.reply_json(
+                409,
+                {
+                    "error": "ten images are already attached",
+                    "code": "attachment_limit",
+                },
+            )
         self.reply_json(201, {"path": attachment_rel(n, k, extension), "k": k})
 
     def delete_attachment(self, match: re.Match, body: object) -> None:
@@ -290,7 +365,9 @@ class Handler(BaseHTTPRequestHandler):
         target = inside(root, unquote(rel))
         if target is None:
             return self.reply_json(404, {"error": "not found"})
-        self.reply(200, target.read_bytes(), types.get(target.suffix.lower(), OCTET_STREAM))
+        self.reply(
+            200, target.read_bytes(), types.get(target.suffix.lower(), OCTET_STREAM)
+        )
 
     def log_message(self, format: str, *args: object) -> None:
         pass
@@ -300,13 +377,21 @@ def main(argv: list[str]) -> int:
     store = Store(Path(argv[1]))
     store.root.mkdir(parents=True, exist_ok=True)
     server = None
-    if (earlier := store.record()) and 0 < earlier["port"] < 1 << 16 and TOKEN.fullmatch(earlier["token"]):
+    if (
+        (earlier := store.record())
+        and 0 < earlier["port"] < 1 << 16
+        and TOKEN.fullmatch(earlier["token"])
+    ):
         with contextlib.suppress(OSError):
             server = Server(store, earlier["token"], earlier["port"])
     if server is None:
         store.heartbeat_file.unlink(missing_ok=True)
         server = Server(store, secrets.token_hex(32))
-    record = {"pid": os.getpid(), "port": server.server_address[1], "token": server.token}
+    record = {
+        "pid": os.getpid(),
+        "port": server.server_address[1],
+        "token": server.token,
+    }
     write_atomic(store.server_json, json.dumps(record).encode(), 0o600)
     threading.Thread(target=server.watch, daemon=True).start()
     server.serve_forever(poll_interval=MIN_TICK)

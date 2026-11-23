@@ -48,8 +48,11 @@ function call(method, path, body) {
 }
 
 export const getState = () => call("GET", "/api/state");
-export const getFile = (path) => call("GET", "/api/file/" + path.split("/").map(encodeURIComponent).join("/"));
+export const getFile = (path) =>
+  call("GET", "/api/file/" + path.split("/").map(encodeURIComponent).join("/"));
 export const putDraft = (n, obj) => call("PUT", `/api/draft/${n}`, obj);
 export const postResponse = (n, obj) => call("POST", `/api/response/${n}`, obj);
-export const postAttachment = (n, blob) => call("POST", `/api/attachment/${n}`, blob);
-export const deleteAttachment = (n, k) => call("DELETE", `/api/attachment/${n}/${k}`);
+export const postAttachment = (n, blob) =>
+  call("POST", `/api/attachment/${n}`, blob);
+export const deleteAttachment = (n, k) =>
+  call("DELETE", `/api/attachment/${n}/${k}`);

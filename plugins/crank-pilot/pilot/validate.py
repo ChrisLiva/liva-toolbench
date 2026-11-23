@@ -71,11 +71,19 @@ def _question(question: object, path: str) -> list[str]:
     options = question.get("options")
     recommended = question.get("recommended")
     if "options" in question:
-        if not isinstance(options, list) or not options or any(
-            not isinstance(o, dict) or not isinstance(o.get("id"), str) or not isinstance(o.get("label"), str)
-            for o in options
+        if (
+            not isinstance(options, list)
+            or not options
+            or any(
+                not isinstance(o, dict)
+                or not isinstance(o.get("id"), str)
+                or not isinstance(o.get("label"), str)
+                for o in options
+            )
         ):
-            problems.append(f"{path}.options: must be a non-empty list of objects with string id and label")
+            problems.append(
+                f"{path}.options: must be a non-empty list of objects with string id and label"
+            )
         else:
             problems += _unique(options, f"{path}.options")
             if not isinstance(recommended, str):
@@ -89,7 +97,9 @@ def _question(question: object, path: str) -> list[str]:
 
 def _questions(items: object, path: str, non_empty: bool) -> list[str]:
     if not isinstance(items, list) or (non_empty and not items):
-        return [f"{path}: must be {'a non-empty' if non_empty else 'a'} list of questions"]
+        return [
+            f"{path}: must be {'a non-empty' if non_empty else 'a'} list of questions"
+        ]
     problems = []
     for index, question in enumerate(items):
         problems += _question(question, f"{path}[{index}]")
@@ -101,11 +111,15 @@ def _artifact(data: dict, effort: Path) -> list[str]:
     if not isinstance(name, str):
         return ["artifact: must be a string"]
     if inside(effort, name) is None:
-        return ["artifact: must be a relative path to an existing file inside the effort directory"]
+        return [
+            "artifact: must be a relative path to an existing file inside the effort directory"
+        ]
     if not name.endswith(".md"):
         return ["artifact: must be a .md file"]
     if Path(name).name != name:
-        return ["artifact: must be directly in the effort directory, not in a subdirectory"]
+        return [
+            "artifact: must be directly in the effort directory, not in a subdirectory"
+        ]
     try:
         (effort / name).read_bytes().decode("utf-8")
     except UnicodeDecodeError:
@@ -132,7 +146,9 @@ def _variant(variant: object, path: str, effort: Path) -> list[str]:
         return [f"{path}: must be an object"]
     problems = _strings(variant, ("key", "name", "file"), f"{path}.")
     if isinstance(variant.get("file"), str) and inside(effort, variant["file"]) is None:
-        problems.append(f"{path}.file: must be a relative path to an existing file inside the effort directory")
+        problems.append(
+            f"{path}.file: must be a relative path to an existing file inside the effort directory"
+        )
     return problems
 
 
@@ -160,7 +176,11 @@ def interaction_problems(data: object, effort: Path) -> list[str]:
         problems.append(f"phase: must be one of {', '.join(PHASES)}")
     problems += _strings(data, ("title",), "") + _agenda(data)
     if kind == "questions":
-        problems += _questions(data["questions"], "questions", non_empty=True) if "questions" in data else ["questions: required"]
+        problems += (
+            _questions(data["questions"], "questions", non_empty=True)
+            if "questions" in data
+            else ["questions: required"]
+        )
     elif kind == "readback":
         problems += _readback(data, effort)
     elif kind == "prototype":
@@ -168,7 +188,9 @@ def interaction_problems(data: object, effort: Path) -> list[str]:
     return problems
 
 
-def _answer(answer: object, question: dict, number: int, effort: Path, path: str) -> list[str]:
+def _answer(
+    answer: object, question: dict, number: int, effort: Path, path: str
+) -> list[str]:
     if not isinstance(answer, dict):
         return [f"{path}: must be an object"]
     problems = _strings(answer, ("text", "note"), f"{path}.")
@@ -177,24 +199,33 @@ def _answer(answer: object, question: dict, number: int, effort: Path, path: str
     option, text = answer.get("option"), answer.get("text")
     offered = {o["id"] for o in question.get("options", [])}
     if option is not None and (not isinstance(option, str) or option not in offered):
-        problems.append(f"{path}.option: must be null{' or one of ' + ', '.join(sorted(offered)) if offered else ''}")
+        problems.append(
+            f"{path}.option: must be null{' or one of ' + ', '.join(sorted(offered)) if offered else ''}"
+        )
     elif isinstance(text, str) and isinstance(answer.get("accepted"), bool):
         if offered and option is None and not text:
             problems.append(f"{path}.text: an own answer needs text")
         accepted = option == question.get("recommended") if offered else not text
         if answer["accepted"] != accepted:
-            problems.append(f"{path}.accepted: must be {str(accepted).lower()} for this answer")
+            problems.append(
+                f"{path}.accepted: must be {str(accepted).lower()} for this answer"
+            )
     return problems + _attachments(answer, number, effort, path)
 
 
 def _attachments(holder: dict, number: int, effort: Path, path: str) -> list[str]:
     """The `attachments` list of an answer or a mark: paths of images stored for interaction `number`."""
     attachments = holder.get("attachments")
-    if not isinstance(attachments, list) or any(not isinstance(a, str) for a in attachments):
+    if not isinstance(attachments, list) or any(
+        not isinstance(a, str) for a in attachments
+    ):
         return [f"{path}.attachments: must be a list of paths"]
     ours = attachment_rel_pattern(number)
-    return [f"{path}.attachments[{index}]: not an image stored for this interaction"
-            for index, name in enumerate(attachments) if not ours.fullmatch(name) or inside(effort, name) is None]
+    return [
+        f"{path}.attachments[{index}]: not an image stored for this interaction"
+        for index, name in enumerate(attachments)
+        if not ours.fullmatch(name) or inside(effort, name) is None
+    ]
 
 
 def _answers(body: dict, asked: list[dict], number: int, effort: Path) -> list[str]:
@@ -208,11 +239,17 @@ def _answers(body: dict, asked: list[dict], number: int, effort: Path) -> list[s
         name = answer.get("id") if isinstance(answer, dict) else None
         known = questions.get(name) if isinstance(name, str) else None
         if known is None:
-            problems.append(f"answers[{index}].id: names no question of this interaction")
+            problems.append(
+                f"answers[{index}].id: names no question of this interaction"
+            )
         else:
             problems += _answer(answer, known, number, effort, f"answers[{index}]")
-    answered = {a["id"] for a in answers if isinstance(a, dict) and isinstance(a.get("id"), str)}
-    return problems + [f"answers: no answer for {qid!r}" for qid in questions if qid not in answered]
+    answered = {
+        a["id"] for a in answers if isinstance(a, dict) and isinstance(a.get("id"), str)
+    }
+    return problems + [
+        f"answers: no answer for {qid!r}" for qid in questions if qid not in answered
+    ]
 
 
 def _integer(value: object) -> bool:
@@ -225,8 +262,15 @@ def _anchor(mark: dict, lines: int, path: str) -> list[str]:
     if not isinstance(mark.get("quote"), str) or not mark["quote"]:
         problems.append(f"{path}.quote: must be the non-empty selected text")
     span = mark.get("lines")
-    if not (isinstance(span, list) and len(span) == 2 and all(_integer(n) for n in span) and 1 <= span[0] <= span[1] <= lines):
-        problems.append(f"{path}.lines: must be [first, last] within 1 and {lines}, first not after last")
+    if not (
+        isinstance(span, list)
+        and len(span) == 2
+        and all(_integer(n) for n in span)
+        and 1 <= span[0] <= span[1] <= lines
+    ):
+        problems.append(
+            f"{path}.lines: must be [first, last] within 1 and {lines}, first not after last"
+        )
     if not isinstance(mark.get("heading"), str):
         problems.append(f"{path}.heading: must be a string")
     if not _integer(mark.get("occurrence")) or mark["occurrence"] < 1:
@@ -234,10 +278,16 @@ def _anchor(mark: dict, lines: int, path: str) -> list[str]:
     return problems
 
 
-def _mark(mark: object, expected: int, lines: int, number: int, effort: Path, path: str) -> list[str]:
+def _mark(
+    mark: object, expected: int, lines: int, number: int, effort: Path, path: str
+) -> list[str]:
     if not isinstance(mark, dict):
         return [f"{path}: must be an object"]
-    problems = [] if mark.get("n") == expected and _integer(mark["n"]) else [f"{path}.n: must be {expected}"]
+    problems = (
+        []
+        if mark.get("n") == expected and _integer(mark["n"])
+        else [f"{path}.n: must be {expected}"]
+    )
     kind = mark.get("type")
     if kind not in ("comment", "strike", "note"):
         return problems + [f"{path}.type: must be one of comment, strike, note"]
@@ -246,7 +296,11 @@ def _mark(mark: object, expected: int, lines: int, number: int, effort: Path, pa
     elif not mark["text"] and kind != "strike":
         problems.append(f"{path}.text: a {kind} needs text")
     if kind == "note":
-        problems += [f"{path}.{name}: a note has none" for name in ("quote", "lines", "heading", "occurrence") if name in mark]
+        problems += [
+            f"{path}.{name}: a note has none"
+            for name in ("quote", "lines", "heading", "occurrence")
+            if name in mark
+        ]
     else:
         problems += _anchor(mark, lines, path)
     return problems + _attachments(mark, number, effort, path)
@@ -257,7 +311,9 @@ def _readback_response(interaction: dict, body: dict, effort: Path) -> list[str]
     verdict, marks = body.get("verdict"), body.get("marks")
     if verdict not in ("approve", "changes"):
         problems.append("verdict: must be approve or changes")
-    if body.get("version") != interaction["version"] or not _integer(body.get("version")):
+    if body.get("version") != interaction["version"] or not _integer(
+        body.get("version")
+    ):
         problems.append(f"version: must be {interaction['version']}, the version shown")
     if not isinstance(marks, list):
         return problems + ["marks: required, a list"]
@@ -269,11 +325,20 @@ def _readback_response(interaction: dict, body: dict, effort: Path) -> list[str]
     except (OSError, UnicodeDecodeError):
         return problems + ["version: the kept copy of this version cannot be read"]
     for index, mark in enumerate(marks):
-        problems += _mark(mark, index + 1, lines, interaction["number"], effort, f"marks[{index}]")
+        problems += _mark(
+            mark, index + 1, lines, interaction["number"], effort, f"marks[{index}]"
+        )
     return problems
 
 
-def _pin(pin: object, keys: set[str], seen: dict[str, int], number: int, effort: Path, path: str) -> list[str]:
+def _pin(
+    pin: object,
+    keys: set[str],
+    seen: dict[str, int],
+    number: int,
+    effort: Path,
+    path: str,
+) -> list[str]:
     """One comment of a verdict; `seen` counts each variant's comments so far, so `n` follows the order the pins were made."""
     if not isinstance(pin, dict):
         return [f"{path}: must be an object"]
@@ -286,7 +351,9 @@ def _pin(pin: object, keys: set[str], seen: dict[str, int], number: int, effort:
         return problems + [f"{path}.variant: must be one of {', '.join(sorted(keys))}"]
     seen[variant] = seen.get(variant, 0) + 1
     if pin.get("n") != seen[variant] or not _integer(pin["n"]):
-        problems.append(f"{path}.n: must be {seen[variant]}, the next number for variant {variant}")
+        problems.append(
+            f"{path}.n: must be {seen[variant]}, the next number for variant {variant}"
+        )
     return problems + _attachments(pin, number, effort, path)
 
 
@@ -304,7 +371,9 @@ def _prototype_response(interaction: dict, body: dict, effort: Path) -> list[str
         return problems + ["comments: required, a list"]
     seen: dict[str, int] = {}
     for index, pin in enumerate(comments):
-        problems += _pin(pin, keys, seen, interaction["number"], effort, f"comments[{index}]")
+        problems += _pin(
+            pin, keys, seen, interaction["number"], effort, f"comments[{index}]"
+        )
     return problems
 
 

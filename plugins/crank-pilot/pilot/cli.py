@@ -35,10 +35,19 @@ def open_store(args: argparse.Namespace) -> Store:
     return Store(args.effort)
 
 
-def call(record: dict, path: str, method: str = "GET", data: bytes | None = None) -> bytes:
+def call(
+    record: dict, path: str, method: str = "GET", data: bytes | None = None
+) -> bytes:
     """The body of the reply the server on the record's port gives `path`; raises `OSError` or `HTTPException` when it fails."""
-    request = urllib.request.Request(f"http://127.0.0.1:{record['port']}{path}", data=data, method=method, headers={"X-Pilot-Token": record["token"]})
-    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request, timeout=2) as reply:
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{record['port']}{path}",
+        data=data,
+        method=method,
+        headers={"X-Pilot-Token": record["token"]},
+    )
+    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(
+        request, timeout=2
+    ) as reply:
         return reply.read()
 
 
@@ -53,7 +62,11 @@ def ping(record: dict) -> dict | None:
         answer = json.loads(call(record, "/api/ping"))
     except (OSError, ValueError, http.client.HTTPException):
         return None
-    return answer if isinstance(answer, dict) and answer.get("pid") == record["pid"] else None
+    return (
+        answer
+        if isinstance(answer, dict) and answer.get("pid") == record["pid"]
+        else None
+    )
 
 
 def ensure_server(store: Store) -> dict:
@@ -67,8 +80,12 @@ def ensure_server(store: Store) -> dict:
             return record
         time.sleep(scaled(WAIT_POLL))
     process = subprocess.Popen(
-        [sys.executable, "-m", "pilot.server", str(store.effort.resolve())], cwd=PLUGIN_ROOT,
-        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True,
+        [sys.executable, "-m", "pilot.server", str(store.effort.resolve())],
+        cwd=PLUGIN_ROOT,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
     )
     give_up = time.time() + SERVER_START
     while time.time() < give_up:
@@ -117,7 +134,10 @@ def cmd_show(args: argparse.Namespace) -> int:
         return fail("\n".join(problems), 2)
     started = time.time()
     if interaction["kind"] == "readback":
-        interaction = {**interaction, "version": store.keep_version(interaction["artifact"])}
+        interaction = {
+            **interaction,
+            "version": store.keep_version(interaction["artifact"]),
+        }
     if (earlier := store.pending()) is not None:
         settle(store, earlier, "superseded")
     number = store.add_interaction(interaction)
@@ -189,17 +209,28 @@ def cmd_close(args: argparse.Namespace) -> int:
 def parser() -> argparse.ArgumentParser:
     top = argparse.ArgumentParser(prog="crank-pilot")
     verbs = top.add_subparsers(dest="verb", required=True)
-    show = verbs.add_parser("show", help="put an interaction on the page and wait for the page to open")
+    show = verbs.add_parser(
+        "show", help="put an interaction on the page and wait for the page to open"
+    )
     show.add_argument("effort", type=Path)
     show.add_argument("interaction", type=Path)
     show.set_defaults(run=cmd_show)
-    wait = verbs.add_parser("wait", help="block until the pending interaction is answered")
+    wait = verbs.add_parser(
+        "wait", help="block until the pending interaction is answered"
+    )
     wait.add_argument("effort", type=Path)
-    wait.add_argument("--timeout", type=float, default=WAIT_TIMEOUT, help="seconds to wait before exiting 3")
+    wait.add_argument(
+        "--timeout",
+        type=float,
+        default=WAIT_TIMEOUT,
+        help="seconds to wait before exiting 3",
+    )
     wait.set_defaults(run=cmd_wait)
     resolve = verbs.add_parser("resolve", help="settle the pending interaction")
     resolve.add_argument("effort", type=Path)
-    resolve.add_argument("--chat", action="store_true", required=True, help="the user answered in chat")
+    resolve.add_argument(
+        "--chat", action="store_true", required=True, help="the user answered in chat"
+    )
     resolve.set_defaults(run=cmd_resolve)
     close = verbs.add_parser("close", help="stop the effort's server")
     close.add_argument("effort", type=Path)

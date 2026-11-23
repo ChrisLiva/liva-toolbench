@@ -5,7 +5,9 @@ import os
 import sys
 
 if sys.version_info < (3, 11):
-    sys.exit(f"crank-pilot needs Python 3.11 or newer; this is {sys.version.split()[0]}.")
+    sys.exit(
+        f"crank-pilot needs Python 3.11 or newer; this is {sys.version.split()[0]}."
+    )
 
 if os.name == "nt":
     sys.exit("crank-pilot runs on macOS and Linux.")

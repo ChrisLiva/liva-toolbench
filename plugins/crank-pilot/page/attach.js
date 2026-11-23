@@ -4,7 +4,8 @@ import { el } from "/page/dom.js";
 
 const FAILED = "Could not attach the image. Try again.";
 const NOT_REMOVED = "Could not remove the image. Try again.";
-export const BUSY = "An image is still uploading or being removed. Try again in a moment.";
+export const BUSY =
+  "An image is still uploading or being removed. Try again in a moment.";
 
 // Uploads and removals in flight, across every control: a response sent while one is open would miss or name an image.
 let working = 0;
@@ -28,7 +29,9 @@ async function deleteImage(interaction, path) {
 }
 
 export async function discardImages(interaction, paths) {
-  return (await Promise.all(paths.map((path) => deleteImage(interaction, path)))).every(Boolean);
+  return (
+    await Promise.all(paths.map((path) => deleteImage(interaction, path)))
+  ).every(Boolean);
 }
 
 // The message for a refused upload. A 409 is the cap or an interaction that is no longer pending: the first says so,
@@ -46,11 +49,15 @@ async function refusalFor(res) {
 // A control for the images one holder (a question, a mark, a note, a verdict, a pin) carries. `paths` are the stored
 // paths it starts with, `count()` the images on the whole response, and `onChange(paths)` hears every change. Paste and
 // drop work anywhere in `zone`, which is `root` unless the caller names a wider element.
-export function mountAttach(root, { interaction, paths, count, onChange, zone = root }) {
+export function mountAttach(
+  root,
+  { interaction, paths, count, onChange, zone = root },
+) {
   let held = [...paths];
   let bound = null;
   const pick = el("label", { class: "atp" });
-  pick.innerHTML = '<input type="file" accept="image/*" multiple><span class="bt">Attach image</span>';
+  pick.innerHTML =
+    '<input type="file" accept="image/*" multiple><span class="bt">Attach image</span>';
   const input = pick.firstChild;
   const list = el("ul", { class: "attlist", "aria-label": "Attached images" });
   const message = el("p", { class: "err", role: "alert" });
@@ -59,7 +66,11 @@ export function mountAttach(root, { interaction, paths, count, onChange, zone = 
   function paint() {
     list.replaceChildren(
       ...held.map((path) => {
-        const remove = el("button", { type: "button", "aria-label": `Remove image ${nameOf(path)}` }, "Remove");
+        const remove = el(
+          "button",
+          { type: "button", "aria-label": `Remove image ${nameOf(path)}` },
+          "Remove",
+        );
         remove.addEventListener("click", () => removeImage(path));
         return el("li", {}, el("span", { class: "fn" }, nameOf(path)), remove);
       }),
@@ -77,7 +88,8 @@ export function mountAttach(root, { interaction, paths, count, onChange, zone = 
 
   async function removeImage(path) {
     message.textContent = "";
-    if (await deleteImage(interaction, path)) commit(held.filter((p) => p !== path));
+    if (await deleteImage(interaction, path))
+      commit(held.filter((p) => p !== path));
     else message.textContent = NOT_REMOVED;
   }
 
@@ -98,7 +110,9 @@ export function mountAttach(root, { interaction, paths, count, onChange, zone = 
   async function add(files) {
     message.textContent = "";
     for (const file of files) {
-      const kind = sniffImage(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
+      const kind = sniffImage(
+        new Uint8Array(await file.slice(0, 12).arrayBuffer()),
+      );
       const refusal = attachRefusal({ kind, size: file.size, count: count() });
       if (refusal) message.textContent = refusal;
       else await upload(file);
@@ -130,10 +144,12 @@ export function mountAttach(root, { interaction, paths, count, onChange, zone = 
   };
   const bind = (target) => {
     bound = target;
-    for (const [type, handler] of Object.entries(gestures)) target.addEventListener(type, handler);
+    for (const [type, handler] of Object.entries(gestures))
+      target.addEventListener(type, handler);
   };
   const unbind = () => {
-    for (const [type, handler] of Object.entries(gestures)) bound.removeEventListener(type, handler);
+    for (const [type, handler] of Object.entries(gestures))
+      bound.removeEventListener(type, handler);
     bound.classList.remove("drop");
   };
 

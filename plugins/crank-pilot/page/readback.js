@@ -3,11 +3,24 @@ import { renderMarkdown } from "/page/render.js";
 import { anchoring, plain } from "/page/anchor.js";
 import { el, mac, plural, sendControl } from "/page/dom.js";
 import { mountQuestions } from "/page/questions.js";
-import { attachedCount, canSendChanges, diffBlocks, headingAbove, marksFrom, numberMarks, occurrenceOf, readbackResponse, refusalMessage, unansweredOwn } from "/page/model.js";
+import {
+  attachedCount,
+  canSendChanges,
+  diffBlocks,
+  headingAbove,
+  marksFrom,
+  numberMarks,
+  occurrenceOf,
+  readbackResponse,
+  refusalMessage,
+  unansweredOwn,
+} from "/page/model.js";
 import { BUSY, attaching, discardImages, holderControl } from "/page/attach.js";
 
-const HINT = "Select text, or focus a block and press Enter, to comment on it or strike it.";
-const OLDER_HINT = (shown, current) => `Version ${shown} is read-only. Move the version control to v${current} to mark.`;
+const HINT =
+  "Select text, or focus a block and press Enter, to comment on it or strike it.";
+const OLDER_HINT = (shown, current) =>
+  `Version ${shown} is read-only. Move the version control to v${current} to mark.`;
 const LABEL = { comment: "Comment", strike: "Strike", note: "Note" };
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -15,13 +28,27 @@ const byPosition = (a, b) => (a.ay === b.ay ? 0 : a.ay < b.ay ? -1 : 1);
 
 export const surface = {
   mount(stage, state, ctx) {
-    const { number, title, artifact, version, lead, judgment_calls: calls, review_landed: landed, edits, decisions } = state.interaction;
-    const known = Array.isArray(state.versions) && state.versions.length ? state.versions : [version];
+    const {
+      number,
+      title,
+      artifact,
+      version,
+      lead,
+      judgment_calls: calls,
+      review_landed: landed,
+      edits,
+      decisions,
+    } = state.interaction;
+    const known =
+      Array.isArray(state.versions) && state.versions.length
+        ? state.versions
+        : [version];
     const prior = state.prior ?? null;
     // A revision: the version on offer is not the one the user last marked up.
     const revised = prior !== null && prior.version !== version;
     const asked = revised ? prior.marks : [];
-    const draft = state.draft && typeof state.draft === "object" ? state.draft : {};
+    const draft =
+      state.draft && typeof state.draft === "object" ? state.draft : {};
     const reading = stage.querySelector("#reading");
     const ledger = stage.querySelector("#ledger");
 
@@ -35,24 +62,51 @@ export const surface = {
     let alive = true;
     let requested = 0;
     const controls = new Map();
-    const hashed = Number(new URLSearchParams(location.hash.slice(1)).get("version"));
+    const hashed = Number(
+      new URLSearchParams(location.hash.slice(1)).get("version"),
+    );
     let shown = known.includes(hashed) ? hashed : version;
     const older = () => shown !== version;
 
-    const art = el("div", { class: "art", role: "group", "aria-label": `Artifact: ${title}. ${HINT}` });
-    const { piecesIn, trimmed, anchorFor, wrap, draw, unwrap, blockIndex } = anchoring(art, () => blocks);
+    const art = el("div", {
+      class: "art",
+      role: "group",
+      "aria-label": `Artifact: ${title}. ${HINT}`,
+    });
+    const { piecesIn, trimmed, anchorFor, wrap, draw, unwrap, blockIndex } =
+      anchoring(art, () => blocks);
     const hint = el("p", { class: "l status", role: "status" }, HINT);
-    const pop = el("div", { id: "pop", role: "group", "aria-label": "Mark the selected text", hidden: "" });
+    const pop = el("div", {
+      id: "pop",
+      role: "group",
+      "aria-label": "Mark the selected text",
+      hidden: "",
+    });
 
     const above = [];
     if (lead) above.push(el("p", { class: "lead" }, lead));
-    for (const [label, items] of [["Judgment calls", calls], ["Landed by review", landed], ["Edits since the last version", edits]]) {
+    for (const [label, items] of [
+      ["Judgment calls", calls],
+      ["Landed by review", landed],
+      ["Edits since the last version", edits],
+    ]) {
       if (!items?.length) continue;
-      above.push(el("div", { class: "calls" }, el("p", { class: "l" }, `${label} ${items.length}`), el("ul", {}, ...items.map((text) => el("li", {}, text)))));
+      above.push(
+        el(
+          "div",
+          { class: "calls" },
+          el("p", { class: "l" }, `${label} ${items.length}`),
+          el("ul", {}, ...items.map((text) => el("li", {}, text))),
+        ),
+      );
     }
     reading.append(...above);
     if (decisions.length) {
-      const open = el("div", { class: "decisions" }, el("p", { class: "l" }, `Open decisions ${decisions.length}`));
+      const open = el(
+        "div",
+        { class: "decisions" },
+        el("p", { class: "l" }, `Open decisions ${decisions.length}`),
+      );
       reading.append(open);
       ui = mountQuestions(
         open,
@@ -75,13 +129,43 @@ export const surface = {
     const lmarks = el("div", { class: "lmarks" });
     const genHead = el("p", { class: "l" });
     const gen = el("ul", { class: "gen" });
-    const noteInput = el("input", { type: "text", placeholder: "A note on the whole artifact" });
+    const noteInput = el("input", {
+      type: "text",
+      placeholder: "A note on the whole artifact",
+    });
     const noteAdd = el("button", { type: "submit" }, "Add note");
-    const noteForm = el("form", { autocomplete: "off" }, el("div", { class: "addrow" }, el("label", { class: "field" }, el("span", { class: "l" }, "Add a general note"), noteInput), noteAdd));
+    const noteForm = el(
+      "form",
+      { autocomplete: "off" },
+      el(
+        "div",
+        { class: "addrow" },
+        el(
+          "label",
+          { class: "field" },
+          el("span", { class: "l" }, "Add a general note"),
+          noteInput,
+        ),
+        noteAdd,
+      ),
+    );
     const err = el("p", { class: "err", role: "alert" });
-    const approve = el("button", { type: "button", class: "go", "aria-keyshortcuts": "Control+Shift+A Meta+Shift+A" }, "Approve");
+    const approve = el(
+      "button",
+      {
+        type: "button",
+        class: "go",
+        "aria-keyshortcuts": "Control+Shift+A Meta+Shift+A",
+      },
+      "Approve",
+    );
     const [send, sendHint] = sendControl("Send changes");
-    const dialog = el("div", { role: "alertdialog", class: "confirm", "aria-labelledby": "rb-confirm", hidden: "" });
+    const dialog = el("div", {
+      role: "alertdialog",
+      class: "confirm",
+      "aria-labelledby": "rb-confirm",
+      hidden: "",
+    });
     const addressed = el("div", { class: "addr" });
     ledger.append(
       el("p", { class: "l" }, `Marks on v${version}`),
@@ -90,9 +174,16 @@ export const surface = {
       addressed,
       el("div", { class: "lfoot" }, genHead, gen, noteForm),
       err,
-      el("div", { class: "lact" },
+      el(
+        "div",
+        { class: "lact" },
         dialog,
-        el("div", { class: "ar" }, approve, el("kbd", {}, mac ? "⌘⇧A" : "Ctrl+Shift+A")),
+        el(
+          "div",
+          { class: "ar" },
+          approve,
+          el("kbd", {}, mac ? "⌘⇧A" : "Ctrl+Shift+A"),
+        ),
         el("div", { class: "ar" }, send, sendHint),
       ),
     );
@@ -102,8 +193,11 @@ export const surface = {
     }
 
     function refreshButtons() {
-      send.textContent = marks.length ? `Send changes (${plural(marks.length, "mark")})` : "Send changes";
-      send.disabled = sending || older() || !canSendChanges(marks, decisions, form());
+      send.textContent = marks.length
+        ? `Send changes (${plural(marks.length, "mark")})`
+        : "Send changes";
+      send.disabled =
+        sending || older() || !canSendChanges(marks, decisions, form());
       approve.disabled = sending || older();
       noteInput.disabled = older();
       noteAdd.disabled = older();
@@ -113,16 +207,23 @@ export const surface = {
       pop.replaceChildren(
         el("button", { type: "button", "data-act": "comment" }, "Comment"),
         el("button", { type: "button", "data-act": "strike" }, "Strike"),
-        ...(problem ? [el("p", { class: "perr", role: "alert" }, problem)] : []),
+        ...(problem
+          ? [el("p", { class: "perr", role: "alert" }, problem)]
+          : []),
       );
-      if (problem) for (const button of pop.querySelectorAll("button")) button.disabled = true;
+      if (problem)
+        for (const button of pop.querySelectorAll("button"))
+          button.disabled = true;
     }
 
     function placePop(rect) {
       pop.hidden = false;
       const sx = window.scrollX;
       const sy = window.scrollY;
-      const left = Math.min(Math.max(8, rect.left + sx), sx + document.documentElement.clientWidth - pop.offsetWidth - 8);
+      const left = Math.min(
+        Math.max(8, rect.left + sx),
+        sx + document.documentElement.clientWidth - pop.offsetWidth - 8,
+      );
       let top = rect.top + sy - pop.offsetHeight - 8;
       if (top < sy + 4) top = rect.bottom + sy + 8;
       pop.style.left = `${left}px`;
@@ -141,7 +242,8 @@ export const surface = {
       const pieces = trimmed(piecesIn(range));
       let problem = "";
       if (!pieces.length) problem = "Select some text in the artifact.";
-      else if (pieces.some((p) => p.node.parentElement.closest(".mk"))) problem = "That text already has a mark.";
+      else if (pieces.some((p) => p.node.parentElement.closest(".mk")))
+        problem = "That text already has a mark.";
       pending = problem ? null : { pieces, raw: plain(range), mode, returnTo };
       showButtons(problem);
       placePop(range.getBoundingClientRect());
@@ -149,11 +251,19 @@ export const surface = {
 
     function fromSelection() {
       setTimeout(() => {
-        if (!alive || older() || (pop.contains(document.activeElement) && document.activeElement.tagName === "INPUT")) return;
+        if (
+          !alive ||
+          older() ||
+          (pop.contains(document.activeElement) &&
+            document.activeElement.tagName === "INPUT")
+        )
+          return;
         const selection = window.getSelection();
-        if (!selection.rangeCount || selection.isCollapsed) return closePop(false);
+        if (!selection.rangeCount || selection.isCollapsed)
+          return closePop(false);
         const range = selection.getRangeAt(0);
-        if (!art.contains(range.commonAncestorContainer)) return closePop(false);
+        if (!art.contains(range.commonAncestorContainer))
+          return closePop(false);
         propose(range.cloneRange(), "selection", null);
       }, 0);
     }
@@ -176,7 +286,9 @@ export const surface = {
         quote: anchor.quote,
         lines: anchor.lines,
         heading: headingAbove(blocks, blockIndex(anchor.block)),
-        occurrence: anchor.crosses ? 1 : occurrenceOf(anchor.block.textContent, anchor.quote, anchor.start),
+        occurrence: anchor.crosses
+          ? 1
+          : occurrenceOf(anchor.block.textContent, anchor.quote, anchor.start),
         start: anchor.start,
         ...(anchor.crosses ? { end: anchor.end } : {}),
         attachments: [],
@@ -199,9 +311,21 @@ export const surface = {
       const act = event.target.closest("button")?.dataset.act;
       if (act === "strike") commit("strike", "");
       else if (act === "comment") {
-        const input = el("input", { type: "text", "aria-label": "Comment text", placeholder: "Your comment" });
-        pop.replaceChildren(input, el("button", { type: "button", "data-act": "add" }, "Add"), el("button", { type: "button", "data-act": "cancel" }, "Cancel"));
-        placePop(pending ? pending.pieces[0].node.parentElement.getBoundingClientRect() : pop.getBoundingClientRect());
+        const input = el("input", {
+          type: "text",
+          "aria-label": "Comment text",
+          placeholder: "Your comment",
+        });
+        pop.replaceChildren(
+          input,
+          el("button", { type: "button", "data-act": "add" }, "Add"),
+          el("button", { type: "button", "data-act": "cancel" }, "Cancel"),
+        );
+        placePop(
+          pending
+            ? pending.pieces[0].node.parentElement.getBoundingClientRect()
+            : pop.getBoundingClientRect(),
+        );
         input.focus();
       } else if (act === "add") {
         const value = pop.querySelector("input").value.trim();
@@ -210,7 +334,11 @@ export const surface = {
       } else if (act === "cancel") closePop(true);
     });
     pop.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && event.target.tagName === "INPUT" && !(event.metaKey || event.ctrlKey)) {
+      if (
+        event.key === "Enter" &&
+        event.target.tagName === "INPUT" &&
+        !(event.metaKey || event.ctrlKey)
+      ) {
         event.preventDefault();
         const value = event.target.value.trim();
         if (value) commit("comment", value);
@@ -226,13 +354,26 @@ export const surface = {
     art.addEventListener("keydown", (event) => {
       const block = event.target;
       // 'Enter' on a focused block marks the whole block; Ctrl or Cmd with it stays the send shortcut.
-      if (event.key !== "Enter" || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
-      if (!block.matches("[data-lines][tabindex]") || !art.contains(block)) return;
+      if (
+        event.key !== "Enter" ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.shiftKey
+      )
+        return;
+      if (!block.matches("[data-lines][tabindex]") || !art.contains(block))
+        return;
       event.preventDefault();
       fromBlock(block);
     });
     const onSelectionChange = () => {
-      if (pop.hidden || pending?.mode !== "selection" || pop.contains(document.activeElement)) return;
+      if (
+        pop.hidden ||
+        pending?.mode !== "selection" ||
+        pop.contains(document.activeElement)
+      )
+        return;
       if (window.getSelection().isCollapsed) closePop(false);
     };
     document.addEventListener("selectionchange", onSelectionChange);
@@ -245,7 +386,14 @@ export const surface = {
       const anchored = numbered.filter((m) => m.type !== "note");
       const notes = numbered.filter((m) => m.type === "note");
       lmarks.replaceChildren(...anchored.map(entry));
-      if (!anchored.length) lmarks.append(el("p", { class: "empty" }, "No marks on the text yet. Select text in the artifact."));
+      if (!anchored.length)
+        lmarks.append(
+          el(
+            "p",
+            { class: "empty" },
+            "No marks on the text yet. Select text in the artifact.",
+          ),
+        );
       genHead.textContent = `General notes ${notes.length}`;
       gen.replaceChildren(...notes.map(entry));
       refreshButtons();
@@ -254,11 +402,54 @@ export const surface = {
 
     function entry(m, done = false) {
       const acts = el("span", { class: "acts" });
-      if (!done && m.type !== "strike") acts.append(el("button", { type: "button", "data-act": "edit", "aria-label": `Edit mark ${m.n}` }, "Edit"));
-      if (!done) acts.append(el("button", { type: "button", "data-act": "remove", "aria-label": `Remove mark ${m.n}` }, "Remove"));
-      const item = el(m.type === "note" && !done ? "li" : "div", { class: "note", ...(done ? {} : { "data-id": String(m.id) }) }, el("p", { class: "l nh" }, el("span", {}, `${pad(m.n)} ${LABEL[m.type]}${done ? " · Addressed" : ""}`), acts));
-      if (m.type !== "note") item.append(el("p", { class: m.type === "strike" ? "q s" : "q" }, `“${m.quote}”`));
-      if (m.type !== "strike") item.append(!done && editing === m.id ? editor(m) : el("p", { class: "t" }, m.text));
+      if (!done && m.type !== "strike")
+        acts.append(
+          el(
+            "button",
+            {
+              type: "button",
+              "data-act": "edit",
+              "aria-label": `Edit mark ${m.n}`,
+            },
+            "Edit",
+          ),
+        );
+      if (!done)
+        acts.append(
+          el(
+            "button",
+            {
+              type: "button",
+              "data-act": "remove",
+              "aria-label": `Remove mark ${m.n}`,
+            },
+            "Remove",
+          ),
+        );
+      const item = el(
+        m.type === "note" && !done ? "li" : "div",
+        { class: "note", ...(done ? {} : { "data-id": String(m.id) }) },
+        el(
+          "p",
+          { class: "l nh" },
+          el(
+            "span",
+            {},
+            `${pad(m.n)} ${LABEL[m.type]}${done ? " · Addressed" : ""}`,
+          ),
+          acts,
+        ),
+      );
+      if (m.type !== "note")
+        item.append(
+          el("p", { class: m.type === "strike" ? "q s" : "q" }, `“${m.quote}”`),
+        );
+      if (m.type !== "strike")
+        item.append(
+          !done && editing === m.id
+            ? editor(m)
+            : el("p", { class: "t" }, m.text),
+        );
       if (!done) holderControl(controls, m.id, item, attachOptions(m.id));
       return item;
     }
@@ -278,7 +469,11 @@ export const surface = {
     function editor(m) {
       const mark = marks.find((x) => x.id === m.id);
       const original = mark.text;
-      const input = el("input", { type: "text", "aria-label": `Text of mark ${m.n}`, value: mark.text });
+      const input = el("input", {
+        type: "text",
+        "aria-label": `Text of mark ${m.n}`,
+        value: mark.text,
+      });
       let done = false;
       const finish = (keep) => {
         if (done) return;
@@ -366,13 +561,20 @@ export const surface = {
         const rect = span?.getClientRects()[0];
         const block = span?.closest("[data-lines]");
         if (!rect || !block) return { note, ay: Infinity, bx: 0 };
-        return { note, ay: Math.round(rect.top + rect.height / 2 - wrapBox.top), bx: Math.round(block.getBoundingClientRect().right - wrapBox.left) };
+        return {
+          note,
+          ay: Math.round(rect.top + rect.height / 2 - wrapBox.top),
+          bx: Math.round(block.getBoundingClientRect().right - wrapBox.left),
+        };
       });
       if (items.every((item) => item.ay === Infinity)) return;
       lmarks.classList.add("abs");
       let prev = -12;
       for (const item of items.sort(byPosition)) {
-        const top = Math.max(Number.isFinite(item.ay) ? item.ay - 8 : 0, prev + 12);
+        const top = Math.max(
+          Number.isFinite(item.ay) ? item.ay - 8 : 0,
+          prev + 12,
+        );
         item.note.style.top = `${top}px`;
         prev = top + item.note.offsetHeight;
         if (!Number.isFinite(item.ay)) continue;
@@ -407,7 +609,10 @@ export const surface = {
       sending = true;
       err.textContent = "";
       refreshButtons();
-      const problem = await ctx.send(readbackResponse(verdict, version, decisions, form(), marks), "The response was refused.");
+      const problem = await ctx.send(
+        readbackResponse(verdict, version, decisions, form(), marks),
+        "The response was refused.",
+      );
       if (alive) err.textContent = problem;
       sending = false;
       if (alive) refreshButtons();
@@ -421,14 +626,25 @@ export const surface = {
     function tryApprove() {
       if (sending || older() || refused()) return;
       if (!marks.length) return submit("approve");
-      const yes = el("button", { type: "button", class: "go" }, `Approve and discard ${plural(marks.length, "mark")}`);
+      const yes = el(
+        "button",
+        { type: "button", class: "go" },
+        `Approve and discard ${plural(marks.length, "mark")}`,
+      );
       const no = el("button", { type: "button" }, "Keep marking");
       yes.addEventListener("click", () => submit("approve"));
       no.addEventListener("click", () => {
         closeConfirm();
         approve.focus();
       });
-      dialog.replaceChildren(el("p", { id: "rb-confirm" }, `Approving discards your ${plural(marks.length, "mark")}.`), el("div", { class: "ar" }, yes, no));
+      dialog.replaceChildren(
+        el(
+          "p",
+          { id: "rb-confirm" },
+          `Approving discards your ${plural(marks.length, "mark")}.`,
+        ),
+        el("div", { class: "ar" }, yes, no),
+      );
       dialog.hidden = false;
       yes.focus();
     }
@@ -445,7 +661,11 @@ export const surface = {
       approve.focus();
     });
     const onKey = (event) => {
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "a") {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        event.shiftKey &&
+        event.key.toLowerCase() === "a"
+      ) {
         event.preventDefault();
         tryApprove();
       }
@@ -453,27 +673,71 @@ export const surface = {
     document.addEventListener("keydown", onKey);
     ctx.setSend(send);
 
-    addressed.replaceChildren(...(asked.length ? [el("p", { class: "l" }, `Addressed from v${prior.version} ${asked.length}`), ...asked.map((m) => entry(m, true))] : []));
-    const valueText = (n) => (n === version ? `v${n}` : `v${n}, older, read-only`);
+    addressed.replaceChildren(
+      ...(asked.length
+        ? [
+            el(
+              "p",
+              { class: "l" },
+              `Addressed from v${prior.version} ${asked.length}`,
+            ),
+            ...asked.map((m) => entry(m, true)),
+          ]
+        : []),
+    );
+    const valueText = (n) =>
+      n === version ? `v${n}` : `v${n}, older, read-only`;
     const readout = el("output", { class: "l", id: "verOut", for: "ver" });
     const slot = document.getElementById("agendaTools");
     if (known.length > 1) {
-      const input = el("input", { id: "ver", type: "range", min: String(known[0]), max: String(known.at(-1)), step: "1", value: String(shown), "aria-valuetext": valueText(shown) });
+      const input = el("input", {
+        id: "ver",
+        type: "range",
+        min: String(known[0]),
+        max: String(known.at(-1)),
+        step: "1",
+        value: String(shown),
+        "aria-valuetext": valueText(shown),
+      });
       input.addEventListener("input", () => {
         shown = Number(input.value);
         input.setAttribute("aria-valuetext", valueText(shown));
-        history.replaceState(history.state, "", `${location.pathname}${location.search}#version=${shown}`);
+        history.replaceState(
+          history.state,
+          "",
+          `${location.pathname}${location.search}#version=${shown}`,
+        );
         closePop(false);
         refreshButtons();
         load();
       });
-      slot.replaceChildren(el("div", { class: "ver" }, el("div", { class: "row" }, el("label", { class: "sr", for: "ver" }, "Version"), el("span", { class: "l", "aria-hidden": "true" }, `v${known[0]}`), input, el("span", { class: "l", "aria-hidden": "true" }, `v${known.at(-1)}`)), readout));
+      slot.replaceChildren(
+        el(
+          "div",
+          { class: "ver" },
+          el(
+            "div",
+            { class: "row" },
+            el("label", { class: "sr", for: "ver" }, "Version"),
+            el("span", { class: "l", "aria-hidden": "true" }, `v${known[0]}`),
+            input,
+            el(
+              "span",
+              { class: "l", "aria-hidden": "true" },
+              `v${known.at(-1)}`,
+            ),
+          ),
+          readout,
+        ),
+      );
     }
 
     const sources = new Map();
     async function sourceOf(n) {
       if (!sources.has(n)) {
-        const res = await getFile(`pilot/versions/${artifact}/${String(n).padStart(3, "0")}.md`);
+        const res = await getFile(
+          `pilot/versions/${artifact}/${String(n).padStart(3, "0")}.md`,
+        );
         if (!res.ok) throw new Error(`file ${res.status}`);
         sources.set(n, await res.text());
       }
@@ -482,10 +746,14 @@ export const surface = {
 
     // The source text of each block of the version the user last marked up.
     let priorBlocks = null;
-    const priorSources = () => (priorBlocks ??= sourceOf(prior.version).then((text) => renderMarkdown(text, document.createElement("div"))).then((found) => found.map((b) => b.source)).catch((error) => {
-      priorBlocks = null;
-      throw error;
-    }));
+    const priorSources = () =>
+      (priorBlocks ??= sourceOf(prior.version)
+        .then((text) => renderMarkdown(text, document.createElement("div")))
+        .then((found) => found.map((b) => b.source))
+        .catch((error) => {
+          priorBlocks = null;
+          throw error;
+        }));
 
     async function load() {
       const mine = ++requested;
@@ -507,7 +775,10 @@ export const surface = {
       if (revised && shown > prior.version && blocks.length) {
         try {
           before = await priorSources();
-          diff = diffBlocks(before, blocks.map((b) => b.source));
+          diff = diffBlocks(
+            before,
+            blocks.map((b) => b.source),
+          );
         } catch {
           // Without the earlier version nothing can be shown as changed.
         }
@@ -522,7 +793,18 @@ export const surface = {
         blocks[index].el.append(el("span", { class: "chg" }, "CHANGED"));
       }
       removedBox.hidden = !diff?.removed.length;
-      removedBox.replaceChildren(...(diff?.removed.length ? [el("p", { class: "l" }, `Removed ${diff.removed.length}`), el("ul", { "aria-label": "Removed blocks" }, ...diff.removed.map((index) => el("li", {}, before[index])))] : []));
+      removedBox.replaceChildren(
+        ...(diff?.removed.length
+          ? [
+              el("p", { class: "l" }, `Removed ${diff.removed.length}`),
+              el(
+                "ul",
+                { "aria-label": "Removed blocks" },
+                ...diff.removed.map((index) => el("li", {}, before[index])),
+              ),
+            ]
+          : []),
+      );
       readout.textContent = `v${shown} · ${plural(blocks.length, "block")}${diff ? ` · ${diff.changed.length} changed` : ""}`;
       renderLedger();
     }

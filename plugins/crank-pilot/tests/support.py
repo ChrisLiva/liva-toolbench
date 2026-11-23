@@ -20,30 +20,62 @@ PLUGIN = Path(__file__).resolve().parent.parent
 BIN = PLUGIN / "bin" / "crank-pilot"
 
 QUESTIONS = {
-    "kind": "questions", "phase": "spec", "title": "Round 1",
-    "agenda": {"settled": ["Storage"], "open": ["Toggle place", "First visit"], "current": "Toggle place"},
+    "kind": "questions",
+    "phase": "spec",
+    "title": "Round 1",
+    "agenda": {
+        "settled": ["Storage"],
+        "open": ["Toggle place", "First visit"],
+        "current": "Toggle place",
+    },
     "questions": [
-        {"id": "q1", "title": "Where does the toggle live?", "body": "Pick one.",
-         "recommendation": "Header: fewest clicks.",
-         "options": [{"id": "a", "label": "Header"}, {"id": "b", "label": "Settings"}], "recommended": "a"},
-        {"id": "q2", "title": "Name the storage key", "body": "Free text.", "recommendation": "`theme`"},
+        {
+            "id": "q1",
+            "title": "Where does the toggle live?",
+            "body": "Pick one.",
+            "recommendation": "Header: fewest clicks.",
+            "options": [
+                {"id": "a", "label": "Header"},
+                {"id": "b", "label": "Settings"},
+            ],
+            "recommended": "a",
+        },
+        {
+            "id": "q2",
+            "title": "Name the storage key",
+            "body": "Free text.",
+            "recommendation": "`theme`",
+        },
     ],
 }
 
 READBACK = {
-    "kind": "readback", "phase": "spec", "title": "Spec: dark mode toggle",
-    "agenda": {"settled": [], "open": ["Readback of the spec"], "current": "Readback of the spec"},
-    "artifact": "spec.md", "lead": "Commits to a three-state toggle.",
-    "judgment_calls": ["Per device, not per account."], "review_landed": ["The key is named."],
-    "decisions": [], "edits": [],
+    "kind": "readback",
+    "phase": "spec",
+    "title": "Spec: dark mode toggle",
+    "agenda": {
+        "settled": [],
+        "open": ["Readback of the spec"],
+        "current": "Readback of the spec",
+    },
+    "artifact": "spec.md",
+    "lead": "Commits to a three-state toggle.",
+    "judgment_calls": ["Per device, not per account."],
+    "review_landed": ["The key is named."],
+    "decisions": [],
+    "edits": [],
 }
 
 PROTOTYPE = {
-    "kind": "prototype", "phase": "spec", "title": "Toggle prototype",
+    "kind": "prototype",
+    "phase": "spec",
+    "title": "Toggle prototype",
     "agenda": {"settled": [], "open": ["Toggle look"], "current": "Toggle look"},
     "question": "Where should the toggle sit?",
-    "variants": [{"key": "A", "name": "Header switch", "file": "prototype/variant-A.html"},
-                 {"key": "B", "name": "Menu item", "file": "prototype/variant-B.html"}],
+    "variants": [
+        {"key": "A", "name": "Header switch", "file": "prototype/variant-A.html"},
+        {"key": "B", "name": "Menu item", "file": "prototype/variant-B.html"},
+    ],
 }
 
 IMAGES = {
@@ -55,23 +87,76 @@ IMAGES = {
 }
 
 # The records the HTTP and journey tests send: answers to QUESTIONS, a readback's spec and marks, a prototype's verdict.
-Q1_B = {"id": "q1", "accepted": False, "option": "b", "text": "", "note": "", "attachments": []}
-Q1_A = {"id": "q1", "accepted": True, "option": "a", "text": "", "note": "", "attachments": []}
-Q2 = {"id": "q2", "accepted": True, "option": None, "text": "", "note": "", "attachments": []}
+Q1_B = {
+    "id": "q1",
+    "accepted": False,
+    "option": "b",
+    "text": "",
+    "note": "",
+    "attachments": [],
+}
+Q1_A = {
+    "id": "q1",
+    "accepted": True,
+    "option": "a",
+    "text": "",
+    "note": "",
+    "attachments": [],
+}
+Q2 = {
+    "id": "q2",
+    "accepted": True,
+    "option": None,
+    "text": "",
+    "note": "",
+    "attachments": [],
+}
 
 SPEC = "# Spec\n\n## Criteria\n\nFollows the OS within one second.\n"
-COMMENT = {"n": 1, "type": "comment", "text": "Why a second?", "quote": "within one second", "lines": [5, 5],
-           "heading": "Criteria", "occurrence": 1, "attachments": []}
+COMMENT = {
+    "n": 1,
+    "type": "comment",
+    "text": "Why a second?",
+    "quote": "within one second",
+    "lines": [5, 5],
+    "heading": "Criteria",
+    "occurrence": 1,
+    "attachments": [],
+}
 NOTE = {"n": 2, "type": "note", "text": "Add a shortcut criterion.", "attachments": []}
 MARKS = [COMMENT, NOTE]
 CHANGES = {"verdict": "changes", "version": 1, "answers": [], "marks": MARKS}
 
 VERDICT = {
-    "winner": "B", "take": "nothing", "leave_out": "nothing", "attachments": [],
+    "winner": "B",
+    "take": "nothing",
+    "leave_out": "nothing",
+    "attachments": [],
     "comments": [
-        {"n": 1, "variant": "A", "selector": "p", "leading_text": "A", "text": "Too small.", "attachments": []},
-        {"n": 1, "variant": "B", "selector": "p", "leading_text": "B", "text": "Good.", "attachments": []},
-        {"n": 2, "variant": "A", "selector": "p", "leading_text": "A", "text": "Still small.", "attachments": []},
+        {
+            "n": 1,
+            "variant": "A",
+            "selector": "p",
+            "leading_text": "A",
+            "text": "Too small.",
+            "attachments": [],
+        },
+        {
+            "n": 1,
+            "variant": "B",
+            "selector": "p",
+            "leading_text": "B",
+            "text": "Good.",
+            "attachments": [],
+        },
+        {
+            "n": 2,
+            "variant": "A",
+            "selector": "p",
+            "leading_text": "A",
+            "text": "Still small.",
+            "attachments": [],
+        },
     ],
 }
 
@@ -98,29 +183,45 @@ class Effort:
         }
         return {key: value for key, value in merged.items() if value is not None}
 
-    def run(self, *args, scale: int = 100, env: dict[str, str | None] | None = None) -> subprocess.CompletedProcess:
+    def run(
+        self, *args, scale: int = 100, env: dict[str, str | None] | None = None
+    ) -> subprocess.CompletedProcess:
         return subprocess.run(
             [sys.executable, str(BIN), *map(str, args)],
-            capture_output=True, text=True, env=self._env(scale, env),
+            capture_output=True,
+            text=True,
+            env=self._env(scale, env),
         )
 
-    def spawn(self, *args, scale: int = 100, env: dict[str, str | None] | None = None) -> subprocess.Popen:
+    def spawn(
+        self, *args, scale: int = 100, env: dict[str, str | None] | None = None
+    ) -> subprocess.Popen:
         return subprocess.Popen(
             [sys.executable, str(BIN), *map(str, args)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._env(scale, env),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env=self._env(scale, env),
         )
 
     def start_server(self, scale: int = 100) -> subprocess.Popen:
         """Start the server directly, with no `show`, and return it once `server.json` names it."""
         process = subprocess.Popen(
-            [sys.executable, "-m", "pilot.server", str(self.path)], cwd=PLUGIN,
-            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=self._env(scale, None),
+            [sys.executable, "-m", "pilot.server", str(self.path)],
+            cwd=PLUGIN,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=self._env(scale, None),
         )
         self.children.append(process)
         give_up = time.time() + 5
         while time.time() < give_up:
             with contextlib.suppress(OSError, ValueError):
-                if json.loads((self.path / "pilot" / "server.json").read_text())["pid"] == process.pid:
+                if (
+                    json.loads((self.path / "pilot" / "server.json").read_text())["pid"]
+                    == process.pid
+                ):
                     return process
             time.sleep(0.005)
         raise AssertionError("the server wrote no record")
@@ -140,7 +241,10 @@ class Effort:
 
 def recording_browser(effort: Effort) -> tuple[dict[str, str | None], Path]:
     """An environment whose BROWSER appends its arguments to a file, and that file; it also writes to stdout."""
-    script = effort.write("browser.sh", '#!/bin/sh\necho "$@" >> "$(dirname "$0")/opened.txt"\necho noise\n')
+    script = effort.write(
+        "browser.sh",
+        '#!/bin/sh\necho "$@" >> "$(dirname "$0")/opened.txt"\necho noise\n',
+    )
     script.chmod(0o755)
     return {"BROWSER": str(script)}, effort.path / "opened.txt"
 
@@ -171,10 +275,21 @@ class Client:
         effort.pids.add(record["pid"])
         self._opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
-    def request(self, method: str, path: str, body: bytes | None = None, headers: dict[str, str] | None = None,
-                token: bool = True) -> tuple[int, bytes, http.client.HTTPMessage]:
+    def request(
+        self,
+        method: str,
+        path: str,
+        body: bytes | None = None,
+        headers: dict[str, str] | None = None,
+        token: bool = True,
+    ) -> tuple[int, bytes, http.client.HTTPMessage]:
         sent = {**(headers or {}), **({"X-Pilot-Token": self.token} if token else {})}
-        call = urllib.request.Request(f"http://127.0.0.1:{self.port}{path}", data=body, method=method, headers=sent)
+        call = urllib.request.Request(
+            f"http://127.0.0.1:{self.port}{path}",
+            data=body,
+            method=method,
+            headers=sent,
+        )
         try:
             with self._opener.open(call, timeout=5) as reply:
                 return reply.status, reply.read(), reply.headers
@@ -185,7 +300,9 @@ class Client:
         """Send `request` to the server unchanged and read until it closes or `wait` seconds pass; the status and body."""
         deadline = time.monotonic() + wait
         reply = b""
-        with socket.create_connection(("127.0.0.1", self.port), timeout=wait) as connection:
+        with socket.create_connection(
+            ("127.0.0.1", self.port), timeout=wait
+        ) as connection:
             connection.sendall(request)
             while (left := deadline - time.monotonic()) > 0:
                 connection.settimeout(left)
@@ -221,8 +338,13 @@ class Client:
             thread.join()
 
 
-def show(effort: Effort, interaction: dict, scale: int = 100, env: dict[str, str | None] | None = None,
-         opened: Path | None = None) -> int:
+def show(
+    effort: Effort,
+    interaction: dict,
+    scale: int = 100,
+    env: dict[str, str | None] | None = None,
+    opened: Path | None = None,
+) -> int:
     """Run `show` on the interaction with a page beating once the server is up; return the printed number.
 
     With `opened`, the page beats only once that file records a browser launch: a beat that lands before `show`

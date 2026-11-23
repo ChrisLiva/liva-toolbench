@@ -1,37 +1,43 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>crank-pilot</title>
-<link rel="stylesheet" href="/page/page.css">
-<script src="/page/vendor/markdown-it.min.js"></script>
-<script type="module" src="/page/app.js"></script>
-</head>
-<body>
-<header class="chrome wrap">
-  <p class="l brand">crank-pilot</p>
-  <p class="l" id="effort"></p>
-  <p class="l" id="status" role="status"></p>
-</header>
-<div class="agenda" id="agenda" hidden>
-  <div class="wrap">
-    <div class="arow">
-      <p class="l" id="phase"></p>
-      <div class="ag">
-        <button type="button" class="sbtn" id="settledBtn" aria-expanded="false" aria-controls="settledList"></button>
-        <span class="l" aria-hidden="true">·</span>
-        <span class="l" id="openCount"></span>
-        <ul class="open" id="openList" aria-label="Open decisions"></ul>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>crank-pilot</title>
+    <link rel="stylesheet" href="/page/page.css" />
+    <script src="/page/vendor/markdown-it.min.js"></script>
+    <script type="module" src="/page/app.js"></script>
+  </head>
+  <body>
+    <header class="chrome wrap">
+      <p class="l brand">crank-pilot</p>
+      <p class="l" id="effort"></p>
+      <p class="l" id="status" role="status"></p>
+    </header>
+    <div class="agenda" id="agenda" hidden>
+      <div class="wrap">
+        <div class="arow">
+          <p class="l" id="phase"></p>
+          <div class="ag">
+            <button
+              type="button"
+              class="sbtn"
+              id="settledBtn"
+              aria-expanded="false"
+              aria-controls="settledList"
+            ></button>
+            <span class="l" aria-hidden="true">·</span>
+            <span class="l" id="openCount"></span>
+            <ul class="open" id="openList" aria-label="Open decisions"></ul>
+          </div>
+          <div id="agendaTools"></div>
+        </div>
+        <ul id="settledList" hidden aria-label="Settled decisions"></ul>
       </div>
-      <div id="agendaTools"></div>
     </div>
-    <ul id="settledList" hidden aria-label="Settled decisions"></ul>
-  </div>
-</div>
-<main class="wrap grid" id="stage">
-  <article id="reading"></article>
-  <aside class="ledger" id="ledger" aria-label="Ledger" hidden></aside>
-</main>
-</body>
+    <main class="wrap grid" id="stage">
+      <article id="reading"></article>
+      <aside class="ledger" id="ledger" aria-label="Ledger" hidden></aside>
+    </main>
+  </body>
 </html>

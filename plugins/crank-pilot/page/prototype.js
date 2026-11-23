@@ -1,7 +1,13 @@
 import { getFile } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
 import { el, plural, sendControl } from "/page/dom.js";
-import { attachedCount, numberPins, prototypeFrom, prototypeResponse, verdictRefusal } from "/page/model.js";
+import {
+  attachedCount,
+  numberPins,
+  prototypeFrom,
+  prototypeResponse,
+  verdictRefusal,
+} from "/page/model.js";
 import { holderControl, mountAttach } from "/page/attach.js";
 
 const LEADING = 80;
@@ -20,13 +26,17 @@ const PICKER =
   `const text=(e.target.textContent||'').replace(/\\s+/g,' ').trim().slice(0,${LEADING});` +
   "parent.postMessage({pilotPick:{selector:path(e.target),leading_text:text}},'*')},true)})();";
 
-const hashKey = () => new URLSearchParams(location.hash.slice(1)).get("variant");
+const hashKey = () =>
+  new URLSearchParams(location.hash.slice(1)).get("variant");
 
 export const surface = {
   mount(stage, state, ctx) {
     const { number, question, variants } = state.interaction;
     let { verdict, pins } = prototypeFrom(variants, state.draft);
-    let index = Math.max(0, variants.findIndex((v) => v.key === hashKey()));
+    let index = Math.max(
+      0,
+      variants.findIndex((v) => v.key === hashKey()),
+    );
     let picking = false;
     let frame = null;
     let shown = 0;
@@ -38,25 +48,40 @@ export const surface = {
     const prev = el("button", { type: "button" }, "Previous");
     const next = el("button", { type: "button" }, "Next");
     const label = el("p", { class: "l", role: "status" });
-    const mode = el("button", { type: "button", "aria-pressed": "false" }, "Comment mode");
+    const mode = el(
+      "button",
+      { type: "button", "aria-pressed": "false" },
+      "Comment mode",
+    );
     const hint = el("p", { class: "l", role: "status" });
     const box = el("div", { class: "vstage" });
     const ask = el("div", { class: "pinask" });
-    stage.querySelector("#reading").append(
-      el("h2", { class: "pq" }, question),
-      box,
-      el("div", { class: "vsw" }, prev, label, next),
-      el("div", { class: "vmode" }, mode, hint),
-      ask,
-    );
+    stage
+      .querySelector("#reading")
+      .append(
+        el("h2", { class: "pq" }, question),
+        box,
+        el("div", { class: "vsw" }, prev, label, next),
+        el("div", { class: "vmode" }, mode, hint),
+        ask,
+      );
 
     const big = el("p", { class: "big", role: "img" });
     const sub = el("p", { class: "l lsub" });
     const list = el("ol", { class: "pins", "aria-label": "Pinned comments" });
     const err = el("p", { class: "err", role: "alert" });
-    const win = el("fieldset", { class: "win" }, el("legend", { class: "l" }, "Winner"));
+    const win = el(
+      "fieldset",
+      { class: "win" },
+      el("legend", { class: "l" }, "Winner"),
+    );
     for (const v of variants) {
-      const radio = el("input", { type: "radio", name: "winner", id: `win-${v.key}`, value: v.key });
+      const radio = el("input", {
+        type: "radio",
+        name: "winner",
+        id: `win-${v.key}`,
+        value: v.key,
+      });
       radio.defaultChecked = radio.checked = verdict.winner === v.key;
       radio.addEventListener("change", () => {
         verdict.winner = v.key;
@@ -71,10 +96,21 @@ export const surface = {
         verdict[field] = input.value;
         changed();
       });
-      return el("label", { class: "field" }, el("span", { class: "l" }, title), input);
+      return el(
+        "label",
+        { class: "field" },
+        el("span", { class: "l" }, title),
+        input,
+      );
     };
     const [send, sendHint] = sendControl("Send verdict", { class: "go" });
-    const foot = el("div", { class: "lfoot vfoot" }, win, area("take", "What to take from the others"), area("leave_out", "What to leave out"));
+    const foot = el(
+      "div",
+      { class: "lfoot vfoot" },
+      win,
+      area("take", "What to take from the others"),
+      area("leave_out", "What to leave out"),
+    );
     mountAttach(foot, {
       interaction: number,
       paths: verdict.attachments,
@@ -84,15 +120,21 @@ export const surface = {
         changed();
       },
     });
-    stage.querySelector("#ledger").append(
-      el("p", { class: "l" }, "Variant"),
-      big,
-      sub,
-      list,
-      foot,
-      err,
-      el("div", { class: "lact" }, el("div", { class: "ar" }, send, sendHint)),
-    );
+    stage
+      .querySelector("#ledger")
+      .append(
+        el("p", { class: "l" }, "Variant"),
+        big,
+        sub,
+        list,
+        foot,
+        err,
+        el(
+          "div",
+          { class: "lact" },
+          el("div", { class: "ar" }, send, sendHint),
+        ),
+      );
 
     const changed = () => {
       err.textContent = "";
@@ -104,7 +146,13 @@ export const surface = {
       sub.textContent = `of ${variants.length} variants · ${plural(pins.length, "pinned comment")}`;
       list.replaceChildren(
         ...numberPins(pins).map((pin, i) => {
-          const item = el("li", {}, el("span", { class: "l" }, `Variant ${pin.variant} · Pin ${pin.n}`), el("span", { class: "pt" }, pin.text), el("span", { class: "sel" }, pin.selector));
+          const item = el(
+            "li",
+            {},
+            el("span", { class: "l" }, `Variant ${pin.variant} · Pin ${pin.n}`),
+            el("span", { class: "pt" }, pin.text),
+            el("span", { class: "sel" }, pin.selector),
+          );
           holderControl(controls, i, item, {
             interaction: number,
             paths: pins[i].attachments,
@@ -126,12 +174,26 @@ export const surface = {
 
     function openAsk(pick) {
       const v = variants[index];
-      const input = el("input", { type: "text", required: "", placeholder: "What should change here?" });
+      const input = el("input", {
+        type: "text",
+        required: "",
+        placeholder: "What should change here?",
+      });
       const form = el(
         "form",
         { class: "pinform" },
-        el("label", { class: "field" }, el("span", { class: "l" }, `Comment on ${pick.selector}`), input),
-        el("div", { class: "ar" }, el("button", { type: "submit" }, "Pin comment"), el("button", { type: "button" }, "Cancel")),
+        el(
+          "label",
+          { class: "field" },
+          el("span", { class: "l" }, `Comment on ${pick.selector}`),
+          input,
+        ),
+        el(
+          "div",
+          { class: "ar" },
+          el("button", { type: "submit" }, "Pin comment"),
+          el("button", { type: "button" }, "Cancel"),
+        ),
       );
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -140,11 +202,19 @@ export const surface = {
           input.reportValidity();
           return;
         }
-        pins.push({ variant: v.key, selector: pick.selector, leading_text: pick.leading_text, text: input.value.trim(), attachments: [] });
+        pins.push({
+          variant: v.key,
+          selector: pick.selector,
+          leading_text: pick.leading_text,
+          text: input.value.trim(),
+          attachments: [],
+        });
         closeAsk(true);
         changed();
       });
-      form.querySelector("button[type=button]").addEventListener("click", () => closeAsk(true));
+      form
+        .querySelector("button[type=button]")
+        .addEventListener("click", () => closeAsk(true));
       input.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closeAsk(true);
       });
@@ -168,7 +238,11 @@ export const surface = {
       label.textContent = `${v.key} · ${v.name}`;
       big.textContent = v.key;
       big.setAttribute("aria-label", `Variant ${v.key}`);
-      history.replaceState(history.state, "", `#variant=${encodeURIComponent(v.key)}`);
+      history.replaceState(
+        history.state,
+        "",
+        `#variant=${encodeURIComponent(v.key)}`,
+      );
       closeAsk(false);
       frame = null;
       box.replaceChildren(el("p", { class: "l vmsg" }, "Loading the variant"));
@@ -179,18 +253,30 @@ export const surface = {
         frame.className = "pframe";
         frame.title = `Variant ${v.key}: ${v.name}`;
         const pushed = frame;
-        frame.addEventListener("load", () => pushed.contentWindow.postMessage({ pilotPick: picking }, "*"));
+        frame.addEventListener("load", () =>
+          pushed.contentWindow.postMessage({ pilotPick: picking }, "*"),
+        );
         box.replaceChildren(frame);
       } catch {
-        if (alive && mine === shown) box.replaceChildren(el("p", { class: "l vmsg" }, `Could not load variant ${v.key}.`));
+        if (alive && mine === shown)
+          box.replaceChildren(
+            el("p", { class: "l vmsg" }, `Could not load variant ${v.key}.`),
+          );
       }
     }
 
     const onMessage = (event) => {
       const pick = event.data?.pilotPick;
       if (!frame || event.source !== frame.contentWindow || !picking) return;
-      if (typeof pick?.selector !== "string" || typeof pick.leading_text !== "string") return;
-      openAsk({ selector: pick.selector, leading_text: pick.leading_text.slice(0, LEADING) });
+      if (
+        typeof pick?.selector !== "string" ||
+        typeof pick.leading_text !== "string"
+      )
+        return;
+      openAsk({
+        selector: pick.selector,
+        leading_text: pick.leading_text.slice(0, LEADING),
+      });
     };
     window.addEventListener("message", onMessage);
 
@@ -200,7 +286,9 @@ export const surface = {
       picking = !picking;
       mode.setAttribute("aria-pressed", String(picking));
       box.classList.toggle("picking", picking);
-      hint.textContent = picking ? "Click an element of the variant to pin a comment" : "";
+      hint.textContent = picking
+        ? "Click an element of the variant to pin a comment"
+        : "";
       if (!picking) closeAsk(false);
       frame?.contentWindow.postMessage({ pilotPick: picking }, "*");
     });
@@ -214,7 +302,10 @@ export const surface = {
       }
       err.textContent = "";
       send.disabled = true;
-      const problem = await ctx.send(prototypeResponse(verdict, pins), "The verdict was refused.");
+      const problem = await ctx.send(
+        prototypeResponse(verdict, pins),
+        "The verdict was refused.",
+      );
       if (alive) err.textContent = problem;
       send.disabled = false;
     });

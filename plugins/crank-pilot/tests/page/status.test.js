@@ -11,9 +11,20 @@ const interaction = (number) => ({
   title: `Round ${number}`,
   phase: "brainstorm",
   agenda: { settled: [], open: [], current: "" },
-  questions: [{ id: "q1", title: "Which?", options: [{ id: "a", label: "A" }, { id: "b", label: "B" }], recommended: "a" }],
+  questions: [
+    {
+      id: "q1",
+      title: "Which?",
+      options: [
+        { id: "a", label: "A" },
+        { id: "b", label: "B" },
+      ],
+      recommended: "a",
+    },
+  ],
 });
-const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
+const json = (body, status = 200) =>
+  new Response(JSON.stringify(body), { status });
 
 test("status line: draft refused, reconnecting keeps its line, recovery, new interaction", async () => {
   const window = pageWindow();
@@ -32,7 +43,11 @@ test("status line: draft refused, reconnecting keeps its line, recovery, new int
   });
   await import("/page/app.js");
 
-  for (let waited = 0; !document.getElementById("reading").textContent.includes("Round 1"); waited += 10) {
+  for (
+    let waited = 0;
+    !document.getElementById("reading").textContent.includes("Round 1");
+    waited += 10
+  ) {
     assert.ok(waited < 2000, "the page never showed the interaction's title");
     await tick(10);
   }
@@ -40,7 +55,9 @@ test("status line: draft refused, reconnecting keeps its line, recovery, new int
 
   // A refused draft shows its line once the debounce fires.
   const pick = (value) => {
-    const radio = document.querySelector(`input[type="radio"][value="${value}"]`);
+    const radio = document.querySelector(
+      `input[type="radio"][value="${value}"]`,
+    );
     radio.checked = true;
     radio.dispatchEvent(new window.Event("change", { bubbles: true }));
   };

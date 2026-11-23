@@ -116,7 +116,10 @@ class Store:
         directory = self.versions / artifact
         directory.mkdir(parents=True, exist_ok=True)
         latest = max(self.kept_versions(artifact), default=0)
-        if latest and (self.effort / version_rel(artifact, latest)).read_bytes() == text:
+        if (
+            latest
+            and (self.effort / version_rel(artifact, latest)).read_bytes() == text
+        ):
             return latest
         write_atomic(self.effort / version_rel(artifact, latest + 1), text)
         return latest + 1
@@ -128,7 +131,10 @@ class Store:
         """The version and marks of the latest earlier `changes` response for the same artifact as interaction `number`."""
         artifact = self.interaction(number).get("artifact")
         for earlier in sorted(self._numbers(self.interactions), reverse=True):
-            if earlier >= number or self.interaction(earlier).get("artifact") != artifact:
+            if (
+                earlier >= number
+                or self.interaction(earlier).get("artifact") != artifact
+            ):
                 continue
             response = self.response(earlier)
             if response and response.get("verdict") == "changes":
@@ -146,7 +152,9 @@ class Store:
 
     def write_draft(self, number: int, draft: dict) -> None:
         self.drafts.mkdir(parents=True, exist_ok=True)
-        write_atomic(self.drafts / _numbered(number, "json"), json.dumps(draft).encode())
+        write_atomic(
+            self.drafts / _numbered(number, "json"), json.dumps(draft).encode()
+        )
 
     def write_response(self, number: int, data: dict) -> bool:
         """Create the response only if none exists, and the draft goes with it; False when another submission won."""
@@ -164,10 +172,16 @@ class Store:
 
     def respond(self, number: int, body: dict, via: str) -> bool:
         """Close interaction `number` with `body` under the response envelope; False when a response already exists."""
-        return self.write_response(number, {
-            **body, "interaction": number, "kind": self.interaction(number)["kind"], "via": via,
-            "submitted_at": datetime.now(timezone.utc).isoformat(),
-        })
+        return self.write_response(
+            number,
+            {
+                **body,
+                "interaction": number,
+                "kind": self.interaction(number)["kind"],
+                "via": via,
+                "submitted_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
     def add_attachment(self, number: int, data: bytes, extension: str) -> int | None:
         """Store `data` as interaction `number`'s next image and return its `k`; None at `MAX_ATTACHMENTS`."""
@@ -183,7 +197,10 @@ class Store:
     def remove_attachment(self, number: int, k: int) -> bool:
         entries = self.attachments.iterdir() if self.attachments.is_dir() else ()
         for entry in entries:
-            if (match := ATTACHMENT.fullmatch(entry.name)) and (int(match["n"]), int(match["k"])) == (number, k):
+            if (match := ATTACHMENT.fullmatch(entry.name)) and (
+                int(match["n"]),
+                int(match["k"]),
+            ) == (number, k):
                 entry.unlink()
                 return True
         return False
@@ -191,8 +208,12 @@ class Store:
     def _attachment_ks(self, number: int) -> list[int]:
         if not self.attachments.is_dir():
             return []
-        matches = (ATTACHMENT.fullmatch(entry.name) for entry in self.attachments.iterdir())
-        return [int(match["k"]) for match in matches if match and int(match["n"]) == number]
+        matches = (
+            ATTACHMENT.fullmatch(entry.name) for entry in self.attachments.iterdir()
+        )
+        return [
+            int(match["k"]) for match in matches if match and int(match["n"]) == number
+        ]
 
     @staticmethod
     def _json(path: Path) -> dict | None:
@@ -208,14 +229,19 @@ class Store:
         except (OSError, ValueError):
             return None
         shape = {"pid": int, "port": int, "token": str}
-        if not isinstance(record, dict) or any(not isinstance(record.get(k), t) for k, t in shape.items()):
+        if not isinstance(record, dict) or any(
+            not isinstance(record.get(k), t) for k, t in shape.items()
+        ):
             return None
         return record if record["pid"] > 0 else None
 
     def heartbeat(self) -> tuple[float, bool]:
         """The page's last beat (0 when there has been none) and whether it said it was closing."""
         try:
-            return self.heartbeat_file.stat().st_mtime, self.heartbeat_file.read_bytes() == b"bye"
+            return (
+                self.heartbeat_file.stat().st_mtime,
+                self.heartbeat_file.read_bytes() == b"bye",
+            )
         except OSError:
             return 0.0, False
 
@@ -224,4 +250,6 @@ class Store:
         if not directory.is_dir():
             return []
         matches = (NUMBER.fullmatch(entry.name) for entry in directory.iterdir())
-        return [int(match["n"]) for match in matches if match and match["suffix"] == suffix]
+        return [
+            int(match["n"]) for match in matches if match and match["suffix"] == suffix
+        ]

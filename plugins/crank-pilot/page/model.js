@@ -11,15 +11,19 @@ export const ATTACH_MESSAGES = {
   count: `A response can carry at most ${MAX_IMAGES} images.`,
 };
 
-const startsWith = (bytes, signature, at = 0) => signature.every((byte, i) => bytes[at + i] === byte);
+const startsWith = (bytes, signature, at = 0) =>
+  signature.every((byte, i) => bytes[at + i] === byte);
 const ascii = (text) => [...text].map((c) => c.charCodeAt(0));
 
 // The image type a file's leading bytes name, or null: a name, a MIME type, and an SVG's markup are not evidence.
 export function sniffImage(bytes) {
-  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return "png";
+  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+    return "png";
   if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "jpg";
-  if (startsWith(bytes, ascii("GIF87a")) || startsWith(bytes, ascii("GIF89a"))) return "gif";
-  if (startsWith(bytes, ascii("RIFF")) && startsWith(bytes, ascii("WEBP"), 8)) return "webp";
+  if (startsWith(bytes, ascii("GIF87a")) || startsWith(bytes, ascii("GIF89a")))
+    return "gif";
+  if (startsWith(bytes, ascii("RIFF")) && startsWith(bytes, ascii("WEBP"), 8))
+    return "webp";
   return null;
 }
 
@@ -31,17 +35,24 @@ export function attachRefusal({ kind, size, count }) {
 }
 
 // The images attached to every holder (a form's entries, marks, a verdict and its pins) on one response.
-export const attachedCount = (...holders) => holders.flat().reduce((total, holder) => total + holder.attachments.length, 0);
+export const attachedCount = (...holders) =>
+  holders
+    .flat()
+    .reduce((total, holder) => total + holder.attachments.length, 0);
 
-export const hasOptions = (question) => Array.isArray(question.options) && question.options.length > 0;
-export const strings = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === "string") : []);
+export const hasOptions = (question) =>
+  Array.isArray(question.options) && question.options.length > 0;
+export const strings = (value) =>
+  Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
 
 // One question's entry, read defensively: a draft is whatever an earlier page wrote.
 function entry(question, raw) {
   const given = raw && typeof raw === "object" ? raw : {};
   let choice = null;
   if (hasOptions(question)) {
-    const known = given.choice === "own" || question.options.some((option) => option.id === given.choice);
+    const known =
+      given.choice === "own" ||
+      question.options.some((option) => option.id === given.choice);
     choice = known ? given.choice : question.recommended;
   }
   return {
@@ -53,7 +64,9 @@ function entry(question, raw) {
 }
 
 export function formFrom(questions, draft) {
-  return Object.fromEntries(questions.map((q) => [q.id, entry(q, draft?.[q.id])]));
+  return Object.fromEntries(
+    questions.map((q) => [q.id, entry(q, draft?.[q.id])]),
+  );
 }
 
 export function answersFor(questions, form) {
@@ -63,7 +76,14 @@ export function answersFor(questions, form) {
     const typed = own ? text.trim() : "";
     const option = hasOptions(q) && !own ? choice : null;
     const accepted = hasOptions(q) ? option === q.recommended : typed === "";
-    return { id: q.id, accepted, option, text: typed, note: note.trim(), attachments };
+    return {
+      id: q.id,
+      accepted,
+      option,
+      text: typed,
+      note: note.trim(),
+      attachments,
+    };
   });
 }
 
@@ -75,15 +95,25 @@ export function unansweredOwn(questions, form) {
   });
 }
 
-export const refusalMessage = (title) => `Type your answer to "${title}" or pick an option.`;
+export const refusalMessage = (title) =>
+  `Type your answer to "${title}" or pick an option.`;
 
-export const differCount = (questions, form) => answersFor(questions, form).filter((a) => !a.accepted).length;
+export const differCount = (questions, form) =>
+  answersFor(questions, form).filter((a) => !a.accepted).length;
 
 export function recommendedForm(questions, form) {
   return Object.fromEntries(
     questions.map((q) => {
       const { note, attachments } = entry(q, form[q.id]);
-      return [q.id, { choice: hasOptions(q) ? q.recommended : null, text: "", note, attachments }];
+      return [
+        q.id,
+        {
+          choice: hasOptions(q) ? q.recommended : null,
+          text: "",
+          note,
+          attachments,
+        },
+      ];
     }),
   );
 }
@@ -96,7 +126,13 @@ export function marksFrom(raw) {
   if (!Array.isArray(raw)) return [];
   const out = [];
   for (const m of raw) {
-    if (!m || typeof m !== "object" || !Number.isInteger(m.id) || typeof m.text !== "string") continue;
+    if (
+      !m ||
+      typeof m !== "object" ||
+      !Number.isInteger(m.id) ||
+      typeof m.text !== "string"
+    )
+      continue;
     const attachments = strings(m.attachments);
     if (m.type === "note") {
       out.push({ id: m.id, type: "note", text: m.text, attachments });
@@ -105,13 +141,20 @@ export function marksFrom(raw) {
     const whole =
       (m.type === "comment" || m.type === "strike") &&
       typeof m.quote === "string" &&
-      Array.isArray(m.lines) && m.lines.length === 2 && m.lines.every(Number.isInteger) &&
+      Array.isArray(m.lines) &&
+      m.lines.length === 2 &&
+      m.lines.every(Number.isInteger) &&
       Number.isInteger(m.start);
     if (!whole) continue;
     out.push({
-      id: m.id, type: m.type, text: m.text, quote: m.quote, lines: m.lines,
+      id: m.id,
+      type: m.type,
+      text: m.text,
+      quote: m.quote,
+      lines: m.lines,
       heading: typeof m.heading === "string" ? m.heading : "",
-      occurrence: Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
+      occurrence:
+        Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
       start: m.start,
       ...(Number.isInteger(m.end) ? { end: m.end } : {}),
       attachments,
@@ -122,15 +165,26 @@ export function marksFrom(raw) {
 
 // Anchored marks in document order (first line, then offset, then creation), general notes last in creation order.
 export function numberMarks(marks) {
-  const anchored = marks.filter((m) => m.type !== "note").sort((a, b) => a.lines[0] - b.lines[0] || a.start - b.start || a.id - b.id);
-  const notes = marks.filter((m) => m.type === "note").sort((a, b) => a.id - b.id);
+  const anchored = marks
+    .filter((m) => m.type !== "note")
+    .sort(
+      (a, b) => a.lines[0] - b.lines[0] || a.start - b.start || a.id - b.id,
+    );
+  const notes = marks
+    .filter((m) => m.type === "note")
+    .sort((a, b) => a.id - b.id);
   return [...anchored, ...notes].map((m, i) => ({ ...m, n: i + 1 }));
 }
 
 // Which occurrence of `quote` in the block's rendered `text` the one at offset `start` is, counting overlapping matches.
 export function occurrenceOf(text, quote, start) {
   let count = 0;
-  for (let at = text.indexOf(quote); at !== -1 && at <= start; at = text.indexOf(quote, at + 1)) count++;
+  for (
+    let at = text.indexOf(quote);
+    at !== -1 && at <= start;
+    at = text.indexOf(quote, at + 1)
+  )
+    count++;
   return Math.max(count, 1);
 }
 
@@ -149,12 +203,18 @@ export function markRecord(mark) {
   return { n, type, text, quote, lines, heading, occurrence, attachments };
 }
 
-export const canSendChanges = (marks, questions, form) => marks.length > 0 || differCount(questions, form) > 0;
+export const canSendChanges = (marks, questions, form) =>
+  marks.length > 0 || differCount(questions, form) > 0;
 
 // An approve sends no marks, whatever marks exist.
 export function readbackResponse(verdict, version, questions, form, marks) {
   const sent = verdict === "approve" ? [] : numberMarks(marks).map(markRecord);
-  return { verdict, version, answers: answersFor(questions, form), marks: sent };
+  return {
+    verdict,
+    version,
+    answers: answersFor(questions, form),
+    marks: sent,
+  };
 }
 
 // Blocks compared by source text with a longest common subsequence: the indexes into `newSources` that are added or
@@ -163,10 +223,15 @@ export function diffBlocks(oldSources, newSources) {
   const rows = oldSources.length;
   const cols = newSources.length;
   // tail[i][j] is the length of the longest common subsequence of oldSources.slice(i) and newSources.slice(j).
-  const tail = Array.from({ length: rows + 1 }, () => new Array(cols + 1).fill(0));
+  const tail = Array.from({ length: rows + 1 }, () =>
+    new Array(cols + 1).fill(0),
+  );
   for (let i = rows - 1; i >= 0; i--) {
     for (let j = cols - 1; j >= 0; j--) {
-      tail[i][j] = oldSources[i] === newSources[j] ? tail[i + 1][j + 1] + 1 : Math.max(tail[i + 1][j], tail[i][j + 1]);
+      tail[i][j] =
+        oldSources[i] === newSources[j]
+          ? tail[i + 1][j + 1] + 1
+          : Math.max(tail[i + 1][j], tail[i][j + 1]);
     }
   }
   const changed = [];
@@ -197,7 +262,8 @@ export function numberPins(pins) {
   });
 }
 
-export const verdictRefusal = (verdict) => (verdict.winner ? null : "Choose a winner.");
+export const verdictRefusal = (verdict) =>
+  verdict.winner ? null : "Choose a winner.";
 
 const orNothing = (text) => text.trim() || "nothing";
 
@@ -207,13 +273,23 @@ export function prototypeResponse(verdict, pins) {
     take: orNothing(verdict.take),
     leave_out: orNothing(verdict.leave_out),
     attachments: verdict.attachments,
-    comments: numberPins(pins).map(({ n, variant, selector, leading_text, text, attachments }) => ({ n, variant, selector, leading_text, text, attachments })),
+    comments: numberPins(pins).map(
+      ({ n, variant, selector, leading_text, text, attachments }) => ({
+        n,
+        variant,
+        selector,
+        leading_text,
+        text,
+        attachments,
+      }),
+    ),
   };
 }
 
 // The verdict and pins a saved draft holds.
 export function prototypeFrom(variants, draft) {
-  const given = draft?.verdict && typeof draft.verdict === "object" ? draft.verdict : {};
+  const given =
+    draft?.verdict && typeof draft.verdict === "object" ? draft.verdict : {};
   const text = (value) => (typeof value === "string" ? value : "");
   const keys = new Set(variants.map((v) => v.key));
   const pins = Array.isArray(draft?.pins) ? draft.pins : [];
@@ -226,6 +302,12 @@ export function prototypeFrom(variants, draft) {
     },
     pins: pins
       .filter((pin) => pin && typeof pin === "object" && keys.has(pin.variant))
-      .map((pin) => ({ variant: pin.variant, selector: text(pin.selector), leading_text: text(pin.leading_text), text: text(pin.text), attachments: strings(pin.attachments) })),
+      .map((pin) => ({
+        variant: pin.variant,
+        selector: text(pin.selector),
+        leading_text: text(pin.leading_text),
+        text: text(pin.text),
+        attachments: strings(pin.attachments),
+      })),
   };
 }

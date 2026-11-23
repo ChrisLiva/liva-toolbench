@@ -14,7 +14,20 @@ import time
 import unittest
 from pathlib import Path
 
-from support import BIN, IMAGES, PROTOTYPE, Q1_B, Q2, QUESTIONS, READBACK, Client, EffortCase, is_dead, recording_browser, show
+from support import (
+    BIN,
+    IMAGES,
+    PROTOTYPE,
+    Q1_B,
+    Q2,
+    QUESTIONS,
+    READBACK,
+    Client,
+    EffortCase,
+    is_dead,
+    recording_browser,
+    show,
+)
 
 NO_SUCH_DIR = "/nonexistent-xyz"
 
@@ -22,8 +35,12 @@ NO_SUCH_DIR = "/nonexistent-xyz"
 class MissingEffortDirectoryTest(EffortCase):
     def test_each_verb_exits_2_with_one_stderr_line(self):
         effort = self.effort()
-        for args in (("show", NO_SUCH_DIR, "x.json"), ("wait", NO_SUCH_DIR), ("resolve", NO_SUCH_DIR, "--chat"),
-                     ("close", NO_SUCH_DIR)):
+        for args in (
+            ("show", NO_SUCH_DIR, "x.json"),
+            ("wait", NO_SUCH_DIR),
+            ("resolve", NO_SUCH_DIR, "--chat"),
+            ("close", NO_SUCH_DIR),
+        ):
             with self.subTest(verb=args[0]):
                 done = effort.run(*args)
                 self.assertEqual(done.returncode, 2)
@@ -61,7 +78,9 @@ class EntryTest(EffortCase):
             link = Path(elsewhere) / "crank-pilot"
             link.symlink_to(BIN)
             done = subprocess.run(
-                [str(link), "wait", NO_SUCH_DIR], capture_output=True, text=True,
+                [str(link), "wait", NO_SUCH_DIR],
+                capture_output=True,
+                text=True,
                 env={**os.environ, "CRANK_PILOT_NO_OPEN": "1"},
             )
         self.assertEqual(done.returncode, 2)
@@ -89,7 +108,9 @@ class ShowRejectionTest(EffortCase):
                 self.assertEqual(done.returncode, 2)
                 self.assertEqual(done.stdout, "")
                 self.assertEqual(len(done.stderr.strip().splitlines()), 1)
-                self.assertEqual(list((effort.path / "pilot" / "interactions").glob("*")), [])
+                self.assertEqual(
+                    list((effort.path / "pilot" / "interactions").glob("*")), []
+                )
                 if name == "cut off":
                     self.assertIn("not valid JSON", done.stderr)
 
@@ -110,26 +131,86 @@ REJECTED = (
     ("missing field", derived(QUESTIONS, lambda d: d.pop("title")), "title"),
     ("wrong type", derived(QUESTIONS, lambda d: d.update(questions="q1")), "questions"),
     ("wrong agenda type", derived(QUESTIONS, lambda d: d.update(agenda=[])), "agenda"),
-    ("duplicate question id", derived(QUESTIONS, lambda d: d["questions"][1].update(id="q1")), "duplicate"),
-    ("duplicate option id", derived(QUESTIONS, lambda d: d["questions"][0]["options"][1].update(id="a")), "duplicate"),
-    ("options, no recommended", derived(QUESTIONS, lambda d: d["questions"][0].pop("recommended")), "recommended"),
-    ("recommended, no options", derived(QUESTIONS, lambda d: d["questions"][1].update(recommended="a")), "options"),
-    ("recommended names no option", derived(QUESTIONS, lambda d: d["questions"][0].update(recommended="z")), "recommended"),
-    ("no recommendation", derived(QUESTIONS, lambda d: d["questions"][0].pop("recommendation")), "recommendation"),
-    ("absolute artifact", derived(READBACK, lambda d: d.update(artifact="/etc/hosts")), "artifact"),
-    ("artifact leaves the directory", derived(READBACK, lambda d: d.update(artifact="../spec.md")), "artifact"),
-    ("artifact names no file", derived(READBACK, lambda d: d.update(artifact="missing.md")), "artifact"),
-    ("artifact not markdown", derived(READBACK, lambda d: d.update(artifact="notes.txt")), ".md"),
-    ("artifact in a subdirectory", derived(READBACK, lambda d: d.update(artifact="sub/spec.md")), "artifact"),
-    ("artifact not UTF-8", derived(READBACK, lambda d: d.update(artifact="binary.md")), "UTF-8"),
-    ("artifact unreadable", derived(READBACK, lambda d: d.update(artifact="unreadable.md")), "cannot be read"),
-    ("bad decision", derived(READBACK, lambda d: d.update(decisions=[{"id": "d1"}])), "decisions[0]"),
+    (
+        "duplicate question id",
+        derived(QUESTIONS, lambda d: d["questions"][1].update(id="q1")),
+        "duplicate",
+    ),
+    (
+        "duplicate option id",
+        derived(QUESTIONS, lambda d: d["questions"][0]["options"][1].update(id="a")),
+        "duplicate",
+    ),
+    (
+        "options, no recommended",
+        derived(QUESTIONS, lambda d: d["questions"][0].pop("recommended")),
+        "recommended",
+    ),
+    (
+        "recommended, no options",
+        derived(QUESTIONS, lambda d: d["questions"][1].update(recommended="a")),
+        "options",
+    ),
+    (
+        "recommended names no option",
+        derived(QUESTIONS, lambda d: d["questions"][0].update(recommended="z")),
+        "recommended",
+    ),
+    (
+        "no recommendation",
+        derived(QUESTIONS, lambda d: d["questions"][0].pop("recommendation")),
+        "recommendation",
+    ),
+    (
+        "absolute artifact",
+        derived(READBACK, lambda d: d.update(artifact="/etc/hosts")),
+        "artifact",
+    ),
+    (
+        "artifact leaves the directory",
+        derived(READBACK, lambda d: d.update(artifact="../spec.md")),
+        "artifact",
+    ),
+    (
+        "artifact names no file",
+        derived(READBACK, lambda d: d.update(artifact="missing.md")),
+        "artifact",
+    ),
+    (
+        "artifact not markdown",
+        derived(READBACK, lambda d: d.update(artifact="notes.txt")),
+        ".md",
+    ),
+    (
+        "artifact in a subdirectory",
+        derived(READBACK, lambda d: d.update(artifact="sub/spec.md")),
+        "artifact",
+    ),
+    (
+        "artifact not UTF-8",
+        derived(READBACK, lambda d: d.update(artifact="binary.md")),
+        "UTF-8",
+    ),
+    (
+        "artifact unreadable",
+        derived(READBACK, lambda d: d.update(artifact="unreadable.md")),
+        "cannot be read",
+    ),
+    (
+        "bad decision",
+        derived(READBACK, lambda d: d.update(decisions=[{"id": "d1"}])),
+        "decisions[0]",
+    ),
     ("absolute variant", variant_file("/etc/hosts"), "file"),
     ("variant leaves the directory", variant_file("../x.html"), "file"),
     ("variant through a symlink", variant_file("prototype/link.html"), "file"),
     ("variant names no file", variant_file("prototype/none.html"), "file"),
     ("one variant", derived(PROTOTYPE, lambda d: d["variants"].pop()), "variants"),
-    ("duplicate variant key", derived(PROTOTYPE, lambda d: d["variants"][1].update(key="A")), "duplicate"),
+    (
+        "duplicate variant key",
+        derived(PROTOTYPE, lambda d: d["variants"][1].update(key="A")),
+        "duplicate",
+    ),
 )
 
 
@@ -138,7 +219,13 @@ class ValidationCase(EffortCase):
         """An effort directory holding the files the fixtures name, a non-UTF-8 binary.md, an unreadable.md with no
         read permission, and a symlink to a file outside it."""
         effort = self.effort()
-        for rel in ("spec.md", "notes.txt", "sub/spec.md", "prototype/variant-A.html", "prototype/variant-B.html"):
+        for rel in (
+            "spec.md",
+            "notes.txt",
+            "sub/spec.md",
+            "prototype/variant-A.html",
+            "prototype/variant-B.html",
+        ):
             effort.write(rel, "x")
         (effort.path / "binary.md").write_bytes(b"line\n\xff\xfe bad\n")
         effort.write("unreadable.md", "x").chmod(0)
@@ -150,7 +237,11 @@ class ValidationCase(EffortCase):
         return effort
 
     def run_show(self, effort, interaction: dict) -> subprocess.CompletedProcess:
-        return effort.run("show", effort.path, effort.write("interaction.json", json.dumps(interaction)))
+        return effort.run(
+            "show",
+            effort.path,
+            effort.write("interaction.json", json.dumps(interaction)),
+        )
 
     def assert_nothing_stored(self, effort) -> None:
         self.assertEqual(list((effort.path / "pilot" / "interactions").glob("*")), [])
@@ -170,24 +261,37 @@ class ShowValidationTest(ValidationCase):
 
     def test_a_file_with_two_problems_prints_two_lines(self):
         effort = self.effort_with_files()
-        interaction = derived(QUESTIONS, lambda d: (d.update(phase="execute"), d.pop("title")))
+        interaction = derived(
+            QUESTIONS, lambda d: (d.update(phase="execute"), d.pop("title"))
+        )
         done = self.run_show(effort, interaction)
         self.assertEqual(done.returncode, 2)
-        self.assertEqual(len([line for line in done.stderr.splitlines() if line.strip()]), 2)
+        self.assertEqual(
+            len([line for line in done.stderr.splitlines() if line.strip()]), 2
+        )
         self.assert_nothing_stored(effort)
 
 
 class ShowTest(EffortCase):
-    def test_show_stores_each_interaction_under_the_next_number_prints_it_and_reuses_the_server(self):
+    def test_show_stores_each_interaction_under_the_next_number_prints_it_and_reuses_the_server(
+        self,
+    ):
         effort = self.effort()
         record_path = effort.path / "pilot" / "server.json"
         self.assertEqual(show(effort, QUESTIONS), 1)
-        stored = json.loads((effort.path / "pilot" / "interactions" / "001.json").read_text())
+        stored = json.loads(
+            (effort.path / "pilot" / "interactions" / "001.json").read_text()
+        )
         self.assertEqual(stored, {**QUESTIONS, "number": 1})
         first = json.loads(record_path.read_text())
-        hostile = {**QUESTIONS, "title": "caf\u00e9 \u65e5\u672c \U0001f600 \ud800 \"quoted\" \\ \n"}
+        hostile = {
+            **QUESTIONS,
+            "title": 'caf\u00e9 \u65e5\u672c \U0001f600 \ud800 "quoted" \\ \n',
+        }
         self.assertEqual(show(effort, hostile), 2)
-        stored = json.loads((effort.path / "pilot" / "interactions" / "002.json").read_text())
+        stored = json.loads(
+            (effort.path / "pilot" / "interactions" / "002.json").read_text()
+        )
         self.assertEqual(stored, {**hostile, "number": 2})
         self.assertEqual(json.loads(record_path.read_text()), first)
         os.kill(first["pid"], 0)
@@ -202,7 +306,10 @@ class UnreadableRecordTest(EffortCase):
         started = time.time()
         done = effort.run("show", effort.path, source)
         self.assertLess(time.time() - started, 4)
-        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (1, "", "server did not start"))
+        self.assertEqual(
+            (done.returncode, done.stdout, done.stderr.strip()),
+            (1, "", "server did not start"),
+        )
         done = effort.run("close", effort.path)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
         self.assertTrue(record.is_dir())
@@ -217,13 +324,25 @@ class ShowBrowserTest(EffortCase):
         self.assertEqual(show(effort, QUESTIONS, scale=10, env=env, opened=opened), 1)
         record = json.loads((effort.path / "pilot" / "server.json").read_text())
         url = opened.read_text()
-        code = re.fullmatch(rf"http://127\.0\.0\.1:{record['port']}/\?c=([0-9a-f]{{32}})\n", url)
+        code = re.fullmatch(
+            rf"http://127\.0\.0\.1:{record['port']}/\?c=([0-9a-f]{{32}})\n", url
+        )
         self.assertIsNotNone(code, url)
         self.assertNotIn(record["token"], url)
         client = Client(effort)
-        status, body, _ = client.request("POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False)
+        status, body, _ = client.request(
+            "POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False
+        )
         self.assertEqual((status, json.loads(body)), (200, {"token": record["token"]}))
-        self.assertEqual(client.request("POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False)[0], 403)
+        self.assertEqual(
+            client.request(
+                "POST",
+                "/api/session",
+                json.dumps({"code": code[1]}).encode(),
+                token=False,
+            )[0],
+            403,
+        )
         done = effort.run("show", effort.path, source, scale=10, env=env)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "2\n", ""))
         self.assertEqual(len(opened.read_text().splitlines()), 1)
@@ -237,7 +356,13 @@ class ShowBrowserTest(EffortCase):
                 heartbeat.write_bytes(content)
                 os.utime(heartbeat, (time.time() - age, time.time() - age))
                 source = effort.write("interaction.json", json.dumps(QUESTIONS))
-                done = effort.run("show", effort.path, source, scale=100, env={**browser, "CRANK_PILOT_NO_OPEN": None})
+                done = effort.run(
+                    "show",
+                    effort.path,
+                    source,
+                    scale=100,
+                    env={**browser, "CRANK_PILOT_NO_OPEN": None},
+                )
                 with contextlib.suppress(FileNotFoundError, ValueError):
                     Client(effort)
                 self.assertEqual(done.returncode, 4)
@@ -246,7 +371,9 @@ class ShowBrowserTest(EffortCase):
 
 
 class ShowWaitTest(EffortCase):
-    def test_show_exits_4_when_no_page_is_live_in_time_and_leaves_the_interaction_pending(self):
+    def test_show_exits_4_when_no_page_is_live_in_time_and_leaves_the_interaction_pending(
+        self,
+    ):
         effort = self.effort()
         browser, opened = recording_browser(effort)
         source = effort.write("interaction.json", json.dumps(QUESTIONS))
@@ -268,7 +395,9 @@ ANSWERS = json.dumps({"answers": [Q1_B, Q2]}).encode()
 
 
 class WaitBoundTest(EffortCase):
-    def test_wait_exits_3_at_the_bound_and_a_second_wait_resumes_the_same_interaction(self):
+    def test_wait_exits_3_at_the_bound_and_a_second_wait_resumes_the_same_interaction(
+        self,
+    ):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
@@ -276,14 +405,21 @@ class WaitBoundTest(EffortCase):
             started = time.time()
             done = effort.run("wait", effort.path, "--timeout", 20)
             elapsed = time.time() - started
-            self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (3, "", "still waiting"))
+            self.assertEqual(
+                (done.returncode, done.stdout, done.stderr.strip()),
+                (3, "", "still waiting"),
+            )
             self.assertGreater(elapsed, 0.2)
             self.assertLess(elapsed, 1.5)
-            self.assertEqual(len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1)
+            self.assertEqual(
+                len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1
+            )
             self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
             done = effort.run("wait", effort.path)
         self.assertEqual((done.returncode, done.stderr), (0, ""))
-        self.assertEqual(len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1)
+        self.assertEqual(
+            len(list((effort.path / "pilot" / "interactions").glob("*.json"))), 1
+        )
 
     def test_the_default_bound_is_540_seconds_and_outlasts_the_90_second_grace(self):
         effort = self.effort()
@@ -292,7 +428,10 @@ class WaitBoundTest(EffortCase):
             started = time.time()
             done = effort.run("wait", effort.path, scale=2000)
             elapsed = time.time() - started
-        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (3, "", "still waiting"))
+        self.assertEqual(
+            (done.returncode, done.stdout, done.stderr.strip()),
+            (3, "", "still waiting"),
+        )
         self.assertGreater(elapsed, 0.27)
         self.assertLess(elapsed, 1.5)
 
@@ -307,20 +446,26 @@ class WaitClosedPageTest(EffortCase):
         started = time.time()
         done = effort.run("wait", effort.path)
         elapsed = time.time() - started
-        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed"))
+        self.assertEqual(
+            (done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed")
+        )
         self.assertGreater(elapsed, 0.85)
         self.assertLess(elapsed, 1.5)
 
 
 class WaitClosingBeaconTest(EffortCase):
-    def test_wait_exits_4_soon_after_a_closing_beacon_and_one_beat_after_it_clears_it(self):
+    def test_wait_exits_4_soon_after_a_closing_beacon_and_one_beat_after_it_clears_it(
+        self,
+    ):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
         self.assertEqual(client.request("POST", "/api/bye", token=False)[0], 204)
         started = time.time()
         done = effort.run("wait", effort.path)
-        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed"))
+        self.assertEqual(
+            (done.returncode, done.stdout, done.stderr.strip()), (4, "", "page closed")
+        )
         self.assertLess(time.time() - started, 0.5)
         client.state()
         done = effort.run("wait", effort.path, "--timeout", 30)
@@ -356,21 +501,28 @@ def response_file(effort, number: int = 1) -> Path:
 
 
 class SupersedeTest(EffortCase):
-    def test_a_new_show_closes_the_pending_interaction_as_superseded_and_moves_the_state_on(self):
+    def test_a_new_show_closes_the_pending_interaction_as_superseded_and_moves_the_state_on(
+        self,
+    ):
         effort = self.effort()
         self.assertEqual(show(effort, QUESTIONS), 1)
         client = Client(effort)
         self.assertEqual(show(effort, QUESTIONS), 2)
         saved = json.loads(response_file(effort).read_text())
         self.assertEqual(sorted(saved), RESPONSE_KEYS)
-        self.assertEqual((saved["via"], saved["interaction"], saved["kind"]), ("superseded", 1, "questions"))
+        self.assertEqual(
+            (saved["via"], saved["interaction"], saved["kind"]),
+            ("superseded", 1, "questions"),
+        )
         state = client.state()
         self.assertEqual((state["interaction"]["number"], state["response"]), (2, None))
         self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 409)
 
 
 class ResolveChatTest(EffortCase):
-    def test_resolve_chat_writes_a_chat_response_and_a_running_wait_exits_0_with_its_path(self):
+    def test_resolve_chat_writes_a_chat_response_and_a_running_wait_exits_0_with_its_path(
+        self,
+    ):
         effort = self.effort()
         show(effort, QUESTIONS)
         client = Client(effort)
@@ -381,10 +533,16 @@ class ResolveChatTest(EffortCase):
             done = effort.run("resolve", effort.path, "--chat")
             self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
             out, err = process.communicate(timeout=5)
-        self.assertEqual((process.returncode, out, err), (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""))
+        self.assertEqual(
+            (process.returncode, out, err),
+            (0, f"{effort.path.resolve()}/pilot/responses/001.json\n", ""),
+        )
         saved = json.loads(response_file(effort).read_text())
         self.assertEqual(sorted(saved), RESPONSE_KEYS)
-        self.assertEqual((saved["via"], saved["interaction"], saved["kind"]), ("chat", 1, "questions"))
+        self.assertEqual(
+            (saved["via"], saved["interaction"], saved["kind"]),
+            ("chat", 1, "questions"),
+        )
         self.assertEqual(client.state()["response"], {"via": "chat"})
 
     def test_resolve_chat_never_replaces_an_existing_response(self):
@@ -394,7 +552,10 @@ class ResolveChatTest(EffortCase):
         self.assertEqual(client.request("POST", "/api/response/1", ANSWERS)[0], 201)
         before = response_file(effort).read_bytes()
         done = effort.run("resolve", effort.path, "--chat")
-        self.assertEqual((done.returncode, done.stdout, done.stderr.strip()), (2, "", "nothing pending"))
+        self.assertEqual(
+            (done.returncode, done.stdout, done.stderr.strip()),
+            (2, "", "nothing pending"),
+        )
         self.assertEqual(response_file(effort).read_bytes(), before)
 
 
@@ -420,11 +581,15 @@ class ResolveRaceTest(EffortCase):
                 effort = self.effort()
                 show(effort, QUESTIONS)
                 client = Client(effort)
-                status, code, _, err = self.race(effort, client, "resolve", effort.path, "--chat", delay=delay)
+                status, code, _, err = self.race(
+                    effort, client, "resolve", effort.path, "--chat", delay=delay
+                )
                 self.assertIn((status, code), ((201, 2), (409, 0)), err)
                 saved = json.loads(response_file(effort).read_text())
                 self.assertEqual(saved["via"], "page" if status == 201 else "chat")
-                self.assertEqual(len(list(response_file(effort).parent.glob("*.json"))), 1)
+                self.assertEqual(
+                    len(list(response_file(effort).parent.glob("*.json"))), 1
+                )
 
     def test_show_treats_a_lost_supersede_race_as_an_answered_interaction(self):
         for delay in RACE_DELAYS:
@@ -433,10 +598,16 @@ class ResolveRaceTest(EffortCase):
                 show(effort, QUESTIONS)
                 client = Client(effort)
                 source = effort.write("second.json", json.dumps(QUESTIONS))
-                status, code, out, err = self.race(effort, client, "show", effort.path, source, delay=delay)
+                status, code, out, err = self.race(
+                    effort, client, "show", effort.path, source, delay=delay
+                )
                 self.assertEqual((code, out.strip()), (0, "2"), err)
-                self.assertTrue((effort.path / "pilot" / "interactions" / "002.json").exists())
-                self.assertEqual(len(list(response_file(effort).parent.glob("*.json"))), 1)
+                self.assertTrue(
+                    (effort.path / "pilot" / "interactions" / "002.json").exists()
+                )
+                self.assertEqual(
+                    len(list(response_file(effort).parent.glob("*.json"))), 1
+                )
                 saved = json.loads(response_file(effort).read_text())
                 if saved["via"] == "page":
                     self.assertEqual(saved["answers"], json.loads(ANSWERS)["answers"])
@@ -452,9 +623,14 @@ class CloseTest(EffortCase):
         effort.write("spec.md", "# Spec\n")
         self.assertEqual(show(effort, READBACK, scale=20), 1)
         client = Client(effort)
-        self.assertEqual(client.request("POST", "/api/attachment/1", IMAGES["png"])[0], 201)
+        self.assertEqual(
+            client.request("POST", "/api/attachment/1", IMAGES["png"])[0], 201
+        )
         approve = {"verdict": "approve", "version": 1, "answers": [], "marks": []}
-        self.assertEqual(client.request("POST", "/api/response/1", json.dumps(approve).encode())[0], 201)
+        self.assertEqual(
+            client.request("POST", "/api/response/1", json.dumps(approve).encode())[0],
+            201,
+        )
         self.assertEqual(show(effort, QUESTIONS, scale=20), 2)
         draft = json.dumps({"q1": {"choice": "b"}}).encode()
         self.assertEqual(client.request("PUT", "/api/draft/2", draft)[0], 204)
@@ -467,8 +643,14 @@ class CloseTest(EffortCase):
         self.assertTrue(is_dead(pid))
         for gone in ("server.json", "heartbeat"):
             self.assertFalse((pilot / gone).exists(), gone)
-        for kept in ("interactions/001.json", "interactions/002.json", "responses/001.json",
-                     "versions/spec.md/001.md", "attachments/001-1.png", "drafts/002.json"):
+        for kept in (
+            "interactions/001.json",
+            "interactions/002.json",
+            "responses/001.json",
+            "versions/spec.md/001.md",
+            "attachments/001-1.png",
+            "drafts/002.json",
+        ):
             self.assertTrue((pilot / kept).exists(), kept)
 
     def test_close_removes_the_record_of_a_server_that_was_killed(self):
@@ -482,7 +664,9 @@ class CloseTest(EffortCase):
 
 
 class CloseWindowTest(EffortCase):
-    def test_a_show_during_the_window_waits_for_the_record_to_go_and_starts_a_new_server(self):
+    def test_a_show_during_the_window_waits_for_the_record_to_go_and_starts_a_new_server(
+        self,
+    ):
         effort = self.effort()
         show(effort, QUESTIONS, scale=20)
         Client(effort)
@@ -510,7 +694,9 @@ class CloseWindowTest(EffortCase):
 
 
 class SecondCloseTest(EffortCase):
-    def test_a_second_close_partway_through_the_window_does_not_move_the_server_exit_later(self):
+    def test_a_second_close_partway_through_the_window_does_not_move_the_server_exit_later(
+        self,
+    ):
         effort = self.effort()
         show(effort, QUESTIONS, scale=10)
         client = Client(effort)
@@ -591,7 +777,10 @@ class ForeignPidTest(EffortCase):
         effort = self.effort()
         listener = ForeignPidListener()
         self.addCleanup(listener.stop)
-        record = effort.write("pilot/server.json", json.dumps({"pid": 1, "port": listener.port, "token": "t"}))
+        record = effort.write(
+            "pilot/server.json",
+            json.dumps({"pid": 1, "port": listener.port, "token": "t"}),
+        )
         done = effort.run("close", effort.path)
         self.assertEqual((done.returncode, done.stdout, done.stderr), (0, "", ""))
         self.assertFalse(record.exists())
@@ -599,7 +788,9 @@ class ForeignPidTest(EffortCase):
 
 
 class IdleExitTest(EffortCase):
-    def test_the_server_stays_up_while_a_page_beats_and_exits_30_scaled_minutes_after_the_last_beat_keeping_its_record(self):
+    def test_the_server_stays_up_while_a_page_beats_and_exits_30_scaled_minutes_after_the_last_beat_keeping_its_record(
+        self,
+    ):
         effort = self.effort()
         process = effort.start_server(3600)
         client = Client(effort)

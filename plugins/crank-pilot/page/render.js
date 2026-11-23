@@ -1,9 +1,11 @@
-export const FRAME_POLICY = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:";
+export const FRAME_POLICY =
+  "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:";
 
 const MERMAID_SRC = "/page/vendor/mermaid.min.js";
 const FRAGMENTS = new Set(["html", "svg"]);
 // A sandboxed frame has an opaque origin, so its postMessage must target every origin; the page checks event.source.
-const SIZER = "const send=()=>parent.postMessage({pilotHeight:Math.ceil(document.documentElement.getBoundingClientRect().height)},'*');" +
+const SIZER =
+  "const send=()=>parent.postMessage({pilotHeight:Math.ceil(document.documentElement.getBoundingClientRect().height)},'*');" +
   "addEventListener('load',send);new ResizeObserver(send).observe(document.documentElement);";
 
 const md = globalThis.markdownit({ html: false });
@@ -45,7 +47,8 @@ window.addEventListener("message", (event) => {
   const height = event.data?.pilotHeight;
   if (!Number.isFinite(height) || height < 0) return;
   for (const frame of document.querySelectorAll("iframe.frag")) {
-    if (event.source === frame.contentWindow) frame.style.height = `${height}px`;
+    if (event.source === frame.contentWindow)
+      frame.style.height = `${height}px`;
   }
 });
 
@@ -63,7 +66,10 @@ function loadMermaid() {
     const script = document.createElement("script");
     script.src = MERMAID_SRC;
     script.onload = () => {
-      globalThis.mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+      globalThis.mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+      });
       resolve(globalThis.mermaid);
     };
     script.onerror = () => {
@@ -89,7 +95,8 @@ async function drawDiagram(pre) {
 }
 
 // The first and last source line a rendered block spans.
-export const linesOf = (node) => node.getAttribute("data-lines").split("-").map(Number);
+export const linesOf = (node) =>
+  node.getAttribute("data-lines").split("-").map(Number);
 
 export async function renderMarkdown(source, root) {
   root.innerHTML = md.render(source);
@@ -97,12 +104,20 @@ export async function renderMarkdown(source, root) {
     if (!FRAGMENTS.has(pre.dataset.fence)) continue;
     figure(pre).append(sandboxFrame(pre.textContent));
   }
-  for (const pre of root.querySelectorAll('pre[data-fence="mermaid"]')) await drawDiagram(pre);
+  for (const pre of root.querySelectorAll('pre[data-fence="mermaid"]'))
+    await drawDiagram(pre);
   const lines = source.split("\n");
   return [...root.querySelectorAll("[data-lines]")]
     .filter((el) => !el.querySelector("[data-lines]"))
     .map((el) => {
       const [first, last] = linesOf(el);
-      return { el, first, last, tag: el.tagName.toLowerCase(), text: el.textContent, source: lines.slice(first - 1, last).join("\n") };
+      return {
+        el,
+        first,
+        last,
+        tag: el.tagName.toLowerCase(),
+        text: el.textContent,
+        source: lines.slice(first - 1, last).join("\n"),
+      };
     });
 }

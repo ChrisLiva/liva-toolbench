@@ -7,7 +7,19 @@ import { pageWindow, routeFetch, tick } from "./page.js";
 const SOURCE = "# Title\n\nHello *big* world\n\nSecond block here";
 
 const STATE = {
-  interaction: { number: 1, kind: "readback", title: "T", artifact: "spec.md", version: 1, lead: "", judgment_calls: [], review_landed: [], edits: [], decisions: [], agenda: { settled: [], open: [], current: "" } },
+  interaction: {
+    number: 1,
+    kind: "readback",
+    title: "T",
+    artifact: "spec.md",
+    version: 1,
+    lead: "",
+    judgment_calls: [],
+    review_landed: [],
+    edits: [],
+    decisions: [],
+    agenda: { settled: [], open: [], current: "" },
+  },
   versions: [1],
   prior: null,
   draft: null,
@@ -15,23 +27,41 @@ const STATE = {
 
 test("readback: strike across blocks, comment, remount from the draft, remove", async () => {
   const window = pageWindow();
-  routeFetch({ "GET /api/file/": async () => new Response(SOURCE, { status: 200 }) });
+  routeFetch({
+    "GET /api/file/": async () => new Response(SOURCE, { status: 200 }),
+  });
   const { surface } = await import("/page/readback.js");
   const { document } = window;
 
   const drafts = [];
-  const ctx = { saveDraftSoon: (draft) => drafts.push(structuredClone(draft)), send: async () => "", setSend() {} };
+  const ctx = {
+    saveDraftSoon: (draft) => drafts.push(structuredClone(draft)),
+    send: async () => "",
+    setSend() {},
+  };
   const stage = document.getElementById("stage");
   const mount = (draft) => surface.mount(stage, { ...STATE, draft }, ctx);
-  const marked = () => [...document.querySelectorAll("[data-mark]")].map((m) => `${m.tagName}:${m.textContent}`);
-  const paragraph = (text) => [...document.querySelectorAll("#reading p[data-lines]")].find((p) => p.textContent === text);
+  const marked = () =>
+    [...document.querySelectorAll("[data-mark]")].map(
+      (m) => `${m.tagName}:${m.textContent}`,
+    );
+  const paragraph = (text) =>
+    [...document.querySelectorAll("#reading p[data-lines]")].find(
+      (p) => p.textContent === text,
+    );
 
   let teardown = mount(null);
   await tick(20);
 
   // The blocks.
-  const blocks = [...document.querySelectorAll("[data-lines]")].map((b) => `${b.getAttribute("data-lines")}:${b.textContent}`);
-  assert.deepEqual(blocks, ["1-1:Title", "3-3:Hello big world", "5-5:Second block here"]);
+  const blocks = [...document.querySelectorAll("[data-lines]")].map(
+    (b) => `${b.getAttribute("data-lines")}:${b.textContent}`,
+  );
+  assert.deepEqual(blocks, [
+    "1-1:Title",
+    "3-3:Hello big world",
+    "5-5:Second block here",
+  ]);
 
   // A strike across two blocks wraps each text node the selection covers.
   const hello = paragraph("Hello big world");
@@ -48,7 +78,12 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
   hello.dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
   await tick(10);
   document.querySelector('[data-act="strike"]').click();
-  assert.deepEqual(marked(), ["DEL:llo ", "DEL:big", "DEL: world", "DEL:Second"]);
+  assert.deepEqual(marked(), [
+    "DEL:llo ",
+    "DEL:big",
+    "DEL: world",
+    "DEL:Second",
+  ]);
   const strike = drafts.at(-1).marks[0];
   assert.equal(strike.type, "strike");
   assert.equal(strike.quote, "llo big world\nSecond");
@@ -61,7 +96,9 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
   // A comment inside one block carries no end offset.
   const tail = paragraph("Second block here").lastChild;
   select(tail, 1, tail, 6);
-  paragraph("Second block here").dispatchEvent(new window.MouseEvent("mouseup", { bubbles: true }));
+  paragraph("Second block here").dispatchEvent(
+    new window.MouseEvent("mouseup", { bubbles: true }),
+  );
   await tick(10);
   document.querySelector('[data-act="comment"]').click();
   document.querySelector("#pop input").value = "why";
@@ -86,12 +123,17 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
 
   // Removing the strike gives the text back as it was.
   const strikeId = String(saved.marks[0].id);
-  document.querySelector(`#ledger [data-id="${strikeId}"] [data-act="remove"]`).click();
+  document
+    .querySelector(`#ledger [data-id="${strikeId}"] [data-act="remove"]`)
+    .click();
   await tick(10);
   assert.equal(document.querySelector(`[data-mark="${strikeId}"]`), null);
   const restored = paragraph("Hello big world");
   assert.equal(restored.textContent, "Hello big world");
   assert.equal(restored.querySelector("em").textContent, "big");
-  assert.deepEqual(drafts.at(-1).marks.map((m) => m.type), ["comment"]);
+  assert.deepEqual(
+    drafts.at(-1).marks.map((m) => m.type),
+    ["comment"],
+  );
   teardown();
 });

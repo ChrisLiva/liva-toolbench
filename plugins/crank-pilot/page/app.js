@@ -37,7 +37,11 @@ function words(list, current) {
 }
 
 function paintStatus() {
-  $("status").textContent = !connected ? "Reconnecting" : draftRefused ? DRAFT_REFUSED : "";
+  $("status").textContent = !connected
+    ? "Reconnecting"
+    : draftRefused
+      ? DRAFT_REFUSED
+      : "";
 }
 
 function renderAgenda(interaction) {
@@ -135,9 +139,12 @@ function show(state) {
   renderAgenda(interaction);
   if (state.ended) return stop("The session ended. This tab can be closed.");
   if (!interaction) return message("Waiting for the agent");
-  const response = state.response ?? (interaction.number === answered ? { via: "page" } : null);
+  const response =
+    state.response ??
+    (interaction.number === answered ? { via: "page" } : null);
   if (response) {
-    const lead = { page: "Sent. ", chat: "Answered in chat. " }[response.via] ?? "";
+    const lead =
+      { page: "Sent. ", chat: "Answered in chat. " }[response.via] ?? "";
     return message(`${lead}Waiting for the agent.`);
   }
   settle(`interaction:${interaction.number}`, () => {
@@ -188,12 +195,20 @@ $("settledBtn").addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && (event.metaKey || event.ctrlKey) && sendButton?.isConnected && !sendButton.disabled) {
+  if (
+    event.key === "Enter" &&
+    (event.metaKey || event.ctrlKey) &&
+    sendButton?.isConnected &&
+    !sendButton.disabled
+  ) {
     event.preventDefault();
     sendButton.click();
   }
 });
 
-window.addEventListener("pagehide", () => token() && navigator.sendBeacon("/api/bye"));
+window.addEventListener(
+  "pagehide",
+  () => token() && navigator.sendBeacon("/api/bye"),
+);
 
 start().then((t) => (t ? poll() : stop("Open this page from the session")));

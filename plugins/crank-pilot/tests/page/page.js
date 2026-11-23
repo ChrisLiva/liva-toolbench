@@ -6,10 +6,20 @@ import { JSDOM } from "jsdom";
 
 const PAGE_DIR = new URL("../../page/", import.meta.url);
 const URL_BASE = "http://127.0.0.1:1/";
-const GLOBALS = ["document", "Node", "NodeFilter", "location", "history", "sessionStorage"];
+const GLOBALS = [
+  "document",
+  "Node",
+  "NodeFilter",
+  "location",
+  "history",
+  "sessionStorage",
+];
 
 export function pageWindow() {
-  const html = readFileSync(new URL("index.html", PAGE_DIR), "utf8").replace(/<script\b[^>]*>\s*<\/script>/g, "");
+  const html = readFileSync(new URL("index.html", PAGE_DIR), "utf8").replace(
+    /<script\b[^>]*>\s*<\/script>/g,
+    "",
+  );
   const { window } = new JSDOM(html, { url: URL_BASE });
   globalThis.window = window;
   for (const name of GLOBALS) globalThis[name] = window[name];
@@ -19,7 +29,16 @@ export function pageWindow() {
   assert.equal(typeof globalThis.markdownit, "function");
 
   // jsdom has no layout.
-  const zero = { x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 };
+  const zero = {
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 0,
+    height: 0,
+  };
   window.Range.prototype.getBoundingClientRect = () => ({ ...zero });
   class ResizeObserver {
     observe() {}
@@ -27,7 +46,10 @@ export function pageWindow() {
   }
   window.ResizeObserver = globalThis.ResizeObserver = ResizeObserver;
   window.navigator.sendBeacon = () => true;
-  Object.defineProperty(globalThis, "navigator", { value: window.navigator, configurable: true });
+  Object.defineProperty(globalThis, "navigator", {
+    value: window.navigator,
+    configurable: true,
+  });
   return window;
 }
 
