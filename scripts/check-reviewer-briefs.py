@@ -208,6 +208,12 @@ PILOT_TESTS = "plugins/crank-pilot/tests"
 # (docs/adr/0006-page-tests-run-on-node-and-jsdom.md).
 PAGE_TESTS = "plugins/crank-pilot/tests/page"
 
+# The crank-pilot plugin's lint, format, type, dead-code and complexity tools. The
+# Python ones live in the plugin's own uv venv (`uv sync --locked`), the JS ones in
+# the repo root's node_modules (`pnpm install --frozen-lockfile`); the plugin holds
+# no package.json (docs/adr/0007-pilot-dev-tools-stay-out-of-the-plugin-manifest.md).
+PILOT_DIR = "plugins/crank-pilot"
+
 # The agent-effort mod runs against an engine API that changes between Claude
 # Code releases, so the installed engine checks it on every gate run.
 MOD_DIR = "plugins/agent-effort"
@@ -380,6 +386,57 @@ def check_node_tests(failures, directory):
         failures.append(f"FAIL {directory}: " + " | ".join(tail))
 
 
+def check_tool(failures, label, argv, cwd, env=None):
+    """Run one tool; a non-zero exit or a missing binary is a FAIL line naming it."""
+    try:
+        proc = subprocess.run(
+            argv, cwd=cwd, env={**os.environ, **(env or {})},
+            capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        failures.append(f"FAIL crank-pilot {label}: {argv[0]} not found")
+        return
+    if proc.returncode != 0:
+        lines = (proc.stdout + "\n" + proc.stderr).splitlines()
+        tail = [line.strip() for line in lines if line.strip()][-6:]
+        failures.append(f"FAIL crank-pilot {label}: " + " | ".join(tail))
+
+
+def check_pilot_tools(failures):
+    """crank-pilot must pass every pinned tool and keep both lockfiles current."""
+    plugin = ROOT / PILOT_DIR
+    js_bin = ROOT / "node_modules" / ".bin"
+    venv_bin = plugin / ".venv" / "bin"
+    if (js_bin / "oxlint").exists():
+        check_tool(failures, "pnpm lockfile", ["pnpm", "install", "--frozen-lockfile", "--offline", "--lockfile-only"], ROOT)
+        js = [
+            ("oxlint", [str(js_bin / "oxlint"), "--deny-warnings", PILOT_DIR], ROOT, None),
+            ("prettier", [str(js_bin / "prettier"), "--check", "."], plugin, None),
+            ("tsc", [str(js_bin / "tsc"), "--noEmit", "-p", f"{PILOT_DIR}/tsconfig.json"], ROOT, None),
+            ("knip", [str(js_bin / "knip"), "--no-progress"], ROOT, None),
+            ("fallow health", [str(js_bin / "fallow"), "health", "--root", PILOT_DIR, "--no-cache", "-q"], ROOT, None),
+            ("fallow dead-code", [str(js_bin / "fallow"), "dead-code", PILOT_DIR, "--no-cache", "-q"], ROOT, None),
+            ("aislop", [str(js_bin / "aislop"), "scan", PILOT_DIR], ROOT, {"AISLOP_NO_TELEMETRY": "1"}),
+        ]
+        for label, argv, cwd, env in js:
+            check_tool(failures, label, argv, cwd, env)
+    else:
+        failures.append("FAIL crank-pilot JS tools: run pnpm install --frozen-lockfile first")
+    if (venv_bin / "ruff").exists():
+        check_tool(failures, "uv lockfile", ["uv", "lock", "--check", "--offline"], plugin)
+        py = [
+            ("ruff check", ["ruff", "check"]),
+            ("ruff format", ["ruff", "format", "--check"]),
+            ("pyright", ["pyright"]),
+            ("vulture", ["vulture"]),
+            ("complexipy", ["complexipy", "--failed"]),
+        ]
+        for label, (tool, *args) in py:
+            check_tool(failures, label, [str(venv_bin / tool), *args], plugin)
+    else:
+        failures.append("FAIL crank-pilot Python tools: run uv sync --locked in plugins/crank-pilot first")
+
+
 def validate_findings(stdout):
     """Each error and warning in a `claude plugin validate --json` report."""
     try:
@@ -427,6 +484,7 @@ def main():
     check_unittests(failures, HEALTH_TESTS)
     check_unittests(failures, PILOT_TESTS)
     check_node_tests(failures, PAGE_TESTS)
+    check_pilot_tools(failures)
     check_mod(failures)
     for line in failures:
         print(line)
