@@ -6,6 +6,7 @@ import { BUSY, attaching } from "/page/attach.js";
 
 const POLL_MS = 2000;
 const SEND_FAILED = "Could not send. Try again.";
+const DRAFT_REFUSED = "Draft not saved.";
 const DRAFT_MS = 1000;
 const surfaces = { questions, readback, prototype };
 const $ = (id) => document.getElementById(id);
@@ -51,6 +52,7 @@ function renderAgenda(interaction) {
 function clear() {
   clearTimeout(draftTimer);
   draftRefused = false;
+  if ($("status").textContent === DRAFT_REFUSED) $("status").textContent = "";
   teardown?.();
   teardown = null;
   sendButton = null;
@@ -87,7 +89,7 @@ function contextFor(n) {
           const res = await putDraft(n, obj);
           if (view !== `interaction:${n}`) return;
           draftRefused = !res.ok && res.status !== 409;
-          if (!$("status").textContent.startsWith("Reconnecting")) $("status").textContent = draftRefused ? "Draft not saved." : "";
+          if (!$("status").textContent.startsWith("Reconnecting")) $("status").textContent = draftRefused ? DRAFT_REFUSED : "";
         } catch {}
       }, DRAFT_MS);
     },
@@ -156,7 +158,7 @@ async function run() {
     if (res.status === 403) return stop("Open this page from the session");
     if (!res.ok) throw new Error(`state ${res.status}`);
     const state = await res.json();
-    $("status").textContent = draftRefused ? "Draft not saved." : "";
+    $("status").textContent = draftRefused ? DRAFT_REFUSED : "";
     show(state);
   } catch {
     $("status").textContent = "Reconnecting";
