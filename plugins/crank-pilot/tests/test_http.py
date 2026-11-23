@@ -698,9 +698,7 @@ class AttachmentTest(HttpCase):
             with self.subTest(kind):
                 status, reply = self.upload(client, IMAGES[kind])
                 path = f"pilot/attachments/001-{k}.{ext}"
-                self.assertEqual(
-                    (status, json.loads(reply)), (201, {"path": path, "k": k})
-                )
+                self.assertEqual((status, json.loads(reply)), (201, {"path": path}))
                 self.assertEqual((effort.path / path).read_bytes(), IMAGES[kind])
 
     def test_a_non_image_type_gets_415_naming_the_four_types_and_writes_nothing(
@@ -745,15 +743,43 @@ class AttachmentTest(HttpCase):
         effort, client = self.round()
         png = IMAGES["png"]
         for expected in range(1, 11):
-            self.assertEqual(json.loads(self.upload(client, png)[1])["k"], expected)
+            self.assertEqual(
+                json.loads(self.upload(client, png)[1])["path"],
+                f"pilot/attachments/001-{expected}.png",
+            )
         status, reply = self.upload(client, png)
         self.assertEqual((status, json.loads(reply)["code"]), (409, "attachment_limit"))
         self.assertEqual(client.request("DELETE", "/api/attachment/1/3")[0], 204)
         self.assertNotIn("001-3.png", self.stored(effort))
         status, reply = self.upload(client, png)
-        self.assertEqual((status, json.loads(reply)["k"]), (201, 11))
+        self.assertEqual(
+            (status, json.loads(reply)["path"]),
+            (201, "pilot/attachments/001-11.png"),
+        )
         self.assertEqual(self.upload(client, png)[0], 409)
         self.assertEqual(len(self.stored(effort)), 10)
+
+    def test_the_1000th_interaction_is_stored_capped_and_removable(self):
+        effort, _ = self.round()
+        self.assertEqual(effort.run("resolve", effort.path, "--chat").returncode, 0)
+        pilot = effort.path / "pilot"
+        for directory in ("interactions", "responses"):
+            (pilot / directory / "001.json").rename(pilot / directory / "999.json")
+        self.assertEqual(show(effort, QUESTIONS), 1000)
+        client = Client(effort)
+        png = IMAGES["png"]
+        for expected in range(1, 11):
+            status, reply = self.upload(client, png, number=1000)
+            self.assertEqual(
+                (status, json.loads(reply)),
+                (201, {"path": f"pilot/attachments/1000-{expected}.png"}),
+            )
+        status, reply = self.upload(client, png, number=1000)
+        self.assertEqual((status, json.loads(reply)["code"]), (409, "attachment_limit"))
+        self.assertEqual(client.request("DELETE", "/api/attachment/1000/3")[0], 204)
+        self.assertNotIn("1000-3.png", self.stored(effort))
+        self.assertEqual(effort.run("resolve", effort.path, "--chat").returncode, 0)
+        self.assertEqual(show(effort, QUESTIONS), 1001)
 
     def test_an_image_is_removable_until_a_response_names_it_then_not_added_or_removed(
         self,
@@ -793,7 +819,9 @@ class AttachmentTest(HttpCase):
             [name for name in self.stored(effort) if name.startswith("001-")], []
         )
         status, reply = self.upload(client, IMAGES["png"])
-        self.assertEqual((status, json.loads(reply)["k"]), (201, 1))
+        self.assertEqual(
+            (status, json.loads(reply)["path"]), (201, "pilot/attachments/001-1.png")
+        )
 
 
 if __name__ == "__main__":

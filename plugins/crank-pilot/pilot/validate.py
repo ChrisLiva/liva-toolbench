@@ -1,9 +1,9 @@
 """Shape checks for an interaction file, and the one containment check for a file named
 inside an effort directory."""
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
-from pilot.store import attachment_rel_pattern, version_rel
+from pilot.store import ATTACHMENT, ATTACHMENTS, version_rel
 
 KINDS = ("questions", "readback", "prototype")
 PHASES = ("brainstorm", "spec", "plan")
@@ -240,12 +240,22 @@ def _attachments(holder: dict, number: int, effort: Path, path: str) -> list[str
         not isinstance(a, str) for a in attachments
     ):
         return [f"{path}.attachments: must be a list of paths"]
-    ours = attachment_rel_pattern(number)
     return [
         f"{path}.attachments[{index}]: not an image stored for this interaction"
         for index, name in enumerate(attachments)
-        if not ours.fullmatch(name) or inside(effort, name) is None
+        if not _stored_for(name, number) or inside(effort, name) is None
     ]
+
+
+def _stored_for(name: str, number: int) -> bool:
+    """Whether `name` is a path `attachment_rel` gives for interaction `number`."""
+    rel = PurePosixPath(name)
+    match = ATTACHMENT.fullmatch(rel.name)
+    return (
+        rel.parent == PurePosixPath(ATTACHMENTS)
+        and match is not None
+        and int(match["n"]) == number
+    )
 
 
 def _answers(body: dict, asked: list[dict], number: int, effort: Path) -> list[str]:

@@ -378,7 +378,7 @@ class Handler(BaseHTTPRequestHandler):
                     "code": "attachment_limit",
                 },
             )
-        self.reply_json(201, {"path": attachment_rel(n, k, extension), "k": k})
+        self.reply_json(201, {"path": attachment_rel(n, k, extension)})
 
     def delete_attachment(self, match: re.Match, body: object) -> None:
         n = int(match["n"])

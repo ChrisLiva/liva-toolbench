@@ -5,17 +5,19 @@ import os
 import re
 import tempfile
 import threading
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
 IMAGE_TYPES = "png|jpg|gif|webp"
-ATTACHMENT = re.compile(rf"(?P<n>\d{{3}})-(?P<k>\d+)\.(?:{IMAGE_TYPES})")
+ATTACHMENT = re.compile(rf"(?P<n>\d{{3,}})-(?P<k>\d+)\.(?:{IMAGE_TYPES})")
+ATTACHMENTS = "pilot/attachments"
 MAX_ATTACHMENTS = 10
-NUMBER = re.compile(r"(?P<n>\d{3})\.(?P<suffix>json|md)")
+NUMBER = re.compile(r"(?P<n>\d{3,})\.(?P<suffix>json|md)")
 
 
 def _numbered(n: int, suffix: str) -> str:
-    """The file name of numbered item `n`: three digits, a dot, `suffix`."""
+    """The file name of numbered item `n`: at least three digits, a dot, `suffix`."""
     return f"{n:03d}.{suffix}"
 
 
@@ -26,18 +28,12 @@ def response_rel(n: int) -> str:
 
 def attachment_rel(n: int, k: int, extension: str) -> str:
     """Where image `k` of interaction `n` lives, relative to the effort directory."""
-    return f"pilot/attachments/{n:03d}-{k}.{extension}"
+    return f"{ATTACHMENTS}/{n:03d}-{k}.{extension}"
 
 
 def version_rel(artifact: str, n: int) -> str:
     """Where kept version `n` of `artifact` lives, relative to the effort directory."""
     return f"pilot/versions/{artifact}/{_numbered(n, 'md')}"
-
-
-def attachment_rel_pattern(n: int) -> re.Pattern:
-    """The paths `attachment_rel` gives for interaction `n`, whatever `k` and
-    extension."""
-    return re.compile(rf"pilot/attachments/{n:03d}-\d+\.(?:{IMAGE_TYPES})")
 
 
 def image_extension(data: bytes) -> str | None:
@@ -203,25 +199,23 @@ class Store:
         return k
 
     def remove_attachment(self, number: int, k: int) -> bool:
-        entries = self.attachments.iterdir() if self.attachments.is_dir() else ()
-        for entry in entries:
-            if (match := ATTACHMENT.fullmatch(entry.name)) and (
-                int(match["n"]),
-                int(match["k"]),
-            ) == (number, k):
-                entry.unlink()
+        for n, found, path in self._attachment_files():
+            if (n, found) == (number, k):
+                path.unlink()
                 return True
         return False
 
-    def _attachment_ks(self, number: int) -> list[int]:
+    def _attachment_files(self) -> Iterator[tuple[int, int, Path]]:
+        """The `(n, k, path)` of each stored image; nothing when the directory is
+        missing."""
         if not self.attachments.is_dir():
-            return []
-        matches = (
-            ATTACHMENT.fullmatch(entry.name) for entry in self.attachments.iterdir()
-        )
-        return [
-            int(match["k"]) for match in matches if match and int(match["n"]) == number
-        ]
+            return
+        for entry in self.attachments.iterdir():
+            if match := ATTACHMENT.fullmatch(entry.name):
+                yield int(match["n"]), int(match["k"]), entry
+
+    def _attachment_ks(self, number: int) -> list[int]:
+        return [k for n, k, _ in self._attachment_files() if n == number]
 
     @staticmethod
     def _json(path: Path) -> dict | None:
