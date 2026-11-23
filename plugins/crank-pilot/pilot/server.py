@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import unquote
 
-from pilot.store import Store, image_extension, scaled, write_atomic
+from pilot.store import Store, attachment_rel, image_extension, response_rel, scaled, write_atomic
 from pilot.validate import inside, response_problems
 
 PAGE = Path(__file__).resolve().parent.parent / "page"
@@ -269,7 +269,7 @@ class Handler(BaseHTTPRequestHandler):
                  "submitted_at": datetime.now(timezone.utc).isoformat()}
         if not store.write_response(n, saved):
             return self.reply_json(409, {"error": "that interaction is not pending"})
-        self.reply_json(201, {"path": f"pilot/responses/{n:03d}.json"})
+        self.reply_json(201, {"path": response_rel(n)})
 
     def post_attachment(self, match: re.Match, body: bytes) -> None:
         n = int(match["n"])
@@ -281,7 +281,7 @@ class Handler(BaseHTTPRequestHandler):
         k = self.server.store.add_attachment(n, body, extension)
         if k is None:
             return self.reply_json(409, {"error": "ten images are already attached", "code": "attachment_limit"})
-        self.reply_json(201, {"path": f"pilot/attachments/{n:03d}-{k}.{extension}", "k": k})
+        self.reply_json(201, {"path": attachment_rel(n, k, extension), "k": k})
 
     def delete_attachment(self, match: re.Match, body: object) -> None:
         n = int(match["n"])

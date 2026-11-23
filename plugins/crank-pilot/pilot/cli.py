@@ -12,7 +12,7 @@ import webbrowser
 from datetime import datetime, timezone
 from pathlib import Path
 
-from pilot.store import Store, scaled
+from pilot.store import Store, response_rel, scaled
 from pilot.validate import interaction_problems
 
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
@@ -154,7 +154,7 @@ def cmd_wait(args: argparse.Namespace) -> int:
         if latest is None:
             return fail("nothing pending", 2)
         if store.pending() is None:
-            print(store.responses.resolve() / f"{latest:03d}.json")
+            print((store.effort / response_rel(latest)).resolve())
             return 0
         if now - last_poll > scaled(SUSPEND_GAP):
             grace_from = now

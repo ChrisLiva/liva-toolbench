@@ -13,6 +13,31 @@ MAX_ATTACHMENTS = 10
 NUMBER = re.compile(r"(?P<n>\d{3})\.(?P<suffix>json|md)")
 
 
+def _numbered(n: int, suffix: str) -> str:
+    """The file name of numbered item `n`: three digits, a dot, `suffix`."""
+    return f"{n:03d}.{suffix}"
+
+
+def response_rel(n: int) -> str:
+    """Where interaction `n`'s response lives, relative to the effort directory."""
+    return f"pilot/responses/{_numbered(n, 'json')}"
+
+
+def attachment_rel(n: int, k: int, extension: str) -> str:
+    """Where image `k` of interaction `n` lives, relative to the effort directory."""
+    return f"pilot/attachments/{n:03d}-{k}.{extension}"
+
+
+def version_rel(artifact: str, n: int) -> str:
+    """Where kept version `n` of `artifact` lives, relative to the effort directory."""
+    return f"pilot/versions/{artifact}/{_numbered(n, 'md')}"
+
+
+def attachment_rel_pattern(n: int) -> re.Pattern:
+    """The paths `attachment_rel` gives for interaction `n`, whatever `k` and extension."""
+    return re.compile(rf"pilot/attachments/{n:03d}-\d+\.(?:{IMAGE_TYPES})")
+
+
 def image_extension(data: bytes) -> str | None:
     """The extension of the image type `data`'s leading bytes name (png, jpg, gif, webp), or None."""
     if data.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -75,7 +100,7 @@ class Store:
     def pending(self) -> int | None:
         """The highest-numbered interaction with no response, or None."""
         latest = self.latest()
-        if latest is None or (self.responses / f"{latest:03d}.json").exists():
+        if latest is None or (self.effort / response_rel(latest)).exists():
             return None
         return latest
 
@@ -84,7 +109,7 @@ class Store:
         number = (self.latest() or 0) + 1
         self.interactions.mkdir(parents=True, exist_ok=True)
         stored = json.dumps({**interaction, "number": number}).encode()
-        write_atomic(self.interactions / f"{number:03d}.json", stored)
+        write_atomic(self.interactions / _numbered(number, "json"), stored)
         return number
 
     def keep_version(self, artifact: str) -> int:
@@ -93,9 +118,9 @@ class Store:
         directory = self.versions / artifact
         directory.mkdir(parents=True, exist_ok=True)
         latest = max(self.kept_versions(artifact), default=0)
-        if latest and (directory / f"{latest:03d}.md").read_bytes() == text:
+        if latest and (self.effort / version_rel(artifact, latest)).read_bytes() == text:
             return latest
-        write_atomic(directory / f"{latest + 1:03d}.md", text)
+        write_atomic(self.effort / version_rel(artifact, latest + 1), text)
         return latest + 1
 
     def kept_versions(self, artifact: str) -> list[int]:
@@ -114,22 +139,22 @@ class Store:
         return None
 
     def interaction(self, number: int) -> dict:
-        return json.loads((self.interactions / f"{number:03d}.json").read_text())
+        return json.loads((self.interactions / _numbered(number, "json")).read_text())
 
     def response(self, number: int) -> dict | None:
-        return self._json(self.responses / f"{number:03d}.json")
+        return self._json(self.effort / response_rel(number))
 
     def draft(self, number: int) -> dict | None:
-        return self._json(self.drafts / f"{number:03d}.json")
+        return self._json(self.drafts / _numbered(number, "json"))
 
     def write_draft(self, number: int, draft: dict) -> None:
         self.drafts.mkdir(parents=True, exist_ok=True)
-        write_atomic(self.drafts / f"{number:03d}.json", json.dumps(draft).encode())
+        write_atomic(self.drafts / _numbered(number, "json"), json.dumps(draft).encode())
 
     def write_response(self, number: int, data: dict) -> bool:
         """Create the response only if none exists, and the draft goes with it; False when another submission won."""
         self.responses.mkdir(parents=True, exist_ok=True)
-        target = self.responses / f"{number:03d}.json"
+        target = self.effort / response_rel(number)
         temporary = _write_beside(target, json.dumps(data).encode(), 0o644)
         try:
             os.link(temporary, target)
@@ -137,7 +162,7 @@ class Store:
             return False
         finally:
             temporary.unlink(missing_ok=True)
-        (self.drafts / f"{number:03d}.json").unlink(missing_ok=True)
+        (self.drafts / _numbered(number, "json")).unlink(missing_ok=True)
         return True
 
     def add_attachment(self, number: int, data: bytes, extension: str) -> int | None:
@@ -148,7 +173,7 @@ class Store:
             if len(present) >= MAX_ATTACHMENTS:
                 return None
             k = max(present, default=0) + 1
-            write_atomic(self.attachments / f"{number:03d}-{k}.{extension}", data)
+            write_atomic(self.effort / attachment_rel(number, k, extension), data)
         return k
 
     def remove_attachment(self, number: int, k: int) -> bool:

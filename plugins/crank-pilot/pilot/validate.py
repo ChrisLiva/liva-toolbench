@@ -1,9 +1,8 @@
 """Shape checks for an interaction file, and the one containment check for a file named inside an effort directory."""
 
-import re
 from pathlib import Path
 
-from pilot.store import IMAGE_TYPES
+from pilot.store import attachment_rel_pattern, version_rel
 
 KINDS = ("questions", "readback", "prototype")
 PHASES = ("brainstorm", "spec", "plan")
@@ -193,7 +192,7 @@ def _attachments(holder: dict, number: int, effort: Path, path: str) -> list[str
     attachments = holder.get("attachments")
     if not isinstance(attachments, list) or any(not isinstance(a, str) for a in attachments):
         return [f"{path}.attachments: must be a list of paths"]
-    ours = re.compile(rf"pilot/attachments/{number:03d}-\d+\.(?:{IMAGE_TYPES})")
+    ours = attachment_rel_pattern(number)
     return [f"{path}.attachments[{index}]: not an image stored for this interaction"
             for index, name in enumerate(attachments) if not ours.fullmatch(name) or inside(effort, name) is None]
 
@@ -264,8 +263,8 @@ def _readback_response(interaction: dict, body: dict, effort: Path) -> list[str]
         return problems + ["marks: required, a list"]
     if verdict == "approve" and marks:
         problems.append("marks: an approve carries none")
-    kept = effort / "pilot" / "versions" / interaction["artifact"] / f"{interaction['version']:03d}.md"
     try:
+        kept = effort / version_rel(interaction["artifact"], interaction["version"])
         lines = len(kept.read_bytes().decode("utf-8").splitlines())
     except (OSError, UnicodeDecodeError):
         return problems + ["version: the kept copy of this version cannot be read"]
