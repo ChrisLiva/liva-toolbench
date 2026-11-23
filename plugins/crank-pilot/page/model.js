@@ -44,6 +44,7 @@ export const hasOptions = (question) =>
   Array.isArray(question.options) && question.options.length > 0;
 export const strings = (value) =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+const stringOrEmpty = (value) => (typeof value === "string" ? value : "");
 
 // One question's entry, read defensively: a draft is whatever an earlier page wrote.
 function entry(question, raw) {
@@ -167,12 +168,13 @@ export function marksFrom(raw) {
 export function numberMarks(marks) {
   const anchored = marks
     .filter((m) => m.type !== "note")
-    .sort(
+    .toSorted(
       (a, b) => a.lines[0] - b.lines[0] || a.start - b.start || a.id - b.id,
     );
   const notes = marks
     .filter((m) => m.type === "note")
-    .sort((a, b) => a.id - b.id);
+    .toSorted((a, b) => a.id - b.id);
+  // oxlint-disable-next-line oxc/no-map-spread -- each numbered mark is a copy, so the page's own marks stay unnumbered
   return [...anchored, ...notes].map((m, i) => ({ ...m, n: i + 1 }));
 }
 
@@ -224,7 +226,7 @@ export function diffBlocks(oldSources, newSources) {
   const cols = newSources.length;
   // tail[i][j] is the length of the longest common subsequence of oldSources.slice(i) and newSources.slice(j).
   const tail = Array.from({ length: rows + 1 }, () =>
-    new Array(cols + 1).fill(0),
+    Array.from({ length: cols + 1 }, () => 0),
   );
   for (let i = rows - 1; i >= 0; i--) {
     for (let j = cols - 1; j >= 0; j--) {
@@ -290,23 +292,22 @@ export function prototypeResponse(verdict, pins) {
 export function prototypeFrom(variants, draft) {
   const given =
     draft?.verdict && typeof draft.verdict === "object" ? draft.verdict : {};
-  const text = (value) => (typeof value === "string" ? value : "");
   const keys = new Set(variants.map((v) => v.key));
   const pins = Array.isArray(draft?.pins) ? draft.pins : [];
   return {
     verdict: {
       winner: keys.has(given.winner) ? given.winner : null,
-      take: text(given.take),
-      leave_out: text(given.leave_out),
+      take: stringOrEmpty(given.take),
+      leave_out: stringOrEmpty(given.leave_out),
       attachments: strings(given.attachments),
     },
     pins: pins
       .filter((pin) => pin && typeof pin === "object" && keys.has(pin.variant))
       .map((pin) => ({
         variant: pin.variant,
-        selector: text(pin.selector),
-        leading_text: text(pin.leading_text),
-        text: text(pin.text),
+        selector: stringOrEmpty(pin.selector),
+        leading_text: stringOrEmpty(pin.leading_text),
+        text: stringOrEmpty(pin.text),
         attachments: strings(pin.attachments),
       })),
   };

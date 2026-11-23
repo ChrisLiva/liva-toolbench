@@ -30,6 +30,48 @@ export const plain = (range) => {
   return copy.textContent;
 };
 
+function trimmed(pieces) {
+  const out = pieces.map((p) => ({ ...p }));
+  while (out.length) {
+    const p = out[0];
+    const text = p.node.data.slice(p.s, p.e);
+    const lead = text.length - text.trimStart().length;
+    if (lead === text.length) out.shift();
+    else {
+      p.s += lead;
+      break;
+    }
+  }
+  while (out.length) {
+    const p = out.at(-1);
+    const text = p.node.data.slice(p.s, p.e);
+    const tail = text.length - text.trimEnd().length;
+    if (tail === text.length) out.pop();
+    else {
+      p.e -= tail;
+      break;
+    }
+  }
+  return out;
+}
+
+// Each selected text node gets its own wrapper, so a mark can cross inline elements without nesting them.
+function wrap(pieces, mark) {
+  for (const { node, s, e } of pieces) {
+    let target = node;
+    if (e < node.length) node.splitText(e);
+    if (s > 0) target = node.splitText(s);
+    const span = document.createElement(
+      mark.type === "strike" ? "del" : "span",
+    );
+    span.setAttribute("class", `mk ${mark.type}`);
+    span.setAttribute("data-mark", String(mark.id));
+    target.replaceWith(span);
+    span.append(target);
+  }
+  return pieces.length;
+}
+
 export function anchoring(art, getBlocks) {
   const blockOf = (node) => {
     const host = node?.nodeType === 1 ? node : node?.parentElement;
@@ -60,31 +102,6 @@ export function anchoring(art, getBlocks) {
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode())
         consider(node);
-    }
-    return out;
-  }
-
-  function trimmed(pieces) {
-    const out = pieces.map((p) => ({ ...p }));
-    while (out.length) {
-      const p = out[0];
-      const text = p.node.data.slice(p.s, p.e);
-      const lead = text.length - text.trimStart().length;
-      if (lead === text.length) out.shift();
-      else {
-        p.s += lead;
-        break;
-      }
-    }
-    while (out.length) {
-      const p = out.at(-1);
-      const text = p.node.data.slice(p.s, p.e);
-      const tail = text.length - text.trimEnd().length;
-      if (tail === text.length) out.pop();
-      else {
-        p.e -= tail;
-        break;
-      }
     }
     return out;
   }
@@ -134,23 +151,6 @@ export function anchoring(art, getBlocks) {
       ...locate(b, single ? mark.start + mark.quote.length : mark.end, true),
     );
     return range;
-  }
-
-  // Each selected text node gets its own wrapper, so a mark can cross inline elements without nesting them.
-  function wrap(pieces, mark) {
-    for (const { node, s, e } of pieces) {
-      let target = node;
-      if (e < node.length) node.splitText(e);
-      if (s > 0) target = node.splitText(s);
-      const span = document.createElement(
-        mark.type === "strike" ? "del" : "span",
-      );
-      span.setAttribute("class", `mk ${mark.type}`);
-      span.setAttribute("data-mark", String(mark.id));
-      target.replaceWith(span);
-      span.append(target);
-    }
-    return pieces.length;
   }
 
   function draw(mark) {

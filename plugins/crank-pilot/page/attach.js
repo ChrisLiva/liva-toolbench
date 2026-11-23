@@ -111,10 +111,12 @@ export function mountAttach(
     message.textContent = "";
     for (const file of files) {
       const kind = sniffImage(
+        // oxlint-disable-next-line eslint/no-await-in-loop -- each file is judged against the count the one before it made
         new Uint8Array(await file.slice(0, 12).arrayBuffer()),
       );
       const refusal = attachRefusal({ kind, size: file.size, count: count() });
       if (refusal) message.textContent = refusal;
+      // oxlint-disable-next-line eslint/no-await-in-loop -- each file is judged against the count the one before it made
       else await upload(file);
     }
   }

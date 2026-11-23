@@ -25,6 +25,8 @@ const interaction = (number) => ({
 });
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status });
+const roundOne = () => json({ effort: "e", interaction: interaction(1) });
+const unanswered = () => {};
 
 test("status line: draft refused, reconnecting keeps its line, recovery, new interaction", async () => {
   const window = pageWindow();
@@ -32,8 +34,8 @@ test("status line: draft refused, reconnecting keeps its line, recovery, new int
   const { document } = window;
   const status = () => document.getElementById("status").textContent;
 
-  let current = () => json({ effort: "e", interaction: interaction(1) });
-  let answered = () => {};
+  let current = roundOne;
+  let answered = unanswered;
   routeFetch({
     "GET /api/state": () => current(),
     "PUT /api/draft/": () => {
@@ -49,6 +51,7 @@ test("status line: draft refused, reconnecting keeps its line, recovery, new int
     waited += 10
   ) {
     assert.ok(waited < 2000, "the page never showed the interaction's title");
+    // oxlint-disable-next-line eslint/no-await-in-loop -- polls the page every 10 ms until it shows the title
     await tick(10);
   }
   assert.equal(status(), "");
@@ -80,7 +83,7 @@ test("status line: draft refused, reconnecting keeps its line, recovery, new int
   assert.equal(status(), "Reconnecting");
 
   // Recovery brings the refusal back.
-  current = () => json({ effort: "e", interaction: interaction(1) });
+  current = roundOne;
   await tick(2200);
   assert.equal(status(), "Draft not saved.");
 

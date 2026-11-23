@@ -24,6 +24,7 @@ WAIT_TIMEOUT = 540
 
 
 def fail(message: str, code: int) -> int:
+    # aislop-ignore-next-line ai-slop/python-print-debug -- the command's error line
     print(message, file=sys.stderr)
     return code
 
@@ -150,6 +151,7 @@ def cmd_show(args: argparse.Namespace) -> int:
     record = ensure_server(store)
     beat, bye = store.heartbeat()
     if beat and not bye and started - beat <= scaled(GRACE):
+        # aislop-ignore-next-line ai-slop/python-print-debug -- the command's output
         print(number)
         return 0
     if not os.environ.get("CRANK_PILOT_NO_OPEN"):
@@ -158,6 +160,7 @@ def cmd_show(args: argparse.Namespace) -> int:
     while True:
         beat, bye = store.heartbeat()
         if beat >= started and not bye:
+            # aislop-ignore-next-line ai-slop/python-print-debug -- the command's output
             print(number)
             return 0
         if time.time() >= give_up:
@@ -174,6 +177,7 @@ def cmd_wait(args: argparse.Namespace) -> int:
         if latest is None:
             return fail("nothing pending", 2)
         if store.pending() is None:
+            # aislop-ignore-next-line ai-slop/python-print-debug -- the command's output
             print((store.effort / response_rel(latest)).resolve())
             return 0
         if now - last_poll > scaled(SUSPEND_GAP):

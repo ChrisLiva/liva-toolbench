@@ -297,9 +297,9 @@ export const surface = {
       nextId++;
       marks.push(mark);
       window.getSelection().removeAllRanges();
-      const number = numberMarks(marks).find((m) => m.id === mark.id).n;
+      const markNumber = numberMarks(marks).find((m) => m.id === mark.id).n;
       closePop(true);
-      hint.textContent = `Added mark ${number}.`;
+      hint.textContent = `Added mark ${markNumber}.`;
       renderLedger();
       saveSoon();
     }
@@ -570,7 +570,7 @@ export const surface = {
       if (items.every((item) => item.ay === Infinity)) return;
       lmarks.classList.add("abs");
       let prev = -12;
-      for (const item of items.sort(byPosition)) {
+      for (const item of items.toSorted(byPosition)) {
         const top = Math.max(
           Number.isFinite(item.ay) ? item.ay - 8 : 0,
           prev + 12,

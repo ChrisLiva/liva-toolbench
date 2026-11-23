@@ -240,6 +240,7 @@ class Handler(BaseHTTPRequestHandler):
         return (
             self.command in WRITES
             and origin is not None
+            # aislop-ignore-next-line ai-slop/hardcoded-url -- loopback Origin check
             and origin not in map("http://{}".format, self.home())
         )
 

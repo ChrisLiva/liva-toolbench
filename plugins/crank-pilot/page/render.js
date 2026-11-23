@@ -65,17 +65,17 @@ function loadMermaid() {
   mermaidReady ??= new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = MERMAID_SRC;
-    script.onload = () => {
+    script.addEventListener("load", () => {
       globalThis.mermaid.initialize({
         startOnLoad: false,
         securityLevel: "strict",
       });
       resolve(globalThis.mermaid);
-    };
-    script.onerror = () => {
+    });
+    script.addEventListener("error", () => {
       mermaidReady = null;
       reject(new Error("mermaid did not load"));
-    };
+    });
     document.head.append(script);
   });
   return mermaidReady;
@@ -87,6 +87,7 @@ async function drawDiagram(pre) {
   try {
     const mermaid = await loadMermaid();
     const { svg } = await mermaid.render(id, pre.textContent);
+    // aislop-ignore-next-line security/innerhtml -- mermaid's SVG output under securityLevel "strict"
     figure(pre).innerHTML = svg;
   } catch {
     // A diagram that cannot be drawn stays on the page as its source.
@@ -99,12 +100,14 @@ export const linesOf = (node) =>
   node.getAttribute("data-lines").split("-").map(Number);
 
 export async function renderMarkdown(source, root) {
+  // aislop-ignore-next-line security/innerhtml -- markdown-it output, which escapes raw HTML (html: false)
   root.innerHTML = md.render(source);
   for (const pre of root.querySelectorAll("pre[data-fence]")) {
     if (!FRAGMENTS.has(pre.dataset.fence)) continue;
     figure(pre).append(sandboxFrame(pre.textContent));
   }
   for (const pre of root.querySelectorAll('pre[data-fence="mermaid"]'))
+    // oxlint-disable-next-line eslint/no-await-in-loop -- diagrams draw one at a time, in document order
     await drawDiagram(pre);
   const lines = source.split("\n");
   return [...root.querySelectorAll("[data-lines]")]

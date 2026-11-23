@@ -71,10 +71,10 @@ function clear() {
   $("stage").classList.add("solo");
 }
 
-function heading(text, message) {
+function heading(text, asMessage) {
   const h1 = document.createElement("h1");
   h1.textContent = text;
-  if (message) h1.className = "msg";
+  if (asMessage) h1.className = "msg";
   return h1;
 }
 
@@ -99,7 +99,9 @@ function contextFor(n) {
           if (view !== `interaction:${n}`) return;
           draftRefused = !res.ok && res.status !== 409;
           paintStatus();
-        } catch {}
+        } catch {
+          // A draft that never reached the server leaves the status line to the poll, which reports a dropped connection.
+        }
       }, DRAFT_MS);
     },
     // Resolves to the line the surface shows by its send button, empty when the send needs none: a 201 shows the wait

@@ -115,8 +115,8 @@ export const surface = {
       interaction: number,
       paths: verdict.attachments,
       count,
-      onChange(next) {
-        verdict.attachments = next;
+      onChange(paths) {
+        verdict.attachments = paths;
         changed();
       },
     });
@@ -157,8 +157,8 @@ export const surface = {
             interaction: number,
             paths: pins[i].attachments,
             count,
-            onChange(next) {
-              pins[i].attachments = next;
+            onChange(paths) {
+              pins[i].attachments = paths;
               changed();
             },
           });
