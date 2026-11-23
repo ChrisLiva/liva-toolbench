@@ -1,8 +1,8 @@
 """Multi-step journeys through the server and the command."""
 
+import contextlib
 import datetime
 import json
-import contextlib
 import os
 import re
 import signal
@@ -30,7 +30,8 @@ from support import (
 
 
 def non_loopback_address() -> str | None:
-    """This machine's outward address, read without sending a packet, or None when it has none."""
+    """This machine's outward address, read without sending a packet, or None when it
+    has none."""
     probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         probe.connect(("192.0.2.1", 9))
@@ -134,9 +135,12 @@ class ReadbackVersionsJourneyTest(EffortCase):
         effort = self.effort()
         spec = effort.write("spec.md", SPEC)
         kept = effort.path / "pilot" / "versions" / "spec.md"
-        stored = lambda n: json.loads(
-            (effort.path / "pilot" / "interactions" / f"{n:03d}.json").read_text()
-        )
+
+        def stored(n):
+            return json.loads(
+                (effort.path / "pilot" / "interactions" / f"{n:03d}.json").read_text()
+            )
+
         self.assertEqual(show(effort, READBACK), 1)
         client = Client(effort)
         self.assertEqual((kept / "001.md").read_text(), SPEC)
@@ -160,7 +164,7 @@ class ReadbackVersionsJourneyTest(EffortCase):
         self.assertEqual(state["versions"], [1, 2])
         self.assertEqual(state["prior"], {"version": 1, "marks": MARKS})
 
-    def test_versions_are_numbered_and_prior_is_the_latest_changes_response_per_artifact_file_name(
+    def test_versions_are_numbered_and_prior_is_the_latest_changes_response_per_file(
         self,
     ):
         effort = self.effort()
@@ -229,7 +233,8 @@ DRAFT = {"q1": {"choice": "b"}}
 
 class RestartAfterKillJourneyTest(EffortCase):
     def killed_with_a_draft(self):
-        """An effort whose server was killed with interaction 1 pending and a draft saved; the old client, its record."""
+        """An effort whose server was killed with interaction 1 pending and a draft
+        saved; the old client, its record."""
         effort = self.effort()
         self.assertEqual(show(effort, QUESTIONS, scale=20), 1)
         client = Client(effort)
@@ -243,7 +248,8 @@ class RestartAfterKillJourneyTest(EffortCase):
         return effort, client, record
 
     def restarted(self, effort, old: dict) -> dict:
-        """The record once a spawned `wait` has started a new server, within a second."""
+        """The record once a spawned `wait` has started a new server, within a
+        second."""
         give_up = time.time() + 1
         while time.time() < give_up:
             with contextlib.suppress(OSError, ValueError):
@@ -254,7 +260,7 @@ class RestartAfterKillJourneyTest(EffortCase):
             time.sleep(0.01)
         self.fail("no new server record within a second")
 
-    def test_the_next_wait_restarts_the_server_on_the_same_port_and_token_with_the_draft_intact(
+    def test_the_next_wait_restarts_the_server_on_the_same_port_and_token_draft_intact(
         self,
     ):
         effort, client, old = self.killed_with_a_draft()
@@ -269,10 +275,10 @@ class RestartAfterKillJourneyTest(EffortCase):
             )[0],
             201,
         )
-        out, err = waiting.communicate(timeout=5)
+        _out, err = waiting.communicate(timeout=5)
         self.assertEqual((waiting.returncode, err), (0, ""))
 
-    def test_a_taken_port_gets_a_new_port_and_token_with_no_heartbeat_and_the_next_show_opens_a_tab(
+    def test_a_taken_port_gets_a_new_port_and_token_no_heartbeat_and_show_opens_a_tab(
         self,
     ):
         effort, client, old = self.killed_with_a_draft()

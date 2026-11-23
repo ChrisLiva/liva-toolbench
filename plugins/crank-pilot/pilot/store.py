@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 IMAGE_TYPES = "png|jpg|gif|webp"
@@ -35,7 +35,8 @@ def version_rel(artifact: str, n: int) -> str:
 
 
 def attachment_rel_pattern(n: int) -> re.Pattern:
-    """The paths `attachment_rel` gives for interaction `n`, whatever `k` and extension."""
+    """The paths `attachment_rel` gives for interaction `n`, whatever `k` and
+    extension."""
     return re.compile(rf"pilot/attachments/{n:03d}-\d+\.(?:{IMAGE_TYPES})")
 
 
@@ -53,7 +54,8 @@ def image_extension(data: bytes) -> str | None:
 
 
 def scaled(seconds: float) -> float:
-    """A duration divided by CRANK_PILOT_TIME_SCALE, so a test can run a minute's logic in a moment."""
+    """A duration divided by CRANK_PILOT_TIME_SCALE, so a test can run a minute's logic
+    in a moment."""
     return seconds / float(os.environ.get("CRANK_PILOT_TIME_SCALE", "1"))
 
 
@@ -70,7 +72,8 @@ def _write_beside(path: Path, data: bytes, mode: int) -> Path:
 
 
 def write_atomic(path: Path, data: bytes, mode: int = 0o644) -> None:
-    """Write beside the target, then move into place, so a reader never sees half a file."""
+    """Write beside the target, then move into place, so a reader never sees half a
+    file."""
     temporary = _write_beside(path, data, mode)
     try:
         os.replace(temporary, path)
@@ -111,7 +114,8 @@ class Store:
         return number
 
     def keep_version(self, artifact: str) -> int:
-        """The kept-version number of the effort's `artifact`: the latest copy's when its text is identical, else a new copy's."""
+        """The kept-version number of the effort's `artifact`: the latest copy's when
+        its text is identical, else a new copy's."""
         text = (self.effort / artifact).read_bytes()
         directory = self.versions / artifact
         directory.mkdir(parents=True, exist_ok=True)
@@ -128,7 +132,8 @@ class Store:
         return sorted(self._numbers(self.versions / artifact, "md"))
 
     def prior(self, number: int) -> dict | None:
-        """The version and marks of the latest earlier `changes` response for the same artifact as interaction `number`."""
+        """The version and marks of the latest earlier `changes` response for the same
+        artifact as interaction `number`."""
         artifact = self.interaction(number).get("artifact")
         for earlier in sorted(self._numbers(self.interactions), reverse=True):
             if (
@@ -157,7 +162,8 @@ class Store:
         )
 
     def write_response(self, number: int, data: dict) -> bool:
-        """Create the response only if none exists, and the draft goes with it; False when another submission won."""
+        """Create the response only if none exists, and the draft goes with it; False
+        when another submission won."""
         self.responses.mkdir(parents=True, exist_ok=True)
         target = self.effort / response_rel(number)
         temporary = _write_beside(target, json.dumps(data).encode(), 0o644)
@@ -171,7 +177,8 @@ class Store:
         return True
 
     def respond(self, number: int, body: dict, via: str) -> bool:
-        """Close interaction `number` with `body` under the response envelope; False when a response already exists."""
+        """Close interaction `number` with `body` under the response envelope; False
+        when a response already exists."""
         return self.write_response(
             number,
             {
@@ -179,12 +186,13 @@ class Store:
                 "interaction": number,
                 "kind": self.interaction(number)["kind"],
                 "via": via,
-                "submitted_at": datetime.now(timezone.utc).isoformat(),
+                "submitted_at": datetime.now(UTC).isoformat(),
             },
         )
 
     def add_attachment(self, number: int, data: bytes, extension: str) -> int | None:
-        """Store `data` as interaction `number`'s next image and return its `k`; None at `MAX_ATTACHMENTS`."""
+        """Store `data` as interaction `number`'s next image and return its `k`; None at
+        `MAX_ATTACHMENTS`."""
         self.attachments.mkdir(parents=True, exist_ok=True)
         with self._attachment_lock:
             present = self._attachment_ks(number)
@@ -223,7 +231,8 @@ class Store:
             return None
 
     def record(self) -> dict | None:
-        """The server record, or None when server.json is missing, unreadable, or not a record."""
+        """The server record, or None when server.json is missing, unreadable, or not a
+        record."""
         try:
             record = json.loads(self.server_json.read_text())
         except (OSError, ValueError):
@@ -236,7 +245,8 @@ class Store:
         return record if record["pid"] > 0 else None
 
     def heartbeat(self) -> tuple[float, bool]:
-        """The page's last beat (0 when there has been none) and whether it said it was closing."""
+        """The page's last beat (0 when there has been none) and whether it said it was
+        closing."""
         try:
             return (
                 self.heartbeat_file.stat().st_mtime,

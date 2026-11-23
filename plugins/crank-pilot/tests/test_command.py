@@ -216,8 +216,9 @@ REJECTED = (
 
 class ValidationCase(EffortCase):
     def effort_with_files(self):
-        """An effort directory holding the files the fixtures name, a non-UTF-8 binary.md, an unreadable.md with no
-        read permission, and a symlink to a file outside it."""
+        """An effort directory holding the files the fixtures name, a non-UTF-8
+        binary.md, an unreadable.md with no read permission, and a symlink to a file
+        outside it."""
         effort = self.effort()
         for rel in (
             "spec.md",
@@ -273,7 +274,7 @@ class ShowValidationTest(ValidationCase):
 
 
 class ShowTest(EffortCase):
-    def test_show_stores_each_interaction_under_the_next_number_prints_it_and_reuses_the_server(
+    def test_show_stores_each_interaction_under_the_next_number_prints_it_reuses_server(
         self,
     ):
         effort = self.effort()
@@ -371,7 +372,7 @@ class ShowBrowserTest(EffortCase):
 
 
 class ShowWaitTest(EffortCase):
-    def test_show_exits_4_when_no_page_is_live_in_time_and_leaves_the_interaction_pending(
+    def test_show_exits_4_when_no_page_is_live_in_time_leaving_the_interaction_pending(
         self,
     ):
         effort = self.effort()
@@ -501,7 +502,7 @@ def response_file(effort, number: int = 1) -> Path:
 
 
 class SupersedeTest(EffortCase):
-    def test_a_new_show_closes_the_pending_interaction_as_superseded_and_moves_the_state_on(
+    def test_a_new_show_closes_the_pending_interaction_as_superseded_and_moves_state_on(
         self,
     ):
         effort = self.effort()
@@ -520,7 +521,7 @@ class SupersedeTest(EffortCase):
 
 
 class ResolveChatTest(EffortCase):
-    def test_resolve_chat_writes_a_chat_response_and_a_running_wait_exits_0_with_its_path(
+    def test_resolve_chat_writes_a_chat_response_and_a_running_wait_exits_0_with_path(
         self,
     ):
         effort = self.effort()
@@ -561,7 +562,8 @@ class ResolveChatTest(EffortCase):
 
 class ResolveRaceTest(EffortCase):
     def race(self, effort, client, *argv, delay: float):
-        """Start the command, post a valid response `delay` seconds later; the post's status and the finished command."""
+        """Start the command, post a valid response `delay` seconds later; the post's
+        status and the finished command."""
         process = effort.spawn(*argv)
         posted = []
 
@@ -664,7 +666,7 @@ class CloseTest(EffortCase):
 
 
 class CloseWindowTest(EffortCase):
-    def test_a_show_during_the_window_waits_for_the_record_to_go_and_starts_a_new_server(
+    def test_a_show_during_the_window_waits_for_the_record_to_go_and_starts_a_server(
         self,
     ):
         effort = self.effort()
@@ -694,7 +696,7 @@ class CloseWindowTest(EffortCase):
 
 
 class SecondCloseTest(EffortCase):
-    def test_a_second_close_partway_through_the_window_does_not_move_the_server_exit_later(
+    def test_a_second_close_partway_through_the_window_does_not_move_the_exit_later(
         self,
     ):
         effort = self.effort()
@@ -730,7 +732,8 @@ class SelfExitTest(EffortCase):
 
 
 class ForeignPidListener:
-    """A stdlib server that answers `GET /api/ping` as pid 1 and records every POST it receives."""
+    """A stdlib server that answers `GET /api/ping` as pid 1 and records every POST it
+    receives."""
 
     def __init__(self) -> None:
         self.posts: list[str] = []
@@ -788,7 +791,7 @@ class ForeignPidTest(EffortCase):
 
 
 class IdleExitTest(EffortCase):
-    def test_the_server_stays_up_while_a_page_beats_and_exits_30_scaled_minutes_after_the_last_beat_keeping_its_record(
+    def test_server_stays_up_on_beats_exits_30_scaled_minutes_after_last_keeps_record(
         self,
     ):
         effort = self.effort()

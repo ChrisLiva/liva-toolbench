@@ -29,7 +29,8 @@ def fail(message: str, code: int) -> int:
 
 
 def open_store(args: argparse.Namespace) -> Store:
-    """The store of the effort directory the command names; exit 2 when it is not a directory."""
+    """The store of the effort directory the command names; exit 2 when it is not a
+    directory."""
     if not args.effort.is_dir():
         sys.exit(fail(f"no such effort directory: {args.effort}", 2))
     return Store(args.effort)
@@ -38,7 +39,8 @@ def open_store(args: argparse.Namespace) -> Store:
 def call(
     record: dict, path: str, method: str = "GET", data: bytes | None = None
 ) -> bytes:
-    """The body of the reply the server on the record's port gives `path`; raises `OSError` or `HTTPException` when it fails."""
+    """The body of the reply the server on the record's port gives `path`; raises
+    `OSError` or `HTTPException` when it fails."""
     request = urllib.request.Request(
         f"http://127.0.0.1:{record['port']}{path}",
         data=data,
@@ -52,8 +54,9 @@ def call(
 
 
 def ping(record: dict) -> dict | None:
-    """The reply of the server on the record's port when it is the record's process, else None. A pid that
-    `os.kill` refuses belongs to another user, so it is never this effort's server."""
+    """The reply of the server on the record's port when it is the record's process,
+    else None. A pid that `os.kill` refuses belongs to another user, so it is never this
+    effort's server."""
     try:
         os.kill(record["pid"], 0)
     except OSError:
@@ -70,8 +73,9 @@ def ping(record: dict) -> dict | None:
 
 
 def ensure_server(store: Store) -> dict:
-    """Return the running server's record, starting the server first when none runs; exit 1 when it does not start.
-    A server in its closing window counts as gone: wait for its record to be removed, then start a new one."""
+    """Return the running server's record, starting the server first when none runs;
+    exit 1 when it does not start. A server in its closing window counts as gone: wait
+    for its record to be removed, then start a new one."""
     while (record := store.record()) is not None:
         answer = ping(record)
         if answer is None:
@@ -79,7 +83,7 @@ def ensure_server(store: Store) -> dict:
         if not answer.get("closing"):
             return record
         time.sleep(scaled(WAIT_POLL))
-    process = subprocess.Popen(
+    process = subprocess.Popen(  # noqa: S603  starts this package's own server module
         [sys.executable, "-m", "pilot.server", str(store.effort.resolve())],
         cwd=PLUGIN_ROOT,
         stdin=subprocess.DEVNULL,
@@ -99,8 +103,9 @@ def ensure_server(store: Store) -> dict:
 
 
 def open_page(record: dict) -> None:
-    """Open the page in a browser with a one-time code in the URL, not the token; whatever the launcher prints stays
-    off stdout, which carries only the number. Opens nothing when the server gives no code."""
+    """Open the page in a browser with a one-time code in the URL, not the token;
+    whatever the launcher prints stays off stdout, which carries only the number. Opens
+    nothing when the server gives no code."""
     try:
         code = json.loads(call(record, "/api/code", "POST", b"{}"))["code"]
     except (OSError, http.client.HTTPException):
@@ -117,7 +122,8 @@ def open_page(record: dict) -> None:
 
 
 def settle(store: Store, number: int, via: str) -> bool:
-    """Close interaction `number` with a response that carries no answers; False when a response already exists."""
+    """Close interaction `number` with a response that carries no answers; False when a
+    response already exists."""
     return store.respond(number, {}, via)
 
 

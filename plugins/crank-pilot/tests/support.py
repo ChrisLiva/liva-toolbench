@@ -1,4 +1,5 @@
-"""Helpers for the crank-pilot tests: an effort directory and the command run against it."""
+"""Helpers for the crank-pilot tests: an effort directory and the command run against
+it."""
 
 import contextlib
 import http.client
@@ -86,7 +87,8 @@ IMAGES = {
     "svg": b"<svg xmlns='http://www.w3.org/2000/svg'/>",
 }
 
-# The records the HTTP and journey tests send: answers to QUESTIONS, a readback's spec and marks, a prototype's verdict.
+# The records the HTTP and journey tests send: answers to QUESTIONS, a readback's spec
+# and marks, a prototype's verdict.
 Q1_B = {
     "id": "q1",
     "accepted": False,
@@ -205,7 +207,8 @@ class Effort:
         )
 
     def start_server(self, scale: int = 100) -> subprocess.Popen:
-        """Start the server directly, with no `show`, and return it once `server.json` names it."""
+        """Start the server directly, with no `show`, and return it once `server.json`
+        names it."""
         process = subprocess.Popen(
             [sys.executable, "-m", "pilot.server", str(self.path)],
             cwd=PLUGIN,
@@ -229,10 +232,8 @@ class Effort:
     def cleanup(self) -> None:
         self.run("close", self.path)
         for pid in self.pids:
-            try:
+            with contextlib.suppress(ProcessLookupError):
                 os.kill(pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
         for child in self.children:
             child.kill()
             child.wait()
@@ -240,7 +241,8 @@ class Effort:
 
 
 def recording_browser(effort: Effort) -> tuple[dict[str, str | None], Path]:
-    """An environment whose BROWSER appends its arguments to a file, and that file; it also writes to stdout."""
+    """An environment whose BROWSER appends its arguments to a file, and that file; it
+    also writes to stdout."""
     script = effort.write(
         "browser.sh",
         '#!/bin/sh\necho "$@" >> "$(dirname "$0")/opened.txt"\necho noise\n',
@@ -250,7 +252,8 @@ def recording_browser(effort: Effort) -> tuple[dict[str, str | None], Path]:
 
 
 def is_dead(pid: int) -> bool:
-    """True when no process has `pid`; a server `show` started has no parent left to reap it, so this is exact."""
+    """True when no process has `pid`; a server `show` started has no parent left to
+    reap it, so this is exact."""
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -266,7 +269,8 @@ class EffortCase(unittest.TestCase):
 
 
 class Client:
-    """The page's side of the HTTP interface, for the server `show` started on an effort."""
+    """The page's side of the HTTP interface, for the server `show` started on an
+    effort."""
 
     def __init__(self, effort: Effort) -> None:
         self.effort = effort
@@ -297,7 +301,8 @@ class Client:
             return refusal.code, refusal.read(), refusal.headers
 
     def raw(self, request: bytes, wait: float = 1.0) -> tuple[int, bytes]:
-        """Send `request` to the server unchanged and read until it closes or `wait` seconds pass; the status and body."""
+        """Send `request` to the server unchanged and read until it closes or `wait`
+        seconds pass; the status and body."""
         deadline = time.monotonic() + wait
         reply = b""
         with socket.create_connection(
@@ -345,10 +350,12 @@ def show(
     env: dict[str, str | None] | None = None,
     opened: Path | None = None,
 ) -> int:
-    """Run `show` on the interaction with a page beating once the server is up; return the printed number.
+    """Run `show` on the interaction with a page beating once the server is up; return
+    the printed number.
 
-    With `opened`, the page beats only once that file records a browser launch: a beat that lands before `show`
-    checks for a live page means a page is already open, and `show` then opens none."""
+    With `opened`, the page beats only once that file records a browser launch: a beat
+    that lands before `show` checks for a live page means a page is already open, and
+    `show` then opens none."""
     source = effort.write("interaction.json", json.dumps(interaction))
     process = effort.spawn("show", effort.path, source, scale=scale, env=env)
     client = None

@@ -45,7 +45,7 @@ class HttpCase(EffortCase):
 
 
 class NotPendingTest(HttpCase):
-    def test_a_draft_or_response_for_an_interaction_that_is_not_pending_gets_409_and_writes_nothing(
+    def test_a_draft_or_response_for_a_non_pending_interaction_gets_409_writing_nothing(
         self,
     ):
         effort, client = self.round()
@@ -194,7 +194,8 @@ class InvalidResponseTest(HttpCase):
 
 class ReadbackHttpCase(HttpCase):
     def readback(self, interaction: dict = READBACK) -> tuple[Effort, Client]:
-        """An effort whose pending interaction 1 is a readback of the 5-line spec, kept as version 1."""
+        """An effort whose pending interaction 1 is a readback of the 5-line spec, kept
+        as version 1."""
         effort = self.effort()
         effort.write("spec.md", SPEC)
         show(effort, interaction)
@@ -365,7 +366,10 @@ class FileRoutesTest(HttpCase):
         client = Client(effort)
 
         def raw_get(path: str) -> int:
-            request = f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{client.port}\r\nX-Pilot-Token: {client.token}\r\n\r\n"
+            request = (
+                f"GET {path} HTTP/1.1\r\nHost: 127.0.0.1:{client.port}\r\n"
+                f"X-Pilot-Token: {client.token}\r\n\r\n"
+            )
             return client.raw(request.encode())[0]
 
         refused = {
@@ -432,7 +436,7 @@ class ContentTypeTest(HttpCase):
 
 
 class PageShellTest(HttpCase):
-    def test_the_page_and_its_files_load_with_no_token_typed_by_extension_and_the_page_names_only_its_own_paths(
+    def test_page_files_load_with_no_token_by_extension_and_name_only_its_own_paths(
         self,
     ):
         effort = self.effort()
@@ -467,7 +471,8 @@ def raw_request(
     body: bytes = b"",
     length: str | None = "auto",
 ) -> tuple[int, bytes]:
-    """One request written by hand through `Client.raw`: the Host line, the token header, and the length are each settable."""
+    """One request written by hand through `Client.raw`: the Host line, the token
+    header, and the length are each settable."""
     lines = [f"{method} {path} HTTP/1.1", f"Host: {host or f'127.0.0.1:{client.port}'}"]
     if token:
         lines.append(f"X-Pilot-Token: {client.token}")
@@ -483,7 +488,7 @@ class GuardTest(HttpCase):
     def test_a_request_whose_host_is_not_this_server_gets_403_static_files_included(
         self,
     ):
-        effort, client = self.round()
+        _effort, client = self.round()
         home = f"localhost:{client.port}"
         cases = {
             "state with a foreign host": ("GET", "/api/state", "evil.example", 403),
@@ -542,7 +547,7 @@ class GuardTest(HttpCase):
                 )
         self.assertTrue(draft.exists())
 
-    def test_a_request_without_the_right_token_gets_403_except_the_pages_static_files_the_beacon_and_the_code_exchange(
+    def test_no_right_token_gets_403_except_static_files_the_beacon_and_code_exchange(
         self,
     ):
         effort, client = self.round()
@@ -589,13 +594,16 @@ class GuardTest(HttpCase):
                     403,
                 )
 
-    def test_a_json_body_over_1_mib_gets_413_before_it_is_read_and_a_body_with_no_length_gets_411(
+    def test_a_json_body_over_1_mib_gets_413_unread_and_a_body_with_no_length_gets_411(
         self,
     ):
         effort, client = self.round()
         draft = effort.path / "pilot" / "drafts" / "001.json"
         cap = 1 << 20
-        padded = lambda size: b'{"pad":"' + b"x" * (size - 10) + b'"}'
+
+        def padded(size):
+            return b'{"pad":"' + b"x" * (size - 10) + b'"}'
+
         self.assertEqual(client.request("PUT", "/api/draft/1", padded(cap + 1))[0], 413)
         self.assertFalse(draft.exists())
         self.assertEqual(
@@ -612,10 +620,10 @@ class GuardTest(HttpCase):
                     raw_request(client, "PUT", "/api/draft/1", length=length)[0], 400
                 )
 
-    def test_a_5000_digit_interaction_or_attachment_number_gets_a_4xx_reply_not_a_dropped_connection(
+    def test_a_5000_digit_interaction_or_attachment_number_gets_a_4xx_not_a_drop(
         self,
     ):
-        effort, client = self.round()
+        _effort, client = self.round()
         digits = "9" * 5000
         for method, path in (
             ("POST", f"/api/attachment/{digits}"),
@@ -646,7 +654,7 @@ class AttachmentTest(HttpCase):
         directory = effort.path / "pilot" / "attachments"
         return sorted(p.name for p in directory.iterdir()) if directory.is_dir() else []
 
-    def test_png_jpeg_gif_and_webp_are_accepted_by_their_leading_bytes_whatever_the_content_type_says(
+    def test_png_jpeg_gif_and_webp_are_accepted_by_leading_bytes_whatever_content_type(
         self,
     ):
         effort, client = self.round()
@@ -661,7 +669,7 @@ class AttachmentTest(HttpCase):
                 )
                 self.assertEqual((effort.path / path).read_bytes(), IMAGES[kind])
 
-    def test_anything_that_is_not_one_of_the_four_image_types_gets_415_naming_them_and_writes_nothing(
+    def test_a_non_image_type_gets_415_naming_the_four_types_and_writes_nothing(
         self,
     ):
         effort, client = self.round()
@@ -697,7 +705,7 @@ class AttachmentTest(HttpCase):
             (effort.path / "pilot" / "attachments" / "001-1.png").stat().st_size, cap
         )
 
-    def test_an_eleventh_image_gets_409_and_a_new_image_is_numbered_one_above_the_highest_present(
+    def test_an_eleventh_image_gets_409_and_a_new_image_is_numbered_above_the_highest(
         self,
     ):
         effort, client = self.round()
@@ -713,7 +721,7 @@ class AttachmentTest(HttpCase):
         self.assertEqual(self.upload(client, png)[0], 409)
         self.assertEqual(len(self.stored(effort)), 10)
 
-    def test_an_image_is_removable_until_a_response_names_it_by_its_path_and_then_neither_added_nor_removed(
+    def test_an_image_is_removable_until_a_response_names_it_then_not_added_or_removed(
         self,
     ):
         effort, client = self.round()

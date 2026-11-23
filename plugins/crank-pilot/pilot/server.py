@@ -1,4 +1,5 @@
-"""The effort's HTTP server: `python -m pilot.server <effort-dir>`. It keeps no session state beyond the files."""
+"""The effort's HTTP server: `python -m pilot.server <effort-dir>`. It keeps no session
+state beyond the files."""
 
 import contextlib
 import hmac
@@ -130,7 +131,8 @@ class Server(ThreadingHTTPServer):
         return code
 
     def take_code(self, code: object) -> bool:
-        """True and the code is spent when it is a live code; two callers with one code never both get True."""
+        """True and the code is spent when it is a live code; two callers with one code
+        never both get True."""
         with self._codes_lock:
             if isinstance(code, str) and code in self.codes:
                 self.codes.remove(code)
@@ -138,9 +140,10 @@ class Server(ThreadingHTTPServer):
             return False
 
     def watch(self) -> None:
-        """Stop serving when the `ended` window has passed (after removing the heartbeat and the record), or when the
-        record is gone or names another process or nothing has touched `heartbeat` or `contact` for 30 scaled
-        minutes (leaving it as it is)."""
+        """Stop serving when the `ended` window has passed (after removing the heartbeat
+        and the record), or when the record is gone or names another process or nothing
+        has touched `heartbeat` or `contact` for 30 scaled minutes (leaving it as it
+        is)."""
         started = time.time()
         while True:
             time.sleep(max(scaled(WATCH), MIN_TICK))
@@ -194,17 +197,19 @@ class Handler(BaseHTTPRequestHandler):
         }
 
     def require_pending(self, n: int) -> bool:
-        """True when `n` is the pending interaction; otherwise answer 409 and return False."""
+        """True when `n` is the pending interaction; otherwise answer 409 and return
+        False."""
         if self.server.store.pending() == n:
             return True
         self.reply_json(409, {"error": "that interaction is not pending"})
         return False
 
     def read_body(self, cap: int) -> bytes | object:
-        """The request body bytes, or `_Refused` after answering a refusal: 411 with no `Content-Length`, 400 when it
-        is not a plain number of at most 15 digits, 413 over `cap`, all on the header alone. A 413's body is discarded
-        after the reply, up to `DRAIN_LIMIT`, so a client still sending reads the 413 instead of a reset. A body the
-        client cut short is dropped without a reply."""
+        """The request body bytes, or `_Refused` after answering a refusal: 411 with no
+        `Content-Length`, 400 when it is not a plain number of at most 15 digits, 413
+        over `cap`, all on the header alone. A 413's body is discarded after the reply,
+        up to `DRAIN_LIMIT`, so a client still sending reads the 413 instead of a reset.
+        A body the client cut short is dropped without a reply."""
         length = self.headers.get("Content-Length")
         if length is None:
             self.reply_json(411, {"error": "length required"})
@@ -339,7 +344,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply_json(
                 415,
                 {
-                    "error": "unsupported image type: accepted types are PNG, JPEG, GIF, WebP"
+                    "error": "unsupported image type: "
+                    "accepted types are PNG, JPEG, GIF, WebP"
                 },
             )
         k = self.server.store.add_attachment(n, body, extension)
