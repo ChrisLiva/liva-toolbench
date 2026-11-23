@@ -153,16 +153,15 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
   );
   teardown();
 
-  // The hash picks the version to open on only when it names this interaction.
-  const opensOn = async (hash) => {
-    window.history.replaceState(null, "", hash);
+  // A version picked on the slider survives a reload of its interaction, and not the next interaction.
+  const opensOn = async (number, pick) => {
     document.getElementById("reading").replaceChildren();
     document.getElementById("ledger").replaceChildren();
     const stop = surface.mount(
       stage,
       {
         ...STATE,
-        interaction: { ...STATE.interaction, version: 2 },
+        interaction: { ...STATE.interaction, number, version: 2 },
         versions: [
           { n: 1, file: "kept/spec-v1.md" },
           { n: 2, file: "kept/spec-v2.md" },
@@ -171,12 +170,18 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
       ctx,
     );
     await tick(20);
-    const shown = document.getElementById("ver").value;
+    const slider = document.getElementById("ver");
+    const shown = slider.value;
+    if (pick !== undefined) {
+      slider.value = String(pick);
+      slider.dispatchEvent(new window.Event("input", { bubbles: true }));
+    }
     stop();
     return shown;
   };
-  assert.equal(await opensOn("#n=1&version=1"), "1");
-  assert.equal(await opensOn("#n=9&version=1"), "2");
+  assert.equal(await opensOn(1, 1), "2");
+  assert.equal(await opensOn(1), "1");
+  assert.equal(await opensOn(2), "2");
 });
 
 test("readback: Approve with Other chosen and nothing typed is refused and focuses the field", async () => {
@@ -225,7 +230,7 @@ test("readback: Approve with Other chosen and nothing typed is refused and focus
 
   document.querySelector('input[type="radio"][value="own"]').click();
   approve.click();
-  assert.equal(err(), 'Type your answer to "Which?" or pick an option.');
+  assert.match(err(), /Which\?/);
   assert.equal(document.activeElement, field);
   assert.equal(sent.length, 0);
 

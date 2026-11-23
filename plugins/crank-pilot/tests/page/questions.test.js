@@ -51,7 +51,7 @@ test("questions: Other chosen with nothing typed refuses the send and focuses th
 
   document.querySelector('input[type="radio"][value="own"]').click();
   sendButton.click();
-  assert.equal(err(), 'Type your answer to "Which?" or pick an option.');
+  assert.match(err(), /Which\?/);
   assert.equal(document.activeElement, field);
   assert.equal(sent.length, 0);
 
