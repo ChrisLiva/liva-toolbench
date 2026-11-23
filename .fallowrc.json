@@ -1,0 +1,14 @@
+{
+  "entry": [
+    "plugins/crank-pilot/page/*.js",
+    "plugins/crank-pilot/page/page.css",
+    "plugins/crank-pilot/tests/page/*.js"
+  ],
+  "ignoreUnresolvedImports": ["/page/**"],
+  "rules": {
+    "complexity-cyclomatic": "off",
+    "complexity-crap": "off",
+    "complexity-file-lines": "off"
+  },
+  "health": { "maxCognitive": 15 }
+}

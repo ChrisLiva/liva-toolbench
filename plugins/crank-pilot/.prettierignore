@@ -1,0 +1,5 @@
+page/vendor/
+.impeccable/
+.venv/
+.ruff_cache/
+.complexipy_cache/

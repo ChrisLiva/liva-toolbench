@@ -1,0 +1,14 @@
+{
+  "entry": [
+    "plugins/crank-pilot/page/app.js",
+    "plugins/crank-pilot/tests/page/*.test.js",
+    "plugins/crank-pilot/tests/page/hooks.js"
+  ],
+  "project": [
+    "plugins/crank-pilot/page/**/*.js",
+    "plugins/crank-pilot/tests/page/*.js"
+  ],
+  "ignore": ["plugins/crank-pilot/page/vendor/**"],
+  "paths": { "/page/*": ["plugins/crank-pilot/page/*"] },
+  "ignoreDependencies": ["aislop", "fallow", "oxlint", "prettier"]
+}

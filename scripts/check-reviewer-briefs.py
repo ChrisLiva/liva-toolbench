@@ -204,7 +204,7 @@ HEALTH_TESTS = "plugins/crank/skills/crank-health/scripts/tests"
 # need no network, so a broken command or page server fails here.
 PILOT_TESTS = "plugins/crank-pilot/tests"
 
-# The crank-pilot page's tests run on Node against jsdom, which `npm ci` installs
+# The crank-pilot page's tests run on Node against jsdom, which `pnpm install --frozen-lockfile` installs
 # (docs/adr/0006-page-tests-run-on-node-and-jsdom.md).
 PAGE_TESTS = "plugins/crank-pilot/tests/page"
 
@@ -365,7 +365,7 @@ def check_unittests(failures, directory):
 
 def check_node_tests(failures, directory):
     if not (ROOT / "node_modules" / "jsdom").is_dir():
-        failures.append("FAIL page tests: run npm ci first")
+        failures.append("FAIL page tests: run pnpm install --frozen-lockfile first")
         return
     try:
         proc = subprocess.run(
