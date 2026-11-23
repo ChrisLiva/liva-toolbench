@@ -253,7 +253,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply_json(415, {"error": "unsupported image type: accepted types are PNG, JPEG, GIF, WebP"})
         k = self.server.store.add_attachment(n, body, extension)
         if k is None:
-            return self.reply_json(409, {"error": "ten images are already attached"})
+            return self.reply_json(409, {"error": "ten images are already attached", "code": "attachment_limit"})
         self.reply_json(201, {"path": f"pilot/attachments/{n:03d}-{k}.{extension}", "k": k})
 
     def delete_attachment(self, match: re.Match, body: object) -> None:

@@ -391,7 +391,7 @@ class AttachmentTest(HttpCase):
         for expected in range(1, 11):
             self.assertEqual(json.loads(self.upload(client, png)[1])["k"], expected)
         status, reply = self.upload(client, png)
-        self.assertEqual((status, json.loads(reply)["error"]), (409, "ten images are already attached"))
+        self.assertEqual((status, json.loads(reply)["code"]), (409, "attachment_limit"))
         self.assertEqual(client.request("DELETE", "/api/attachment/1/3")[0], 204)
         self.assertNotIn("001-3.png", self.stored(effort))
         status, reply = self.upload(client, png)

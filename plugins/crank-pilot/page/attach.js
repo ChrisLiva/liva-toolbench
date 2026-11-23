@@ -39,7 +39,7 @@ async function refusalFor(res) {
   if (res.status === 413) return ATTACH_MESSAGES.size;
   if (res.status === 409) {
     const body = await res.json().catch(() => ({}));
-    return body.error === "ten images are already attached" ? ATTACH_MESSAGES.count : "";
+    return body.code === "attachment_limit" ? ATTACH_MESSAGES.count : "";
   }
   return FAILED;
 }
