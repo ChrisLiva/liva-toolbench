@@ -231,16 +231,21 @@ class Handler(BaseHTTPRequestHandler):
         port = self.pilot.server_address[1]
         return f"127.0.0.1:{port}", f"localhost:{port}"
 
-    def dispatch(self) -> None:
+    def foreign(self) -> bool:
+        """Whether the Host names another server, or a write comes from another
+        origin."""
         if self.headers.get("Host") not in self.home():
-            return self.reply_json(403, {"error": "forbidden"})
+            return True
         origin = self.headers.get("Origin")
-        if (
+        return (
             self.command in WRITES
             and origin is not None
             and origin not in map("http://{}".format, self.home())
-        ):
-            return self.reply_json(403, {"error": "forbidden"})
+        )
+
+    def find_route(self) -> tuple[Route, re.Match] | None:
+        """The route and match for this request, or None after answering 404 for a
+        path no route has and 405 for a path with another method."""
         path = self.path.partition("?")[0]
         matches = [
             (route, match)
@@ -256,22 +261,35 @@ class Handler(BaseHTTPRequestHandler):
             None,
         )
         if not found:
-            return self.reply_json(
+            self.reply_json(
                 405 if matches else 404,
                 {"error": "not allowed" if matches else "not found"},
             )
+        return found
+
+    def read_json(self, route: Route) -> object:
+        """The request body for `route`: `_Refused` after answering a refusal,
+        `_NotJson` for a JSON route whose body does not parse, else the bytes or the
+        parsed JSON."""
+        body = self.read_body(cast(int, route.cap))
+        if body is _Refused or route.raw:
+            return body
+        try:
+            return json.loads(cast(bytes, body))
+        except ValueError:
+            return _NotJson
+
+    def dispatch(self) -> None:
+        if self.foreign():
+            return self.reply_json(403, {"error": "forbidden"})
+        if (found := self.find_route()) is None:
+            return
         route, match = found
         if not (route.public or self.has_token()):
             return self.reply_json(403, {"error": "forbidden"})
         body = None
-        if route.cap is not None:
-            if (body := self.read_body(route.cap)) is _Refused:
-                return
-            if not route.raw:
-                try:
-                    body = json.loads(cast(bytes, body))
-                except ValueError:
-                    body = _NotJson
+        if route.cap is not None and (body := self.read_json(route)) is _Refused:
+            return
         getattr(self, route.handler)(match, body)
 
     do_GET = do_PUT = do_POST = do_DELETE = dispatch

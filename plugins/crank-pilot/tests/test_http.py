@@ -176,12 +176,30 @@ class InvalidResponseTest(HttpCase):
                 "answers": [{**Q1_A, "accepted": False}, Q2]
             },
         }
+        said = {
+            "option not offered": "answers[0].option: must be null or one of a, b",
+            "option on a question with none": "answers[1].option: must be null",
+            "accepted contradicts the rule": (
+                "answers[1].accepted: must be false for this answer"
+            ),
+            "recommended option not accepted": (
+                "answers[0].accepted: must be true for this answer"
+            ),
+        }
         for name, body in cases.items():
             with self.subTest(name):
                 status, reply = send(client, "POST", "/api/response/1", body)
                 self.assertEqual(status, 400)
                 self.assertTrue(reply["problems"])
+                if name in said:
+                    self.assertEqual(reply["problems"], [said[name]])
                 self.assertFalse(self.response_file(effort).exists())
+        status, body, _ = client.request("POST", "/api/response/1", b"x")
+        self.assertEqual(
+            (status, json.loads(body)),
+            (400, {"problems": ["body: must be valid JSON"]}),
+        )
+        self.assertFalse(self.response_file(effort).exists())
         own_text = {**Q2, "accepted": False, "text": "x"}
         self.assertEqual(
             send(client, "POST", "/api/response/1", {"answers": [Q1_A, own_text]})[0],
@@ -397,6 +415,13 @@ class FileRoutesTest(HttpCase):
         self.assertEqual(
             client.request("GET", "/api/file/notes/two%20words.md")[:2], (200, b"ok")
         )
+        for method, path, status, error in (
+            ("GET", "/api/nowhere", 404, "not found"),
+            ("POST", "/api/state", 405, "not allowed"),
+        ):
+            with self.subTest(method=method, path=path):
+                got, body, _ = client.request(method, path, b"{}")
+                self.assertEqual((got, json.loads(body)), (status, {"error": error}))
 
 
 class ContentTypeTest(HttpCase):

@@ -211,14 +211,25 @@ def _answer(
             f"{' or one of ' + ', '.join(sorted(offered)) if offered else ''}"
         )
     elif isinstance(text, str) and isinstance(answer.get("accepted"), bool):
-        if offered and option is None and not text:
-            problems.append(f"{path}.text: an own answer needs text")
-        accepted = option == question.get("recommended") if offered else not text
-        if answer["accepted"] != accepted:
-            problems.append(
-                f"{path}.accepted: must be {str(accepted).lower()} for this answer"
-            )
+        problems += _acceptance(answer, question, offered, path)
     return problems + _attachments(answer, number, effort, path)
+
+
+def _acceptance(
+    answer: dict, question: dict, offered: set[str], path: str
+) -> list[str]:
+    """What an answer's `text` and `accepted` must say, given its `option`: an own
+    answer needs text, and `accepted` is true only for the recommended option."""
+    option, text = answer.get("option"), answer["text"]
+    problems = []
+    if offered and option is None and not text:
+        problems.append(f"{path}.text: an own answer needs text")
+    accepted = option == question.get("recommended") if offered else not text
+    if answer["accepted"] != accepted:
+        problems.append(
+            f"{path}.accepted: must be {str(accepted).lower()} for this answer"
+        )
+    return problems
 
 
 def _attachments(holder: dict, number: int, effort: Path, path: str) -> list[str]:
