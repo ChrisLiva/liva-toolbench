@@ -386,8 +386,10 @@ def check_node_tests(failures, directory):
         failures.append(f"FAIL {directory}: " + " | ".join(tail))
 
 
-def check_tool(failures, label, argv, cwd, env=None):
-    """Run one tool; a non-zero exit or a missing binary is a FAIL line naming it."""
+def check_tool(failures, label, argv, cwd, env=None, focus=None):
+    """Run one tool; a non-zero exit or a missing binary is a FAIL line naming it.
+    With `focus`, the line carries each output line holding it plus the line after
+    (the finding's location) instead of the output's last six lines."""
     try:
         proc = subprocess.run(
             argv, cwd=cwd, env={**os.environ, **(env or {})},
@@ -398,8 +400,16 @@ def check_tool(failures, label, argv, cwd, env=None):
         return
     if proc.returncode != 0:
         lines = (proc.stdout + "\n" + proc.stderr).splitlines()
-        tail = [line.strip() for line in lines if line.strip()][-6:]
-        failures.append(f"FAIL crank-pilot {label}: " + " | ".join(tail))
+        lines = [line.strip() for line in lines if line.strip()]
+        picked = [
+            kept
+            for i, line in enumerate(lines)
+            if focus and focus in line
+            for kept in lines[i : i + 2]
+        ]
+        failures.append(
+            f"FAIL crank-pilot {label}: " + " | ".join(picked or lines[-6:])
+        )
 
 
 def check_pilot_tools(failures):
@@ -410,16 +420,17 @@ def check_pilot_tools(failures):
     if (js_bin / "oxlint").exists():
         check_tool(failures, "pnpm lockfile", ["pnpm", "install", "--frozen-lockfile", "--offline", "--lockfile-only"], ROOT)
         js = [
-            ("oxlint", [str(js_bin / "oxlint"), "--deny-warnings", PILOT_DIR], ROOT, None),
-            ("prettier", [str(js_bin / "prettier"), "--check", "."], plugin, None),
-            ("tsc", [str(js_bin / "tsc"), "--noEmit", "-p", f"{PILOT_DIR}/tsconfig.json"], ROOT, None),
-            ("knip", [str(js_bin / "knip"), "--no-progress"], ROOT, None),
-            ("fallow health", [str(js_bin / "fallow"), "health", "--root", PILOT_DIR, "--no-cache", "-q"], ROOT, None),
-            ("fallow dead-code", [str(js_bin / "fallow"), "dead-code", PILOT_DIR, "--no-cache", "-q"], ROOT, None),
-            ("aislop", [str(js_bin / "aislop"), "scan", PILOT_DIR], ROOT, {"AISLOP_NO_TELEMETRY": "1"}),
+            ("oxlint", [str(js_bin / "oxlint"), "--deny-warnings", PILOT_DIR], ROOT, None, None),
+            ("prettier", [str(js_bin / "prettier"), "--check", "."], plugin, None, None),
+            ("tsc", [str(js_bin / "tsc"), "--noEmit", "-p", f"{PILOT_DIR}/tsconfig.json"], ROOT, None, None),
+            ("knip", [str(js_bin / "knip"), "--no-progress"], ROOT, None, None),
+            ("fallow health", [str(js_bin / "fallow"), "health", "--root", PILOT_DIR, "--no-cache", "-q"], ROOT, None, None),
+            ("fallow dead-code", [str(js_bin / "fallow"), "dead-code", PILOT_DIR, "--no-cache", "-q"], ROOT, None, None),
+            # aislop prints its findings first and a repair-plan footer last.
+            ("aislop", [str(js_bin / "aislop"), "scan", PILOT_DIR], ROOT, {"AISLOP_NO_TELEMETRY": "1"}, "[ERROR]"),
         ]
-        for label, argv, cwd, env in js:
-            check_tool(failures, label, argv, cwd, env)
+        for label, argv, cwd, env, focus in js:
+            check_tool(failures, label, argv, cwd, env, focus)
     else:
         failures.append("FAIL crank-pilot JS tools: run pnpm install --frozen-lockfile first")
     if (venv_bin / "ruff").exists():
