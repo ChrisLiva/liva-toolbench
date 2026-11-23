@@ -6,7 +6,7 @@ import { JSDOM } from "jsdom";
 
 const PAGE_DIR = new URL("../../page/", import.meta.url);
 const URL_BASE = "http://127.0.0.1:1/";
-const GLOBALS = ["document", "Node", "NodeFilter", "location", "history", "sessionStorage", "HTMLElement", "Range"];
+const GLOBALS = ["document", "Node", "NodeFilter", "location", "history", "sessionStorage"];
 
 export function pageWindow() {
   const html = readFileSync(new URL("index.html", PAGE_DIR), "utf8").replace(/<script\b[^>]*>\s*<\/script>/g, "");
