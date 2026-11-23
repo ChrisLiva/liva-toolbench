@@ -137,7 +137,7 @@ export function occurrenceOf(text, quote, start) {
 // The nearest heading at or above block `index`: a heading block is under itself.
 export function headingAbove(blocks, index) {
   for (let i = Math.min(index, blocks.length - 1); i >= 0; i--) {
-    if (/^h[1-6]$/.test(blocks[i].tag)) return blocks[i].text ?? "";
+    if (/^h[1-6]$/.test(blocks[i].tag)) return blocks[i].text;
   }
   return "";
 }

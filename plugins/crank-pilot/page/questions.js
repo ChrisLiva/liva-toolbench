@@ -112,7 +112,7 @@ export function mountQuestions(root, questions, initial, onChange, { interaction
       emit();
     },
     focusQuestion(qid) {
-      parts.get(qid)?.text.focus();
+      parts.get(qid).text.focus();
     },
   };
 }

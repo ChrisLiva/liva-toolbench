@@ -17,10 +17,10 @@ export const surface = {
   mount(stage, state, ctx) {
     const { number, title, artifact, version, lead, judgment_calls: calls, review_landed: landed, edits, decisions } = state.interaction;
     const known = Array.isArray(state.versions) && state.versions.length ? state.versions : [version];
-    const prior = state.prior && typeof state.prior === "object" ? state.prior : null;
+    const prior = state.prior ?? null;
     // A revision: the version on offer is not the one the user last marked up.
     const revised = prior !== null && prior.version !== version;
-    const asked = revised && Array.isArray(prior.marks) ? prior.marks : [];
+    const asked = revised ? prior.marks : [];
     const draft = state.draft && typeof state.draft === "object" ? state.draft : {};
     const reading = stage.querySelector("#reading");
     const ledger = stage.querySelector("#ledger");
@@ -165,7 +165,7 @@ export const surface = {
       const range = document.createRange();
       range.selectNodeContents(block);
       propose(range, "block", block);
-      pop.querySelector("button")?.focus();
+      pop.querySelector("button").focus();
     }
 
     function commit(type, text) {
@@ -230,7 +230,7 @@ export const surface = {
       const block = event.target;
       // 'Enter' on a focused block marks the whole block; Ctrl or Cmd with it stays the send shortcut.
       if (event.key !== "Enter" || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
-      if (!block.matches?.("[data-lines][tabindex]") || !art.contains(block)) return;
+      if (!block.matches("[data-lines][tabindex]") || !art.contains(block)) return;
       event.preventDefault();
       fromBlock(block);
     });
@@ -376,7 +376,7 @@ export const surface = {
       lmarks.classList.add("abs");
       let prev = -12;
       for (const item of items.sort(byPosition)) {
-        const top = Math.max(Number.isFinite(item.ay) ? item.ay - 8 : 0, prev + 12, 0);
+        const top = Math.max(Number.isFinite(item.ay) ? item.ay - 8 : 0, prev + 12);
         item.note.style.top = `${top}px`;
         prev = top + item.note.offsetHeight;
         if (!Number.isFinite(item.ay)) continue;
@@ -389,7 +389,7 @@ export const surface = {
           lmarks.append(down);
         }
       }
-      lmarks.style.height = `${Math.max(prev, 0)}px`;
+      lmarks.style.height = `${prev}px`;
     }
     window.addEventListener("resize", layout);
     const watcher = new ResizeObserver(layout);

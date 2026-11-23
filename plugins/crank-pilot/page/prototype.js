@@ -204,7 +204,7 @@ export const surface = {
       box.classList.toggle("picking", picking);
       hint.textContent = picking ? "Click an element of the variant to pin a comment" : "";
       if (!picking) closeAsk(false);
-      frame?.contentWindow?.postMessage({ pilotPick: picking }, "*");
+      frame?.contentWindow.postMessage({ pilotPick: picking }, "*");
     });
 
     send.addEventListener("click", async () => {

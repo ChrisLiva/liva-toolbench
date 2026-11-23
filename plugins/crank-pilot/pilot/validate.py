@@ -10,7 +10,7 @@ PHASES = ("brainstorm", "spec", "plan")
 
 def inside(root: Path, rel: str) -> Path | None:
     """The resolved path of `rel` when it is relative, stays within `root`, and names a regular file, else None."""
-    if not isinstance(rel, str) or not rel or Path(rel).is_absolute():
+    if not rel or Path(rel).is_absolute():
         return None
     try:
         base = root.resolve()

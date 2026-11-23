@@ -107,21 +107,21 @@ export function mountAttach(root, { interaction, paths, count, onChange, zone = 
   }
 
   const gestures = {
-    'paste': (event) => {
+    paste: (event) => {
       const files = [...(event.clipboardData?.files ?? [])];
       if (!files.length) return;
       event.preventDefault();
       add(files);
     },
-    'dragover': (event) => {
+    dragover: (event) => {
       if (![...(event.dataTransfer?.types ?? [])].includes("Files")) return;
       event.preventDefault();
       bound.classList.add("drop");
     },
-    'dragleave': (event) => {
+    dragleave: (event) => {
       if (!bound.contains(event.relatedTarget)) bound.classList.remove("drop");
     },
-    'drop': (event) => {
+    drop: (event) => {
       bound.classList.remove("drop");
       const files = [...(event.dataTransfer?.files ?? [])];
       if (!files.length) return;

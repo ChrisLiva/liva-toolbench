@@ -8,7 +8,6 @@ prototype's first variant. It runs until killed, so run.sh starts it before the 
 import json
 import sys
 import time
-import urllib.error
 import urllib.request
 from pathlib import Path
 

@@ -210,7 +210,7 @@ class Store:
     def record(self) -> dict | None:
         """The server record, or None when server.json is missing, unreadable, or not a record."""
         try:
-            record = json.loads(self.server_json.read_text()) if self.server_json.is_file() else None
+            record = json.loads(self.server_json.read_text())
         except (OSError, ValueError):
             return None
         shape = {"pid": int, "port": int, "token": str}
