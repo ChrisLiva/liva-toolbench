@@ -1,6 +1,6 @@
 import { getFile } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
-import { el, plural, sendControl } from "/page/dom.js";
+import { el, hashParam, plural, sendControl, setHashParam } from "/page/dom.js";
 import {
   attachedCount,
   numberPins,
@@ -26,16 +26,13 @@ const PICKER =
   `const text=(e.target.textContent||'').replace(/\\s+/g,' ').trim().slice(0,${LEADING});` +
   "parent.postMessage({pilotPick:{selector:path(e.target),leading_text:text}},'*')},true)})();";
 
-const hashKey = () =>
-  new URLSearchParams(location.hash.slice(1)).get("variant");
-
 export const surface = {
   mount(stage, state, ctx) {
     const { number, question, variants } = state.interaction;
     let { verdict, pins } = prototypeFrom(variants, state.draft);
     let index = Math.max(
       0,
-      variants.findIndex((v) => v.key === hashKey()),
+      variants.findIndex((v) => v.key === hashParam(number, "variant")),
     );
     let picking = false;
     /**
@@ -242,11 +239,7 @@ export const surface = {
       label.textContent = `${v.key} · ${v.name}`;
       big.textContent = v.key;
       big.setAttribute("aria-label", `Variant ${v.key}`);
-      history.replaceState(
-        history.state,
-        "",
-        `#variant=${encodeURIComponent(v.key)}`,
-      );
+      setHashParam(number, "variant", v.key);
       closeAsk(false);
       frame = null;
       box.replaceChildren(el("p", { class: "l vmsg" }, "Loading the variant"));

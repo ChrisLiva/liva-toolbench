@@ -1,7 +1,14 @@
 import { getFile } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
 import { anchoring, plain } from "/page/anchor.js";
-import { el, mac, plural, sendControl } from "/page/dom.js";
+import {
+  el,
+  hashParam,
+  mac,
+  plural,
+  sendControl,
+  setHashParam,
+} from "/page/dom.js";
 import { mountQuestions } from "/page/questions.js";
 import {
   attachedCount,
@@ -87,9 +94,7 @@ export const surface = {
     let alive = true;
     let requested = 0;
     const controls = new Map();
-    const hashed = Number(
-      new URLSearchParams(location.hash.slice(1)).get("version"),
-    );
+    const hashed = Number(hashParam(number, "version"));
     let shown = known.includes(hashed) ? hashed : version;
     const older = () => shown !== version;
 
@@ -714,11 +719,7 @@ export const surface = {
       input.addEventListener("input", () => {
         shown = Number(input.value);
         input.setAttribute("aria-valuetext", valueText(shown));
-        history.replaceState(
-          history.state,
-          "",
-          `${location.pathname}${location.search}#version=${shown}`,
-        );
+        setHashParam(number, "version", shown);
         closePop(false);
         refreshButtons();
         load();

@@ -149,4 +149,26 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
     ["comment"],
   );
   teardown();
+
+  // The hash picks the version to open on only when it names this interaction.
+  const opensOn = async (hash) => {
+    window.history.replaceState(null, "", hash);
+    document.getElementById("reading").replaceChildren();
+    document.getElementById("ledger").replaceChildren();
+    const stop = surface.mount(
+      stage,
+      {
+        ...STATE,
+        interaction: { ...STATE.interaction, version: 2 },
+        versions: [1, 2],
+      },
+      ctx,
+    );
+    await tick(20);
+    const shown = document.getElementById("ver").value;
+    stop();
+    return shown;
+  };
+  assert.equal(await opensOn("#n=1&version=1"), "1");
+  assert.equal(await opensOn("#n=9&version=1"), "2");
 });
