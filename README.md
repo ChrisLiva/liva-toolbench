@@ -103,7 +103,7 @@ A model id outside the `claude-<family>-<major>-<minor>` form shows as the engin
 
 ### `crank-pilot` puts crank's questions and reviews on a local web page
 
-This Claude Code plugin ships a `crank-pilot` command, which a plugin's `bin/` puts on PATH. It opens a page in a local browser tab where you answer crank and crank-lite's question rounds, mark up readbacks, and review prototypes. Each answer is saved as a file in the effort directory, so the agent reads it back, and the session continues in chat if the page fails. Its tests run with `python3 -m unittest discover -s plugins/crank-pilot/tests`.
+This Claude Code plugin ships a `crank-pilot` command, which a plugin's `bin/` puts on PATH. It opens a page in a local browser tab where you answer crank and crank-lite's question rounds, mark up readbacks, and review prototypes. Each answer is saved as a file in the effort directory, so the agent reads it back, and the session continues in chat if the page fails. Its tests run with `python3 -m unittest discover -s plugins/crank-pilot/tests`. Its page tests need `npm ci` once and run with `node --import ./plugins/crank-pilot/tests/page/hooks.js --test --test-force-exit plugins/crank-pilot/tests/page/*.test.js`.
 
 ---
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Gate the adversarial-review sites, the orchestrator skills' promised
 literals, the hand-synced reference copies, the prose pointers to sections,
-the wizard template, crank-health's scanner, crank-pilot's tests, and the
-agent-effort mod.
+the wizard template, crank-health's scanner, crank-pilot's tests and page
+tests, and the agent-effort mod.
 
 Prints one line per failed check and exits 1 when any fails, 0 when all pass.
 Run from the repository root: python3 scripts/check-reviewer-briefs.py
@@ -204,6 +204,10 @@ HEALTH_TESTS = "plugins/crank/skills/crank-health/scripts/tests"
 # need no network, so a broken command or page server fails here.
 PILOT_TESTS = "plugins/crank-pilot/tests"
 
+# The crank-pilot page's tests run on Node against jsdom, which `npm ci` installs
+# (docs/adr/0006-page-tests-run-on-node-and-jsdom.md).
+PAGE_TESTS = "plugins/crank-pilot/tests/page"
+
 # The agent-effort mod runs against an engine API that changes between Claude
 # Code releases, so the installed engine checks it on every gate run.
 MOD_DIR = "plugins/agent-effort"
@@ -359,6 +363,19 @@ def check_unittests(failures, directory):
         failures.append(f"FAIL {directory}: " + " | ".join(tail))
 
 
+def check_node_tests(failures, directory):
+    if not (ROOT / "node_modules" / "jsdom").is_dir():
+        failures.append("FAIL page tests: run npm ci first")
+        return
+    proc = subprocess.run(
+        ["node", "--import", f"./{directory}/hooks.js", "--test", "--test-force-exit", f"{directory}/*.test.js"],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        tail = [line for line in proc.stdout.strip().splitlines() if line.strip()][-6:]
+        failures.append(f"FAIL {directory}: " + " | ".join(tail))
+
+
 def validate_findings(stdout):
     """Each error and warning in a `claude plugin validate --json` report."""
     try:
@@ -405,6 +422,7 @@ def main():
     check_template(failures)
     check_unittests(failures, HEALTH_TESTS)
     check_unittests(failures, PILOT_TESTS)
+    check_node_tests(failures, PAGE_TESTS)
     check_mod(failures)
     for line in failures:
         print(line)
