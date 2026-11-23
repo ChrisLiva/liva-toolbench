@@ -5,6 +5,7 @@ import { surface as prototype } from "/page/prototype.js";
 import { BUSY, attaching } from "/page/attach.js";
 
 const POLL_MS = 2000;
+const SEND_FAILED = "Could not send. Try again.";
 const DRAFT_MS = 1000;
 const surfaces = { questions, readback, prototype };
 const $ = (id) => document.getElementById(id);
@@ -17,6 +18,7 @@ let latest = null;
 let agendaKey = "";
 let timer = null;
 let draftTimer = null;
+let draftRefused = false;
 let stopped = false;
 let chain = Promise.resolve();
 
@@ -48,6 +50,7 @@ function renderAgenda(interaction) {
 
 function clear() {
   clearTimeout(draftTimer);
+  draftRefused = false;
   if (mounted) mounted.surface.unmount();
   mounted = null;
   sendButton = null;
@@ -79,7 +82,14 @@ function contextFor(n) {
   return {
     saveDraftSoon(obj) {
       clearTimeout(draftTimer);
-      draftTimer = setTimeout(() => Promise.resolve(putDraft(n, obj)).catch(() => {}), DRAFT_MS);
+      draftTimer = setTimeout(async () => {
+        try {
+          const res = await putDraft(n, obj);
+          if (view !== `interaction:${n}`) return;
+          draftRefused = !res.ok && res.status !== 409;
+          if (!$("status").textContent.startsWith("Reconnecting")) $("status").textContent = draftRefused ? "Draft not saved." : "";
+        } catch {}
+      }, DRAFT_MS);
     },
     // Resolves to the line the surface shows by its send button, empty when the send needs none: a 201 shows the wait
     // and a 409 the interaction that replaced this one, so neither is the surface's to report.
@@ -95,10 +105,14 @@ function contextFor(n) {
         } else if (res.status === 400) {
           const refused = await res.json().catch(() => ({}));
           return refused.problems?.[0] ?? refusal;
+        } else if (res.status === 413) {
+          return "Too long to send: shorten the answer or note.";
+        } else {
+          return SEND_FAILED;
         }
         return "";
       } catch {
-        return "Could not send. Try again.";
+        return SEND_FAILED;
       }
     },
     setSend(button) {
@@ -143,7 +157,7 @@ async function run() {
     if (res.status === 403) return stop("Open this page from the session");
     if (!res.ok) throw new Error(`state ${res.status}`);
     const state = await res.json();
-    $("status").textContent = "";
+    $("status").textContent = draftRefused ? "Draft not saved." : "";
     show(state);
   } catch {
     $("status").textContent = "Reconnecting";
