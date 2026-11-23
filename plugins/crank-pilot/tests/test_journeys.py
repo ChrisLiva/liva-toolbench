@@ -11,6 +11,7 @@ import stat
 import threading
 import time
 import unittest
+from typing import cast
 
 from support import (
     MARKS,
@@ -326,7 +327,7 @@ class RestartAfterKillJourneyTest(EffortCase):
             status, body, _ = fresh.request(
                 "POST",
                 "/api/session",
-                json.dumps({"code": code[1]}).encode(),
+                json.dumps({"code": cast(re.Match[str], code)[1]}).encode(),
                 token=False,
             )
             self.assertEqual((status, json.loads(body)), (200, {"token": new["token"]}))

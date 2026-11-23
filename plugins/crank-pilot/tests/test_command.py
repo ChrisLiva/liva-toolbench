@@ -13,6 +13,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
+from typing import cast
 
 from support import (
     BIN,
@@ -332,14 +333,17 @@ class ShowBrowserTest(EffortCase):
         self.assertNotIn(record["token"], url)
         client = Client(effort)
         status, body, _ = client.request(
-            "POST", "/api/session", json.dumps({"code": code[1]}).encode(), token=False
+            "POST",
+            "/api/session",
+            json.dumps({"code": cast(re.Match[str], code)[1]}).encode(),
+            token=False,
         )
         self.assertEqual((status, json.loads(body)), (200, {"token": record["token"]}))
         self.assertEqual(
             client.request(
                 "POST",
                 "/api/session",
-                json.dumps({"code": code[1]}).encode(),
+                json.dumps({"code": cast(re.Match[str], code)[1]}).encode(),
                 token=False,
             )[0],
             403,
@@ -753,7 +757,7 @@ class ForeignPidListener:
                 self.send_header("Content-Length", "0")
                 self.end_headers()
 
-            def log_message(self, *args) -> None:
+            def log_message(self, format: str, *args) -> None:
                 pass
 
         self.httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)

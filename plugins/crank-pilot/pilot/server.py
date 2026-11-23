@@ -12,7 +12,7 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, cast
 from urllib.parse import unquote
 
 from pilot.store import (
@@ -160,7 +160,9 @@ class Server(ThreadingHTTPServer):
 
 
 class Handler(BaseHTTPRequestHandler):
-    server: Server
+    @property
+    def pilot(self) -> Server:
+        return cast(Server, self.server)
 
     def reply(self, status: int, body: bytes, content_type: str) -> None:
         self.send_response(status)
@@ -174,32 +176,32 @@ class Handler(BaseHTTPRequestHandler):
 
     def has_token(self) -> bool:
         return hmac.compare_digest(
-            self.headers.get("X-Pilot-Token", "").encode(), self.server.token.encode()
+            self.headers.get("X-Pilot-Token", "").encode(), self.pilot.token.encode()
         )
 
     def state(self) -> dict:
-        store = self.server.store
+        store = self.pilot.store
         latest = store.latest()
         response = store.response(latest) if latest else None
         draft = store.draft(latest) if latest and response is None else None
         interaction = store.interaction(latest) if latest else None
         readback = interaction is not None and interaction["kind"] == "readback"
         return {
-            "ended": self.server.closing_until is not None,
+            "ended": self.pilot.closing_until is not None,
             "effort": store.effort.name,
             "interaction": interaction,
             "response": {"via": response["via"]} if response else None,
             "draft": draft,
-            "versions": store.kept_versions(interaction["artifact"])
+            "versions": store.kept_versions(cast(dict, interaction)["artifact"])
             if readback
             else [],
-            "prior": store.prior(latest) if readback else None,
+            "prior": store.prior(cast(int, latest)) if readback else None,
         }
 
     def require_pending(self, n: int) -> bool:
         """True when `n` is the pending interaction; otherwise answer 409 and return
         False."""
-        if self.server.store.pending() == n:
+        if self.pilot.store.pending() == n:
             return True
         self.reply_json(409, {"error": "that interaction is not pending"})
         return False
@@ -226,7 +228,7 @@ class Handler(BaseHTTPRequestHandler):
         return _Refused
 
     def home(self) -> tuple[str, str]:
-        port = self.server.server_address[1]
+        port = self.pilot.server_address[1]
         return f"127.0.0.1:{port}", f"localhost:{port}"
 
     def dispatch(self) -> None:
@@ -267,7 +269,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if not route.raw:
                 try:
-                    body = json.loads(body)
+                    body = json.loads(cast(bytes, body))
                 except ValueError:
                     body = _NotJson
         getattr(self, route.handler)(match, body)
@@ -281,32 +283,32 @@ class Handler(BaseHTTPRequestHandler):
         self.serve_file(PAGE, match["rel"], PAGE_TYPES)
 
     def effort_file(self, match: re.Match, body: object) -> None:
-        self.serve_file(self.server.store.effort, match["rel"], EFFORT_TYPES)
+        self.serve_file(self.pilot.store.effort, match["rel"], EFFORT_TYPES)
 
     def ping(self, match: re.Match, body: object) -> None:
-        write_atomic(self.server.store.contact, b"")
-        closing = {"closing": True} if self.server.closing_until is not None else {}
+        write_atomic(self.pilot.store.contact, b"")
+        closing = {"closing": True} if self.pilot.closing_until is not None else {}
         self.reply_json(200, {"pid": os.getpid(), **closing})
 
     def poll(self, match: re.Match, body: object) -> None:
-        if self.server.closing_until is None:
-            write_atomic(self.server.store.heartbeat_file, b"")
+        if self.pilot.closing_until is None:
+            write_atomic(self.pilot.store.heartbeat_file, b"")
         self.reply_json(200, self.state())
 
     def bye(self, match: re.Match, body: object) -> None:
-        write_atomic(self.server.store.heartbeat_file, b"bye")
+        write_atomic(self.pilot.store.heartbeat_file, b"bye")
         self.reply(204, b"", "application/json")
 
     def close(self, match: re.Match, body: object) -> None:
-        self.server.start_closing()
+        self.pilot.start_closing()
         self.reply(202, b"", "application/json")
 
     def new_code(self, match: re.Match, body: object) -> None:
-        self.reply_json(201, {"code": self.server.add_code()})
+        self.reply_json(201, {"code": self.pilot.add_code()})
 
     def session(self, match: re.Match, body: object) -> None:
-        if isinstance(body, dict) and self.server.take_code(body.get("code")):
-            return self.reply_json(200, {"token": self.server.token})
+        if isinstance(body, dict) and self.pilot.take_code(body.get("code")):
+            return self.reply_json(200, {"token": self.pilot.token})
         self.reply_json(403, {"error": "forbidden"})
 
     def put_draft(self, match: re.Match, body: object) -> None:
@@ -315,14 +317,14 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not isinstance(body, dict):
             return self.reply_json(400, {"problems": ["draft: must be a JSON object"]})
-        self.server.store.write_draft(n, body)
+        self.pilot.store.write_draft(n, body)
         self.reply(204, b"", "application/json")
 
     def post_response(self, match: re.Match, body: object) -> None:
         n = int(match["n"])
         if not self.require_pending(n):
             return
-        store = self.server.store
+        store = self.pilot.store
         interaction = store.interaction(n)
         problems = (
             ["body: must be valid JSON"]
@@ -331,7 +333,7 @@ class Handler(BaseHTTPRequestHandler):
         )
         if problems:
             return self.reply_json(400, {"problems": problems})
-        if not store.respond(n, body, "page"):
+        if not store.respond(n, cast(dict, body), "page"):
             return self.reply_json(409, {"error": "that interaction is not pending"})
         self.reply_json(201, {"path": response_rel(n)})
 
@@ -348,7 +350,7 @@ class Handler(BaseHTTPRequestHandler):
                     "accepted types are PNG, JPEG, GIF, WebP"
                 },
             )
-        k = self.server.store.add_attachment(n, body, extension)
+        k = self.pilot.store.add_attachment(n, body, extension)
         if k is None:
             return self.reply_json(
                 409,
@@ -363,7 +365,7 @@ class Handler(BaseHTTPRequestHandler):
         n = int(match["n"])
         if not self.require_pending(n):
             return
-        if not self.server.store.remove_attachment(n, int(match["k"])):
+        if not self.pilot.store.remove_attachment(n, int(match["k"])):
             return self.reply_json(404, {"error": "no such attachment"})
         self.reply(204, b"", "application/json")
 

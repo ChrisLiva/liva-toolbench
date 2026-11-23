@@ -6,6 +6,7 @@ import shutil
 import threading
 import time
 import unittest
+from typing import Any
 
 from support import (
     CHANGES,
@@ -28,7 +29,7 @@ from support import (
 )
 
 
-def send(client: Client, method: str, path: str, payload: object) -> tuple[int, object]:
+def send(client: Client, method: str, path: str, payload: object) -> tuple[int, Any]:
     status, body, _ = client.request(method, path, json.dumps(payload).encode())
     return status, (json.loads(body) if body else None)
 

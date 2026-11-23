@@ -2,7 +2,7 @@
 it."""
 
 import contextlib
-import http.client
+import email.message
 import json
 import os
 import signal
@@ -286,7 +286,7 @@ class Client:
         body: bytes | None = None,
         headers: dict[str, str] | None = None,
         token: bool = True,
-    ) -> tuple[int, bytes, http.client.HTTPMessage]:
+    ) -> tuple[int, bytes, email.message.Message]:
         sent = {**(headers or {}), **({"X-Pilot-Token": self.token} if token else {})}
         call = urllib.request.Request(
             f"http://127.0.0.1:{self.port}{path}",
