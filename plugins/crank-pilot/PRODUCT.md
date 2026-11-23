@@ -4,7 +4,7 @@
 
 ## Platform
 
-web
+web, served from macOS or Linux (the command refuses Windows: there os.kill(pid, 0), its liveness probe, sends a console control event or kills the process instead of testing that it exists)
 
 ## Stack
 
