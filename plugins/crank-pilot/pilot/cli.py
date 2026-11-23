@@ -9,7 +9,6 @@ import sys
 import time
 import urllib.request
 import webbrowser
-from datetime import datetime, timezone
 from pathlib import Path
 
 from pilot.store import Store, response_rel, scaled
@@ -104,10 +103,7 @@ def open_page(record: dict) -> None:
 
 def settle(store: Store, number: int, via: str) -> bool:
     """Close interaction `number` with a response that carries no answers; False when a response already exists."""
-    kind = store.interaction(number)["kind"]
-    return store.write_response(number, {
-        "interaction": number, "kind": kind, "via": via, "submitted_at": datetime.now(timezone.utc).isoformat(),
-    })
+    return store.respond(number, {}, via)
 
 
 def cmd_show(args: argparse.Namespace) -> int:

@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 
 IMAGE_TYPES = "png|jpg|gif|webp"
@@ -164,6 +165,13 @@ class Store:
             temporary.unlink(missing_ok=True)
         (self.drafts / _numbered(number, "json")).unlink(missing_ok=True)
         return True
+
+    def respond(self, number: int, body: dict, via: str) -> bool:
+        """Close interaction `number` with `body` under the response envelope; False when a response already exists."""
+        return self.write_response(number, {
+            **body, "interaction": number, "kind": self.interaction(number)["kind"], "via": via,
+            "submitted_at": datetime.now(timezone.utc).isoformat(),
+        })
 
     def add_attachment(self, number: int, data: bytes, extension: str) -> int | None:
         """Store `data` as interaction `number`'s next image and return its `k`; None when ten are already present."""

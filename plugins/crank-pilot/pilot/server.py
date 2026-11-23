@@ -9,7 +9,6 @@ import secrets
 import sys
 import threading
 import time
-from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import NamedTuple
@@ -265,9 +264,7 @@ class Handler(BaseHTTPRequestHandler):
         problems = ["body: must be valid JSON"] if body is _NotJson else response_problems(interaction, body, store.effort)
         if problems:
             return self.reply_json(400, {"problems": problems})
-        saved = {**body, "interaction": n, "kind": interaction["kind"], "via": "page",
-                 "submitted_at": datetime.now(timezone.utc).isoformat()}
-        if not store.write_response(n, saved):
+        if not store.respond(n, body, "page"):
             return self.reply_json(409, {"error": "that interaction is not pending"})
         self.reply_json(201, {"path": response_rel(n)})
 
