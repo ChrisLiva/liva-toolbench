@@ -3,8 +3,8 @@
 // A question form is {[questionId]: {choice: <option id> | "own" | null, text, note, attachments}}.
 
 // The server accepts only the types `sniffImage` names, up to `MAX_IMAGES` per response.
-export const MAX_IMAGES = 10;
-export const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_IMAGES = 10;
+const MAX_BYTES = 10 * 1024 * 1024;
 export const ATTACH_MESSAGES = {
   type: "Only PNG, JPEG, GIF, WebP images can be attached.",
   size: "That image is over 10 MiB.",
@@ -42,7 +42,7 @@ export const attachedCount = (...holders) =>
 
 export const hasOptions = (question) =>
   Array.isArray(question.options) && question.options.length > 0;
-export const strings = (value) =>
+const strings = (value) =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
 const stringOrEmpty = (value) => (typeof value === "string" ? value : "");
 
@@ -198,7 +198,7 @@ export function headingAbove(blocks, index) {
   return "";
 }
 
-export function markRecord(mark) {
+function markRecord(mark) {
   const { n, type, text, attachments } = mark;
   if (type === "note") return { n, type, text, attachments };
   const { quote, lines, heading, occurrence } = mark;

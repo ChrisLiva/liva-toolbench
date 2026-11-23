@@ -1,4 +1,4 @@
-export const FRAME_POLICY =
+const FRAME_POLICY =
   "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:";
 
 const MERMAID_SRC = "/page/vendor/mermaid.min.js";
