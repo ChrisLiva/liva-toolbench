@@ -1,6 +1,6 @@
 import { getFile } from "/page/api.js";
 import { renderMarkdown } from "/page/render.js";
-import { el, mac } from "/page/dom.js";
+import { el, mac, sendControl } from "/page/dom.js";
 import { mountQuestions } from "/page/questions.js";
 import { attachedCount, canSendChanges, diffBlocks, headingAbove, numberMarks, occurrenceOf, readbackResponse, refusalMessage, roundRefusal, unansweredOwn } from "/page/model.js";
 import { BUSY, attaching, discardImages, holderControl } from "/page/attach.js";
@@ -70,8 +70,6 @@ const plain = (range) => {
 
 const byPosition = (a, b) => (a.ay === b.ay ? 0 : a.ay < b.ay ? -1 : 1);
 
-let live = null;
-
 export const surface = {
   mount(stage, state, ctx) {
     const { number, title, artifact, version, lead, judgment_calls: calls, review_landed: landed, edits, decisions } = state.interaction;
@@ -140,7 +138,7 @@ export const surface = {
     const noteForm = el("form", { autocomplete: "off" }, el("div", { class: "addrow" }, el("label", { class: "field" }, el("span", { class: "l" }, "Add a general note"), noteInput), noteAdd));
     const err = el("p", { class: "err", role: "alert" });
     const approve = el("button", { type: "button", class: "go", "aria-keyshortcuts": "Control+Shift+A Meta+Shift+A" }, "Approve");
-    const send = el("button", { type: "button", "aria-keyshortcuts": "Control+Enter Meta+Enter" }, "Send changes");
+    const [send, sendHint] = sendControl("Send changes");
     const dialog = el("div", { role: "alertdialog", class: "confirm", "aria-labelledby": "rb-confirm", hidden: "" });
     const addressed = el("div", { class: "addr" });
     ledger.append(
@@ -153,7 +151,7 @@ export const surface = {
       el("div", { class: "lact" },
         dialog,
         el("div", { class: "ar" }, approve, el("kbd", {}, mac ? "⌘⇧A" : "Ctrl+Shift+A")),
-        el("div", { class: "ar" }, send, el("kbd", {}, mac ? "⌘↵" : "Ctrl+Enter")),
+        el("div", { class: "ar" }, send, sendHint),
       ),
     );
 
@@ -711,19 +709,13 @@ export const surface = {
     renderLedger();
     load();
 
-    live = {
-      stop() {
-        alive = false;
-        document.removeEventListener("keydown", onKey);
-        document.removeEventListener("selectionchange", onSelectionChange);
-        window.removeEventListener("resize", layout);
-        watcher.disconnect();
-        slot.replaceChildren();
-      },
+    return () => {
+      alive = false;
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("selectionchange", onSelectionChange);
+      window.removeEventListener("resize", layout);
+      watcher.disconnect();
+      slot.replaceChildren();
     };
-  },
-  unmount() {
-    live?.stop();
-    live = null;
   },
 };

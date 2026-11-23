@@ -1,6 +1,6 @@
 import { getFile } from "/page/api.js";
 import { sandboxFrame } from "/page/render.js";
-import { el, mac } from "/page/dom.js";
+import { el, sendControl } from "/page/dom.js";
 import { attachedCount, numberPins, prototypeFrom, prototypeResponse, verdictRefusal } from "/page/model.js";
 import { holderControl, mountAttach } from "/page/attach.js";
 
@@ -22,8 +22,6 @@ const PICKER =
   "parent.postMessage({pilotPick:{selector:path(e.target),leading_text:text}},'*')},true)})();";
 
 const hashKey = () => new URLSearchParams(location.hash.slice(1)).get("variant");
-
-let live = null;
 
 export const surface = {
   mount(stage, state, ctx) {
@@ -77,7 +75,7 @@ export const surface = {
       });
       return el("label", { class: "field" }, el("span", { class: "l" }, title), input);
     };
-    const send = el("button", { type: "button", class: "go", "aria-keyshortcuts": "Control+Enter Meta+Enter" }, "Send verdict");
+    const [send, sendHint] = sendControl("Send verdict", { class: "go" });
     const foot = el("div", { class: "lfoot vfoot" }, win, area("take", "What to take from the others"), area("leave_out", "What to leave out"));
     mountAttach(foot, {
       interaction: number,
@@ -95,7 +93,7 @@ export const surface = {
       list,
       foot,
       err,
-      el("div", { class: "lact" }, el("div", { class: "ar" }, send, el("kbd", {}, mac ? "⌘↵" : "Ctrl+Enter"))),
+      el("div", { class: "lact" }, el("div", { class: "ar" }, send, sendHint)),
     );
 
     const changed = () => {
@@ -226,15 +224,9 @@ export const surface = {
 
     paintPins();
     show(index);
-    live = {
-      stop() {
-        alive = false;
-        window.removeEventListener("message", onMessage);
-      },
+    return () => {
+      alive = false;
+      window.removeEventListener("message", onMessage);
     };
-  },
-  unmount() {
-    live?.stop();
-    live = null;
   },
 };

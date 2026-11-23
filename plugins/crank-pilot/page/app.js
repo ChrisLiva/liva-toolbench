@@ -11,7 +11,7 @@ const surfaces = { questions, readback, prototype };
 const $ = (id) => document.getElementById(id);
 
 let view = null;
-let mounted = null;
+let teardown = null;
 let sendButton = null;
 let answered = null;
 let latest = null;
@@ -51,8 +51,8 @@ function renderAgenda(interaction) {
 function clear() {
   clearTimeout(draftTimer);
   draftRefused = false;
-  if (mounted) mounted.surface.unmount();
-  mounted = null;
+  teardown?.();
+  teardown = null;
   sendButton = null;
   $("reading").replaceChildren();
   $("ledger").replaceChildren();
@@ -139,8 +139,7 @@ function show(state) {
     if (!surface) return;
     $("ledger").hidden = false;
     $("stage").classList.remove("solo");
-    mounted = { surface };
-    surface.mount($("stage"), state, contextFor(interaction.number));
+    teardown = surface.mount($("stage"), state, contextFor(interaction.number));
   });
 }
 

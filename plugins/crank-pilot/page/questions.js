@@ -1,6 +1,6 @@
 import { renderMarkdown } from "/page/render.js";
 import { answersFor, attachedCount, differCount, formFrom, recommendedForm, refusalMessage, unansweredOwn } from "/page/model.js";
-import { el, mac } from "/page/dom.js";
+import { el, sendControl } from "/page/dom.js";
 import { mountAttach } from "/page/attach.js";
 
 const OWN = "own";
@@ -144,8 +144,7 @@ export const surface = {
     const sum = el("ol", { class: "sum", "aria-label": "Answers so far" });
     const err = el("p", { class: "err", role: "alert" });
     const accept = el("button", { type: "button" }, "Accept all recommendations");
-    const send = el("button", { type: "button", class: "go", "aria-keyshortcuts": "Control+Enter Meta+Enter" }, "Send answers");
-    const hint = el("kbd", {}, mac ? "⌘↵" : "Ctrl+Enter");
+    const [send, hint] = sendControl("Send answers", { class: "go" });
     stage.querySelector("#ledger").append(
       el("p", { class: "l" }, "Differ from recommended"),
       big,
@@ -186,5 +185,4 @@ export const surface = {
     });
     ctx.setSend(send);
   },
-  unmount() {},
 };
