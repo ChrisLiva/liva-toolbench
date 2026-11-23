@@ -121,6 +121,19 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
   await tick(20);
   assert.deepEqual(marked(), before);
 
+  // Every open mark in the ledger, not only the first, can be edited or removed.
+  const commentId = String(saved.marks[1].id);
+  const actions = (id) =>
+    [...document.querySelectorAll(`#ledger [data-id="${id}"] [data-act]`)].map(
+      (b) => b.textContent,
+    );
+  assert.deepEqual(actions(String(saved.marks[0].id)), ["Remove"]);
+  assert.deepEqual(actions(commentId), ["Edit", "Remove"]);
+  assert.equal(
+    document.getElementById("ledger").textContent.includes("Addressed"),
+    false,
+  );
+
   // Removing the strike gives the text back as it was.
   const strikeId = String(saved.marks[0].id);
   document

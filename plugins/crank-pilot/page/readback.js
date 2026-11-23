@@ -394,7 +394,7 @@ export const surface = {
       closeConfirm();
       const anchored = numbered.filter((m) => m.type !== "note");
       const notes = numbered.filter((m) => m.type === "note");
-      lmarks.replaceChildren(...anchored.map(entry));
+      lmarks.replaceChildren(...anchored.map((m) => entry(m)));
       if (!anchored.length)
         lmarks.append(
           el(
@@ -404,12 +404,12 @@ export const surface = {
           ),
         );
       genHead.textContent = `General notes ${notes.length}`;
-      gen.replaceChildren(...notes.map(entry));
+      gen.replaceChildren(...notes.map((m) => entry(m)));
       refreshButtons();
       layout();
     }
 
-    /** @param {boolean | number} [done] `.map(entry)` passes the index here. */
+    /** @param {boolean} [done] */
     function entry(m, done = false) {
       const acts = el("span", { class: "acts" });
       if (!done && m.type !== "strike")
