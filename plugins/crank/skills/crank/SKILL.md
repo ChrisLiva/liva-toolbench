@@ -29,7 +29,7 @@ The first rule that applies wins:
 4. **Torn between two routes.** Only when two routes are *genuinely* arguable — a formed idea touching unfamiliar architecture, a "small" ask hiding an open product question — ask one question naming both routes, a one-line case for each, your recommendation first.
 5. **Nothing to route.** Invoked bare with no usable conversation context: ask what the user wants to work on, then triage the answer from rule 1 and against the sibling entry points named in the Goal.
 
-Wherever they sit in the arguments, `--pilot` and `--no-pilot` are mode words: set them aside before applying the rules above, never reading one as a route or as part of the idea. When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, read [PILOT.md](PILOT.md) when the phase reaches its first question round, readback, or prototype review.
+Wherever they sit in the arguments, `--pilot` and `--no-pilot` are mode words: set them aside before applying the rules above, never reading one as a route or as part of the idea. **Interactive mode** is on when the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`. In interactive mode, read [PILOT.md](PILOT.md) when the phase reaches its first question round, readback, or prototype review.
 
 ## Phase gates
 

@@ -15,7 +15,7 @@ Before the first question, read:
 
 Offer a prototype, 3 to 5 variants behind one switcher, once, when the change touches a page, screen, component, CLI output, flags, help text, or TUI, a look or interaction decision is still open, and the incoming artifact carries no `Prototype:` line (a verdict, `declined`, or `no verdict`). When `.crank/<slug>/prototype/` already holds files, offer to reopen them. On a yes, read [PROTOTYPE.md](PROTOTYPE.md) and follow it; on a no, record `Prototype: declined` under the plan's assumptions. Copy a brainstorm brief's `Prototype:` line, with any block beneath it, under the assumptions as written. When no offer fires, move on without mentioning a prototype.
 
-Put each of these to the user as a decision: a risk no check can retire, a spec clause the code contradicts, a threshold no run measured, a spec decision whose stated reason the lookups overturned, a fixed value the person running what ships might set (a window, limit, or count), and a spec-wide rule the site count below does not support. When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, put each round on the page per [PILOT.md](PILOT.md).
+Put each of these to the user as a decision: a risk no check can retire, a spec clause the code contradicts, a threshold no run measured, a spec decision whose stated reason the lookups overturned, a fixed value the person running what ships might set (a window, limit, or count), and a spec-wide rule the site count below does not support. In interactive mode, put each round on the page per [PILOT.md](PILOT.md).
 
 Run it, don't recall:
 

@@ -51,7 +51,7 @@ Completion criterion: the idea is confirmed buildable as one project, or split �
 
 Walk the open design questions per [GRILLING.md](GRILLING.md) (read it here). If its opening agenda shows the way from idea to spec is already clear, say so and offer to skip to the spec phase rather than manufacture a brainstorm.
 
-When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, put each round on the page per [PILOT.md](PILOT.md).
+In interactive mode, put each round on the page per [PILOT.md](PILOT.md).
 
 - **Raise fidelity when words stall.** When a question is experiential, about how something should look, behave, or read, offer a mock in place of the question and record the reaction as the answer: a sketch, a sample output or mock data shape, a single self-contained HTML file the user double-clicks and drives when the behavior is the question, or variants to compare per [PROTOTYPE.md](PROTOTYPE.md) when the look is the question, read once the user accepts. Write the mock under `.crank/<slug>/` per [ARTIFACT-HOME.md](ARTIFACT-HOME.md), read before writing it, and keep it on disk until the plan's execution finishes. The brief records the mock's path beside the decision it settled.
 
@@ -75,7 +75,7 @@ Completion criterion: every applicable Deliverables section is in the brief file
 
 Read back the brief per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the Shape's diagram and each Open question as the sharp question it hands the spec.
 
-When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, send the readback to the page per [PILOT.md](PILOT.md).
+In interactive mode, send the readback to the page per [PILOT.md](PILOT.md).
 
 ### 8. Hand off
 
@@ -83,7 +83,7 @@ Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 - **Next:** say "continue" to run the spec phase ([SPEC.md](SPEC.md)) on the approved brief now, or in a fresh session: `/crank spec .crank/<slug>/brainstorm.md`.
 
-When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, finish the hand-off per [PILOT.md](PILOT.md) → Hand-off.
+In interactive mode, finish the hand-off per [PILOT.md](PILOT.md) → Hand-off.
 
 ## References
 

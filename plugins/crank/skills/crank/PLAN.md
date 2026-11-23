@@ -84,7 +84,7 @@ Learn what you'll touch before writing tasks. Dispatch the wide reads per [SUBAG
 
 **Ask the plan's decisions.** When grounding leaves a choice with more than one defensible answer that the spec does not settle — a spec clause the code contradicts, two criteria that collide on a case grounding found, a threshold or cap no run measured, a spec decision whose stated reason this phase's grounding overturned, the home of a new shared module — ask those choices as one round per [GRILLING.md](GRILLING.md) before Map the files, and land each answer under **Updates since spec** as `user decision: <answer>`.
 
-When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, put that round on the page per [PILOT.md](PILOT.md).
+In interactive mode, put that round on the page per [PILOT.md](PILOT.md).
 
 Completion criterion, all of:
 
@@ -172,7 +172,7 @@ The merger's findings file is `plan-review-findings.md`, and its edit script is 
 
 Read back the reviewed plan per [SKILL.md](SKILL.md) → Phase gates, reading [READBACK.md](READBACK.md) here. Its message shows the file map as its path / action / responsibility rows, each stage cut in a staged plan beside the cut it rejected, and each task as what it builds with its test-first, lightest-check, or probe call where that call was a real choice.
 
-When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, send the readback to the page per [PILOT.md](PILOT.md).
+In interactive mode, send the readback to the page per [PILOT.md](PILOT.md).
 
 ### 7. Hand back
 
@@ -180,4 +180,4 @@ Hand off per [SKILL.md](SKILL.md) → Phase gates.
 
 - **Next:** `/crank-execute .crank/<slug>/plan.md` — in this session or a fresh one; the plan is self-contained, and one run carries it through its last task. For a staged plan, add one sentence: the user may bound a run at any stage gate (`stop after Task <N>`, the gate's last task), and a gate short of the last task ends a short run whose final review and retro belong to the run that lands the last task.
 
-When the invocation carried `--pilot`, or a loaded instruction file asks for interactive mode, and the invocation carried no `--no-pilot`, finish the hand-off per [PILOT.md](PILOT.md) → Hand-off.
+In interactive mode, finish the hand-off per [PILOT.md](PILOT.md) → Hand-off.
