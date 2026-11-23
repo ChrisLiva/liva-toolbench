@@ -3,11 +3,17 @@ import { linesOf } from "/page/render.js";
 // Anchoring: places a mark in the rendered text and reads a selection back as a mark's anchor.
 
 // The text node and offset that sit `offset` characters into `block`'s rendered text.
+/** @returns {[Node, number]} */
 function locate(block, offset, atEnd) {
   const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
   let seen = 0;
+  /** @type {Text | null} */
   let last = null;
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+  for (
+    let node = /** @type {Text | null} */ (walker.nextNode());
+    node;
+    node = /** @type {Text | null} */ (walker.nextNode())
+  ) {
     if (atEnd ? offset <= seen + node.length : offset < seen + node.length)
       return [node, offset - seen];
     seen += node.length;

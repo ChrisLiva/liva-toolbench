@@ -46,7 +46,9 @@ export function sandboxFrame(html, options = {}) {
 window.addEventListener("message", (event) => {
   const height = event.data?.pilotHeight;
   if (!Number.isFinite(height) || height < 0) return;
-  for (const frame of document.querySelectorAll("iframe.frag")) {
+  for (const frame of /** @type {NodeListOf<HTMLIFrameElement>} */ (
+    document.querySelectorAll("iframe.frag")
+  )) {
     if (event.source === frame.contentWindow)
       frame.style.height = `${height}px`;
   }
@@ -60,6 +62,7 @@ function figure(pre) {
   return el;
 }
 
+/** @type {Promise<any> | null} */
 let mermaidReady = null;
 function loadMermaid() {
   mermaidReady ??= new Promise((resolve, reject) => {
@@ -78,7 +81,7 @@ function loadMermaid() {
     });
     document.head.append(script);
   });
-  return mermaidReady;
+  return /** @type {Promise<any>} */ (mermaidReady);
 }
 
 let diagrams = 0;

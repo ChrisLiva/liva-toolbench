@@ -9,16 +9,23 @@ const SEND_FAILED = "Could not send. Try again.";
 const DRAFT_REFUSED = "Draft not saved.";
 const DRAFT_MS = 1000;
 const surfaces = { questions, readback, prototype };
-const $ = (id) => document.getElementById(id);
+const $ = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
 
+/** @type {string | null} */
 let view = null;
+/** @type {(() => void) | null} */
 let teardown = null;
+/** @type {HTMLButtonElement | null} */
 let sendButton = null;
+/** @type {number | null} */
 let answered = null;
+/** @type {any} */
 let latest = null;
 let agendaKey = "";
-let timer = null;
-let draftTimer = null;
+let timer = /** @type {number | undefined} */ (/** @type {unknown} */ (null));
+let draftTimer = /** @type {number | undefined} */ (
+  /** @type {unknown} */ (null)
+);
 let draftRefused = false;
 let connected = true;
 let stopped = false;

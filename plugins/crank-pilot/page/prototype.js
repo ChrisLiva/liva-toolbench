@@ -38,6 +38,10 @@ export const surface = {
       variants.findIndex((v) => v.key === hashKey()),
     );
     let picking = false;
+    /**
+     * In the box, hence with a window, from its assignment on; show() nulls it before it leaves.
+     * @type {(HTMLIFrameElement & { contentWindow: Window }) | null}
+     */
     let frame = null;
     let shown = 0;
     let alive = true;
@@ -249,7 +253,9 @@ export const surface = {
       try {
         const html = await variantText(v);
         if (!alive || mine !== shown) return;
-        frame = sandboxFrame(html, { script: PICKER });
+        frame = /** @type {HTMLIFrameElement & { contentWindow: Window }} */ (
+          sandboxFrame(html, { script: PICKER })
+        );
         frame.className = "pframe";
         frame.title = `Variant ${v.key}: ${v.name}`;
         const pushed = frame;

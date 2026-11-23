@@ -54,7 +54,8 @@ export function mountAttach(
   { interaction, paths, count, onChange, zone = root },
 ) {
   let held = [...paths];
-  let bound = null;
+  /* Set by bind(zone) before any gesture handler or unbind can run. */
+  let bound = /** @type {HTMLElement} */ (/** @type {unknown} */ (null));
   const pick = el("label", { class: "atp" });
   pick.innerHTML =
     '<input type="file" accept="image/*" multiple><span class="bt">Attach image</span>';

@@ -55,8 +55,11 @@ export const surface = {
     let marks = marksFrom(draft.marks);
     let nextId = marks.reduce((high, m) => Math.max(high, m.id), 0) + 1;
     let blocks = [];
+    /** @type {ReturnType<typeof mountQuestions> | null} */
     let ui = null;
+    /** @type {{ pieces: any[], raw: any, mode: string, returnTo: HTMLElement | null } | null} */
     let pending = null;
+    /** @type {number | null} */
     let editing = null;
     let sending = false;
     let alive = true;
@@ -255,10 +258,10 @@ export const surface = {
           !alive ||
           older() ||
           (pop.contains(document.activeElement) &&
-            document.activeElement.tagName === "INPUT")
+            /** @type {Element} */ (document.activeElement).tagName === "INPUT")
         )
           return;
-        const selection = window.getSelection();
+        const selection = /** @type {Selection} */ (window.getSelection());
         if (!selection.rangeCount || selection.isCollapsed)
           return closePop(false);
         const range = selection.getRangeAt(0);
@@ -296,7 +299,7 @@ export const surface = {
       if (!wrap(p.pieces, mark)) return;
       nextId++;
       marks.push(mark);
-      window.getSelection().removeAllRanges();
+      /** @type {Selection} */ (window.getSelection()).removeAllRanges();
       const markNumber = numberMarks(marks).find((m) => m.id === mark.id).n;
       closePop(true);
       hint.textContent = `Added mark ${markNumber}.`;
@@ -374,7 +377,8 @@ export const surface = {
         pop.contains(document.activeElement)
       )
         return;
-      if (window.getSelection().isCollapsed) closePop(false);
+      if (/** @type {Selection} */ (window.getSelection()).isCollapsed)
+        closePop(false);
     };
     document.addEventListener("selectionchange", onSelectionChange);
 
@@ -400,6 +404,7 @@ export const surface = {
       layout();
     }
 
+    /** @param {boolean | number} [done] `.map(entry)` passes the index here. */
     function entry(m, done = false) {
       const acts = el("span", { class: "acts" });
       if (!done && m.type !== "strike")
@@ -600,7 +605,7 @@ export const surface = {
         return false;
       }
       err.textContent = refusalMessage(open.title);
-      ui.focusQuestion(open.id);
+      /** @type {NonNullable<typeof ui>} */ (ui).focusQuestion(open.id);
       return true;
     }
 
@@ -688,7 +693,9 @@ export const surface = {
     const valueText = (n) =>
       n === version ? `v${n}` : `v${n}, older, read-only`;
     const readout = el("output", { class: "l", id: "verOut", for: "ver" });
-    const slot = document.getElementById("agendaTools");
+    const slot = /** @type {HTMLElement} */ (
+      document.getElementById("agendaTools")
+    );
     if (known.length > 1) {
       const input = el("input", {
         id: "ver",
@@ -745,6 +752,7 @@ export const surface = {
     }
 
     // The source text of each block of the version the user last marked up.
+    /** @type {Promise<any[]> | null} */
     let priorBlocks = null;
     const priorSources = () =>
       (priorBlocks ??= sourceOf(prior.version)
@@ -771,6 +779,7 @@ export const surface = {
         blocks = [];
       }
       let before = [];
+      /** @type {ReturnType<typeof diffBlocks> | null} */
       let diff = null;
       if (revised && shown > prior.version && blocks.length) {
         try {
