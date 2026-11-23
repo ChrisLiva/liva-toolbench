@@ -26,6 +26,28 @@ const pad = (n) => String(n).padStart(2, "0");
 
 const byPosition = (a, b) => (a.ay === b.ay ? 0 : a.ay < b.ay ? -1 : 1);
 
+// The lead and the lists of what the agent did, shown above the artifact.
+function aboveReading(lead, calls, landed, edits) {
+  const above = [];
+  if (lead) above.push(el("p", { class: "lead" }, lead));
+  for (const [label, items] of [
+    ["Judgment calls", calls],
+    ["Landed by review", landed],
+    ["Edits since the last version", edits],
+  ]) {
+    if (!items?.length) continue;
+    above.push(
+      el(
+        "div",
+        { class: "calls" },
+        el("p", { class: "l" }, `${label} ${items.length}`),
+        el("ul", {}, ...items.map((text) => el("li", {}, text))),
+      ),
+    );
+  }
+  return above;
+}
+
 export const surface = {
   mount(stage, state, ctx) {
     const {
@@ -86,24 +108,7 @@ export const surface = {
       hidden: "",
     });
 
-    const above = [];
-    if (lead) above.push(el("p", { class: "lead" }, lead));
-    for (const [label, items] of [
-      ["Judgment calls", calls],
-      ["Landed by review", landed],
-      ["Edits since the last version", edits],
-    ]) {
-      if (!items?.length) continue;
-      above.push(
-        el(
-          "div",
-          { class: "calls" },
-          el("p", { class: "l" }, `${label} ${items.length}`),
-          el("ul", {}, ...items.map((text) => el("li", {}, text))),
-        ),
-      );
-    }
-    reading.append(...above);
+    reading.append(...aboveReading(lead, calls, landed, edits));
     if (decisions.length) {
       const open = el(
         "div",
@@ -763,21 +768,22 @@ export const surface = {
           throw error;
         }));
 
-    async function load() {
-      const mine = ++requested;
-      const stale = () => !alive || mine !== requested;
-      const guide = older() ? OLDER_HINT(shown, version) : HINT;
-      hint.textContent = guide;
-      art.setAttribute("aria-label", `Artifact: ${title}. ${guide}`);
+    // Show the shown version in `art`; false when a newer load replaced this one.
+    async function showArtifact(stale) {
       try {
         const next = await renderMarkdown(await sourceOf(shown), art);
-        if (stale()) return;
+        if (stale()) return false;
         blocks = next;
       } catch {
-        if (stale()) return;
+        if (stale()) return false;
         art.textContent = "The artifact could not be loaded.";
         blocks = [];
       }
+      return true;
+    }
+
+    // What changed since the prior version, or null when a newer load replaced this one.
+    async function changesSincePrior(stale) {
       let before = [];
       /** @type {ReturnType<typeof diffBlocks> | null} */
       let diff = null;
@@ -791,12 +797,13 @@ export const surface = {
         } catch {
           // Without the earlier version nothing can be shown as changed.
         }
-        if (stale()) return;
+        if (stale()) return null;
       }
-      if (!older()) {
-        for (const block of blocks) block.el.setAttribute("tabindex", "0");
-        for (const mark of marks) if (mark.type !== "note") draw(mark);
-      }
+      return { before, diff };
+    }
+
+    /** @param {string[]} before @param {ReturnType<typeof diffBlocks> | null} diff */
+    function showChanges(before, diff) {
       for (const index of diff?.changed ?? []) {
         blocks[index].el.classList.add("changed");
         blocks[index].el.append(el("span", { class: "chg" }, "CHANGED"));
@@ -815,6 +822,22 @@ export const surface = {
           : []),
       );
       readout.textContent = `v${shown} · ${plural(blocks.length, "block")}${diff ? ` · ${diff.changed.length} changed` : ""}`;
+    }
+
+    async function load() {
+      const mine = ++requested;
+      const stale = () => !alive || mine !== requested;
+      const guide = older() ? OLDER_HINT(shown, version) : HINT;
+      hint.textContent = guide;
+      art.setAttribute("aria-label", `Artifact: ${title}. ${guide}`);
+      if (!(await showArtifact(stale))) return;
+      const changes = await changesSincePrior(stale);
+      if (!changes) return;
+      if (!older()) {
+        for (const block of blocks) block.el.setAttribute("tabindex", "0");
+        for (const mark of marks) if (mark.type !== "note") draw(mark);
+      }
+      showChanges(changes.before, changes.diff);
       renderLedger();
     }
 

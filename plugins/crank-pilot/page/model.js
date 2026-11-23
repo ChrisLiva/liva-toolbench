@@ -122,46 +122,48 @@ export function recommendedForm(questions, form) {
 // The readback's marks. A page-side mark is {id, type, text, quote, lines, heading, occurrence, start, attachments}:
 // `id` is the creation counter and `start` the selection's offset in its first block's text; neither is sent.
 
+const hasIdAndText = (m) =>
+  Boolean(m) &&
+  typeof m === "object" &&
+  Number.isInteger(m.id) &&
+  typeof m.text === "string";
+
+const isAnchored = (m) =>
+  (m.type === "comment" || m.type === "strike") &&
+  typeof m.quote === "string" &&
+  Array.isArray(m.lines) &&
+  m.lines.length === 2 &&
+  m.lines.every(Number.isInteger) &&
+  Number.isInteger(m.start);
+
+// One mark whole, with what it may lack filled in, or null when it is not whole.
+function markFrom(m) {
+  if (!hasIdAndText(m)) return null;
+  const attachments = strings(m.attachments);
+  if (m.type === "note") {
+    return { id: m.id, type: "note", text: m.text, attachments };
+  }
+  if (!isAnchored(m)) return null;
+  return {
+    id: m.id,
+    type: m.type,
+    text: m.text,
+    quote: m.quote,
+    lines: m.lines,
+    heading: typeof m.heading === "string" ? m.heading : "",
+    occurrence:
+      Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
+    start: m.start,
+    ...(Number.isInteger(m.end) ? { end: m.end } : {}),
+    attachments,
+  };
+}
+
 // Keep the marks that are whole and fill what a mark may lack.
+/** @returns {any[]} */
 export function marksFrom(raw) {
   if (!Array.isArray(raw)) return [];
-  const out = [];
-  for (const m of raw) {
-    if (
-      !m ||
-      typeof m !== "object" ||
-      !Number.isInteger(m.id) ||
-      typeof m.text !== "string"
-    )
-      continue;
-    const attachments = strings(m.attachments);
-    if (m.type === "note") {
-      out.push({ id: m.id, type: "note", text: m.text, attachments });
-      continue;
-    }
-    const whole =
-      (m.type === "comment" || m.type === "strike") &&
-      typeof m.quote === "string" &&
-      Array.isArray(m.lines) &&
-      m.lines.length === 2 &&
-      m.lines.every(Number.isInteger) &&
-      Number.isInteger(m.start);
-    if (!whole) continue;
-    out.push({
-      id: m.id,
-      type: m.type,
-      text: m.text,
-      quote: m.quote,
-      lines: m.lines,
-      heading: typeof m.heading === "string" ? m.heading : "",
-      occurrence:
-        Number.isInteger(m.occurrence) && m.occurrence >= 1 ? m.occurrence : 1,
-      start: m.start,
-      ...(Number.isInteger(m.end) ? { end: m.end } : {}),
-      attachments,
-    });
-  }
-  return out;
+  return raw.map(markFrom).filter((m) => m !== null);
 }
 
 // Anchored marks in document order (first line, then offset, then creation), general notes last in creation order.

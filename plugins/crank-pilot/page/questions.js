@@ -191,28 +191,28 @@ export function mountQuestions(
   };
 }
 
-function summaryItem(q, i, answer) {
-  let said;
-  let tag;
-  if (hasOptions(q)) {
-    said =
-      answer.option === null
-        ? answer.text
-        : q.options.find((o) => o.id === answer.option)?.label;
-    tag = answer.accepted
-      ? "Accepted"
-      : answer.option === null
-        ? "Own answer"
-        : "Your choice";
-    if (answer.option === null && !answer.text) {
-      said = "";
-      tag = "Open";
-    }
-  } else {
-    said = answer.text || q.recommendation || "";
-    tag = answer.accepted ? "Accepted" : "Own answer";
+const verdict = (answer, other) => (answer.accepted ? "Accepted" : other);
+
+// What an answer said, and how the summary tags it.
+function saidAndTag(q, answer) {
+  if (!hasOptions(q)) {
+    return {
+      said: answer.text || q.recommendation || "",
+      tag: verdict(answer, "Own answer"),
+    };
   }
-  if (answer.note) tag += " + note";
+  if (answer.option !== null) {
+    return {
+      said: q.options.find((o) => o.id === answer.option)?.label,
+      tag: verdict(answer, "Your choice"),
+    };
+  }
+  if (!answer.text) return { said: "", tag: "Open" };
+  return { said: answer.text, tag: verdict(answer, "Own answer") };
+}
+
+function summaryItem(q, i, answer) {
+  const { said, tag } = saidAndTag(q, answer);
   return el(
     "li",
     {},
@@ -221,7 +221,7 @@ function summaryItem(q, i, answer) {
       "span",
       {},
       said || "No answer yet",
-      el("span", { class: "l tag" }, tag),
+      el("span", { class: "l tag" }, answer.note ? `${tag} + note` : tag),
     ),
   );
 }
