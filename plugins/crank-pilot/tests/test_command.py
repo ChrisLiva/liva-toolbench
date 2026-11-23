@@ -121,6 +121,7 @@ REJECTED = (
     ("artifact names no file", derived(READBACK, lambda d: d.update(artifact="missing.md")), "artifact"),
     ("artifact not markdown", derived(READBACK, lambda d: d.update(artifact="notes.txt")), ".md"),
     ("artifact in a subdirectory", derived(READBACK, lambda d: d.update(artifact="sub/spec.md")), "artifact"),
+    ("artifact not UTF-8", derived(READBACK, lambda d: d.update(artifact="binary.md")), "UTF-8"),
     ("bad decision", derived(READBACK, lambda d: d.update(decisions=[{"id": "d1"}])), "decisions[0]"),
     ("absolute variant", variant_file("/etc/hosts"), "file"),
     ("variant leaves the directory", variant_file("../x.html"), "file"),
@@ -133,10 +134,11 @@ REJECTED = (
 
 class ValidationCase(EffortCase):
     def effort_with_files(self):
-        """An effort directory holding the files the fixtures name, plus a symlink to a file outside it."""
+        """An effort directory holding the files the fixtures name, a non-UTF-8 binary.md, and a symlink to a file outside it."""
         effort = self.effort()
         for rel in ("spec.md", "notes.txt", "sub/spec.md", "prototype/variant-A.html", "prototype/variant-B.html"):
             effort.write(rel, "x")
+        (effort.path / "binary.md").write_bytes(b"line\n\xff\xfe bad\n")
         outside = tempfile.TemporaryDirectory()
         self.addCleanup(outside.cleanup)
         target = Path(outside.name) / "outside.html"

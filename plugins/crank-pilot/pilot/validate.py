@@ -107,6 +107,10 @@ def _artifact(data: dict, effort: Path) -> list[str]:
         return ["artifact: must be a .md file"]
     if Path(name).name != name:
         return ["artifact: must be directly in the effort directory, not in a subdirectory"]
+    try:
+        (effort / name).read_bytes().decode("utf-8")
+    except UnicodeDecodeError:
+        return ["artifact: must be UTF-8 text"]
     return []
 
 
@@ -259,7 +263,10 @@ def _readback_response(interaction: dict, body: dict, effort: Path) -> list[str]
     if verdict == "approve" and marks:
         problems.append("marks: an approve carries none")
     kept = effort / "pilot" / "versions" / interaction["artifact"] / f"{interaction['version']:03d}.md"
-    lines = len(kept.read_text().splitlines())
+    try:
+        lines = len(kept.read_bytes().decode("utf-8").splitlines())
+    except (OSError, UnicodeDecodeError):
+        return problems + ["version: the kept copy of this version cannot be read"]
     for index, mark in enumerate(marks):
         problems += _mark(mark, index + 1, lines, interaction["number"], effort, f"marks[{index}]")
     return problems

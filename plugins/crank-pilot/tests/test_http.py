@@ -2,6 +2,7 @@
 
 import json
 import re
+import shutil
 import threading
 import time
 import unittest
@@ -131,6 +132,11 @@ class InvalidReadbackResponseTest(ReadbackHttpCase):
                 self.assertFalse(self.response_file(effort).exists())
         self.assertEqual(send(client, "POST", "/api/response/1", {**CHANGES, "marks": [strike]})[0], 201)
         self.assertEqual(json.loads(self.response_file(effort).read_text())["marks"], [strike])
+        self.assertEqual(show(effort, READBACK), 2)
+        shutil.rmtree(effort.path / "pilot" / "versions")
+        status, reply = send(client, "POST", "/api/response/2", CHANGES)
+        self.assertEqual(status, 400)
+        self.assertTrue(any("version" in problem for problem in reply["problems"]))
 
 
 class ReadbackAcceptedTest(ReadbackHttpCase):
