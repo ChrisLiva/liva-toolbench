@@ -100,8 +100,8 @@ test("summary rows, a draft's general note, an unloadable version, and what chan
     "GET /api/state": () => json(state),
     "PUT /api/draft/": () => json({}),
     "GET /api/file/": (path) => {
-      if (path.endsWith("/001.md")) return new Response(V1);
-      if (path.endsWith("/003.md")) return new Response(V3);
+      if (path === "/api/file/kept/spec-v1.md") return new Response(V1);
+      if (path === "/api/file/kept/spec-v3.md") return new Response(V3);
       return new Response("", { status: 404 });
     },
   });
@@ -167,7 +167,7 @@ test("summary rows, a draft's general note, an unloadable version, and what chan
     interaction: READBACK,
     versions: [1, 2, 3].map((n) => ({
       n,
-      file: `pilot/versions/spec.md/00${n}.md`,
+      file: `kept/spec-v${n}.md`,
     })),
     prior: PRIOR,
     draft: DRAFT,
