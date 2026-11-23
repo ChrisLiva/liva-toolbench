@@ -178,3 +178,63 @@ test("readback: strike across blocks, comment, remount from the draft, remove", 
   assert.equal(await opensOn("#n=1&version=1"), "1");
   assert.equal(await opensOn("#n=9&version=1"), "2");
 });
+
+test("readback: Approve with Other chosen and nothing typed is refused and focuses the field", async () => {
+  const window = pageWindow();
+  routeFetch({
+    "GET /api/file/": async () => new Response(SOURCE, { status: 200 }),
+  });
+  const { surface } = await import("/page/readback.js");
+  const { document } = window;
+  const sent = [];
+  const ctx = {
+    saveDraftSoon() {},
+    send: async (body) => {
+      sent.push(body);
+      return "";
+    },
+    setSend() {},
+  };
+  const stop = surface.mount(
+    document.getElementById("stage"),
+    {
+      ...STATE,
+      interaction: {
+        ...STATE.interaction,
+        decisions: [
+          {
+            id: "d1",
+            title: "Which?",
+            options: [
+              { id: "a", label: "A" },
+              { id: "b", label: "B" },
+            ],
+            recommended: "a",
+          },
+        ],
+      },
+    },
+    ctx,
+  );
+  await tick(20);
+  const err = () => document.querySelector("#ledger .err").textContent;
+  const field = document.querySelector('input[aria-label^="Your own answer"]');
+  const approve = [...document.querySelectorAll("#ledger button")].find(
+    (b) => b.textContent === "Approve",
+  );
+
+  document.querySelector('input[type="radio"][value="own"]').click();
+  approve.click();
+  assert.equal(err(), 'Type your answer to "Which?" or pick an option.');
+  assert.equal(document.activeElement, field);
+  assert.equal(sent.length, 0);
+
+  field.value = "Neither";
+  field.dispatchEvent(new window.Event("input", { bubbles: true }));
+  approve.click();
+  await tick(10);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].verdict, "approve");
+  assert.equal(err(), "");
+  stop();
+});
