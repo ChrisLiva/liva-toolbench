@@ -16,6 +16,7 @@ from typing import NamedTuple, cast
 from urllib.parse import unquote
 
 from pilot.store import (
+    MAX_ATTACHMENTS,
     Store,
     attachment_rel,
     image_extension,
@@ -381,7 +382,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply_json(
                 409,
                 {
-                    "error": "ten images are already attached",
+                    "error": f"{MAX_ATTACHMENTS} images are already attached",
                     "code": "attachment_limit",
                 },
             )
