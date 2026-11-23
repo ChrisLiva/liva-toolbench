@@ -20,6 +20,7 @@ let agendaKey = "";
 let timer = null;
 let draftTimer = null;
 let draftRefused = false;
+let connected = true;
 let stopped = false;
 let chain = Promise.resolve();
 
@@ -33,6 +34,10 @@ function words(list, current) {
     }
     return item;
   });
+}
+
+function paintStatus() {
+  $("status").textContent = !connected ? "Reconnecting" : draftRefused ? DRAFT_REFUSED : "";
 }
 
 function renderAgenda(interaction) {
@@ -52,7 +57,7 @@ function renderAgenda(interaction) {
 function clear() {
   clearTimeout(draftTimer);
   draftRefused = false;
-  if ($("status").textContent === DRAFT_REFUSED) $("status").textContent = "";
+  paintStatus();
   teardown?.();
   teardown = null;
   sendButton = null;
@@ -89,7 +94,7 @@ function contextFor(n) {
           const res = await putDraft(n, obj);
           if (view !== `interaction:${n}`) return;
           draftRefused = !res.ok && res.status !== 409;
-          if (!$("status").textContent.startsWith("Reconnecting")) $("status").textContent = draftRefused ? DRAFT_REFUSED : "";
+          paintStatus();
         } catch {}
       }, DRAFT_MS);
     },
@@ -158,10 +163,12 @@ async function run() {
     if (res.status === 403) return stop("Open this page from the session");
     if (!res.ok) throw new Error(`state ${res.status}`);
     const state = await res.json();
-    $("status").textContent = draftRefused ? DRAFT_REFUSED : "";
+    connected = true;
+    paintStatus();
     show(state);
   } catch {
-    $("status").textContent = "Reconnecting";
+    connected = false;
+    paintStatus();
   }
   if (stopped) return;
   clearTimeout(timer);
