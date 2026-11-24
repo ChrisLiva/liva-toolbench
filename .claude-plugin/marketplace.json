@@ -51,7 +51,7 @@
       "name": "crank-pilot",
       "source": "./plugins/crank-pilot",
       "description": "Interactive page for crank and crank-lite: answer question rounds, mark up readbacks, and review prototypes in a local browser tab. Claude Code only.",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "category": "tools",
       "tags": ["crank", "interactive", "browser", "page"]
     }
