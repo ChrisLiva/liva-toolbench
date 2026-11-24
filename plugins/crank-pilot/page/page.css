@@ -6,6 +6,11 @@
   --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, monospace;
   --measure: clamp(560px, 55vw, 760px);
+  --code-quiet: #5b584f;
+  --code-key: #a83600;
+  --code-text: #1c6b3f;
+  --code-value: #74389a;
+  --code-name: #1b5aa3;
 }
 * {
   box-sizing: border-box;
@@ -338,6 +343,49 @@ h1.msg {
   overflow-wrap: anywhere;
   font: 14px/20px var(--mono);
 }
+.hljs-comment,
+.hljs-quote,
+.hljs-meta {
+  color: var(--code-quiet);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-tag,
+.hljs-name,
+.hljs-section,
+.hljs-deletion {
+  color: var(--code-key);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--code-text);
+}
+.hljs-number,
+.hljs-literal,
+.hljs-built_in,
+.hljs-type,
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--code-value);
+}
+.hljs-title,
+.hljs-attr,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-link {
+  color: var(--code-name);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
+}
 .art .fig {
   margin: 8px 0;
   padding: 8px 0;
@@ -462,7 +510,7 @@ input[type="text"] {
   padding: 6px 2px;
 }
 input::placeholder {
-  color: #5b584f;
+  color: var(--code-quiet);
   opacity: 1;
 }
 .sum li {

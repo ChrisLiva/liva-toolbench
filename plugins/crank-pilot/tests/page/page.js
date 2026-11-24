@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { runInThisContext } from "node:vm";
 import { JSDOM } from "jsdom";
 
 const PAGE_DIR = new URL("../../page/", import.meta.url);
@@ -27,6 +28,11 @@ export function pageWindow() {
   // The vendored UMD file sets globalThis.markdownit as a side effect; its return value is an empty namespace.
   createRequire(import.meta.url)("../../page/vendor/markdown-it.min.js");
   assert.equal(typeof globalThis.markdownit, "function");
+  // The vendored highlight.js sets `hljs` through a top-level `var`, which becomes a global only when the file runs as a script.
+  runInThisContext(
+    readFileSync(new URL("vendor/highlight.min.js", PAGE_DIR), "utf8"),
+  );
+  assert.equal(typeof globalThis.hljs.highlight, "function");
 
   // jsdom has no layout.
   const zero = {

@@ -8,7 +8,7 @@ web, served from macOS or Linux (the command refuses Windows: there os.kill(pid,
 
 ## Stack
 
-Static HTML, CSS, and plain JavaScript with no build step, served by a standard-library Python server on loopback. The markdown renderer and mermaid are vendored and pinned; the page loads nothing from a CDN.
+Static HTML, CSS, and plain JavaScript with no build step, served by a standard-library Python server on loopback. The markdown renderer, mermaid, and the code highlighter are vendored and pinned; the page loads nothing from a CDN.
 
 ## Users
 
@@ -34,7 +34,7 @@ A session board whose only state is files under `.crank/<slug>/`, so a crashed s
 
 - Three marks on a readback: a comment on selected text, a strike on selected text, and a general note. The page never edits the artifact in place.
 - The user can attach images to any response by paste, drop, or file picker.
-- The page renders markdown, code blocks, mermaid, and agent-authored SVG or HTML fragments, the last in a sandboxed frame.
+- The page renders markdown, code blocks colored by the language their fence names, mermaid, and agent-authored SVG or HTML fragments, the last in a sandboxed frame.
 - One tab per effort, loopback only, usable offline.
 - Every action is reachable by standard tab order and Enter. Shortcuts exist only for submit and approve.
 - Claude Code only at launch. The mode is off by default.

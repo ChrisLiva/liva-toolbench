@@ -3,6 +3,8 @@ const FRAME_POLICY =
 
 const MERMAID_SRC = "/page/vendor/mermaid.min.js";
 const FRAGMENTS = new Set(["html", "svg"]);
+// Fences the page draws instead of showing as code.
+const DRAWN = new Set([...FRAGMENTS, "mermaid"]);
 // A sandboxed frame has an opaque origin, so its postMessage must target every origin; the page checks event.source.
 const SIZER =
   "const send=()=>parent.postMessage({pilotHeight:Math.ceil(document.documentElement.getBoundingClientRect().height)},'*');" +
@@ -24,7 +26,13 @@ md.renderer.rules.fence = (tokens, i, options, env, self) => {
   const token = tokens[i];
   const kind = token.info.trim().split(/\s+/)[0];
   const fence = kind ? ` data-fence="${md.utils.escapeHtml(kind)}"` : "";
-  return `<pre${self.renderAttrs(token)}${fence}><code>${md.utils.escapeHtml(token.content)}</code></pre>\n`;
+  const hljs = globalThis.hljs;
+  const code =
+    !DRAWN.has(kind) && hljs.getLanguage(kind)
+      ? hljs.highlight(token.content, { language: kind, ignoreIllegals: true })
+          .value
+      : md.utils.escapeHtml(token.content);
+  return `<pre${self.renderAttrs(token)}${fence}><code>${code}</code></pre>\n`;
 };
 
 // An image would make the browser request a URL the artifact chose, so the alt text stands in.
@@ -103,7 +111,7 @@ export const linesOf = (node) =>
   node.getAttribute("data-lines").split("-").map(Number);
 
 export async function renderMarkdown(source, root) {
-  // aislop-ignore-next-line security/innerhtml -- markdown-it output, which escapes raw HTML (html: false)
+  // aislop-ignore-next-line security/innerhtml -- markdown-it output, which escapes raw HTML (html: false); highlight.js escapes the code it colors
   root.innerHTML = md.render(source);
   for (const pre of root.querySelectorAll("pre[data-fence]")) {
     if (!FRAGMENTS.has(pre.dataset.fence)) continue;
